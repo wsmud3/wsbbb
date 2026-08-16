@@ -184,8 +184,12 @@ const Dialog = {
         this.isShow = true;
     },
     hide: function () {
-        if (this.curItem && Dialog[this.curItem] && Dialog[this.curItem].hide) {
-            if (Dialog[this.curItem].hide() == false) return;
+        // 注意：本函数会被 .on("click", Dialog.hide) 直接绑定，此时 this 是
+        // 被点击的 DOM 元素而非 Dialog 对象，必须显式用 Dialog.curItem，
+        // 否则每个对话框的 hide()（如消息详情"返回上一级"）永远不会被执行
+        var cur = Dialog.curItem;
+        if (cur && Dialog[cur] && Dialog[cur].hide) {
+            if (Dialog[cur].hide() == false) return;
         }
         Dialog.close();
     },
@@ -208,12 +212,14 @@ const Dialog = {
     },
     close: function () {
         if (!Dialog.isShow) return;
-        if (this.curItem) {
-            Dialog[this.curItem].close && Dialog[this.curItem].close();
-            Dialog[this.curItem].isShow = false;
+        // 同 hide()：不依赖 this（可能被 DOM 事件调用），显式用 Dialog.curItem
+        var cur = Dialog.curItem;
+        if (cur) {
+            Dialog[cur].close && Dialog[cur].close();
+            Dialog[cur].isShow = false;
         }
         Dialog.isShow = false;
-        this.curItem = null;
+        Dialog.curItem = null;
         $(".content-room").removeClass("hide");
         Dialog.element.addClass("hide");
     },
