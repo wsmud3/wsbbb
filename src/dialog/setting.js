@@ -17,7 +17,10 @@ export default {
         this.keysElement = $(keys_template);
         this.customElement = $(custom_template);
         Dialog.injectStyle(setting_css);
-        var elems = $(".setting>.setting-item");
+        // 必须在模板元素内查找：init() 在元素 append 进文档前执行，
+        // 全局选择器 $(".setting>...") 永远选不到，导致开关/颜色初始状态
+        // 从不按已保存的设置同步（全部显示默认"关"）
+        var elems = this.settingElement.find(".setting-item");
         for (var i = 0; i < elems.length; i++) {
             var item = $(elems[i]);
             var prop = item.attr("for");

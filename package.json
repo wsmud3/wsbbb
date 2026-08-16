@@ -12,7 +12,6 @@
     "os-debug": "node  --inspect-brk main.js",
     "dev": "vite",
     "build": "vite build",
-    "build:apk": "vite build --mode apk",
     "preview": "vite preview",
     "start": "concurrently \"npm run web\" \"npm run os\"",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,9 +19,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@capacitor/android": "^8.4.0",
-    "@capacitor/cli": "^8.4.0",
-    "@capacitor/core": "^8.4.0",
     "better-sqlite3": "^12.10.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",

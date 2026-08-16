@@ -72,6 +72,8 @@ export default {
         }
         this.messages.push(msg);
     }, clear_message: function (type) {
+        // 未打开过消息对话框时 element 不存在，直接忽略（showMessages 需要 element）
+        if (!this.element) return;
         for (let i = 0; i < this.messages.length; i++) {
             let from = this.messages[i].id;
             if ((type === true && from !== 'notice') || from == type) {
@@ -174,7 +176,16 @@ export default {
         }
         if (!str.length) str.push('<div class="empty">暂无新消息</div>');
         if (!this.listElement) this.listElement = this.element.find(".message-list");
+        // 记录滚动容器当前位置，避免重建列表时跳回顶部：
+        // 原本在底部则跟随新消息滚动到底，否则保持原位置不动
+        var scrollElem = (Dialog.contentElement && Dialog.contentElement[0]) || null;
+        var scrollTop = scrollElem ? scrollElem.scrollTop : 0;
+        var atBottom = !scrollElem || (scrollTop + scrollElem.clientHeight >= scrollElem.scrollHeight - 50);
         this.listElement.html(str.join(""));
+        if (scrollElem) {
+            if (atBottom) scrollElem.scrollTop = scrollElem.scrollHeight;
+            else scrollElem.scrollTop = scrollTop;
+        }
 
     }, getTimedesc: function (long) {
         var now = new Date();
@@ -202,7 +213,10 @@ export default {
     }, showMessageDetail: function () {
         var id = $(this).attr("fromid");
         if (!id) return;
-        this.detailID = id;
+        // 注意：此处的 this 是点击的消息节点（jQuery 事件回调），
+        // 必须显式把 detailID 写到对话框对象上，否则 hide() 检查 detailID
+        // 判断"是否在详情页"会失效，点关闭会直接关掉整个对话框而无法返回列表
+        Dialog.message.detailID = id;
         SendCommand("message " + id);
         Dialog.message.element.addClass("detail");
 
@@ -214,10 +228,11 @@ export default {
         if (!this.detailElement) {
             this.detailElement = this.element.find(".detail-list");
         }
+        // 先记录当前详情 id，保证即使消息不在列表中也能正常"返回上一级"
+        this.detailID = id;
         var msg = this.getMessageitem(id);
         if (!msg) return;
         var str = [];
-        this.detailID = id;
         let has_rec = false;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
@@ -227,9 +242,9 @@ export default {
             }
         }
         this.detailElement.html(str.join(""));
-        let cmds = "";
+        let cmds = `<span cmd="_closed">返回</span>`;
         if (id !== 'notice') {
-            cmds = `<span cmd="message delete ${id}">删除</span><span cmd="receive ${id}">领取全部</span>`;
+            cmds += `<span cmd="message delete ${id}">删除</span><span cmd="receive ${id}">领取全部</span>`;
         }
         Dialog.footerElement.find('.item-commands').html(cmds);
 

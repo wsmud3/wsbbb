@@ -56,7 +56,7 @@ export default {
         var html = [];
         for (var i = 0; i < this.footers.length; i++) {
             html.push("<span class='footer-item" + (i == this.selected_item
-                ? " select" : "") + "' for='" + i + "''>"
+                ? " select" : "") + "' for='" + i + "'>"
                 + this.footers[i] + "</span>");
         }
         if (this.selected_item === 0) {

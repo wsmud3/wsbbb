@@ -59,7 +59,7 @@ export default {
         if (!item) return;
         var html = ["<div class='item-commands'>"];
         html.push('<span cmd="look3 ' + item.id + '">查看</span>');
-        var isCap = Dialog.team.items[0].id == Process.player;
+        var isCap = Dialog.team.items.length && Dialog.team.items[0].id == Process.player;
         if (isCap && item.id != Process.player) {
             html.push('<span cmd="team remove ' + item.id + '">移出队伍</span>');
         } else if (item.id == Process.player) {

@@ -1,5 +1,7 @@
 
 
+import Util from '../utils/util.js';
+
 const paimai_css = `
 .dialog-pms {
     max-height: 32em;
@@ -112,8 +114,9 @@ export default {
         dialog.selected_item = elem;
         dialog.selected_item.addClass('selected');
     }, update_item: function (item) {
+        if (!this.element) return;   // 拍卖面板未打开时忽略出价更新
         let elem = this.element.find('.pm-item[oid="' + item[0] + '"]');
-        if (elem) elem.replaceWith(this.create_item(item));
+        if (elem.length) elem.replaceWith(this.create_item(item));
     },
     create_items: function (list) {
         let str = [];
@@ -135,9 +138,9 @@ export default {
 
         str.push("<div class='pm-desc flex-1'>");
         if (uname) {
-            str.push(uname, '最后出价', moneyToStr(money),);
+            str.push(uname, '最后出价', Util.moneyToStr(money),);
         } else {
-            str.push('当前价格', moneyToStr(money),);
+            str.push('当前价格', Util.moneyToStr(money),);
         }
         str.push("</div>");
 

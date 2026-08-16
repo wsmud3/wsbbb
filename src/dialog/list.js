@@ -43,7 +43,9 @@ export default {
                     this.gongji = data.gongji;
                     this.show_footer(data.gongji);
                 }
-                return this.create_items(this.selllist, this.leftElement, 2, this.selllist.length);
+                // 不能提前 return：否则跳过下方 update_pack（自己背包数量变了）
+                // 和 money 刷新，卖出后右侧背包和金额都不更新
+                this.create_items(this.selllist, this.leftElement, 2, this.selllist.length);
             }
         }
         if (this.isstore && this.isShow) {
@@ -124,7 +126,12 @@ export default {
             Dialog.show("list");
         if (this.rightElement) {
             this.rightElement.show();
-            if (Dialog.pack.objelement) Dialog.pack.objelement.remove();
+            // 必须同时置 null，否则 pack.show_sub 会继续往已脱离 DOM 的
+            // objelement 里写内容，导致物品描述在界面上不可见
+            if (Dialog.pack.objelement) {
+                Dialog.pack.objelement.remove();
+                Dialog.pack.objelement = null;
+            }
         }
         if (this.isShow) return;
         if (!this.element) {

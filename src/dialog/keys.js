@@ -38,13 +38,21 @@ const Keys = {
     show: function (elem) {
         if (!elem) elem = $(".dialog>.dialog-content");  // Default to content element when opened without data
         this.element = elem;
+        this.select_item = null;   // 重开时清空上次选中，避免指向已脱离 DOM 的旧节点
         this.init();
+        // 每次进入都渲染列表（init 可能因 groups 已扩展而提前 return，
+        // 导致 create_html 从未执行、面板空白）
+        this.create_html();
+        elem.off('click', '.skey-item', this.item_clicked);
         elem.on('click', '.skey-item', this.item_clicked);
+        document.body.removeEventListener('keydown', this.record_press);
         document.body.addEventListener('keydown', this.record_press);
     }, hide: function () {
         document.body.removeEventListener('keydown', this.record_press);
+        this.select_item = null;
     }, close: function () {
         document.body.removeEventListener('keydown', this.record_press);
+        this.select_item = null;
     },
     record_press: function (e) {
         let item = Dialog.keys.select_item;
@@ -56,6 +64,7 @@ const Keys = {
             return item.find('.skey-key').html('');
         }
         let code = Dialog.keys.get_key_code(e);
+        if (!code) return;   // 单独按下 Ctrl/Alt/Shift：忽略，不能当作解绑
         Dialog.keys.save_setting(keyitem, code);
         item.find('.skey-key').html(keyitem.key);
         e.preventDefault();
@@ -85,6 +94,11 @@ const Keys = {
             delete this.id2keys[item.id];
         }
         else if (key) {
+            // 先清除该动作原有的键映射，避免旧键残留继续触发
+            let oldKey = this.id2keys[item.id];
+            if (oldKey && oldKey !== key) {
+                delete this.setting[oldKey];
+            }
             if (this.setting[key]) {
                 if (this.setting[key] === item.id) {
                     return;
@@ -92,11 +106,12 @@ const Keys = {
                 let old_item = this.get_item(this.setting[key]);
                 if (old_item) {
                     old_item.key = null;
-                    this.element.find('.skey-item[sid="'
+                    this.element && this.element.find('.skey-item[sid="'
                         + old_item.id + '"]>.skey-key').html("");
                 }
             }
             this.setting[key] = item.id;
+            this.id2keys[item.id] = key;
         }
         Util.storage.setItem('keys', this.setting);
     }, get_item: function (id) {

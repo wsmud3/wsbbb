@@ -5,17 +5,17 @@ import Util from '../utils/util.js';
 export default {
     init: function () {
         Dialog.pack.init();
-        // this.cleanup_cmds = Dialog.pack.cleanup_cmds;
-        // this.formatEqs = Dialog.pack.formatEqs;
-        // this.formatItems = Dialog.pack.formatItems;
-        // this.formatPackItem = Dialog.pack.formatPackItem;
-        // this.createItems = Dialog.pack.createItems;
-        // this.create_eqs = Dialog.pack.create_eqs;
-        // this.init_element = Dialog.pack.init_element;
-        // this.show_items = Dialog.pack.show_items;
-        // this.updateitem = Dialog.pack.updateitem;
-        // this.footerChanged = Dialog.pack.footerChanged;
-        // this.cleanup = Dialog.pack.cleanup;
+        this.cleanup_cmds = Dialog.pack.cleanup_cmds;
+        this.formatEqs = Dialog.pack.formatEqs;
+        this.formatItems = Dialog.pack.formatItems;
+        this.formatPackItem = Dialog.pack.formatPackItem;
+        this.createItems = Dialog.pack.createItems;
+        this.create_eqs = Dialog.pack.create_eqs;
+        this.init_element = Dialog.pack.init_element;
+        this.show_items = Dialog.pack.show_items;
+        this.updateitem = Dialog.pack.updateitem;
+        this.footerChanged = Dialog.pack.footerChanged;
+        this.cleanup = Dialog.pack.cleanup;
 
         this.show_sub = Dialog.pack.show_sub;
         this.close = Dialog.pack.close;

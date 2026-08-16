@@ -5,10 +5,10 @@ export default {
     isScroll: true,
     last_click: 0,
     show: function (nosend) {
-        // When called programmatically (nosend === null from Dialog.show),
-        // bypass the double-click guard. When called from click event,
-        // nosend is the click event object (truthy), so guard applies.
-        if (nosend !== null && Date.now() - this.last_click > 500) {
+        // 防连点守卫：吞掉 500ms 内的重复点击。
+        // 注意条件必须是 <500（原来写成 >500 导致首次点击必然被吞掉，
+        // 只有快速双击才能打开频道）
+        if (nosend !== null && Date.now() - this.last_click < 500) {
             this.last_click = Date.now();
             return;
         }
@@ -105,8 +105,8 @@ export default {
         // }
         var str = html.join("");
         if (this.datas.length > 800) {
-            this.datas.length = 0;
-            this.datas.splice(0, 200);
+            // 保留最近 200 条（原来先 length=0 再 splice 是无效操作，等于全清空）
+            this.datas.splice(0, this.datas.length - 200);
         }
         // Classify rumor as sys for filtering, but don't mutate input
         var filterCh = data.ch == "rumor" ? "sys" : data.ch;

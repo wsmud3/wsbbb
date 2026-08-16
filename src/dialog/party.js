@@ -192,6 +192,9 @@ export default {
         this.element.html(str.join(""));
     },
     onData: function (data) {
+        // 服务端可能在任何时候推送帮派数据（如被踢、公告变更），
+        // 此时若从未打开过帮派 tab，element 尚未创建，必须直接忽略
+        if (!this.element) return;
         if (data.list) return this.show_list(data);
         if (!data.name) {
             return this.empty('你还没有加入帮派');

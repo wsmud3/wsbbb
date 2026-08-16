@@ -72,9 +72,14 @@ const Dialog = {
         // events badge updates). These are silent data changes that should not
         // switch panels.
         if (data && this.isShow && name != this.curItem
-            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events")) {
-            var hasInteractive = data.rcdesc || data.jldesc || data.xqdesc || data.desc || data.items;
-            if (!hasInteractive) {
+            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events" || name === "message" || name === "tasks")) {
+            // 注意：与下方 139 行的 hasInteractive 保持一致，纯 items 更新
+            // 不算交互数据，否则背包刷新（任务奖励/登录刷新等）会劫持
+            // 当前打开的对话框，把用户切换到空白面板
+            var hasInteractive = data.rcdesc || data.jldesc || data.xqdesc || data.desc;
+            // tasks 的 desc 推送是任务完成的后台更新（服务端 task.js 下发），
+            // 不是用户主动查看，且 tasks 没有 init_element 方法，带 desc 强开面板会崩溃
+            if (!hasInteractive || name === "tasks") {
                 dialog.onData(data);
                 return;
             }
@@ -89,7 +94,7 @@ const Dialog = {
         // button clicks, never from automated server data pushes (e.g. pack
         // refresh on login, skill updates, event badge changes).
         if (data && !this.isShow
-            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events")) {
+            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events" || name === "message" || name === "tasks")) {
             dialog.onData(data);
             return;
         }

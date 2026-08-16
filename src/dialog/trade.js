@@ -13,7 +13,11 @@ export default {
         this.hide();
     }, onData: function (data) {
         if (!this.isShow) {
-            Dialog.show("trade");
+            // 这里必须调用自身的 show()（创建 element），
+            // 不能调用 Dialog.show("trade")——Dialog.show 已因带数据
+            // 跳过 dialog.show(null)，此时再重入 Dialog.show 会命中
+            // 切换逻辑走 Dialog.hide()，而 element 尚未创建 → TypeError
+            this.show(data);
         }
         Dialog.title("和" + data.name + "交易中");
         var items = Dialog.pack.items;
@@ -128,7 +132,7 @@ export default {
         for (var i = 0; i < this.trade_list.length; i++) {
             if (obj.id == this.trade_list[i].id) {
                 this.trade_list[i].count += obj.count;
-                return this.create_items();
+                return this.create_items(this.leftElement.empty(), this.trade_list, this.max_count);
             }
         }
         this.trade_list.push(obj);

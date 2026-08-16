@@ -123,8 +123,9 @@ export default {
         if (!this.skills) return;
         var item = this.skills[data.id];
         if (!item) {
-
-            return this.addSkill(item);
+            // 新技能：item 此时必然是 undefined，必须把 data 传给 addSkill，
+            // 原来传 item 会被 addSkill 的 !item 守卫吞掉，新技能永远加不进列表
+            return this.addSkill(data);
         }
         if (data.name)
             item.name = data.name;

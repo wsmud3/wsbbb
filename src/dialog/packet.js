@@ -117,11 +117,14 @@ export default {
                     var st = data.stones[i];
                     str.push('<span class="rc-add" ' + S(this.command_before + 'recast ' + data.id + ' ' + st.id) + '>镶嵌 <hio>' + st.name + '</hio></span>');
                 }
-                for (var i = 0; i < data.words.length; i++) {
-                    var rw = data.words[i];
-                    for (var j = 0; j < data.stones.length; j++) {
-                        var st2 = data.stones[j];
-                        str.push('<span class="rc-rep rc-rep-' + rw.key + '" style="display:none" ' + S(this.command_before + 'recast ' + data.id + ' replace ' + rw.key + ' ' + st2.id) + '>替换为 ' + st2.name + '</span>');
+                // data.words 可能为空（有词条石但装备无词条），需判空
+                if (data.words) {
+                    for (var i = 0; i < data.words.length; i++) {
+                        var rw = data.words[i];
+                        for (var j = 0; j < data.stones.length; j++) {
+                            var st2 = data.stones[j];
+                            str.push('<span class="rc-rep rc-rep-' + rw.key + '" style="display:none" ' + S(this.command_before + 'recast ' + data.id + ' replace ' + rw.key + ' ' + st2.id) + '>替换为 ' + st2.name + '</span>');
+                        }
                     }
                 }
             } else {

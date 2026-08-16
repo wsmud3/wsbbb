@@ -10,6 +10,8 @@ export default {
         this.createSkillItem = Dialog.skills.createSkillItem;
         this.updateSkill = Dialog.skills.updateSkill;
         this.updateSkillItem = Dialog.skills.updateSkillItem;
+        this.addSkill = Dialog.skills.addSkill;
+        this.sort_items = Dialog.skills.sort_items;
         this.showdesc = Dialog.skills.showdesc;
         this.isEnable = Dialog.skills.isEnable;
         this.close = Dialog.skills.close;

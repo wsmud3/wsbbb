@@ -76,9 +76,12 @@ const MessageQueue = {
         if (scrollHeight < clientHeight) return;
         if (!this.allow_scroll) {
             let rect = this.container[0].getBoundingClientRect();
-
-            return this.scroll_button.show().css('top',
-                rect.bottom - this.scroll_button.height() - screenTop);
+            // 浮动按钮是 position:absolute，定位基准是最近的定位祖先(.container)，
+            // 需把视口坐标换算成容器坐标，原来引用的 screenTop 未定义会导致 top 为 NaN
+            let prect = this.container[0].parentElement.getBoundingClientRect();
+            this.scroll_button.show();
+            let top = rect.bottom - (this.scroll_button.height() || 35) - prect.top;
+            return this.scroll_button.css('top', top);
         }
         elem.scrollTop = elem.scrollHeight;
     }

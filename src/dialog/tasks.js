@@ -100,6 +100,8 @@ export default {
         this.element.remove();
         this.isShow = false;
     }, update_item: function (data) {
+        // 任务面板未打开/未加载过时 this.items 为 undefined，需判空
+        if (!this.items) return;
         for (var i = 0; i < this.items.length; i++) {
             if (this.items[i].id == data.id) {
                 if (data.state) {

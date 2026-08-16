@@ -122,7 +122,8 @@ class GameMainPage extends Page {
 let last_click = 0;
 function open_map() {
     last_click = last_click || 0;
-    if (Date.now() - last_click > 500) {
+    // 防连点：吞掉 500ms 内的重复点击（原条件 >500 是反的，导致首次点击永远无效）
+    if (Date.now() - last_click < 500) {
         last_click = Date.now();
         return;
     }
@@ -254,6 +255,7 @@ function ContainerCommand(e) {
                     break;
                 case "_closed":
                     Dialog.hide();
+                    break;
                 case "_party":
                     Dialog.party.command(str[1]);
                     break;

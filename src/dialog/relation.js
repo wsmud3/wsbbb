@@ -12,6 +12,9 @@ export default {
         Dialog.icon("heart");
     },
     onData: function (data) {
+        // 服务端可能在任何时候推送关系数据（夫妻/师徒状态变化），
+        // 未打开过关系 tab 时 element 不存在，直接忽略避免崩溃
+        if (!this.element) return;
         var str = [];
         str.push("<div class='relation-item'>");
         str.push("<div class='relation-desc'>");
@@ -92,3 +95,18 @@ export default {
         this.isShow = false;
     }
 };
+
+// paimai.js 中同名函数是模块私有，这里需要本地实现
+function format_time_span(time) {
+    let diff = Math.floor((time || 0) / 1000);
+    if (diff < 0) diff = 0;
+    if (diff > 3600) {
+        let str = Math.floor(diff / 3600) + "小时";
+        diff = diff % 3600;
+        str += Math.floor(diff / 60) + "分";
+        return str;
+    }
+    let str = Math.floor(diff / 60) + "分";
+    diff = diff % 60;
+    return str + diff + "秒";
+}

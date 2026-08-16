@@ -30,12 +30,18 @@ export default {
     ],
     init: function (elem) {
         if (!elem) return;  // Guard against null/undefined (called from Dialog.show init)
+        // 同一元素重复打开（切 tab、停止录制等）：只更新引用，
+        // 不重复绑定事件（jQuery .on 会叠加导致点一次执行多次）、
+        // 不重建 HTML（否则编辑面板里录制的命令会被清空）
+        if (this.element && this.element[0] === elem[0]) {
+            this.list_elem = this.element.find('.extend-list');
+            this.edit_elem = this.element.find('.extend-add');
+            return;
+        }
         elem.on('click', '[ecmd]', this.onButtonClick);
         elem.on('click', '.setting-item', this.onClickRow);
         elem.on("click", ".switch", this.switchClick);
         elem.on("change", "select", this.selectChanged);
-        // Re-render if element changed or content was cleared (e.g. switching dialogs)
-        if (this.element && this.element[0] === elem[0] && this.list_elem && this.list_elem.parent().length) return;
         this.element = elem;
         let html = [];
         html.push('<div class="extend-list">');
@@ -191,8 +197,13 @@ export default {
         ReceiveMessage('<cyn>已停止记录你的操作命令。</cyn>');
         this.edit_elem.find('.switch').removeClass('on');
         if (this.record_cmds.length > 0) {
-            Dialog.show('setting');
-            Dialog.setting.footerChanged(3);
+            // 打开设置对话框并切到扩展页
+            if (!Dialog.isShow) {
+                Dialog.show('setting');
+            }
+            // 必须传 tab 的字符串 id（"extend"），原代码传数字 3 会拼出
+            // this["3Element"] 而取不到 extendElement，导致录制的命令无法展示
+            Dialog.setting.footerChanged('extend');
             this.edit_elem.show();
             this.list_elem.hide();
             this.edit_elem.find('textarea').val(this.record_cmds.join(";"));
@@ -285,6 +296,9 @@ export default {
                 reader.onload = function (event) {
                     try {
                         const jsonObj = JSON.parse(event.target.result);
+                        if (!jsonObj || !Array.isArray(jsonObj.items)) {
+                            return ReceiveMessage('<red>扩展文件格式错误：缺少 items 数组。</red>');
+                        }
                         Dialog.extend.setting = jsonObj.items;
                         Dialog.extend.refresh_list();
                         Dialog.extend.save_extend();
