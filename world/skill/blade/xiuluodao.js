@@ -99,10 +99,8 @@ this.pfm = {
             }
 
             if (killed) {
-                if (killed) {
-    this.change_distime(me, "xiuluodao/lianyu");
-    me.send_combat("<HIG>修罗炼狱斩杀了敌人，技能冷却重置！</HIG>", target);
-}
+                this.change_distime(me, "xiuluodao/lianyu");
+                me.send_combat("<HIG>修罗炼狱斩杀了敌人，技能冷却重置！</HIG>", target);
             }
             me.end_attack(target);
         },
@@ -142,10 +140,9 @@ this.pfm = {
                 // 清除目标身上的流血状态（不清理其他负面状态，若需清理可用 target.clear_downside(false)）
                 target.remove_status("xiuluo_bleed", true);
 
-                // 增益数值 = 本次造成的伤害值（可设置上限，避免过高）
+                // 增益数值 = 本次造成的伤害值（设置上限避免过高）
                 var buffVal = damage;
-                // 可选：增加一个上限，比如不超过 me.max_hp 的 50% 或固定上限 50000
-                // if (buffVal > 50000) buffVal = 50000;
+                if (buffVal > 500000) buffVal = 500000;
 
                 me.add_status({
                     id: "xiuluo_buff",
