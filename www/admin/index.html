@@ -1255,7 +1255,8 @@ function showBroadcast(m){
     '<div class="row" style="margin-bottom:6px"><button class="'+(window._bcTab==='mail'?'':'blue')+'" onclick="window._bcTab=\'broadcast\';showBroadcast(document.getElementById(\'main\'))">📢 全服公告</button><button class="'+(window._bcTab==='mail'?'blue':'')+'" onclick="window._bcTab=\'mail\';showBroadcast(document.getElementById(\'main\'))">✉️ 系统邮件</button></div>'+
     (window._bcTab==='mail'?
     '<div class="card"><h3>发送系统邮件</h3>'+
-    '<div class="row" style="position:relative"><input id="mail_player" placeholder="玩家ID或名字" style="width:200px" onkeyup="searchMailPlayer()" autocomplete="off"><div id="mail_player_dd" class="dropdown hide"></div></div>'+
+    '<div class="row"><label><input type="checkbox" id="mail_all" onchange="document.getElementById(\'mail_player_row\').style.display=this.checked?\'none\':\'\'"> 发送给全服在线玩家</label></div>'+
+    '<div class="row" id="mail_player_row" style="position:relative"><input id="mail_player" placeholder="玩家ID或名字（自动补全）" style="width:250px" onkeyup="searchMailPlayer()" onfocus="searchMailPlayer()" autocomplete="off"><div id="mail_player_dd" class="dropdown hide"></div></div>'+
     '<textarea id="mail_msg" placeholder="邮件内容..."></textarea>'+
     '<h3>附件物品 <span style="color:#888;font-size:11px">(可选)</span></h3>'+
     '<div class="row" style="position:relative"><input id="mail_item_search" placeholder="搜索物品名称或路径..." style="width:300px" onkeyup="searchBCItem()" onfocus="searchBCItem()" autocomplete="off">'+
@@ -1283,13 +1284,24 @@ async function doBC(){
 }
 async function doBCClear(){var r=await call('broadcast_clear');document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已清空',r.ok?'ok':'err')}
 async function doMail(){
+  var allFlag=document.getElementById('mail_all')?.checked||false;
   var playerId=document.getElementById('mail_player').value.trim();
   var msg=document.getElementById('mail_msg').value;
-  if(!playerId||!msg){document.getElementById('bc_msg_div').innerHTML=M('请填写玩家ID和邮件内容','err');return}
+  if(!msg){document.getElementById('bc_msg_div').innerHTML=M('请填写邮件内容','err');return}
+  if(!allFlag&&!playerId){document.getElementById('bc_msg_div').innerHTML=M('请选择玩家或勾选全服发送','err');return}
   var items=_bcItems.map(function(it){return{obj:it.path,count:it.count}});
-  var r=await call('send_mail',{playerId:playerId,message:msg,items:items});
-  document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已发送',r.ok?'ok':'err');
-  if(r.ok){_bcItems=[];document.getElementById('bc_items').innerHTML=renderBCItems()}
+  if(allFlag){
+    var ok=0,err=0,list=_onlinePlayers||[];
+    for(var i=0;i<list.length;i++){
+      var r=await call('send_mail',{playerId:list[i].id,message:msg,items:items});
+      if(r.ok)ok++;else err++;
+    }
+    document.getElementById('bc_msg_div').innerHTML=M('全服发送完成: '+ok+'成功'+(err?' / '+err+'失败':''));
+  }else{
+    var r=await call('send_mail',{playerId:playerId,message:msg,items:items});
+    document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已发送',r.ok?'ok':'err');
+  }
+  if(_bcItems.length){_bcItems=[];document.getElementById('bc_items').innerHTML=renderBCItems()}
 }
 async function searchMailPlayer(){
   var q=document.getElementById('mail_player').value;
@@ -1297,7 +1309,7 @@ async function searchMailPlayer(){
   if(!q||q.length<1){dd.classList.add('hide');return}
   var matches=_onlinePlayers.filter(function(p){return fuzzyMatch(q,p.name)||fuzzyMatch(q,p.id)}).slice(0,8);
   if(!matches.length){dd.classList.add('hide');return}
-  dd.innerHTML=matches.map(function(p){return '<div onclick="document.getElementById(\'mail_player\').value=\''+p.id+'\';document.getElementById(\'mail_player_dd\').classList.add(\'hide\')">'+p.name+' <span style="color:#888">('+p.id+')</span></div>'}).join('');
+  dd.innerHTML=matches.map(function(p){return '<div onclick="document.getElementById(\'mail_player\').value=\''+p.id+'\';document.getElementById(\'mail_player_dd\').classList.add(\'hide\')">'+p.name+' <span style="color:#888">('+p.id+')</span> Lv'+p.level+'</div>'}).join('');
   dd.classList.remove('hide');
 }
 
