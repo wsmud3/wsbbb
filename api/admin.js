@@ -481,6 +481,32 @@ class AdminAPI extends APIBASE {
         catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
     }
 
+    // POST /api/admin/send_mail — 发送系统邮件
+    async send_mail(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var playerId = params.playerId, message = params.message, items = params.items || [];
+        if (!playerId || !message) return { ok: false, msg: 'playerId和message必填' };
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/send_mail', { playerId: playerId, message: message, items: items }, sid); return { ok: r.ok || false, msg: r.msg || r.error }; }
+        catch (e) { return { ok: false, msg: '发送失败: ' + e.message }; }
+    }
+
+    // POST /api/admin/player_update — 更新玩家属性
+    async player_update(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/player_update', params, sid); return { ok: r.ok || false, msg: r.msg || r.error }; }
+        catch (e) { return { ok: false, msg: '更新失败: ' + e.message }; }
+    }
+
+    // POST /api/admin/stats — 获取玩家统计
+    async stats(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/stats', {}, sid); return { ok: r.ok || false, data: r.data }; }
+        catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: { totalPlayers: 0, activePlayers: 0 } }; }
+    }
+
     // POST /api/admin/hot_reload — 便捷热更新
     async hot_reload(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
