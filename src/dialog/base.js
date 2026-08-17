@@ -176,7 +176,9 @@ const Dialog = {
                 .on("click", ".footer-item", Dialog.footerClick);
             this.hiddenElement = $(".hidden-item");
             this.element = $(".dialog");
-            $(".dialog>.dialog-header>.dialog-close").on("click", Dialog.hide);
+            $(".dialog>.dialog-header>.dialog-close").on("click", function () {
+                Dialog.hide();
+            });
             this.isInit = true;
         }
         $(".content-room").addClass("hide");
@@ -184,12 +186,11 @@ const Dialog = {
         this.isShow = true;
     },
     hide: function () {
-        // 注意：本函数会被 .on("click", Dialog.hide) 直接绑定，此时 this 是
-        // 被点击的 DOM 元素而非 Dialog 对象，必须显式用 Dialog.curItem，
-        // 否则每个对话框的 hide()（如消息详情"返回上一级"）永远不会被执行
+        // 注意：本函数会被 .on("click", function(){ Dialog.hide(); }) 间接绑定，
+        // 此时 this 是 Dialog 对象（方法调用样式），但为了安全仍显式用 Dialog.curItem
         var cur = Dialog.curItem;
         if (cur && Dialog[cur] && Dialog[cur].hide) {
-            if (Dialog[cur].hide() == false) return;
+            if (Dialog[cur].hide() === false) return;
         }
         Dialog.close();
     },
