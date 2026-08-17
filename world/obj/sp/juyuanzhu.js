@@ -1,0 +1,10 @@
+this.inherits(OBJ);
+this.name = "聚元珠";
+this.id = "juyuanzhu";
+this.grade = 5;
+this.value = 0;
+this.unit = "颗";
+this.desc = "一颗散发着五彩光华的宝珠，蕴含着天地五行灵气。传说集齐五行灵气吸收后，可助武圣突破至武帝境界。";
+this.no_drop = true;
+this.combined = true;
+this.showAction = false;

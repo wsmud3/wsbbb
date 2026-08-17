@@ -1,0 +1,10 @@
+	this.inherits(SKILL);
+	this.name = "素女身法";
+	this.id = "sunvshenfa";
+	this.grade = 1;
+	this.family = FAMILIES.SUNV;
+	this.dodge_actions = ["$N身若惊鸿，素女身法飘然闪避", "$N莲步轻移，如仙子凌波般避开"];
+	this.desc = "素女道入门轻功身法，步法轻盈若仙，飘然若舞";
+	this.can_enables = ["dodge"];
+	this.learn_condition = { max_mp: 25, skill: { dodge: 50 } };
+	this.query_enable_prop = function (lv) { return { dodge: { ds: lv + 10, dex: Math.round(lv / 6) } }; };
