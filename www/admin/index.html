@@ -1189,6 +1189,7 @@ async function skillDelete(type,name){
 
 // === BROADCAST ===
 var _bcItems=[];
+var _bcTab='broadcast'; // 当前标签页
 function renderBCItems(){
   if(!_bcItems.length)return '<div style="color:#888;font-size:11px">暂未添加物品（可选）</div>';
   var h='<table><tr><th>物品路径</th><th>名称</th><th style="width:60px">数量</th><th style="width:40px">操作</th></tr>';
@@ -1203,29 +1204,35 @@ function refreshBCItems(){
   if(el)el.innerHTML=renderBCItems();
 }
 function addToBCItems(){
-  var nameText=document.getElementById('bc_item_search').value.trim();
-  var count=parseInt(document.getElementById('bc_count').value)||1;
-  if(!nameText){alert('请从下拉列表选择物品或直接输入路径');return}
-  var itemPath=nameText,itemName='';
-  if(nameText.indexOf('/')<0){
-    call('items_search',{q:nameText}).then(function(r){
+  // 根据当前标签页读取对应的输入框
+  var pathInput = _bcTab==='mail' ? document.getElementById('mail_item_path') : document.getElementById('bc_item_path');
+  var countInput = _bcTab==='mail' ? document.getElementById('mail_count') : document.getElementById('bc_count');
+  var searchInput = _bcTab==='mail' ? document.getElementById('mail_item_search') : document.getElementById('bc_item_search');
+  var path = (pathInput ? pathInput.value.trim() : '') || (searchInput ? searchInput.value.trim() : '');
+  var count = parseInt(countInput ? countInput.value : 1) || 1;
+  if(!path){alert('请输入物品路径');return}
+  var itemPath=path,itemName='';
+  if(path.indexOf('/')<0){
+    call('items_search',{q:path}).then(function(r){
       if(r.ok&&r.data&&r.data.length===1){itemPath=r.data[0].path;itemName=r.data[0].name||''}
       else if(r.ok&&r.data&&r.data.length>1){alert('找到多个匹配物品，请从下拉列表中选择具体的一个');return}
-      else{alert('未找到物品: '+nameText+'. 请使用路径格式如 eq/lv5/wushen/zhanshenjia');return}
+      else{alert('未找到物品: '+path+'. 请使用路径格式如 eq/lv5/wushen/zhanshenjia');return}
       _bcItems.push({path:itemPath,name:itemName,count:count});
       refreshBCItems();
-      document.getElementById('bc_item_search').value='';
-      document.getElementById('bc_count').value='1';
+      if(pathInput)pathInput.value='';
+      if(searchInput)searchInput.value='';
+      if(countInput)countInput.value='1';
     });
     return;
   }
   _bcItems.push({path:itemPath,name:itemName,count:count});
   refreshBCItems();
-  document.getElementById('bc_item_search').value='';
-  document.getElementById('bc_count').value='1';
+  if(pathInput)pathInput.value='';
+  if(searchInput)searchInput.value='';
+  if(countInput)countInput.value='1';
 }
 async function searchBCItem(){
-  var q=document.getElementById('bc_item_search').value;
+  var q=document.getElementById('bc_item_search')?.value||document.getElementById('mail_item_search')?.value||'';
   var dd=document.getElementById('bc_item_dd');
   if(!q||q.length<1){dd.classList.add('hide');return}
   var r=await call('items_search',{q:q});
@@ -1235,14 +1242,17 @@ async function searchBCItem(){
   dd.classList.remove('hide');
 }
 function selectBCItem(path,name){
-  document.getElementById('bc_item_path').value=path;
-  document.getElementById('bc_item_search').value=path;
+  // 将选中物品填入当前标签页对应的路径输入框
+  var pathInput = _bcTab==='mail' ? document.getElementById('mail_item_path') : document.getElementById('bc_item_path');
+  var searchInput = _bcTab==='mail' ? document.getElementById('mail_item_search') : document.getElementById('bc_item_search');
+  if(pathInput)pathInput.value=path;
+  if(searchInput)searchInput.value=path;
   document.getElementById('bc_item_dd').classList.add('hide');
 }
 function showBroadcast(m){
   _bcItems=[];
   m.innerHTML='<h2>📢 公告 / 系统邮件</h2>'+
-    '<div class="row" style="margin-bottom:6px"><button class="'+(window._bcTab==='mail'?'':'blue')+'" onclick="window._bcTab=\'broadcast\';showBroadcast(m)">📢 全服公告</button><button class="'+(window._bcTab==='mail'?'blue':'')+'" onclick="window._bcTab=\'mail\';showBroadcast(m)">✉️ 系统邮件</button></div>'+
+    '<div class="row" style="margin-bottom:6px"><button class="'+(window._bcTab==='mail'?'':'blue')+'" onclick="window._bcTab=\'broadcast\';showBroadcast(document.getElementById(\'main\'))">📢 全服公告</button><button class="'+(window._bcTab==='mail'?'blue':'')+'" onclick="window._bcTab=\'mail\';showBroadcast(document.getElementById(\'main\'))">✉️ 系统邮件</button></div>'+
     (window._bcTab==='mail'?
     '<div class="card"><h3>发送系统邮件</h3>'+
     '<div class="row" style="position:relative"><input id="mail_player" placeholder="玩家ID或名字" style="width:200px" onkeyup="searchMailPlayer()" autocomplete="off"><div id="mail_player_dd" class="dropdown hide"></div></div>'+
