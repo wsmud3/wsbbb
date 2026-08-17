@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MUD 管理面板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Microsoft YaHei,monospace;background:#1a1a2e;color:#ccc;height:100vh}#app{display:flex;height:100vh}
+nav{width:190px;background:#16213e;padding:8px;overflow-y:auto;flex-shrink:0}
+nav a{display:block;color:#aaa;text-decoration:none;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13px;margin:2px 0}
+nav a:hover,nav a.active{background:#0f3460;color:#fff}
+main{flex:1;padding:16px;overflow-y:auto}
+h2{color:#e94560;margin-bottom:10px;font-size:16px}
+.card{background:#16213e;border-radius:6px;padding:12px;margin-bottom:10px}
+.card h3{color:#0f9;font-size:13px;margin-bottom:6px}
+input,textarea,select,button{background:#1a1a2e;color:#ccc;border:1px solid #333;padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px}
+textarea{width:100%;min-height:100px;resize:vertical}
+button{background:#e94560;color:#fff;border:none;cursor:pointer;padding:6px 12px;font-size:12px}
+button:hover{opacity:.85}
+button.sm{padding:3px 8px;font-size:11px}
+button.green{background:#0f9;color:#000}
+button.blue{background:#0f3460}
+button.red{background:#933}
+button.gray{background:#555}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{border:1px solid #333;padding:4px 8px;text-align:left}
+th{background:#0f3460}
+tr:hover{background:#1a1a3e}
+.msg{padding:4px 8px;border-radius:4px;margin:4px 0;font-size:11px}
+.msg.ok{background:#004d00;color:#0f9}.msg.err{background:#4d0000;color:#f66}
+.tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;margin:1px}
+.tag.kill{background:#600}.tag.spar{background:#660}.tag.learn{background:#066}.tag.shop{background:#606}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal>div{background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:16px;max-width:800px;max-height:80vh;overflow-y:auto;width:90%}
+.hide{display:none}
+.status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.status.on{background:#0f9}.status.off{background:#f66}
+pre{white-space:pre-wrap;font-size:11px;max-height:300px;overflow-y:auto;background:#111;padding:8px;border-radius:4px}
+.dropdown{position:absolute;background:#1a1a2e;border:1px solid #333;max-height:200px;overflow-y:auto;z-index:50;width:300px;border-radius:4px}
+.dropdown div{padding:6px 8px;cursor:pointer;font-size:11px;border-bottom:1px solid #222}
+.dropdown div:hover{background:#0f3460}
+</style>
+</head>
+<body>
+
+<div id="login_screen" style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column">
+  <div style="background:#16213e;padding:30px 40px;border-radius:8px;text-align:center;max-width:400px;width:100%">
+    <h1 style="color:#e94560;margin-bottom:20px">MUD 管理面板</h1>
+    <div class="row"><input id="login_code" placeholder="管理员账号" style="width:100%;padding:8px;font-size:14px" autocomplete="off"></div>
+    <div class="row"><input id="login_pwd" type="password" placeholder="密码" style="width:100%;padding:8px;font-size:14px" onkeyup="if(event.key==='Enter')doLogin()"></div>
+    <div class="row"><button onclick="doLogin()" style="width:100%;padding:10px;font-size:14px">登 录</button></div>
+    <div id="login_msg" style="margin-top:8px"></div>
+  </div>
+</div>
+<div id="app" class="hide" style="display:none">
+
+<nav id="nav">
+  <div style="padding:6px 0;border-bottom:1px solid #333;margin-bottom:4px">
+    <select id="server_sel" onchange="switchServer(this.value)" style="width:100%;padding:4px;font-size:11px">
+      <option value="100">🧪 测试服</option>
+      <option value="200">🎮 正式服</option>
+    </select>
+  </div>
+  <a data-p="status">📊 状态</a>
+  <a data-p="players">👥 玩家</a>
+  <a data-p="npcs">👹 NPC</a>
+  <a data-p="maps">🗺️ 地图</a>
+  <a data-p="items">📦 发放</a>
+  <a data-p="reclaim">🗑️ 回收</a>
+  <a data-p="skills">📖 技能</a>
+  <a data-p="broadcast">📢 公告/邮件</a>
+  <a data-p="reload">🔄 热更</a>
+  <a data-p="files">📁 文件</a>
+  <a data-p="backups">💾 备份</a>
+  <a data-p="admins">👑 管理员</a>
+</nav>
+<main id="main"></main>
+<div id="modal" class="modal hide"><div id="modal_content"></div></div>
+</div>
+<script>
+const API='/api/admin';
+let logged=false;
+let _onlinePlayers=[];
+let _loginUser=null;
+let _currentSid=100; // 默认测试服
+
+function showLogin(){
+  document.getElementById('login_screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp(){
+  document.getElementById('login_screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  loadPanel('status');
+}
+
+async function doLogin(){
+  var code = document.getElementById('login_code').value.trim();
+  var pwd = document.getElementById('login_pwd').value.trim();
+  var msg = document.getElementById('login_msg');
+  if (!code || !pwd) { msg.innerHTML = M('请输入账号和密码','err'); return; }
+  var r = await call('login', { code: code, pwd: pwd });
+  if (r.ok) {
+    logged = true;
+    _loginUser = { name: r.name, level: r.level };
+    msg.innerHTML = M('登录成功','ok');
+    setTimeout(showApp, 300);
+  } else {
+    msg.innerHTML = M(r.msg || '登录失败','err');
+  }
+}
+
+
+function switchServer(sid){
+  _currentSid = parseInt(sid) || 100;
+  document.getElementById('server_sel').value = _currentSid;
+  // 重新加载当前面板
+  var cur = document.querySelector('#nav a.active');
+  if(cur) loadPanel(cur.getAttribute('data-p'));
+}
+
+async function call(m,p){
+  try{
+    var url=API+'/'+m;
+    var method='POST';
+    var body=undefined;
+    // Always include sid
+    if(!p) p={};
+    if(!p.sid) p.sid = _currentSid;
+    // GET endpoints with query params
+    if(p&&(m==='items_search'||m==='file_list'||m==='file_read'||m==='equipment_detail')){
+      var qp=[];
+      for(var k in p)qp.push(k+'='+encodeURIComponent(p[k]));
+      url+='?'+qp.join('&');
+      method='GET';
+    }
+    const r=await fetch(url,{
+      method:method,headers:method==='POST'?{'Content-Type':'application/json'}:{},body:method==='POST'&&p?JSON.stringify(p):undefined
+    });
+    return await r.json();
+  }catch(e){return {ok:false,msg:'网络错误: '+e.message}}
+}
+
+function M(t,c){return '<div class="msg '+c+'">'+t+'</div>'}
+
+// ===== Fuzzy match: checks if all chars of query appear in order in text =====
+function fuzzyMatch(query,text){
+  if(!query)return true;
+  var q=query.toLowerCase(),t=text.toLowerCase();
+  if(t.indexOf(q)>=0)return true;
+  var qi=0;
+  for(var i=0;i<t.length&&qi<q.length;i++){
+    if(t[i]===q[qi])qi++;
+  }
+  return qi===q.length;
+}
+
+function showModal(title,body,onSave){
+  document.getElementById('modal').classList.remove('hide');
+  var content=document.getElementById('modal_content');
+  content.innerHTML=
+    '<h2>'+title+'</h2>'+body+'<div class="row" style="margin-top:10px">'+
+    '<button id="modal_close_btn">关闭</button>'+
+    (onSave?'<button class="green" id="modal_save_btn">保存</button>':'')+
+    '</div>';
+  document.getElementById('modal_close_btn').onclick=function(){
+    document.getElementById('modal').classList.add('hide');
+  };
+  if(onSave){
+    document.getElementById('modal_save_btn').onclick=onSave;
+  }
+}
+
+document.getElementById('nav').onclick=function(e){
+  const a=e.target.closest('a');if(!a)return;
+  document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));
+  a.classList.add('active');loadPanel(a.dataset.p);
+};
+
+async function loadPanel(p){
+  const m=document.getElementById('main');
+  // Auth guard: re-verify before every panel load
+  if (!logged) {
+    try {
+      var ck = await call('check');
+      if (!ck.ok) { showLogin(); return; }
+      logged = true;
+    } catch(e) { showLogin(); return; }
+  }
+  m.innerHTML='加载中...';
+  if(p==='items'||p==='players'||p==='reclaim'){try{const r=await call('online');if(r.ok)_onlinePlayers=r.data||[];}catch(e){}}
+  try{
+    switch(p){
+      case 'status':await showStatus(m);break;
+      case 'players':await showPlayers(m);break;
+      case 'npcs':await showNPCs(m);break;
+      case 'maps':await showMaps(m);break;
+      case 'items':showItems(m);break;
+      case 'reclaim':await showReclaim(m);break;
+      case 'skills':await showSkills(m);break;
+      case 'broadcast':showBroadcast(m);break;
+      case 'reload':showReload(m);break;
+      case 'backups':await showBackups(m);break;
+      case 'admins':await showAdmins(m);break;
+      case 'files':showFiles(m);break;
+    }
+  }catch(e){m.innerHTML=M('加载失败: '+e.message,'err')}
+}
+
+// === STATUS ===
+async function showStatus(m){
+  const r=await call('status');
+  if(!r.ok){m.innerHTML=M(r.msg,'err');return}
+  const d=r.data||{};
+  const u=Math.floor((d.uptime||0)/86400),h=Math.floor((d.uptime||0)%86400/3600);
+  var onlinePlayers=_onlinePlayers||[];
+  var totalPlayers=0,activePlayers=0;
+  try{var stR=await call('stats');if(stR.ok){totalPlayers=stR.data.totalPlayers||0;activePlayers=stR.data.activePlayers||0}}catch(e){}
+  m.innerHTML='<h2>服务器状态</h2><div class="card"><p><b>'+(d.serverName||'?')+'</b> (ID:'+(d.serverId||'?')+') <span class="status '+(d.status==='running'?'on':'off')+'"></span>'+(d.status||'?')+'</p>'+
+    '<div class="row" style="gap:12px"><span>在线: <b style="color:#0f9">'+(d.playerCount||0)+'</b></span><span>注册: <b style="color:#e94560">'+(totalPlayers||'?')+'</b></span><span>活跃: <b>'+(activePlayers||'?')+'</b></span></div>'+
+    '<div class="row" style="gap:12px"><span>连接: '+(d.connectCount||0)+'</span><span>心跳: '+(d.heartbeatCount||0)+'</span></div>'+
+    '<p>运行: '+u+'天'+h+'时 | 内存: '+(r.data?.memory?.heapMB||'?')+'MB</p></div>'+
+    '<div class="card"><h3>在线玩家列表</h3><table><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th></tr>'+
+    onlinePlayers.slice(0,20).map(function(p){return '<tr><td>'+p.name+'</td><td>'+(p.level||0)+'</td><td>'+(p.location||'')+'</td><td>'+(p.hp||0)+'/'+(p.max_hp||0)+'</td></tr>'}).join('')+
+    '</table>'+(onlinePlayers.length>20?'<div style="color:#888;font-size:11px;padding:4px">仅显示前20名，完整列表请查看"玩家"面板</div>':'')+'</div>';
+}
+
+// === PLAYERS ===
+async function showPlayers(m){
+  const list=_onlinePlayers;
+  let h='<h2>在线玩家 ('+list.length+')</h2><input id="pl_search" placeholder="搜索名字/ID (支持模糊)" onkeyup="fuzzyFilterTable(\'pl_tb\',this.value)" style="width:100%;margin-bottom:6px"><table id="pl_tb"><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th><th>门派</th><th>操作</th></tr>';
+  list.forEach(function(p){h+='<tr><td>'+(p.name||'')+'</td><td>'+(p.level||0)+'</td><td>'+(p.location||'')+'</td><td>'+(p.hp||0)+'/'+(p.max_hp||0)+'</td><td>'+(p.family||'无')+'</td><td><button class="sm" onclick="viewPlayer(\''+p.id+'\')">详情/编辑</button><button class="sm blue" onclick="gotoGive(\''+p.id+'\')">给物品</button></td></tr>'});
+  h+='</table><div id="pl_detail"></div>';
+  m.innerHTML=h;
+}
+
+async function viewPlayer(id){
+  const r=await call('player',{id});
+  const d=document.getElementById('pl_detail');
+  if(!r.ok){d.innerHTML=M(r.msg,'err');return}
+  const p=r.data||{};
+  const eq=p.equipment?p.equipment.filter(Boolean).map(function(e){return e.name}).join(', '):'无';
+  const inv=(p.inventory||[]).slice(0,10).map(function(i){return i.name+'x'+(i.count||1)}).join(', ');
+  d.innerHTML='<div class="card" id="player_edit_card">'+
+    '<div class="row"><h3 style="margin:0">'+p.name+' [Lv'+p.level+'] '+(p.title||'')+'</h3>'+
+    '<button class="green" onclick="savePlayerEdit(\''+p.id+'\')">💾 保存修改</button>'+
+    '<button onclick="viewPlayer(\''+p.id+'\')">🔄 刷新</button></div>'+
+    '<div class="row"><span>HP:</span><input id="pe_hp" value="'+p.hp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_hp" value="'+p.max_hp+'" style="width:70px" type="number"></div>'+
+    '<div class="row"><span>MP:</span><input id="pe_mp" value="'+p.mp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_mp" value="'+p.max_mp+'" style="width:70px" type="number"></div>'+
+    '<div class="row"><span>攻:</span><input id="pe_gj" value="'+p.gj+'" style="width:70px" type="number"><span>防:</span><input id="pe_fy" value="'+p.fy+'" style="width:70px" type="number"><span>敏:</span><input id="pe_mz" value="'+p.mz+'" style="width:70px" type="number"><span>闪:</span><input id="pe_ds" value="'+p.ds+'" style="width:70px" type="number"><span>招:</span><input id="pe_zj" value="'+p.zj+'" style="width:70px" type="number"></div>'+
+    '<div class="row"><span>经验:</span><input id="pe_exp" value="'+p.exp+'" style="width:100px" type="number"><span>潜能:</span><input id="pe_pot" value="'+p.pot+'" style="width:100px" type="number"><span>金钱:</span><input id="pe_money" value="'+p.money+'" style="width:100px" type="number"></div>'+
+    '<div class="row"><span>门派:</span><span>'+(p.family||'')+'</span><span>位置:</span><span>'+p.location+'</span></div>'+
+    '<p>装备: '+eq+'</p>'+
+    '<p style="font-size:11px;color:#888">背包('+(p.inventory?p.inventory.length:0)+'件): '+inv+((p.inventory||[]).length>10?' ...':'')+'</p>'+
+    '<div id="pe_msg"></div></div>';
+}
+
+async function savePlayerEdit(id){
+  var data={id:id};
+  var fields=['hp','max_hp','mp','max_mp','gj','fy','mz','ds','zj','exp','pot','money'];
+  fields.forEach(function(f){var el=document.getElementById('pe_'+f);if(el)data[f]=parseInt(el.value)||0});
+  var r=await call('player_update',data);
+  document.getElementById('pe_msg').innerHTML=M(r.msg||(r.ok?'已保存':'失败'),r.ok?'ok':'err');
+  if(r.ok)setTimeout(function(){viewPlayer(id)},500);
+}
+
+function gotoGive(id){document.getElementById('give_player').value=id;loadPanel('items')}
+
+// Load full NPC data for editing — with fallback
+async function editNpc(path){
+  var r=await call('npc_editdata',{path});
+  if(!r.ok){
+    r=await call('npc_detail',{path});
+    if(!r.ok){alert('加载NPC数据失败: '+(r.msg||'未知错误'));return}
+    var n=r.data||{}, c=n.content||'';
+    var sellItems='';
+    var sl=c.match(/this\.sell_list\s*=\s*\[([\s\S]*?)\];/);
+    if(sl){
+      var entries=sl[1].match(/\{\s*obj:\s*"([^"]+)",\s*price:\s*(\d+)\s*\}/g)||[];
+      sellItems=entries.map(function(e){var m=e.match(/"([^"]+)",\s*price:\s*(\d+)/);return m?m[1]+':'+m[2]:''}).filter(Boolean).join(',');
+    }
+    if(!sellItems){
+      var onSellBlock=c.match(/this\.on_sell\s*=\s*function[\s\S]*?^};/m);
+      if(onSellBlock){
+        var creates=onSellBlock[0].match(/OBJ\.CREATE\("([^"]+)"\)/g)||[];
+        var vals=onSellBlock[0].match(/\.value\s*=\s*(\d+)/g)||[];
+        var items=[];
+        for(var ci=0;ci<creates.length;ci++){
+          var cpath=creates[ci].match(/"([^"]+)"/)[1];
+          var cval=vals[ci]?parseInt(vals[ci].match(/(\d+)/)[1]):10000;
+          items.push(cpath+':'+cval);
+        }
+        sellItems=items.join(',');
+      }
+    }
+    if(!sellItems){
+      var ipMatch=c.match(/var\s+itemPaths\s*=\s*\[([\s\S]*?)\];/);
+      if(ipMatch){
+        var paths=ipMatch[1].match(/"([^"]+)"/g)||[];
+        var vals2=c.match(/item\.value\s*=\s*(\d+)/g)||[];
+        var items2=[];
+        for(var pi=0;pi<paths.length;pi++){
+          var ppath=paths[pi].replace(/"/g,'');
+          var pval=vals2[pi]?parseInt(vals2[pi].match(/(\d+)/)[1]):(vals2.length===1?parseInt(vals2[0].match(/(\d+)/)[1]):10000);
+          items2.push(ppath+':'+pval);
+        }
+        sellItems=items2.join(',');
+      }
+    }
+    var roomPath='';
+    var rp=c.match(/\/\/\s*placed_in:\s*(.+)/);
+    if(rp)roomPath=rp[1].trim();
+    var isMerchant=/is_merchant:\s*true/.test(c)||/this\.sell_list\s*=/.test(c)||/this\.on_sell\s*=/.test(c)||/this\._goodsCache/.test(c)||/add_action\("list"/.test(c);
+    var isNoFight=/no_fight:\s*true/.test(c)||/on_kill/.test(c)||/on_die/.test(c);
+    r={ok:true,data:{path:n.path,name:'',desc:'',hp:100000,mp:50000,gj:10000,fy:10000,mz:12000,ds:10000,zj:10000,str:5000,con:5000,dex:4000,int:4000,score:50,no_fight:isNoFight,is_merchant:isMerchant,sell_items:sellItems,room_path:roomPath,skills:[],drops:[],content:c}};
+  }
+  var d=r.data||{};
+  d._code_preview = d.content;
+  d.content = '';
+  npcEdit(d);
+}
+
+// === NPC MANAGEMENT ===
+async function showNPCs(m){
+  const r=await call('npcs');
+  if(!r.ok){m.innerHTML=M(r.msg,'err');return}
+  const list=r.data||[];
+  let h='<h2>NPC管理 ('+list.length+')</h2><div class="row"><input id="npc_search" placeholder="搜索名字/路径 (支持模糊)" onkeyup="fuzzyFilterTable(\'npc_tb\',this.value)"><button class="green" onclick="npcEdit({})">+ 新增NPC</button></div>';
+  h+='<table id="npc_tb"><tr><th>路径</th><th>名字</th><th>HP</th><th>攻击</th><th>分数</th><th>类型</th><th>操作</th></tr>';
+  list.forEach(function(n){var tags=[];if(n.no_fight)tags.push('<span class="tag learn">和平</span>');if(n.is_merchant)tags.push('<span class="tag shop">商人</span>');h+='<tr><td>'+n.path+'</td><td>'+(n.name||'')+'</td><td>'+(n.hp||0)+'</td><td>'+(n.gj||0)+'</td><td>'+(n.score||0)+'</td><td>'+(tags.join(' ')||'-')+'</td><td><button class="sm" onclick="npcDetail(\''+n.path+'\')">详情</button><button class="sm blue" onclick="editNpc(\''+n.path+'\')">编辑</button><button class="sm red" onclick="if(confirm(\'删除'+n.name+'?\'))doDeleteNPC(\''+n.path+'\')">删</button></td></tr>'});
+  h+='</table><div id="npc_detail"></div>';
+  m.innerHTML=h;
+}
+
+async function npcDetail(path){
+  const r=await call('npc_detail',{path});
+  const d=document.getElementById('npc_detail');
+  if(!r.ok){d.innerHTML=M(r.msg,'err');return}
+  const n=r.data||{};
+  var sellMatch=(n.content||'').match(/this\.sell_list\s*=\s*\[([\s\S]*?)\];/);
+  var sells=[];
+  if(sellMatch){
+    var sm=sellMatch[1].match(/\{\s*obj:\s*"([^"]+)",\s*price:\s*(\d+)\s*\}/g)||[];
+    sells=sm.map(function(s){var m=s.match(/"([^"]+)",\s*price:\s*(\d+)/);return {obj:m[1],price:m[2]}});
+  }
+  var placedMatch=(n.content||'').match(/\/\/\s*placed_in:\s*(.+)/);
+  var placed=placedMatch?placedMatch[1]:'';
+  var sellHtml=sells.length>0?'<p>售卖品: <ul>'+sells.map(function(s){return '<li>'+s.obj+' (<b>'+s.price+'</b>)</li>'}).join('')+'</ul>':'<p style="color:#888">无售卖品</p>';
+  d.innerHTML='<div class="card"><h3>'+n.path+'</h3><div class="row"><span>部署房间: '+(placed||'<span style="color:#888">未设置</span>')+'</span></div>'+sellHtml+'<pre style="max-height:300px">'+(n.content||'').replace(/</g,'&lt;')+'</pre></div>';
+}
+
+function npcEdit(data){
+  const d=data||{};
+  _sellItems=[];
+  if(d.sell_items){d.sell_items.split(',').filter(Boolean).forEach(function(s){var m=s.trim().split(':');_sellItems.push({path:m[0],price:parseInt(m[1])||10000})})}
+  showModal('NPC: '+(d.path||'新建'),
+    '<div class="row"><label>路径:</label><input id="ne_path" value="'+(d.path||'')+'" style="width:200px" placeholder="如 pub/test"></div>'+
+    '<div class="row"><label>名字:</label><input id="ne_name" value="'+(d.name||'')+'" style="width:150px"></div>'+
+    '<div class="row"><label>描述:</label><input id="ne_desc" value="'+(d.desc||'')+'" style="width:300px"></div>'+
+    '<div class="row"><label>HP:</label><input id="ne_hp" value="'+(d.hp||100000)+'" style="width:80px" type="number"><label>MP:</label><input id="ne_mp" value="'+(d.mp||50000)+'" style="width:80px" type="number"></div>'+
+    '<div class="row"><label>攻:</label><input id="ne_gj" value="'+(d.gj||10000)+'" style="width:80px" type="number"><label>防:</label><input id="ne_fy" value="'+(d.fy||10000)+'" style="width:80px" type="number"><label>敏:</label><input id="ne_mz" value="'+(d.mz||12000)+'" style="width:80px" type="number"></div>'+
+    '<div class="row"><label>闪:</label><input id="ne_ds" value="'+(d.ds||10000)+'" style="width:80px" type="number"><label>招:</label><input id="ne_zj" value="'+(d.zj||10000)+'" style="width:80px" type="number"><label>分数:</label><input id="ne_score" value="'+(d.score||50)+'" style="width:80px" type="number"></div>'+
+    '<div class="row"><label><input type="checkbox" id="ne_nofight" '+(d.no_fight?'checked':'')+'>不可战斗</label><label><input type="checkbox" id="ne_merchant" '+(d.is_merchant?'checked':'')+'>商人(可买卖)</label></div>'+
+    '<div class="row"><label>技能(逗号分隔):</label><input id="ne_skills" value="'+(d.skills||[]).map(function(s){return s.id+':'+(s.level||1000)}).join(',')+'" style="width:400px" placeholder="如 dodge:3000,parry:3000,force:3000,unarmed:3000"></div>'+
+    '<div class="row"><label>掉落(逗号分隔):</label><input id="ne_drops" value="'+(d.drops||[]).map(function(dd){return dd.obj+':'+(dd.odds||10000)}).join(',')+'" style="width:400px" placeholder="如 eq/lv0/cloth:5000"></div>'+
+    '<div class="card" style="margin-top:6px"><h3>售卖品 <span style="color:#888;font-size:11px">(搜索物品→点击添加→设置价格)</span></h3>'+
+    '<div class="row"><input id="ne_sell_search" placeholder="输入关键词搜索物品..." onkeyup="searchSellItems()" style="width:300px"><span id="ne_sell_count" style="color:#888;font-size:11px">'+_sellItems.length+'件</span></div>'+
+    '<div id="ne_sell_results" style="max-height:150px;overflow-y:auto;margin:4px 0"></div>'+
+    '<div id="ne_sell_list" style="max-height:130px;overflow-y:auto;margin:4px 0"></div>'+
+    '<div style="font-size:10px;color:#888">提示: 搜索物品名称或路径，点击"+添加"加入售卖列表，可修改价格</div>'+
+    '<input type="hidden" id="ne_sell" value="'+(d.sell_items||'').replace(/"/g,'&quot;')+'"></div>'+
+    '<div class="row" style="margin-top:6px"><label>部署房间:</label><input id="ne_room" value="'+(d.room_path||'')+'" style="width:250px" placeholder="如 yz/guangchang, 多个逗号分隔"><button type="button" class="sm blue" onclick="searchRooms()" title="搜索可用的房间路径">🔍搜索</button></div>'+
+    '<div id="ne_room_results" style="max-height:100px;overflow-y:auto;margin:2px 0"></div>'+
+    '<pre id="ne_code_prev" style="max-height:80px;margin-top:4px;color:#888;font-size:10px">'+(d._code_preview||d.content||'')+'</pre>'+
+    '<textarea id="ne_code" placeholder="留空则从表单自动生成，或直接编辑完整代码覆盖表单">'+(d.content||'')+'</textarea><div id="ne_msg"></div>',
+    async function(){
+      syncSellHidden();
+      var p={
+        path:document.getElementById('ne_path').value,
+        name:document.getElementById('ne_name').value,
+        desc:document.getElementById('ne_desc').value,
+        hp:parseInt(document.getElementById('ne_hp').value),
+        mp:parseInt(document.getElementById('ne_mp').value),
+        gj:parseInt(document.getElementById('ne_gj').value),
+        fy:parseInt(document.getElementById('ne_fy').value),
+        mz:parseInt(document.getElementById('ne_mz').value),
+        ds:parseInt(document.getElementById('ne_ds').value),
+        zj:parseInt(document.getElementById('ne_zj').value),
+        score:parseInt(document.getElementById('ne_score').value),
+        no_fight:document.getElementById('ne_nofight').checked,
+        is_merchant:document.getElementById('ne_merchant').checked,
+        sell_items:document.getElementById('ne_sell').value,
+        room_path:document.getElementById('ne_room').value,
+        content:document.getElementById('ne_code').value||undefined
+      };
+      var skStr=document.getElementById('ne_skills').value;
+      if(skStr)p.skills=skStr.split(',').filter(Boolean).map(function(s){var m=s.split(':');return {id:m[0].trim(),level:parseInt(m[1])||1000}});
+      var dpStr=document.getElementById('ne_drops').value;
+      if(dpStr)p.drops=dpStr.split(',').filter(Boolean).map(function(s){var m=s.split(':');return {obj:m[0].trim(),odds:parseInt(m[1])||10000}});
+      document.getElementById('modal_save_btn').disabled=true;
+      var r=await call('npc_create',p);
+      var hasWarn=r.msg&&r.msg.indexOf('⚠')>=0;
+      document.getElementById('ne_msg').innerHTML=M(r.msg||(r.ok?'保存成功':'失败'),(r.ok&&!hasWarn)?'ok':'err');
+      document.getElementById('modal_save_btn').disabled=false;
+      if(r.ok&&!hasWarn){document.getElementById('modal').classList.add('hide');setTimeout(function(){loadPanel('npcs')},800);}
+    }
+  );
+  setTimeout(function(){ renderSellItems(); }, 100);
+}
+
+async function doDeleteNPC(path){
+  var r=await call('npc_delete',{path});
+  if(r.ok){document.getElementById('npc_detail').innerHTML=M(r.msg,'ok');setTimeout(function(){loadPanel('npcs')},1000)}
+  else document.getElementById('npc_detail').innerHTML=M('删除失败: '+(r.msg||''),'err');
+}
+
+// === MAP MANAGEMENT ===
+async function showMaps(m){
+  const r=await call('map_list');
+  if(!r.ok){m.innerHTML=M(r.msg,'err');return}
+  const list=r.data||[];
+  let h='<h2>地图管理 ('+list.length+')</h2><div class="row"><input id="map_search" placeholder="搜索名字/ID (支持模糊)" onkeyup="fuzzyFilterTable(\'map_tb\',this.value)"><button class="green" onclick="mapEdit({})">+ 新建地图</button></div>';
+  h+='<table id="map_tb"><tr><th>ID</th><th>名字</th><th>类型</th><th>房间数</th><th>操作</th></tr>';
+  list.forEach(function(mp){h+='<tr><td>'+mp.id+'</td><td>'+mp.name+'</td><td>'+(mp.type==='dungeon'?'副本':'公共')+'</td><td>'+(mp.rooms||'?')+'</td><td><button class="sm" onclick="mapDetail(\''+mp.type+'\',\''+mp.id+'\')">查看</button><button class="sm blue" onclick="mapEdit({type:\''+mp.type+'\',id:\''+mp.id+'\',name:\''+mp.name+'\'})">编辑</button><button class="sm red" onclick="if(confirm(\'删除'+mp.name+'?\'))doDeleteMap(\''+mp.type+'\',\''+mp.id+'\')">删</button></td></tr>'});
+  h+='</table><div id="map_detail"></div>';
+  m.innerHTML=h;
+}
+
+async function mapDetail(type,id){
+  const r=await call('map_detail',{type,id});
+  const d=document.getElementById('map_detail');
+  if(!r.ok){d.innerHTML=M(r.msg,'err');return}
+  const md=r.data||{};
+  const rooms=md.rooms||[];
+  let rh='<table><tr><th>ID</th><th>名</th><th>坐标</th><th>出口</th></tr>';
+  rooms.forEach(function(rm){rh+='<tr><td>'+rm.id+'</td><td>'+rm.n+'</td><td>('+rm.x+','+rm.y+')</td><td>'+(rm.exits||[]).join(',')+'</td></tr>'});
+  rh+='</table>';
+  d.innerHTML='<div class="card"><h3>'+md.name+' ('+md.id+') ['+md.type+']</h3><p>入口: '+(md.first||'')+' | 房间路径: '+(md.room_path||'')+'</p>'+(md.is_copy?'<p>副本设置: 消耗='+(md.expend||0)+' 经验='+(md.exp||0)+' 潜能='+(md.pot||0)+' 分数='+(md.score||0)+' 多人='+(md.is_multi?'是':'否')+'</p>':'')+'<p>房间('+rooms.length+'):</p>'+rh+'</div>';
+}
+
+function mapEdit(data){
+  const d=data||{};
+  showModal('地图: '+(d.id||'新建'),
+    '<div class="row"><label>ID:</label><input id="me_id" value="'+(d.id||'')+'" style="width:150px" placeholder="如 yz"> <span style="color:#888">字母数字下划线</span></div>'+
+    '<div class="row"><label>名字:</label><input id="me_name" value="'+(d.name||'')+'" style="width:200px"></div>'+
+    '<div class="row"><label>类型:</label><select id="me_type"><option value="public" '+(d.type!=='dungeon'?'selected':'')+'>公共地图</option><option value="dungeon" '+(d.type==='dungeon'?'selected':'')+'>副本</option></select><label>入口:</label><input id="me_first" value="'+(d.first||'')+'" style="width:150px" placeholder="如 yz/guangchang"></div>'+
+    '<div id="me_dungeon_opts" class="'+(d.type==='dungeon'?'':'hide')+'"><div class="row"><label>消耗:</label><input id="me_expend" value="'+(d.expend||10)+'" style="width:60px" type="number"><label>经验:</label><input id="me_exp" value="'+(d.exp||10000)+'" style="width:80px" type="number"><label>潜能:</label><input id="me_pot" value="'+(d.pot||8000)+'" style="width:80px" type="number"><label>分数:</label><input id="me_score" value="'+(d.score||100)+'" style="width:60px" type="number"></div><div class="row"><label><input type="checkbox" id="me_multi" '+(d.is_multi?'checked':'')+'>组队副本</label></div></div>'+
+    '<p style="color:#888;font-size:11px;margin-top:6px">房间编辑：在下方输入JSON格式房间数据。每个房间: {n:"名称",id:"xxx/r1",x:0,y:0,exits:["n","s"]}</p>'+
+    '<textarea id="me_rooms" style="min-height:200px">'+JSON.stringify((d.rooms||[]).map(function(r){return {n:r.n,id:r.id,x:r.x||0,y:r.y||0,exits:r.exits||[]}}),null,2)+'</textarea>'+
+    '<div class="row"><label>掉落(路径:概率):</label><input id="me_drops" value="'+(d.drops||[]).join(',')+'" style="width:400px"></div><div id="me_msg"></div>',
+    async function(){
+      var rooms=JSON.parse(document.getElementById('me_rooms').value||'[]');
+      var type=document.getElementById('me_type').value;
+      var p={id:document.getElementById('me_id').value,name:document.getElementById('me_name').value,map_type:type,first:document.getElementById('me_first').value,rooms:rooms,drops:(document.getElementById('me_drops').value||'').split(',').filter(Boolean)};
+      if(type==='dungeon'){p.expend=parseInt(document.getElementById('me_expend').value)||10;p.exp=parseInt(document.getElementById('me_exp').value)||10000;p.pot=parseInt(document.getElementById('me_pot').value)||8000;p.score=parseInt(document.getElementById('me_score').value)||100;p.is_multi=document.getElementById('me_multi').checked}
+      var r=await call(type==='dungeon'?'create_dungeon':'create_map',p);
+      document.getElementById('me_msg').innerHTML=M(r.msg||(r.ok?'创建成功':'失败'),r.ok?'ok':'err');
+      if(r.ok)setTimeout(function(){loadPanel('maps')},1500);
+    }
+  );
+  document.getElementById('me_type').onchange=function(){document.getElementById('me_dungeon_opts').classList.toggle('hide',this.value!=='dungeon')};
+}
+
+async function doDeleteMap(type,id){const r=await call('map_delete',{type,id});if(r.ok)setTimeout(function(){loadPanel('maps')},500)}
+
+// ===================================================================
+// === ITEMS PANEL (发放) ===
+// ===================================================================
+var _giveList=[];
+
+function showItems(m){
+  m.innerHTML=
+    '<h2>📦 物品发放</h2>'+
+    '<div class="card"><h3>快速发放</h3>'+
+    '<div class="row" style="position:relative">'+
+    '<input id="give_player" placeholder="玩家ID或名字" style="width:200px" onkeyup="searchGivePlayer()" onfocus="searchGivePlayer()" autocomplete="off">'+
+    '<div id="give_player_dd" class="dropdown hide"></div>'+
+    '<input id="give_item_search" placeholder="搜索物品名称..." style="width:250px" onkeyup="searchGiveItem()" onfocus="searchGiveItem()" autocomplete="off">'+
+    '<div id="give_item_dd" class="dropdown hide"></div>'+
+    '<input id="give_item_path" placeholder="或直接输入物品路径" style="width:250px">'+
+    '<input id="give_count" value="1" style="width:60px" type="number" min="1">'+
+    '<button onclick="doGiveItem()">发放</button></div>'+
+    '<div id="items_msg"></div></div>'+
+
+    '<div class="card"><h3>批量发放列表 <span style="color:#888;font-size:11px">(添加多个物品后一键发放)</span></h3>'+
+    '<div class="row" style="position:relative">'+
+    '<input id="batch_item_search" placeholder="搜索物品添加到列表..." style="width:300px" onkeyup="searchBatchItem()" onfocus="searchBatchItem()" autocomplete="off">'+
+    '<div id="batch_item_dd" class="dropdown hide"></div>'+
+    '<input id="batch_count" value="1" style="width:60px" type="number" min="1">'+
+    '<button class="green" onclick="addToGiveList()">+ 添加</button>'+
+    '<button class="blue" onclick="clearGiveList()">清空列表</button></div>'+
+    '<div id="give_list" style="max-height:200px;overflow-y:auto;margin:6px 0">'+renderGiveList()+'</div>'+
+    '<div class="row" style="position:relative">'+
+    '<input id="batch_player" placeholder="目标玩家ID或名字" style="width:200px" onkeyup="searchBatchPlayer()" onfocus="searchBatchPlayer()" autocomplete="off">'+
+    '<div id="batch_player_dd" class="dropdown hide"></div>'+
+    '<button class="green" onclick="doBatchGive()">🎁 一键发放全部 ('+_giveList.length+'件)</button></div>'+
+    '<div id="batch_msg"></div></div>'+
+
+    '<div class="card"><h3>物品浏览与管理</h3>'+
+    '<div class="row"><input id="browse_search" placeholder="搜索物品名称/路径 (支持模糊查找)" onkeyup="browseItems()" style="width:300px">'+
+    '<select id="browse_cat" onchange="browseItems()"><option value="">全部分类</option><option value="eq">装备</option><option value="drug">丹药</option><option value="food">食物</option><option value="book">书籍</option><option value="st">宝石</option><option value="cash">现金</option><option value="sp">特殊</option><option value="res">资源</option></select>'+
+    '<button class="green" onclick="itemEdit({})">+ 新增物品</button>'+
+    '<button class="blue sm" onclick="browseItems()">🔄 刷新</button></div>'+
+    '<div id="browse_list" style="max-height:400px;overflow-y:auto"></div></div>';
+  browseItems();
+}
+
+function renderGiveList(){
+  if(!_giveList.length)return '<div style="color:#888;font-size:11px">列表为空，请搜索物品后点击"+ 添加"</div>';
+  var h='<table><tr><th>物品路径</th><th>名称</th><th style="width:60px">数量</th><th style="width:40px">操作</th></tr>';
+  _giveList.forEach(function(it,i){
+    h+='<tr><td>'+it.path+'</td><td>'+(it.name||'')+'</td><td><input value="'+it.count+'" onchange="_giveList['+i+'].count=parseInt(this.value)||1" style="width:55px" type="number" min="1"></td><td><button class="sm red" onclick="_giveList.splice('+i+',1);refreshGiveListUI()">✕</button></td></tr>';
+  });
+  h+='</table>';
+  return h;
+}
+
+function refreshGiveListUI(){
+  var el=document.getElementById('give_list');
+  if(el)el.innerHTML=renderGiveList();
+  var btn=document.querySelector('#batch_msg')?.parentElement?.querySelector('.green');
+  if(btn)btn.textContent='🎁 一键发放全部 ('+_giveList.length+'件)';
+}
+
+function clearGiveList(){_giveList=[];refreshGiveListUI()}
+
+async function addToGiveList(){
+  var nameText=document.getElementById('batch_item_search').value.trim();
+  var count=parseInt(document.getElementById('batch_count').value)||1;
+  if(!nameText){alert('请从下拉列表选择物品或直接输入路径');return}
+  var itemPath=nameText,itemName='';
+  if(nameText.indexOf('/')<0){
+    var r=await call('items_search',{q:nameText});
+    if(r.ok&&r.data&&r.data.length===1){itemPath=r.data[0].path;itemName=r.data[0].name||''}
+    else if(r.ok&&r.data&&r.data.length>1){alert('找到多个匹配物品，请从下拉列表中选择具体的一个');return}
+    else{alert('未找到物品: '+nameText+'. 请使用路径格式如 eq/lv5/wushen/zhanshenjia');return}
+  }
+  _giveList.push({path:itemPath,name:itemName,count:count});
+  refreshGiveListUI();
+  document.getElementById('batch_item_search').value='';
+}
+
+// Player autocomplete
+async function searchGivePlayer(){
+  var q=document.getElementById('give_player').value;
+  var dd=document.getElementById('give_player_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var matches=_onlinePlayers.filter(function(p){return fuzzyMatch(q,p.name)||fuzzyMatch(q,p.id)}).slice(0,8);
+  if(!matches.length){dd.classList.add('hide');return}
+  dd.innerHTML=matches.map(function(p){return '<div onclick="selectGivePlayer(\''+p.id+'\')">'+p.name+' <span style="color:#888">('+p.id+')</span> Lv'+p.level+'</div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectGivePlayer(id){document.getElementById('give_player').value=id;document.getElementById('give_player_dd').classList.add('hide')}
+
+// Item autocomplete for quick give
+async function searchGiveItem(){
+  var q=document.getElementById('give_item_search').value;
+  var dd=document.getElementById('give_item_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var r=await call('items_search',{q:q});
+  var list=(r.data||[]).slice(0,10);
+  if(!list.length){dd.classList.add('hide');return}
+  dd.innerHTML=list.map(function(it){return '<div onclick="selectGiveItem(\''+it.path.replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\')"><b>'+(it.name||it.path)+'</b> <span style="color:#0f9;font-size:10px">'+it.path+'</span></div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectGiveItem(path,name){document.getElementById('give_item_path').value=path;document.getElementById('give_item_search').value=path;document.getElementById('give_item_dd').classList.add('hide')}
+
+// Batch item autocomplete
+async function searchBatchItem(){
+  var q=document.getElementById('batch_item_search').value;
+  var dd=document.getElementById('batch_item_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var r=await call('items_search',{q:q});
+  var list=(r.data||[]).slice(0,10);
+  if(!list.length){dd.classList.add('hide');return}
+  dd.innerHTML=list.map(function(it){return '<div onclick="selectBatchItem(\''+it.path.replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\')"><b>'+(it.name||it.path)+'</b> <span style="color:#0f9;font-size:10px">'+it.path+'</span></div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectBatchItem(path,name){document.getElementById('batch_item_search').value=path;document.getElementById('batch_item_dd').classList.add('hide')}
+
+// Batch player autocomplete
+async function searchBatchPlayer(){
+  var q=document.getElementById('batch_player').value;
+  var dd=document.getElementById('batch_player_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var matches=_onlinePlayers.filter(function(p){return fuzzyMatch(q,p.name)||fuzzyMatch(q,p.id)}).slice(0,8);
+  if(!matches.length){dd.classList.add('hide');return}
+  dd.innerHTML=matches.map(function(p){return '<div onclick="selectBatchPlayer(\''+p.id+'\')">'+p.name+' <span style="color:#888">('+p.id+')</span> Lv'+p.level+'</div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectBatchPlayer(id){document.getElementById('batch_player').value=id;document.getElementById('batch_player_dd').classList.add('hide')}
+
+// Global click to hide dropdowns
+document.addEventListener('click',function(e){
+  var ids=['give_player_dd','give_item_dd','batch_item_dd','batch_player_dd','reclaim_player_dd','bc_item_dd'];
+  ids.forEach(function(id){
+    var dd=document.getElementById(id);
+    if(!dd)return;
+    var inputId=id.replace('_dd','');
+    if(!e.target.closest('#'+id)&&!e.target.closest('#'+inputId))dd.classList.add('hide');
+  });
+});
+
+async function doGiveItem(){
+  var playerId=document.getElementById('give_player').value.trim();
+  var itemPath=document.getElementById('give_item_path').value.trim();
+  var count=parseInt(document.getElementById('give_count').value)||1;
+  if(!playerId||!itemPath){document.getElementById('items_msg').innerHTML=M('请填写玩家和物品','err');return}
+  var r=await call('give_item',{playerId:playerId,itemPath:itemPath,count:count});
+  document.getElementById('items_msg').innerHTML=M(r.msg||(r.ok?'已发放':'失败'),r.ok?'ok':'err');
+}
+
+async function doBatchGive(){
+  var playerId=document.getElementById('batch_player').value.trim();
+  if(!playerId){document.getElementById('batch_msg').innerHTML=M('请填写目标玩家','err');return}
+  if(!_giveList.length){document.getElementById('batch_msg').innerHTML=M('列表为空','err');return}
+  var ok=0,err=0;
+  for(var i=0;i<_giveList.length;i++){
+    var r=await call('give_item',{playerId:playerId,itemPath:_giveList[i].path,count:_giveList[i].count||1});
+    if(r.ok)ok++;else err++;
+  }
+  document.getElementById('batch_msg').innerHTML=M('发放完成: '+ok+'成功'+(err?' / '+err+'失败':''),err?'err':'ok');
+}
+
+// Item browser
+async function browseItems(){
+  var q=document.getElementById('browse_search')?.value||'';
+  var cat=document.getElementById('browse_cat')?.value||'';
+  var list=document.getElementById('browse_list');
+  if(!list)return;
+  var r=await call('items_search',{q:cat||q||''});
+  if(!r||!r.ok){list.innerHTML=M(r?.msg||'加载失败','err');return}
+  var data=(r.data||[]);
+  if(cat)data=data.filter(function(it){return it.path.indexOf(cat+'/')===0});
+  if(q)data=data.filter(function(it){return fuzzyMatch(q,it.path)||fuzzyMatch(q,it.name||'')});
+  data=data.slice(0,100);
+  var h='<table><tr><th>路径</th><th>名字</th><th style="width:180px">操作</th></tr>';
+  data.forEach(function(it){
+    h+='<tr><td>'+it.path+'</td><td>'+(it.name||'')+'</td><td>'+
+      '<button class="sm green" onclick="quickGiveItem(\''+it.path.replace(/'/g,"\\'")+'\')">发放</button> '+
+      '<button class="sm" onclick="addToGiveListFromBrowse(\''+it.path.replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\')">加入列表</button> '+
+      '<button class="sm" onclick="itemView(\''+it.path.replace(/'/g,"\\'")+'\')">查看</button> '+
+      '<button class="sm blue" onclick="itemEdit({path:\''+it.path.replace(/'/g,"\\'")+'\',name:\''+(it.name||'').replace(/'/g,"\\'")+'\'})">编辑</button> '+
+      '<button class="sm red" onclick="if(confirm(\'确认删除 '+(it.name||it.path)+'？\'))doDeleteItem(\''+it.path.replace(/'/g,"\\'")+'\')">删</button>'+
+      '</td></tr>';
+  });
+  h+='</table>';
+  if(!data.length)h='<div style="color:#888;font-size:11px;padding:8px">未找到物品，尝试更换搜索词或分类</div>';
+  list.innerHTML=h;
+}
+
+function quickGiveItem(path){document.getElementById('give_item_path').value=path;document.getElementById('give_item_search').value=path;document.querySelector('.card')?.scrollIntoView({behavior:'smooth'})}
+
+function addToGiveListFromBrowse(path,name){_giveList.push({path:path,name:name,count:1});refreshGiveListUI()}
+
+// ===================================================================
+// === RECLAIM PANEL (回收) ===
+// ===================================================================
+var _reclaimPlayer=null;
+var _reclaimInventory=[];
+
+async function showReclaim(m){
+  _reclaimPlayer=null;
+  _reclaimInventory=[];
+  m.innerHTML=
+    '<h2>🗑️ 回收玩家物品</h2>'+
+    '<div class="card"><h3>选择玩家</h3>'+
+    '<div class="row" style="position:relative">'+
+    '<input id="reclaim_player" placeholder="搜索玩家名字或ID..." style="width:300px" onkeyup="searchReclaimPlayer()" onfocus="searchReclaimPlayer()" autocomplete="off">'+
+    '<div id="reclaim_player_dd" class="dropdown hide"></div>'+
+    '<button class="green" onclick="loadReclaimInventory()">🔍 查看背包</button></div>'+
+    '<div id="reclaim_player_info" style="margin:6px 0"></div></div>'+
+
+    '<div class="card"><h3>背包物品 <span style="color:#888;font-size:11px" id="reclaim_count"></span></h3>'+
+    '<div class="row"><input id="reclaim_filter" placeholder="筛选物品名称/路径..." onkeyup="filterReclaimItems()" style="width:300px">'+
+    '<button class="sm blue" onclick="loadReclaimInventory()">🔄 刷新</button></div>'+
+    '<div id="reclaim_inv_list" style="max-height:500px;overflow-y:auto;margin-top:6px"></div>'+
+    '<div id="reclaim_msg"></div></div>';
+}
+
+// Player autocomplete for reclaim
+async function searchReclaimPlayer(){
+  var q=document.getElementById('reclaim_player')?.value||'';
+  var dd=document.getElementById('reclaim_player_dd');
+  if(!dd)return;
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var matches=_onlinePlayers.filter(function(p){return fuzzyMatch(q,p.name)||fuzzyMatch(q,p.id)}).slice(0,8);
+  if(!matches.length){dd.classList.add('hide');return}
+  dd.innerHTML=matches.map(function(p){return '<div onclick="selectReclaimPlayer(\''+p.id+'\',\''+(p.name||'').replace(/'/g,"\\'")+'\')">'+p.name+' <span style="color:#888">('+p.id+')</span> Lv'+p.level+'</div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectReclaimPlayer(id,name){
+  document.getElementById('reclaim_player').value=name+' ('+id+')';
+  _reclaimPlayer=id;
+  document.getElementById('reclaim_player_dd').classList.add('hide');
+  // auto-load
+  loadReclaimInventory();
+}
+
+async function loadReclaimInventory(){
+  var el=document.getElementById('reclaim_inv_list');
+  var infoEl=document.getElementById('reclaim_player_info');
+  var countEl=document.getElementById('reclaim_count');
+  var msgEl=document.getElementById('reclaim_msg');
+  if(!el)return;
+
+  if(!_reclaimPlayer){
+    var inputVal=document.getElementById('reclaim_player')?.value.trim();
+    if(!inputVal){el.innerHTML='<div style="color:#888;font-size:11px;padding:8px">请先选择玩家</div>';return}
+    // Try to extract ID from input (name (id) format) or use as direct ID
+    var m=inputVal.match(/\(([^)]+)\)$/);
+    _reclaimPlayer=m?m[1]:inputVal;
+  }
+
+  el.innerHTML='<div style="color:#888;padding:8px">加载中...</div>';
+  var r=await call('player',{id:_reclaimPlayer});
+  if(!r.ok){el.innerHTML=M(r.msg||'未找到玩家','err');_reclaimPlayer=null;return}
+  var p=r.data||{};
+  _reclaimInventory=p.inventory||[];
+  if(infoEl)infoEl.innerHTML='<span style="color:#0f9">'+p.name+'</span> [Lv'+p.level+'] '+(p.family||'')+' | 位置:'+p.location+' | 背包:'+_reclaimInventory.length+'件';
+  if(countEl)countEl.textContent='(共'+_reclaimInventory.length+'件)';
+  if(msgEl)msgEl.innerHTML='';
+  renderReclaimItems();
+}
+
+function renderReclaimItems(filter){
+  var el=document.getElementById('reclaim_inv_list');
+  if(!el)return;
+  filter=(filter||'').toLowerCase();
+  var list=_reclaimInventory;
+  if(filter)list=list.filter(function(it){return fuzzyMatch(filter,it.name||'')||fuzzyMatch(filter,it.path||'')});
+
+  if(!list.length){
+    el.innerHTML='<div style="color:#888;font-size:11px;padding:8px">'+(filter?'未找到匹配物品':'背包为空')+'</div>';
+    return;
+  }
+
+  var h='<table><tr><th>物品名</th><th>路径</th><th style="width:60px">数量</th><th style="width:100px">ID</th><th style="width:140px">操作</th></tr>';
+  list.forEach(function(it){
+    var c=it.count||1;
+    h+='<tr><td><b>'+(it.name||it.path)+'</b></td><td style="font-size:10px;color:#888">'+it.path+'</td><td>'+c+'</td><td style="font-size:9px;color:#666">'+(it.id||'')+'</td>'+
+      '<td>'+
+      '<input id="rc_qty_'+it.id+'" value="1" style="width:40px;font-size:11px" type="number" min="1" max="'+c+'">'+
+      '<button class="sm red" onclick="doReclaimItem(\''+it.id+'\',\''+(it.path||'').replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\','+c+')">回收</button>'+
+      (c>1?'<button class="sm red" onclick="doReclaimAll(\''+it.id+'\',\''+(it.path||'').replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\','+c+')" title="回收全部'+c+'个">全部</button>':'')+
+      '</td></tr>';
+  });
+  h+='</table>';
+  el.innerHTML=h;
+}
+
+function filterReclaimItems(){
+  var q=document.getElementById('reclaim_filter')?.value||'';
+  renderReclaimItems(q);
+}
+
+async function doReclaimItem(itemId,itemPath,itemName,maxCount){
+  var qtyEl=document.getElementById('rc_qty_'+itemId);
+  var count=parseInt(qtyEl?.value)||1;
+  if(count>maxCount)count=maxCount;
+  if(count<1)count=1;
+  var r=await call('reclaim_item',{playerId:_reclaimPlayer,itemId:itemId,itemPath:itemPath,count:count});
+  var msgEl=document.getElementById('reclaim_msg');
+  if(msgEl)msgEl.innerHTML=M(r.msg||(r.ok?'回收成功':'失败'),r.ok?'ok':'err');
+  if(r.ok)setTimeout(function(){loadReclaimInventory()},500);
+}
+
+async function doReclaimAll(itemId,itemPath,itemName,maxCount){
+  var r=await call('reclaim_item',{playerId:_reclaimPlayer,itemId:itemId,itemPath:itemPath,count:maxCount});
+  var msgEl=document.getElementById('reclaim_msg');
+  if(msgEl)msgEl.innerHTML=M(r.msg||(r.ok?'回收成功':'失败'),r.ok?'ok':'err');
+  if(r.ok)setTimeout(function(){loadReclaimInventory()},500);
+}
+
+// Item View - read and display item JS file
+async function itemView(itemPath){
+  showModal('查看物品: '+itemPath,
+    '<div id="iv_content" style="padding:8px;text-align:center;color:#888">加载中...</div>',
+    null
+  );
+  var r = await call('equipment_detail',{path:itemPath});
+  var el = document.getElementById('iv_content');
+  if (!el) return;
+  if (!r.ok) { el.innerHTML = M(r.msg||'加载失败','err'); return; }
+  var d = r.data || {};
+  var h = '<div class="row"><label>路径:</label><span>'+itemPath+'</span></div>';
+  h += '<div class="row"><label>名称:</label><span>'+(d.name||'')+'</span></div>';
+  h += '<div class="row"><label>等级:</label><span>'+d.grade+'</span></div>';
+  h += '<div class="row"><label>类型:</label><span>'+(d.eq_type||'')+'</span></div>';
+  if (d.weapon_type) h += '<div class="row"><label>武器类型:</label><span>'+d.weapon_type+'</span></div>';
+  if (d.prop) {
+    h += '<div class="row"><label>属性:</label></div>';
+    h += '<table><tr><th>属性</th><th>值</th></tr>';
+    for (var k in d.prop) h += '<tr><td>'+k+'</td><td>'+d.prop[k]+'</td></tr>';
+    h += '</table>';
+  }
+  h += '<p style="color:#0f9;margin-top:8px">源代码:</p>';
+  h += '<textarea readonly style="min-height:350px;font-family:Consolas,monospace;font-size:11px;background:#111">'+(d.content||'').replace(/</g,'&lt;')+'</textarea>';
+  el.innerHTML = h;
+}
+
+// Item Edit/Create - async, loads existing data from API
+async function itemEdit(data){
+  var d = data || {};
+  var isNew = !d.path;
+  var itemData = d;
+
+  // For existing items, load full data from API if content not already provided
+  if (!isNew && !d._loaded) {
+    showModal('编辑物品: '+d.path,
+      '<div style="padding:20px;text-align:center;color:#888">加载物品数据...</div>',
+      null
+    );
+    var r = await call('equipment_detail',{path:d.path});
+    if (!r.ok) {
+      document.querySelector('#modal .modal>div').innerHTML = '<h2>加载失败</h2>'+M(r.msg||'未知错误','err');
+      return;
+    }
+    itemData = r.data || d;
+    itemData._loaded = true;
+    // Close the loading modal and reopen with form
+    document.getElementById('modal').classList.add('hide');
+  }
+
+  var props = itemData.prop || {};
+  var cond = itemData.condition || {};
+  var condSkill = cond.skill || {};
+
+  // Build properties table rows
+  var propRows = '';
+  var propKeys = Object.keys(props);
+  if (propKeys.length === 0) propKeys = [''];
+  for (var pi = 0; pi < propKeys.length; pi++) {
+    var pk = propKeys[pi];
+    var pv = props[pk] !== undefined ? props[pk] : '';
+    propRows += '<div class="row" style="margin:2px 0"><input class="ie_prop_key" value="'+pk+'" placeholder="属性名" style="width:120px"><input class="ie_prop_val" value="'+pv+'" placeholder="值" style="width:100px" type="number"></div>';
+  }
+
+  // Build condition skill rows
+  var condSkillRows = '';
+  var csKeys = Object.keys(condSkill);
+  if (csKeys.length === 0) csKeys = [''];
+  for (var ci = 0; ci < csKeys.length; ci++) {
+    var ck = csKeys[ci];
+    var cv = condSkill[ck] !== undefined ? condSkill[ck] : '';
+    condSkillRows += '<div class="row" style="margin:2px 0"><input class="ie_cskill_key" value="'+ck+'" placeholder="技能名" style="width:120px"><input class="ie_cskill_val" value="'+cv+'" placeholder="等级" style="width:80px" type="number"></div>';
+  }
+
+  var eqTypes = ['EQUIP_TYPE.CLOTH','EQUIP_TYPE.BLADE','EQUIP_TYPE.SWORD','EQUIP_TYPE.STAFF','EQUIP_TYPE.CLUB','EQUIP_TYPE.WHIP','EQUIP_TYPE.THROWING','EQUIP_TYPE.UNARMED','EQUIP_TYPE.JEWELS','EQUIP_TYPE.SHOES','EQUIP_TYPE.HELMET'];
+  var eqTypeOpts = eqTypes.map(function(t){ return '<option value="'+t+'"'+(itemData.eq_type===t?' selected':'')+'>'+t+'</option>'; }).join('');
+
+  var bodyHtml =
+    '<div class="row"><label>路径:</label><input id="ie_path" value="'+(itemData.path||'')+'" style="width:300px" placeholder="如 eq/lv0/cloth 或 drug/jinchuangyao" '+(isNew?'':'readonly')+'></div>'+
+    '<div class="row"><label>名称:</label><input id="ie_name" value="'+(itemData.name||'')+'" style="width:200px" placeholder="物品名称"></div>'+
+    '<div class="row"><label>描述:</label><input id="ie_desc" value="'+(itemData.desc||'').replace(/"/g,'&quot;')+'" style="width:400px" placeholder="物品描述"></div>'+
+    '<div class="row"><label>单位:</label><input id="ie_unit" value="'+(itemData.unit||'件')+'" style="width:80px">'+
+    '<label>等级:</label><select id="ie_grade">'+[0,1,2,3,4,5,6,7].map(function(g){return '<option value="'+g+'"'+(itemData.grade===g?' selected':'')+'>'+g+'</option>';}).join('')+'</select>'+
+    '<label>孔数:</label><input id="ie_holes" value="'+(itemData.hole_count||0)+'" style="width:50px" type="number" min="0" max="8">'+
+    '<label>价值:</label><input id="ie_value" value="'+(itemData.value||0)+'" style="width:70px" type="number"></div>'+
+    '<div class="row"><label>装备类型:</label><select id="ie_eqtype"><option value="">-非装备-</option>'+eqTypeOpts+'</select>'+
+    '<label>武器类型:</label><input id="ie_wtype" value="'+(itemData.weapon_type||'')+'" style="width:150px" placeholder="如 WEAPON_TYPE.SWORD"></div>'+
+    '<div class="row"><label>套装:</label><input id="ie_group" value="'+(itemData.group_name||'')+'" style="width:150px" placeholder="套装名称"></div>'+
+    '<details><summary style="cursor:pointer;color:#0f9;margin:6px 0">属性 (Prop) <span style="color:#888">- 展开编辑</span></summary>'+
+    '<div id="ie_props">'+propRows+'</div>'+
+    '<button class="sm" onclick="addPropRow()" style="margin:4px 0">+ 添加属性</button>'+
+    '</details>'+
+    '<details><summary style="cursor:pointer;color:#0f9;margin:6px 0">装备条件 (Condition) <span style="color:#888">- 展开编辑</span></summary>'+
+    '<div><label style="font-size:11px">属性需求:</label>'+
+    '<div class="row"><label>str:</label><input id="ie_cstr" value="'+(cond.str||'')+'" style="width:60px" placeholder="力量" type="number">'+
+    '<label>con:</label><input id="ie_ccon" value="'+(cond.con||'')+'" style="width:60px" placeholder="体质" type="number">'+
+    '<label>dex:</label><input id="ie_cdex" value="'+(cond.dex||'')+'" style="width:60px" placeholder="敏捷" type="number">'+
+    '<label>int:</label><input id="ie_cint" value="'+(cond.int||'')+'" style="width:60px" placeholder="智力" type="number"></div></div>'+
+    '<div><label style="font-size:11px">技能需求:</label>'+
+    '<div id="ie_cskills">'+condSkillRows+'</div>'+
+    '<button class="sm" onclick="addCondSkillRow()" style="margin:4px 0">+ 添加技能条件</button></div>'+
+    '</details>'+
+    '<details><summary style="cursor:pointer;color:#0f9;margin:6px 0">特殊效果 <span style="color:#888">- 展开编辑</span></summary>'+
+    '<div style="font-size:11px;color:#888">以下为自定义JS代码段，留空则不生成对应效果</div>'+
+    '<label style="font-size:11px">do_attack (攻击时触发):</label>'+
+    '<textarea id="ie_do_attack" style="min-height:80px;font-family:Consolas,monospace;font-size:11px" placeholder="this.do_attack = function(me, tar, damage) { ... };">'+(itemData.do_attack_code||'')+'</textarea>'+
+    '<label style="font-size:11px">on_use (使用时触发):</label>'+
+    '<textarea id="ie_on_use" style="min-height:80px;font-family:Consolas,monospace;font-size:11px" placeholder="this.on_use = function(me, tar) { ... };">'+(itemData.on_use_code||'')+'</textarea>'+
+    '<label style="font-size:11px">group_prop (套装属性):</label>'+
+    '<textarea id="ie_group_prop" style="min-height:80px;font-family:Consolas,monospace;font-size:11px" placeholder="this.group_prop = function(me) { ... };">'+(itemData.group_prop_code||'')+'</textarea>'+
+    '</details>'+
+    '<details><summary style="cursor:pointer;color:#888;margin:6px 0">高级: 直接编辑源代码 <span style="color:#f66">- 优先使用</span></summary>'+
+    '<textarea id="ie_code" style="min-height:300px;font-family:Consolas,monospace;font-size:11px" placeholder="留空则从表单生成。填写后保存将使用此代码覆盖文件。">'+(itemData.content||'')+'</textarea>'+
+    '</details>'+
+    '<div id="ie_msg"></div>';
+
+  showModal((isNew?'新增':'编辑')+'物品', bodyHtml,
+    async function(){
+      var path = document.getElementById('ie_path').value.trim();
+      var name = document.getElementById('ie_name').value.trim();
+      var content = document.getElementById('ie_code')?.value.trim();
+      var ieMsg = document.getElementById('ie_msg');
+      if (!path) { ieMsg.innerHTML = M('路径必填','err'); return; }
+
+      // If raw code is provided, use it directly
+      if (content) {
+        var p = {path:path, name:name, content:content};
+        var r = await call('equipment_save', p);
+        ieMsg.innerHTML = M(r.msg||(r.ok?'保存成功':'失败'), r.ok?'ok':'err');
+        if (r.ok) { document.getElementById('modal').classList.add('hide'); browseItems(); }
+        return;
+      }
+
+      // Build from form fields
+      var formData = {
+        path: path,
+        name: name || '未命名',
+        desc: document.getElementById('ie_desc')?.value.trim() || '',
+        unit: document.getElementById('ie_unit')?.value.trim() || '件',
+        grade: parseInt(document.getElementById('ie_grade')?.value) || 0,
+        eq_type: document.getElementById('ie_eqtype')?.value || '',
+        weapon_type: document.getElementById('ie_wtype')?.value.trim() || '',
+        hole_count: parseInt(document.getElementById('ie_holes')?.value) || 0,
+        value: parseInt(document.getElementById('ie_value')?.value) || 0,
+        group_name: document.getElementById('ie_group')?.value.trim() || '',
+        no_fenjie: false,
+      };
+
+      // Collect props
+      var propObj = {};
+      var propKeys = document.querySelectorAll('.ie_prop_key');
+      var propVals = document.querySelectorAll('.ie_prop_val');
+      for (var i = 0; i < propKeys.length; i++) {
+        var k = propKeys[i].value.trim();
+        if (k) propObj[k] = parseFloat(propVals[i].value) || 0;
+      }
+      formData.prop = propObj;
+
+      // Collect conditions
+      var condObj = {};
+      var cstr = parseInt(document.getElementById('ie_cstr')?.value) || 0;
+      var ccon = parseInt(document.getElementById('ie_ccon')?.value) || 0;
+      var cdex = parseInt(document.getElementById('ie_cdex')?.value) || 0;
+      var cint = parseInt(document.getElementById('ie_cint')?.value) || 0;
+      if (cstr) condObj.str = cstr;
+      if (ccon) condObj.con = ccon;
+      if (cdex) condObj.dex = cdex;
+      if (cint) condObj.int = cint;
+
+      var skObj = {};
+      var skKeys = document.querySelectorAll('.ie_cskill_key');
+      var skVals = document.querySelectorAll('.ie_cskill_val');
+      for (var j = 0; j < skKeys.length; j++) {
+        var sk = skKeys[j].value.trim();
+        if (sk) skObj[sk] = parseInt(skVals[j].value) || 100;
+      }
+      if (Object.keys(skObj).length > 0) condObj.skill = skObj;
+      if (Object.keys(condObj).length > 0) formData.condition = condObj;
+
+      // Special effects
+      var doAtk = document.getElementById('ie_do_attack')?.value.trim();
+      var onUse = document.getElementById('ie_on_use')?.value.trim();
+      var gp = document.getElementById('ie_group_prop')?.value.trim();
+      if (doAtk) formData.do_attack_code = doAtk;
+      if (onUse) formData.on_use_code = onUse;
+      if (gp) formData.group_prop_code = gp;
+
+      var r = await call('equipment_save', formData);
+      ieMsg.innerHTML = M(r.msg||(r.ok?'保存成功':'失败'), r.ok?'ok':'err');
+      if (r.ok) { document.getElementById('modal').classList.add('hide'); browseItems(); }
+    }
+  );
+}
+
+// Helper: add prop row in item edit modal
+function addPropRow() {
+  var container = document.getElementById('ie_props');
+  if (!container) return;
+  var row = document.createElement('div');
+  row.className = 'row';
+  row.style.margin = '2px 0';
+  row.innerHTML = '<input class="ie_prop_key" placeholder="属性名" style="width:120px"><input class="ie_prop_val" placeholder="值" style="width:100px" type="number">';
+  container.appendChild(row);
+}
+
+// Helper: add condition skill row in item edit modal
+function addCondSkillRow() {
+  var container = document.getElementById('ie_cskills');
+  if (!container) return;
+  var row = document.createElement('div');
+  row.className = 'row';
+  row.style.margin = '2px 0';
+  row.innerHTML = '<input class="ie_cskill_key" placeholder="技能名" style="width:120px"><input class="ie_cskill_val" placeholder="等级" style="width:80px" type="number">';
+  container.appendChild(row);
+}
+
+async function doDeleteItem(path){
+  var r=await call('equipment_delete',{path:path});
+  if(r.ok){browseItems()}else{alert('删除失败: '+(r.msg||''))}
+}
+
+// === FILE MANAGER ===
+
+function showFiles(m){
+  m.innerHTML=
+    '<h2>📁 文件管理</h2>'+
+    '<div class="card">'+
+    '<div class="row"><span style="color:#0f9">当前目录:</span><span id="fm_curdir">/</span>'+
+    '<button class="sm blue" onclick="browseFiles(\'\')">🏠 根目录</button>'+
+    '<button class="sm" onclick="browseFiles(\'world\')">world</button>'+
+    '<button class="sm" onclick="browseFiles(\'os\')">os</button>'+
+    '<button class="sm" onclick="browseFiles(\'api\')">api</button>'+
+    '<button class="sm" onclick="browseFiles(\'www\')">www</button>'+
+    '<button class="sm" onclick="browseFiles(\'config.js\')">config.js</button></div>'+
+    '<div id="fm_list" style="max-height:500px;overflow-y:auto;margin-top:6px"></div>'+
+    '<div id="fm_msg"></div></div>'+
+    '<div id="fm_detail" style="margin-top:8px"></div>';
+  browseFiles('');
+}
+
+async function browseFiles(dir){
+  var listEl = document.getElementById('fm_list');
+  var curEl = document.getElementById('fm_curdir');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="color:#888;padding:8px">加载中...</div>';
+  var r = await call('file_list',{dir:dir||''});
+  if (!r.ok) { listEl.innerHTML = M(r.msg||'加载失败','err'); return; }
+  if (curEl) curEl.textContent = '/' + (r.dir||'');
+
+  var data = r.data || [];
+  var parentDir = dir ? dir.substring(0, dir.lastIndexOf('/')) : null;
+  var h = '';
+  if (dir) {
+    h += '<div style="padding:4px;cursor:pointer;color:#0f9" onclick="browseFiles(\''+(parentDir||'')+'\')">📂 .. (上级目录)</div>';
+  }
+  data.forEach(function(f){
+    var icon = f.is_dir ? '📁' : '📄';
+    var sizeStr = f.size !== undefined ? formatSize(f.size) : '';
+    var fullPath = dir ? dir + '/' + f.name : f.name;
+    if (f.is_dir) {
+      h += '<div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #222" onclick="browseFiles(\''+fullPath.replace(/'/g,"\\'")+'\')">'+icon+' <b style="color:#0f9">'+f.name+'</b> <span style="color:#888;font-size:10px">/</span></div>';
+    } else {
+      h += '<div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #222" class="fm_file" data-path="'+fullPath.replace(/'/g,"&#39;")+'">'+icon+' '+f.name+' <span style="color:#888;font-size:10px">'+sizeStr+'</span>'+
+        ' <button class="sm" onclick="event.stopPropagation();fileView(\''+fullPath.replace(/'/g,"\\'")+'\')">查看</button>'+
+        ' <button class="sm blue" onclick="event.stopPropagation();fileEdit(\''+fullPath.replace(/'/g,"\\'")+'\')">编辑</button>'+
+        ' <button class="sm red" onclick="event.stopPropagation();doFileDelete(\''+fullPath.replace(/'/g,"\\'")+'\',false)">删</button>'+
+        '</div>';
+    }
+  });
+  if (!data.length && !dir) h = '<div style="color:#888;padding:8px">空目录</div>';
+  listEl.innerHTML = h;
+}
+
+function formatSize(bytes){
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// View file content
+async function fileView(filePath){
+  showModal('查看文件: '+filePath,
+    '<div id="fv_content" style="padding:8px;text-align:center;color:#888">加载中...</div>',
+    null
+  );
+  var r = await call('file_read',{path:filePath});
+  var el = document.getElementById('fv_content');
+  if (!el) return;
+  if (!r.ok) { el.innerHTML = M(r.msg||'加载失败','err'); return; }
+  var d = r.data || {};
+  var ext = filePath.split('.').pop();
+  var langMap = {js:'javascript',json:'json',html:'html',css:'css',md:'markdown',py:'python',sh:'bash'};
+  var mode = langMap[ext] || '';
+  el.innerHTML =
+    '<div class="row"><label>路径:</label><span>'+filePath+'</span> <span style="color:#888">('+formatSize(d.size)+')</span>'+
+    '<button class="sm blue" onclick="document.getElementById(\'modal\').classList.add(\'hide\');fileEdit(\''+filePath.replace(/'/g,"\\'")+'\')">编辑</button></div>'+
+    '<textarea readonly style="min-height:450px;font-family:Consolas,monospace;font-size:11px;background:#111;width:100%">'+(d.content||'').replace(/</g,'&lt;')+'</textarea>';
+}
+
+// Edit file
+var _editingFilePath = '';
+async function fileEdit(filePath){
+  _editingFilePath = filePath;
+  showModal('编辑文件: '+filePath,
+    '<div id="fe_content" style="padding:8px;text-align:center;color:#888">加载中...</div>',
+    async function(){
+      var content = document.getElementById('fe_code')?.value || '';
+      var r = await call('file_save',{path:_editingFilePath,content:content});
+      var el = document.getElementById('fe_msg');
+      if (!el) return;
+      if (r.ok) {
+        el.innerHTML = M(r.msg||'保存成功','ok');
+        setTimeout(function(){ document.getElementById('modal').classList.add('hide'); browseFiles(_editingFilePath.substring(0,_editingFilePath.lastIndexOf('/'))); }, 800);
+      } else {
+        el.innerHTML = M(r.msg||'保存失败','err');
+      }
+    }
+  );
+  var r = await call('file_read',{path:filePath});
+  var el = document.getElementById('fe_content');
+  if (!el) return;
+  if (!r.ok) { el.innerHTML = M(r.msg||'加载失败','err'); return; }
+  var d = r.data || {};
+  el.innerHTML =
+    '<textarea id="fe_code" style="min-height:450px;font-family:Consolas,monospace;font-size:11px;background:#111;width:100%">'+(d.content||'').replace(/</g,'&lt;').replace(/&/g,'&amp;').replace(/&amp;lt;/g,'&lt;')+'</textarea>'+
+    '<div id="fe_msg" style="margin-top:4px"></div>';
+}
+
+// Delete file
+async function doFileDelete(filePath,isDir){
+  if (!confirm('确认删除 '+(isDir?'目录':'文件')+' ' + filePath + '？此操作不可撤销！')) return;
+  var r = await call('file_delete',{path:filePath});
+  if (r.ok) {
+    var parentDir = filePath.substring(0, filePath.lastIndexOf('/'));
+    browseFiles(parentDir);
+  } else {
+    alert('删除失败: '+(r.msg||''));
+  }
+}
+
+
+// === SKILLS ===
+async function showSkills(m){
+  var r=await call('skills');
+  if(!r.ok){m.innerHTML=M(r.msg,'err');return}
+  var tree=r.data||{},typeNames=r.typeNames||{};
+  var allSkills=[];
+  for(var type in tree){tree[type].forEach(function(sk){allSkills.push({type:type,name:sk,typeName:typeNames[type]||type})})}
+  allSkills.sort(function(a,b){return a.name.localeCompare(b.name)});
+  var h='<h2>技能管理 ('+allSkills.length+')</h2><div class="row"><input id="sk_search" placeholder="搜索技能名 (支持模糊查找)" onkeyup="fuzzyFilterSkills()" style="width:300px"><select id="sk_type_filter" onchange="fuzzyFilterSkills()"><option value="">全部类型</option></select><button class="green" onclick="skillEdit({})">+ 新增技能</button><button class="blue sm" onclick="loadPanel(\'skills\')" title="刷新列表">🔄</button></div><div id="sk_msg"></div>';
+  var typeSet={};
+  allSkills.forEach(function(s){typeSet[s.type]=s.typeName});
+  var typeOpts='<option value="">全部类型</option>';
+  Object.keys(typeSet).sort().forEach(function(t){typeOpts+='<option value="'+t+'">'+typeSet[t]+' ('+t+')</option>'});
+  h+='<div id="sk_list" style="max-height:500px;overflow-y:auto"><table id="sk_tb"><tr><th>技能ID</th><th>类型</th><th>类型名</th><th>操作</th></tr>';
+  allSkills.forEach(function(sk){h+='<tr class="sk_row" data-type="'+sk.type+'" data-name="'+sk.name+'"><td><b>'+sk.name+'</b></td><td>'+sk.type+'</td><td>'+sk.typeName+'</td><td><button class="sm" onclick="skillView(\''+sk.type+'\',\''+sk.name+'\')">查看</button><button class="sm blue" onclick="skillViewEdit(\''+sk.type+'\',\''+sk.name+'\')">编辑</button><button class="sm red" onclick="if(confirm(\'确认删除技能 '+sk.name+'?\'))skillDelete(\''+sk.type+'\',\''+sk.name+'\')">删</button></td></tr>'});
+  h+='</table></div><div id="sk_detail"></div>';
+  setTimeout(function(){var sel=document.getElementById('sk_type_filter');if(sel)sel.innerHTML=typeOpts},10);
+  m.innerHTML=h;
+}
+
+function fuzzyFilterSkills(){
+  var q=(document.getElementById('sk_search')?.value||'').toLowerCase();
+  var t=(document.getElementById('sk_type_filter')?.value||'').toLowerCase();
+  document.querySelectorAll('.sk_row').forEach(function(r){
+    var name=(r.dataset.name||'').toLowerCase();
+    var type=(r.dataset.type||'').toLowerCase();
+    var matchQ=!q||fuzzyMatch(q,name)||fuzzyMatch(q,type);
+    var matchT=!t||type===t;
+    r.style.display=(matchQ&&matchT)?'':'none';
+  });
+}
+
+async function skillView(type,name){
+  var r=await call('skill',{type:type,name:name});
+  var d=document.getElementById('sk_detail');
+  if(!r.ok){d.innerHTML=M(r.msg,'err');return}
+  var s=r.data||{};
+  d.innerHTML='<div class="card"><div class="row"><h3 style="margin:0">'+s.type+'/'+s.name+'</h3><button class="sm blue" onclick="skillViewEdit(\''+type+'\',\''+name+'\')">编辑</button><button class="sm red" onclick="if(confirm(\'确认删除?\')&&skillDelete(\''+type+'\',\''+name+'\')){}">删除</button></div><pre style="max-height:400px">'+(s.content||'').replace(/</g,'&lt;')+'</pre></div>';
+}
+
+async function skillViewEdit(type,name){
+  var r=await call('skill',{type:type,name:name});
+  if(!r.ok){alert('加载失败: '+r.msg);return}
+  skillEdit({type:type,name:name,content:r.data?.content||''});
+}
+
+function skillEdit(data){
+  var d=data||{},isNew=!d.type||!d.name;
+  showModal((isNew?'新建':'编辑')+'技能',
+    '<div class="row"><label>类型:</label><input id="se_type" value="'+(d.type||'')+'" style="width:120px" placeholder="如 force"> <span style="color:#888;font-size:11px">对应 skill/ 下的子目录</span></div>'+
+    '<div class="row"><label>名称:</label><input id="se_name" value="'+(d.name||'')+'" style="width:200px" placeholder="如 jiuyangshengong"> <span style="color:#888;font-size:11px">文件名(不含.js)</span></div>'+
+    '<p style="color:#888;font-size:11px;margin:4px 0">技能代码(JavaScript):</p>'+
+    '<textarea id="se_code" style="min-height:350px;font-family:Consolas,monospace;font-size:11px">'+(d.content||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea>'+
+    '<div id="se_msg"></div>',
+    async function(){
+      var p={type:document.getElementById('se_type').value.trim(),name:document.getElementById('se_name').value.trim(),content:document.getElementById('se_code').value};
+      if(!p.type||!p.name){document.getElementById('se_msg').innerHTML=M('类型和名称必填','err');return}
+      if(!/^[a-zA-Z0-9_]+$/.test(p.type)||!/^[a-zA-Z0-9_]+$/.test(p.name)){document.getElementById('se_msg').innerHTML=M('类型/名称只能包含字母数字下划线','err');return}
+      var r=await call(isNew?'skill_create':'skill_save',p);
+      document.getElementById('se_msg').innerHTML=M(r.msg||(r.ok?'保存成功':'失败'),r.ok?'ok':'err');
+      if(r.ok){document.getElementById('modal').classList.add('hide');setTimeout(function(){loadPanel('skills')},500)}
+    }
+  );
+}
+
+async function skillDelete(type,name){
+  var r=await call('skill_delete',{type:type,name:name});
+  if(r.ok){document.getElementById('sk_detail').innerHTML=M(r.msg,'ok');setTimeout(function(){loadPanel('skills')},600);return true}
+  else{document.getElementById('sk_detail').innerHTML=M('删除失败: '+(r.msg||''),'err');return false}
+}
+
+// === BROADCAST ===
+var _bcItems=[];
+function renderBCItems(){
+  if(!_bcItems.length)return '<div style="color:#888;font-size:11px">暂未添加物品（可选）</div>';
+  var h='<table><tr><th>物品路径</th><th>名称</th><th style="width:60px">数量</th><th style="width:40px">操作</th></tr>';
+  _bcItems.forEach(function(it,i){
+    h+='<tr><td>'+it.path+'</td><td>'+(it.name||'')+'</td><td><input value="'+it.count+'" onchange="_bcItems['+i+'].count=parseInt(this.value)||1" style="width:55px" type="number" min="1"></td><td><button class="sm red" onclick="_bcItems.splice('+i+',1);refreshBCItems()">✕</button></td></tr>';
+  });
+  h+='</table>';
+  return h;
+}
+function refreshBCItems(){
+  var el=document.getElementById('bc_items');
+  if(el)el.innerHTML=renderBCItems();
+}
+function addToBCItems(){
+  var nameText=document.getElementById('bc_item_search').value.trim();
+  var count=parseInt(document.getElementById('bc_count').value)||1;
+  if(!nameText){alert('请从下拉列表选择物品或直接输入路径');return}
+  var itemPath=nameText,itemName='';
+  if(nameText.indexOf('/')<0){
+    call('items_search',{q:nameText}).then(function(r){
+      if(r.ok&&r.data&&r.data.length===1){itemPath=r.data[0].path;itemName=r.data[0].name||''}
+      else if(r.ok&&r.data&&r.data.length>1){alert('找到多个匹配物品，请从下拉列表中选择具体的一个');return}
+      else{alert('未找到物品: '+nameText+'. 请使用路径格式如 eq/lv5/wushen/zhanshenjia');return}
+      _bcItems.push({path:itemPath,name:itemName,count:count});
+      refreshBCItems();
+      document.getElementById('bc_item_search').value='';
+      document.getElementById('bc_count').value='1';
+    });
+    return;
+  }
+  _bcItems.push({path:itemPath,name:itemName,count:count});
+  refreshBCItems();
+  document.getElementById('bc_item_search').value='';
+  document.getElementById('bc_count').value='1';
+}
+async function searchBCItem(){
+  var q=document.getElementById('bc_item_search').value;
+  var dd=document.getElementById('bc_item_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var r=await call('items_search',{q:q});
+  var list=(r.data||[]).slice(0,10);
+  if(!list.length){dd.classList.add('hide');return}
+  dd.innerHTML=list.map(function(it){return '<div onclick="selectBCItem(\''+it.path.replace(/'/g,"\\'")+'\',\''+(it.name||'').replace(/'/g,"\\'")+'\')"><b>'+(it.name||it.path)+'</b> <span style="color:#0f9;font-size:10px">'+it.path+'</span></div>'}).join('');
+  dd.classList.remove('hide');
+}
+function selectBCItem(path,name){
+  document.getElementById('bc_item_path').value=path;
+  document.getElementById('bc_item_search').value=path;
+  document.getElementById('bc_item_dd').classList.add('hide');
+}
+function showBroadcast(m){
+  _bcItems=[];
+  m.innerHTML='<h2>📢 公告 / 系统邮件</h2>'+
+    '<div class="row" style="margin-bottom:6px"><button class="'+(window._bcTab==='mail'?'':'blue')+'" onclick="window._bcTab=\'broadcast\';showBroadcast(m)">📢 全服公告</button><button class="'+(window._bcTab==='mail'?'blue':'')+'" onclick="window._bcTab=\'mail\';showBroadcast(m)">✉️ 系统邮件</button></div>'+
+    (window._bcTab==='mail'?
+    '<div class="card"><h3>发送系统邮件</h3>'+
+    '<div class="row" style="position:relative"><input id="mail_player" placeholder="玩家ID或名字" style="width:200px" onkeyup="searchMailPlayer()" autocomplete="off"><div id="mail_player_dd" class="dropdown hide"></div></div>'+
+    '<textarea id="mail_msg" placeholder="邮件内容..."></textarea>'+
+    '<h3>附件物品 <span style="color:#888;font-size:11px">(可选)</span></h3>'+
+    '<div class="row" style="position:relative"><input id="mail_item_search" placeholder="搜索物品名称或路径..." style="width:300px" onkeyup="searchBCItem()" onfocus="searchBCItem()" autocomplete="off">'+
+    '<div id="bc_item_dd" class="dropdown hide"></div><input id="mail_item_path" placeholder="物品路径" style="width:250px">'+
+    '<input id="mail_count" value="1" style="width:60px" type="number" min="1">'+
+    '<button class="green" onclick="addToBCItems()">+ 添加物品</button></div>'+
+    '<div id="bc_items" style="max-height:200px;overflow-y:auto;margin:6px 0">'+renderBCItems()+'</div>'+
+    '<div class="row"><button onclick="doMail()">发送邮件</button></div><div id="bc_msg_div"></div></div>'
+    :
+    '<div class="card"><h3>全服公告</h3><textarea id="bc_msg" placeholder="公告内容..."></textarea>'+
+    '<h3>附件物品 <span style="color:#888;font-size:11px">(可选)</span></h3>'+
+    '<div class="row" style="position:relative"><input id="bc_item_search" placeholder="搜索物品名称或路径..." style="width:300px" onkeyup="searchBCItem()" onfocus="searchBCItem()" autocomplete="off">'+
+    '<div id="bc_item_dd" class="dropdown hide"></div><input id="bc_item_path" placeholder="物品路径" style="width:250px">'+
+    '<input id="bc_count" value="1" style="width:60px" type="number" min="1">'+
+    '<button class="green" onclick="addToBCItems()">+ 添加物品</button></div>'+
+    '<div id="bc_items" style="max-height:200px;overflow-y:auto;margin:6px 0">'+renderBCItems()+'</div>'+
+    '<div class="row"><button onclick="doBC()">发送公告</button><button class="blue" onclick="doBCClear()">清空历史</button></div><div id="bc_msg_div"></div></div>');
+}
+async function doBC(){
+  var msg=document.getElementById('bc_msg').value;
+  var items=_bcItems.map(function(it){return{obj:it.path,count:it.count}});
+  var r=await call('broadcast',{message:msg,items:items});
+  document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已发送',r.ok?'ok':'err');
+  if(r.ok){_bcItems=[];document.getElementById('bc_items').innerHTML=renderBCItems()}
+}
+async function doBCClear(){var r=await call('broadcast_clear');document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已清空',r.ok?'ok':'err')}
+async function doMail(){
+  var playerId=document.getElementById('mail_player').value.trim();
+  var msg=document.getElementById('mail_msg').value;
+  if(!playerId||!msg){document.getElementById('bc_msg_div').innerHTML=M('请填写玩家ID和邮件内容','err');return}
+  var items=_bcItems.map(function(it){return{obj:it.path,count:it.count}});
+  var r=await call('send_mail',{playerId:playerId,message:msg,items:items});
+  document.getElementById('bc_msg_div').innerHTML=M(r.msg||'已发送',r.ok?'ok':'err');
+  if(r.ok){_bcItems=[];document.getElementById('bc_items').innerHTML=renderBCItems()}
+}
+async function searchMailPlayer(){
+  var q=document.getElementById('mail_player').value;
+  var dd=document.getElementById('mail_player_dd');
+  if(!q||q.length<1){dd.classList.add('hide');return}
+  var matches=_onlinePlayers.filter(function(p){return fuzzyMatch(q,p.name)||fuzzyMatch(q,p.id)}).slice(0,8);
+  if(!matches.length){dd.classList.add('hide');return}
+  dd.innerHTML=matches.map(function(p){return '<div onclick="document.getElementById(\'mail_player\').value=\''+p.id+'\';document.getElementById(\'mail_player_dd\').classList.add(\'hide\')">'+p.name+' <span style="color:#888">('+p.id+')</span></div>'}).join('');
+  dd.classList.remove('hide');
+}
+
+// === ADMIN MANAGEMENT ===
+async function showAdmins(m){
+  m.innerHTML='<h2>👑 管理员管理</h2>'+
+    '<div class="card"><h3>设置管理员</h3>'+
+    '<div class="row"><input id="admin_name" placeholder="输入要设置的账号" style="width:200px">'+
+    '<button class="green" onclick="doSetAdmin(5)">设为管理员</button>'+
+    '<button class="red" onclick="doSetAdmin(0)">取消管理员</button></div>'+
+    '<div id="admin_msg"></div></div>'+
+    '<div class="card"><h3>当前管理员列表</h3>'+
+    '<div id="admin_list" style="max-height:400px;overflow-y:auto"></div></div>';
+  refreshAdminList();
+}
+async function refreshAdminList(){
+  var r=await call('users_list',{keyword:''});
+  var list=document.getElementById('admin_list');
+  if(!list)return;
+  if(!r.ok){list.innerHTML=M(r.msg||'加载失败','err');return}
+  var users=r.data||[];
+  var admins=users.filter(function(u){return u.level>=5});
+  if(!admins.length){list.innerHTML='<div style="color:#888;padding:8px">暂无管理员</div>';return}
+  var h='<table><tr><th>ID</th><th>账号</th><th>等级</th></tr>';
+  admins.forEach(function(u){
+    h+='<tr><td>'+u.id+'</td><td>'+u.name+'</td><td>Lv.'+u.level+'</td></tr>';
+  });
+  h+='</table>';
+  list.innerHTML=h;
+}
+async function doSetAdmin(level){
+  var name=document.getElementById('admin_name').value.trim();
+  if(!name){document.getElementById('admin_msg').innerHTML=M('请输入账号','err');return}
+  var label=level>=5?'设为管理员':'取消管理员';
+  if(!confirm('确认将账号 '+name+' '+(level>=5?'设为':'取消')+'管理员？'))return;
+  var r=await call('set_admin',{name:name,level:level});
+  document.getElementById('admin_msg').innerHTML=M(r.msg||(r.ok?'已更新':'失败'),r.ok?'ok':'err');
+  if(r.ok){document.getElementById('admin_name').value='';refreshAdminList()}
+}
+
+// === RELOAD ===
+function showReload(m){m.innerHTML='<h2>热更新</h2><div class="card"><div class="row">'+['all:全部','skills:技能','npcs:NPC','objects:物品','maps:地图','areas:区域','cmds:命令'].map(function(t){return '<button onclick="doReload(\''+t.split(':')[0]+'\')">'+t.split(':')[1]+'</button>'}).join('')+'</div><div id="re_msg"></div></div>'}
+async function doReload(t){var r=await call('hot_reload',{target:t});document.getElementById('re_msg').innerHTML=M(r.msg||('已热更 '+(r.files||0)+' 文件'),r.ok?'ok':'err')}
+
+// === BACKUPS ===
+async function showBackups(m){
+  var r=await call('backup_list');
+  if(!r.ok){m.innerHTML=M(r.msg,'err');return}
+  var list=r.data||[];
+  var h='<h2>备份管理</h2><div class="row"><button class="green" onclick="doBackupNow()">📀 立即备份</button></div><table><tr><th>文件名</th><th>操作</th></tr>';
+  list.forEach(function(f){h+='<tr><td>'+f+'</td><td><button class="sm blue" onclick="if(confirm(\'回滚到'+f+'？需重启服务器\'))doRollback(\''+f+'\')">回滚</button></td></tr>'});
+  h+='</table><div id="bk_msg"></div>';
+  m.innerHTML=h;
+}
+async function doBackupNow(){var r=await call('eval',{code:'(function(){try{WORLD.save();WORLD.DATA.backup();return\'备份完成\'}catch(e){return e.message}})()'});document.getElementById('bk_msg').innerHTML=M(r.ok?JSON.stringify(r.data):'失败','ok')}
+async function doRollback(fn){var r=await call('backup_rollback',{filename:fn});document.getElementById('bk_msg').innerHTML=M(r.msg||'已回滚,请重启',r.ok?'ok':'err')}
+
+// === SELL ITEMS HELPERS ===
+var _sellItems=[];
+
+function renderSellItems(){
+  var list=document.getElementById('ne_sell_list'),count=document.getElementById('ne_sell_count');
+  if(!list||!count)return;
+  if(_sellItems.length===0){list.innerHTML='<div style="color:#888;font-size:11px">暂无售卖品，请在下方搜索添加</div>';count.textContent='0件';return}
+  count.textContent=_sellItems.length+'件';
+  var warn='';
+  if(_sellItems.length>15)warn='<div class="msg err" style="margin-bottom:4px">⚠ 售卖品超过15件，游戏中可能无法正常显示购买按钮！建议精简到15件以内。</div>';
+  var h=warn+'<table><tr><th>物品路径</th><th style="width:70px">价格</th><th style="width:40px">操作</th></tr>';
+  _sellItems.forEach(function(it,i){h+='<tr><td>'+it.path+'</td><td><input value="'+it.price+'" onchange="_sellItems['+i+'].price=parseInt(this.value)||10000;syncSellHidden()" style="width:65px" type="number"></td><td><button class="sm red" onclick="_sellItems.splice('+i+',1);renderSellItems();syncSellHidden()">✕</button></td></tr>'});
+  h+='</table>';
+  list.innerHTML=h;
+}
+
+function syncSellHidden(){var el=document.getElementById('ne_sell');if(el)el.value=_sellItems.map(function(it){return it.path+':'+it.price}).join(',')}
+
+async function searchSellItems(){
+  var q=document.getElementById('ne_sell_search')?.value||'',div=document.getElementById('ne_sell_results');
+  if(!div)return;
+  if(!q){div.innerHTML='';return}
+  var r=await call('items_search',{q:q});
+  var list=(r.data||[]).slice(0,30);
+  var h='<table><tr><th>路径</th><th>名字</th><th style="width:60px">操作</th></tr>';
+  list.forEach(function(it){
+    var already=_sellItems.some(function(s){return s.path===it.path});
+    h+='<tr><td>'+it.path+'</td><td>'+(it.name||'')+'</td><td>'+(already?'<span style="color:#0f9;font-size:11px">已添加</span>':'<button class="sm green" onclick="if(!_sellItems.some(function(x){return x.path===\''+it.path+'\'})){_sellItems.push({path:\''+it.path+'\',price:10000});renderSellItems();syncSellHidden();searchSellItems()}">+添加</button>')+'</td></tr>';
+  });
+  h+='</table>';
+  div.innerHTML=h;
+}
+
+async function searchRooms(){
+  var q=prompt('输入房间名/路径关键词搜索:');
+  if(!q)return;
+  var r=await call('eval',{code:'(function(){var fs=require(\'fs\');var p=require(\'path\');var d=p.join(__dirname,\'..\',\'world\',\'map\');var res=[];function s(pth,pre){var es=fs.readdirSync(pth,{withFileTypes:true});for(var i=0;i<es.length;i++){var e=es[i];var f=p.join(pth,e.name);if(e.isDirectory())s(f,pre+e.name+\'/\');else if(e.name.endsWith(\'.js\')){var rp=pre+e.name.replace(\'.js\',\'\');if(rp.indexOf(\''+q.replace(/'/g,"\\'")+'\')>=0)res.push(rp)}}}s(d,\'\');return res.slice(0,50)})()'});
+  var div=document.getElementById('ne_room_results');
+  if(!div)return;
+  if(!r.ok||!(r.data||[]).length){div.innerHTML='<div style="color:#888;font-size:11px">未找到匹配房间</div>';return}
+  div.innerHTML='<div style="font-size:11px;color:#0f9;margin:4px 0">找到 '+(r.data||[]).length+' 个房间，点击添加到输入框:</div>'+r.data.map(function(rp){return '<button class="sm" onclick="var el=document.getElementById(\'ne_room\');var v=el.value;el.value=v+(v?\', \':\'\')+\''+rp+'\'" title="添加房间">'+rp+'</button>'}).join(' ');
+}
+
+// === HELPERS ===
+function fuzzyFilterTable(tbId,q){
+  q=(q||'').toLowerCase();
+  document.querySelectorAll('#'+tbId+' tr').forEach(function(r){
+    if(r.querySelector('th'))return;
+    if(!q){r.style.display='';return}
+    r.style.display=fuzzyMatch(q,r.textContent)?'':'none';
+  });
+}
+
+// Init: check auth, show login if not authenticated
+(async function(){
+  try {
+    var r = await call('check');
+    if (r.ok) {
+      logged = true;
+      _loginUser = { name: r.name, level: r.level };
+      showApp();
+    } else {
+      showLogin();
+    }
+  } catch(e) { showLogin(); }
+})();
+</script>
+</body>
+</html>

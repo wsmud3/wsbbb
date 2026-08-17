@@ -155,6 +155,19 @@ function handleRequest(req, res) {
                 status: 'running'
             });
         }
+        // POST /api/stats — 获取玩家统计
+        else if (url === '/api/stats' && method === 'POST') {
+            readBody(req, function (err, body) {
+                var totalPlayers = 0, activePlayers = 0;
+                for (var i = 0; i < WORLD.USERS.length; i++) {
+                    var u = WORLD.USERS[i];
+                    if (!u || !u.is_player) continue;
+                    totalPlayers++;
+                    if (u.is_active) activePlayers++;
+                }
+                sendJSON(res, { ok: true, data: { totalPlayers: totalPlayers, activePlayers: activePlayers } });
+            });
+        }
         // GET /api/online
         else if (url === '/api/online' && method === 'GET') {
             var players = [];
@@ -243,6 +256,59 @@ function handleRequest(req, res) {
                 limit_mp: found.limit_mp || 0,
                 skills: skills, statuses: statuses, equipment: eq, inventory: inv,
                 isBusy: !!found.is_busy, isFaint: !!found.is_faint, isFighting: found.fight_type > 0,
+            });
+        }
+        // POST /api/player_update — 更新玩家属性
+        else if (url === '/api/player_update' && method === 'POST') {
+            readBody(req, function (err, body) {
+                if (err) { sendJSON(res, { ok: false, msg: 'Invalid JSON' }, 400); return; }
+                var pid = body.id;
+                if (!pid) { sendJSON(res, { ok: false, msg: '缺少玩家ID' }, 400); return; }
+                var found = WORLD.find_user(pid);
+                if (!found) {
+                    for (var i = 0; i < WORLD.USERS.length; i++) {
+                        if (WORLD.USERS[i] && WORLD.USERS[i].is_player && WORLD.USERS[i].id === pid) {
+                            found = WORLD.USERS[i]; break;
+                        }
+                    }
+                }
+                if (!found) { sendJSON(res, { ok: false, msg: '玩家不在线' }, 404); return; }
+                var fields = ['hp', 'max_hp', 'mp', 'max_mp', 'gj', 'fy', 'mz', 'ds', 'zj', 'exp', 'pot', 'money'];
+                fields.forEach(function (f) {
+                    if (body[f] !== undefined) found[f] = body[f];
+                });
+                sendJSON(res, { ok: true, msg: '玩家属性已更新' });
+            });
+        }
+        // POST /api/send_mail — 发送系统邮件
+        else if (url === '/api/send_mail' && method === 'POST') {
+            readBody(req, function (err, body) {
+                if (err) { sendJSON(res, { ok: false, msg: 'Invalid JSON' }, 400); return; }
+                var pid = body.playerId, msg = body.message, items = body.items || [];
+                if (!pid || !msg) { sendJSON(res, { ok: false, msg: '缺少玩家ID或邮件内容' }, 400); return; }
+                var found = null;
+                for (var i = 0; i < WORLD.USERS.length; i++) {
+                    if (WORLD.USERS[i] && WORLD.USERS[i].is_player && (WORLD.USERS[i].id === pid || WORLD.USERS[i].name === pid)) {
+                        found = WORLD.USERS[i]; break;
+                    }
+                }
+                if (!found) { sendJSON(res, { ok: false, msg: '找不到该玩家' }, 404); return; }
+                // 推送到消息系统
+                if (WORLD.MESSAGE && WORLD.MESSAGE.pushUserMessage) {
+                    var attachItems = [];
+                    for (var j = 0; j < items.length; j++) {
+                        var obj = OBJ.CREATE(items[j].obj, items[j].count || 1);
+                        if (obj) attachItems.push({ name: obj.unit_name(items[j].count || 1), obj: items[j].obj, count: items[j].count || 1 });
+                    }
+                    WORLD.MESSAGE.pushUserMessage(found.id, { id: 'system', name: '系统' }, {
+                        time: Date.now(), content: msg, attach: attachItems.length > 0 ? attachItems : undefined
+                    });
+                    var dialogMsg = JSON.stringify({ type: 'dialog', dialog: 'message', message: { id: 'system', name: '系统', content: msg, time: Date.now(), attach: attachItems.length > 0 ? attachItems : undefined } });
+                    if (found.socket) found.send(dialogMsg);
+                    sendJSON(res, { ok: true, msg: '邮件已发送' });
+                } else {
+                    sendJSON(res, { ok: false, msg: '消息系统未初始化' }, 500);
+                }
             });
         }
         // POST /api/update
