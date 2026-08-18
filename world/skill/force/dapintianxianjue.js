@@ -64,7 +64,7 @@ function start_passive_timer(me, lv) {
             name: "天仙之力",
             desc: "战斗时间累积的攻击和命中加成",
             duration: 86400,
-            max_count: Infinity,
+            max_count: 999999,
             count: 1,
             downside: false,
             override: 1,

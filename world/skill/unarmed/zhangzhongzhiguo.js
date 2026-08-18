@@ -54,9 +54,11 @@ this.query_enable_prop = function (lv) {
     };
 };
 
-// ========== 被动叠层（示例模式） ==========
+// ========== 被动叠层 ==========
 function add_power_buff(me) {
     if (!me) return;
+    var lv = me.query_skill ? me.query_skill("zhangzhongzhiguo", 0) : 0;
+    if (lv <= 0) return;
     me.add_status({
         id: "zhangzhongzhiguo_power",
         name: "掌中之国",

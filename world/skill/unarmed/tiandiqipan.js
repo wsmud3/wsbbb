@@ -274,12 +274,10 @@ this.pfm = {
 
                 duration: time * 1000,
 
-                // 免疫控制
-                ig_control: time * 1000,
-
-                // 100%伤害减免
+                // 免疫控制 + 100%伤害减免
                 prop: {
-                    diff_sh_per: 100
+                    diff_sh_per: 100,
+                    ig_control: 1
                 },
 
                 // 冷色系添加状态文本
