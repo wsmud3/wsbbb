@@ -1,8 +1,9 @@
 # MUD 游戏 - 更新日志
 
-## 2026-08-19 00:44 — 修复 grade6 武学 bug（3 处）
+## 2026-08-19 00:44 — 修复 grade6 武学 bug（4 处）
 
 - **掌中之国** — 修复 add_power_buff 中 lv 未定义导致崩溃的 bug，改为从 me.query_skill 获取等级
+- **掌中之国** — 修复 `do_attack` 钩子错误：引擎不调用 skill.do_attack，改为正确的 `on_attack_over` 钩子，修正后攻击命中才会正确叠层
 - **天地棋盘** — 修复「退守」技能 ig_control 位置错误（原挂载在状态顶层而非 prop 内），修正为正确的 prop.ig_control: 1
 - **大品天仙诀** — 修复 max_count: Infinity 可能导致状态系统异常的问题，改为 999999
 
