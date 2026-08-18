@@ -1,4 +1,4 @@
-﻿this.inherits(NPC);
+this.inherits(NPC);
 this.set({
     name: "武馆教习",
     desc: "一个高大威猛的汉子，负责教导武馆新人基本功法",
@@ -22,7 +22,14 @@ this.skill_map(
     ["whip", 5000],
     ["unarmed", 5000],
     ["throwing", 5000],
-    ["niutou", 3000]
+    ["niutou", 3000],
+    ["nixianmojue", 5000, "force"],
+    ["tiandiqipan", 5000, "unarmed"],
+    ["tianditongshou", 5000, "unarmed"],
+    ["xiuluodao", 5000, "blade"],
+    ["cihangjiandian", 5000, "force"],
+    ["shandianwulianbian", 5000, "whip"],
+    ["dapintianxianjue", 5000, "force"]
 );
 this.on_checkskill = function (me) {
     if (!me.query_temp("wg_sr")) {
