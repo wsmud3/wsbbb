@@ -16,19 +16,16 @@ function startDailyBackup() {
                 WORLD.save();
                 WORLD.DATA.backup();
                 WORLD.DATA.set_temp('last_auto_backup', now);
-                // 清理7天前的备份
-                var fs = require('fs');
-                var path = require('path');
-                var backupDir = path.join(__dirname, '..', '..', 'data', 'backup');
-                if (fs.existsSync(backupDir)) {
-                    var files = fs.readdirSync(backupDir).filter(function(f) { return f.endsWith('.js'); }).sort();
+                // 清理7天前的备份（沙箱内无 require，用 BASE 提供的文件接口）
+                var backupDir = __PATH.DATA + 'backup';
+                if (BASE.path_exists(backupDir)) {
+                    var files = BASE.read_dir(backupDir).filter(function(f) { return f.endsWith('.js'); }).sort();
                     var cutoff = now - 7 * 86400000; // 7天前
                     for (var i = 0; i < files.length; i++) {
-                        var fp = path.join(backupDir, files[i]);
+                        var fp = backupDir + '/' + files[i];
                         try {
-                            var stat = fs.statSync(fp);
-                            if (stat.mtimeMs < cutoff) {
-                                fs.unlinkSync(fp);
+                            if (BASE.stat_mtime(fp) < cutoff) {
+                                BASE.unlink_file(fp);
                                 console.log('[备份清理] 删除过期备份:', files[i]);
                             }
                         } catch(e) {}

@@ -125,6 +125,13 @@ BASE.prototype.call_interval = function (func, time, count, end_func) {
 const vm = require('vm');
 const fs = require("fs");
 
+// 沙箱脚本（world/** 经 vm.compileFunction 加载）没有 require/module 作用域，
+// 通过 BASE 暴露受限的文件操作接口供其使用（不直接暴露 fs）
+BASE.read_dir = function (dir) { return fs.readdirSync(dir); };
+BASE.unlink_file = function (fp) { fs.unlinkSync(fp); };
+BASE.stat_mtime = function (fp) { return fs.statSync(fp).mtimeMs; };
+BASE.path_exists = function (fp) { return fs.existsSync(fp); };
+
 // 修复源文件中的两类换行问题：
 // 1. 代码中的字面 \n（反斜杠+n）→ 还原为真正的换行符
 // 2. 字符串内的真实换行 → 用 \n 转义序列替代（合并跨行字符串）

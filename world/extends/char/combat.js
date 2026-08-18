@@ -373,12 +373,7 @@ CHARACTER.prototype.from_attack = function (sh, mz, gjmsg, shmsg, dsmsg, parryms
 CHARACTER.prototype.do_recover = function (hp) {
     hp = hp + hp * this.query_prop('recover_per') / 100;
     if (!(hp > 0)) return 0;
-    var result = this.add_hp(parseInt(hp));
-    if (result > 0 && this.is_player) {
-        var stack = new Error().stack;
-        require('fs').appendFileSync('/tmp/debug_heal.log', "[do_recover] player=" + this.name + " hp_heal=" + result + " hp=" + this.hp + " max_hp=" + this.max_hp + " time=" + Date.now() + " stack=" + (stack ? stack.split("\n").slice(1, 6).join(" <- ") : "none") + "\n");
-    }
-    return result;
+    return this.add_hp(parseInt(hp));
 }
 
 CHARACTER.prototype.damage = function (sh, from, diff_fy) {

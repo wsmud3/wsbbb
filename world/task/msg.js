@@ -1,5 +1,4 @@
 
-const fs = require("fs");
 this.inherits(TASK);
 this.id = "msg";
 this.handler = null;
@@ -89,12 +88,13 @@ this.check_file = function () {
 }
 
 
-this.check_temp_files = async function (path, func) {
+this.check_temp_files = function (path, func) {
     const dir = __PATH.DATA + path + "/";
-    const paths = await fs.readdir(dir);
+    var paths;
+    try { paths = BASE.read_dir(dir); } catch (e) { return; }
     for (var i = 0; i < paths.length; i++) {
         if (func(paths[i])) {
-            fs.unlink(dir + paths[i]);
+            BASE.unlink_file(dir + paths[i]);
         }
     }
 }
