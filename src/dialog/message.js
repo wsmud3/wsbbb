@@ -53,7 +53,7 @@ export default {
                 this.showNotice(data.message);
             }
         }
-        if (this.element)
+        if (this.isShow && this.element)
             this.showMessages();
         if (this.isShow) {
             if (data.message && this.element.is(".detail")
