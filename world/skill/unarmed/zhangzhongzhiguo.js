@@ -77,9 +77,9 @@ function add_power_buff(me) {
     }, me);
 }
 
-// 战斗系统命中回调
-this.do_attack = function (me, target, par) {
-    if (target && target.hp > 0) {
+// ========== 攻击命中后叠层 ==========
+this.on_attack_over = function (me, target, par, sh) {
+    if (target && target.hp > 0 && sh > 0) {
         add_power_buff(me);
     }
 };
