@@ -189,6 +189,11 @@ const Dialog = {
         // 注意：本函数会被 .on("click", function(){ Dialog.hide(); }) 间接绑定，
         // 此时 this 是 Dialog 对象（方法调用样式），但为了安全仍显式用 Dialog.curItem
         var cur = Dialog.curItem;
+        // 消息详情页：X 返回列表而非关闭对话框
+        if (cur === "message" && Dialog.message && Dialog.message._inDetail) {
+            Dialog.message.hide_detail();
+            return;
+        }
         if (cur && Dialog[cur] && Dialog[cur].hide) {
             if (Dialog[cur].hide() === false) return;
         }
