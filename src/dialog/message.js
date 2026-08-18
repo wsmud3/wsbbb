@@ -11,16 +11,17 @@ export default {
         this.element.remove();
         this.isShow = false;
     }, hide: function () {
-        // 如果在详情页（detailID 或元素有 detail class），则返回列表而非关闭对话框
-        if (this.detailID || (this.element && this.element.is(".detail"))) {
+        // 在详情页时返回列表，不关闭对话框
+        if (this._inDetail) {
             this.hide_detail();
             return false;
         }
     }, hide_detail: function () {
         this.element.removeClass("detail");
         this.detailID = null;
+        this._inDetail = false;
         Dialog.footerElement.find('.item-commands').empty();
-        // 恢复底部 tab 栏（重新创建 footer 确保 tab 可见）
+        // 恢复底部 tab 栏
         this.create_footer();
         this.footerChanged(this.selected_item);
     },
@@ -218,9 +219,10 @@ export default {
         var id = $(this).attr("fromid");
         if (!id) return;
         // 注意：此处的 this 是点击的消息节点（jQuery 事件回调），
-        // 必须显式把 detailID 写到对话框对象上，否则 hide() 检查 detailID
+        // 必须显式把 detailID/_inDetail 写到对话框对象上，否则 hide() 检查
         // 判断"是否在详情页"会失效，点关闭会直接关掉整个对话框而无法返回列表
         Dialog.message.detailID = id;
+        Dialog.message._inDetail = true;
         SendCommand("message " + id);
         Dialog.message.element.addClass("detail");
 
@@ -234,6 +236,7 @@ export default {
         }
         // 先记录当前详情 id，保证即使消息不在列表中也能正常"返回上一级"
         this.detailID = id;
+        this._inDetail = true;
         var msg = this.getMessageitem(id);
         if (!msg) return;
         var str = [];
