@@ -41,6 +41,9 @@ REMOTE=$(git rev-parse origin/main)
 BUILT_REF_FILE=log/last_built_ref
 BUILT_REF=$(cat "$BUILT_REF_FILE" 2>/dev/null || true)
 if [ "$BUILT_REF" != "$LOCAL" ]; then
+    # 自愈清理：root 属主的构建产物 mud 无法覆盖，会阻塞构建
+    # （www 目录本身属主为 mud，cron 可以删除其中的 root 文件）
+    find www -user root -delete 2>/dev/null || true
     if npm run build >> "$LOG" 2>&1; then
         echo "$LOCAL" > "$BUILT_REF_FILE"
         log "前端构建完成 ${LOCAL:0:7}（www/ 已更新）"
