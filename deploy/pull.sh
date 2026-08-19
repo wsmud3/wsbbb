@@ -35,6 +35,20 @@ fi
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 
+# ---------- 1.5 前端构建：代码比上次构建新就重建（即使没有新提交） ----------
+# www/ 是 gitignore 的本地构建产物，不入版本库；这里保证拉取后的
+# 前端代码能自动构建生效（同时修复 pull.sh 自身更新后不触发构建的问题）
+BUILT_REF_FILE=log/last_built_ref
+BUILT_REF=$(cat "$BUILT_REF_FILE" 2>/dev/null || true)
+if [ "$BUILT_REF" != "$LOCAL" ]; then
+    if npm run build >> "$LOG" 2>&1; then
+        echo "$LOCAL" > "$BUILT_REF_FILE"
+        log "前端构建完成 ${LOCAL:0:7}（www/ 已更新）"
+    else
+        log "错误：前端构建失败 ${LOCAL:0:7}，前端保持旧版本，下轮自动重试"
+    fi
+fi
+
 # 无更新，什么都不做（避免无意义 reload）
 [ "$LOCAL" = "$REMOTE" ] && exit 0
 
