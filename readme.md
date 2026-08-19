@@ -1,5 +1,14 @@
 # MUD 游戏 - 更新日志
 
+## 2026-08-19 — 服务器事故修复完成：GitHub 仓库历史与文件全部恢复
+
+- **根因确认** — 8/18 21:36 开发机 force-push 将整个仓库压成快照式根提交，抹掉服务器 3 个提交（部署加固脚本/事故记录/沙箱修复），且快照缺少 config.js、ecosystem.config.js 等关键文件。自动部署脚本的关键文件校验与快进检查**正确拦截**了坏提交（脚本无问题），服务器因此保持旧版本运行
+- **历史恢复** — 服务器 3 个被抹掉的提交通过 rebase 重放至远端最新提交之上，全部快进推送（未使用 force-push）
+- **文件恢复** — 逐字节恢复快照丢失的文件：config.js、ecosystem.config.js、.env.example、.env.apk.example、android/ 客户端源码（57 个文件）、audit_pfm.py、check_rooms.js、capacitor.config.ts、icon-1024.png、tubiao.png、www/admin/index.html、自创系统方案.md
+- **部署脚本可执行权限恢复** — 快照把 deploy/pull.sh 改成 644 导致 cron 静默失败，已恢复可执行位并推送
+- **手动保护式部署上线** — 备份数据库 → pm2 reload all → 健康检查全部通过（web API 正常、正式服/测试服端口在监听）。昨晚 23:42 武馆教习 7 技能与 00:45 grade6 武学修复**正式生效**
+- **协作约定** — main 分支禁止 force-push；config.js/ecosystem.config.js 必须在提交中保留；修改 pull.sh 时勿丢失可执行位
+
 ## 2026-08-19 00:44 — 修复 grade6 武学 bug（4 处）
 
 - **掌中之国** — 修复 add_power_buff 中 lv 未定义导致崩溃的 bug，改为从 me.query_skill 获取等级
