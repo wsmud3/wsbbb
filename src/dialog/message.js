@@ -112,8 +112,10 @@ export default {
 
         Dialog.title("消息");
         Dialog.icon("envelope");
-        this.element.on("click",
-            ".message-item", this.showMessageDetail);
+        // 先解绑再绑定，避免每次切换底部 tab / 从详情返回列表时
+        // 重复绑定，导致点击一条消息触发多次 showMessageDetail
+        this.element.off("click", ".message-item")
+            .on("click", ".message-item", this.showMessageDetail);
     },
     inner_close: function () {
         this.element.remove();
@@ -127,7 +129,7 @@ export default {
             html.push("<span class='footer-item" + (i == this.selected_item ? " select" : "") + "' for='" + i + "''>"
                 + this.footers[i] + "</span>");
         }
-        html.push('<dic class="item-commands"></div>');
+        html.push('<div class="item-commands"></div>');
         Dialog.footer(html.join(""));
 
 
@@ -286,7 +288,15 @@ export default {
         return str.join("");
     },
     createElement: function () {
-        return $('<div class="dialog-message"><div class="message-list"></div><div class="detail-list"></div></div>');
+        var el = $('<div class="dialog-message"><div class="message-list"></div><div class="detail-list"></div></div>');
+        // 详情界面：点击任意区域返回上一级（消息列表），
+        // 与背包物品详情、技能详情保持一致；带 cmd 的命令按钮（如领取）除外
+        el.find(".detail-list").on("click", function (e) {
+            if (!Dialog.message._inDetail) return;
+            if ($(e.target).closest('[cmd]').length > 0) return;
+            Dialog.message.hide_detail();
+        });
+        return el;
     }, updateMessageState: function (rec, index) {
         if (this.detailID != rec) return;
         const elem = this.detailElement.find(".detail-item[index='" + index + "']>.detail-rec");
