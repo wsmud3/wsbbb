@@ -20,7 +20,7 @@ this.set({
         // 绝招冷却时间 -20%
         distime_per: 20,
 
-        desc: "每秒恢复1%最大气血和内力"
+        desc: "每秒恢复最大3%的气血和内力"
     },
 });
 
@@ -46,17 +46,17 @@ this.on_eq = function (me) {
         // 死亡不恢复
         if (me.hp > 0) {
 
-            // 固定按照最大气血的1%恢复
+            // 固定按照最大气血的3%恢复
             if (me.hp < me.max_hp) {
-                var hp = Math.floor(me.max_hp / 100);
+                var hp = Math.floor(me.max_hp * 3 / 100);
 
                 if (hp > 0)
                 me.add_hp(hp);
             }
 
-            // 固定按照最大内力的1%恢复
+            // 固定按照最大内力的3%恢复
             if (me.mp < me.max_mp) {
-                var mp = Math.floor(me.max_mp / 100);
+                var mp = Math.floor(me.max_mp * 3 / 100);
 
                 if (mp > 0)
                 me.add_mp(mp);
