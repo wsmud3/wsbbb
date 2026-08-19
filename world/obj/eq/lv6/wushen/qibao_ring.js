@@ -18,7 +18,14 @@ this.set({
 
 this.on_eq = function (me) {
 				if (me.query_temp("qibao_timer")) return;
+				var item = this;
 				var handler = setInterval(function () {
+								// 已经卸下装备则停止恢复（修复未装备仍恢复内力的问题）
+								if (!me.equipment || me.equipment[item.eq_type] !== item) {
+												clearInterval(handler);
+												me.remove_temp("qibao_timer");
+												return;
+								}
 								if (!me.environment || me.hp <= 0) return;
 								var recover = Math.floor(me.max_mp * 5 / 100);
 								if (recover > 0 && me.mp < me.max_mp) {
