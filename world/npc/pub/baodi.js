@@ -2,7 +2,6 @@
 this.set({
     name: "易直非",
     desc: "一个神秘的商人，可以帮你兑换你一直想要却得不到的道具",
-    title: "神秘商人",
     gender: 1,
     age: 25,
     per: this.random(20) + 10,
@@ -34,80 +33,63 @@ function shenqi_frags(me) {
     };
 }
 
+// 兑换：只弹出一个「神器兑换」按钮
 this.add_action("ask3", "兑换", function (me) {
-    var lines = [];
-    lines.push("\n<hiz>══ 神秘商人 · 兑换 ══</hiz>");
-    lines.push("<hiw>易直非笑眯眯地看着你：“我这儿的宝贝，可都是外面求都求不来的好东西。”</hiw>");
-    lines.push("\n<hig>① 神器兑换</hig><hiw> — 消耗<hir>神魂碎片×" + SHENQI_NEED + "</hir>、<hir>神器碎片×" + SHENQI_NEED + "</hir>，换取一件神器装备</hiw>");
-    me.notify(lines.join("\n"));
     me.send_commands("shenqi_duihuan " + this.id, "神器兑换");
 });
 
-// 打开神器兑换面板（回复编号选择）
+// 神器格子面板：点击神器查看详情
 this.add_action("shenqi_duihuan", null, function (me) {
-    var frags = shenqi_frags(me);
-    var lines = [];
-    lines.push("\n<hiz>══ 神器兑换 ══</hiz>");
-    lines.push("<hiw>易直非抚掌笑道：“想要神器？拿</hiw><hir>神魂碎片×" + SHENQI_NEED + "</hir><hiw>和</hiw><hir>神器碎片×" + SHENQI_NEED + "</hir><hiw>来换，任你挑选！”</hiw>");
-    lines.push("<hiw>你身上的碎片：</hiw><hir>神魂碎片×" + frags.soul + "</hir><hiw>　</hiw><hir>神器碎片×" + frags.art + "</hir>");
-    lines.push("\n<hiz>──────────────────</hiz>");
+    var _S = function (cmd) {
+        return "onclick=\"window.SendCommand('" + cmd + "')\"";
+    };
+    var CELL = "display:inline-block;width:31%;box-sizing:border-box;text-align:center;border:1px solid #b8943f;background:#151515;border-radius:0.4em;padding:0.55em 0;margin:0.4em 1%;cursor:pointer;vertical-align:top;";
+    var html = '<div style="text-align:center;">';
     for (var i = 0; i < SHENQI_LIST.length; i++) {
         var obj = OBJ.CREATE("eq/lv6/wushen/" + SHENQI_LIST[i]);
         if (!obj) continue;
         var color = obj.query_grade_color ? obj.query_grade_color() : "hiw";
-        lines.push("<hig>" + (i + 1) + ".</hig> <" + color + ">" + obj.name + "</" + color + ">");
+        html += '<span ' + _S("shenqi_pick_" + (i + 1) + " " + this.id) + ' style="' + CELL + '"><' + color + '>' + obj.name + '</' + color + '></span>';
     }
-    lines.push("\n<hiz>──────────────────</hiz>");
-    lines.push("<hiw>回复装备对应的<hiy>编号</hiy>即可兑换（回复<hir>0</hir>或点下方按钮取消）。</hiw>");
-    me.notify(lines.join("\n"));
-    me.wait_input = this.on_shenqi_pick.bind(this);
-    me.send_commands("quxiao", "取消兑换");
+    html += '</div>';
+    me.notify(html);
 });
 
-// 处理兑换编号输入
-this.on_shenqi_pick = function (me, input) {
-    input = (input || "").trim();
-    if (input == "quxiao" || input == "cancle" || input == "取消" || input == "0") {
-        me.wait_input = null;
-        return me.notify("易直非笑道：“随时欢迎再来兑换！”");
-    }
-    var num = null;
-    var tokens = input.split(/\s+/);
-    for (var t = 0; t < tokens.length; t++) {
-        if (/^\d+$/.test(tokens[t])) {
-            num = parseInt(tokens[t], 10);
-            break;
-        }
-    }
-    if (num === null) {
-        me.notify("易直非说道：请回复装备对应的编号（回复0取消）。");
-        return;
-    }
-    if (num < 1 || num > SHENQI_LIST.length) {
-        me.notify("易直非摇头道：没有这个编号的神器，再选选看。");
-        return;
-    }
-
-    var path = "eq/lv6/wushen/" + SHENQI_LIST[num - 1];
-    var obj = OBJ.CREATE(path);
-    if (!obj) {
-        me.wait_input = null;
-        return me.notify("易直非挠头道：哎呀，这件神器不知去向，换一件吧。");
-    }
-
-    var frags = shenqi_frags(me);
-    if (frags.soul < SHENQI_NEED || frags.art < SHENQI_NEED) {
-        me.notify("<hiw>易直非说道：碎片不够啊，需要</hiw><hir>神魂碎片×" + SHENQI_NEED + "</hir><hiw>（当前" + frags.soul + "）、</hiw><hir>神器碎片×" + SHENQI_NEED + "</hir><hiw>（当前" + frags.art + "），凑齐了再来吧。</hiw>");
-        return;
-    }
-
-    var soul = me.find_obj_bypath("eq/lv6/wushen/shenhunsuipian");
-    var art = me.find_obj_bypath("eq/lv6/wushen/shenqisuipian");
-    me.remove_obj(soul, SHENQI_NEED);
-    me.remove_obj(art, SHENQI_NEED);
-    var got = me.add_obj(path, 1);
-    me.wait_input = null;
-    if (got) {
-        me.notify("\n<hig>易直非郑重地将" + got.color_name + "</hig><hiw>交到你手中：</hiw><hiy>“此乃上古神器，望你善加利用！”</hiy>");
-    }
-};
+// 注册每个神器的查看与确认兑换动作
+for (var i = 0; i < SHENQI_LIST.length; i++) {
+    (function (idx) {
+        var key = SHENQI_LIST[idx];
+        // 点击神器：显示属性 + 兑换需求 + 确认兑换按钮
+        this.add_action("shenqi_pick_" + (idx + 1), null, function (me, par) {
+            var obj = OBJ.CREATE("eq/lv6/wushen/" + key);
+            if (!obj) return me.notify("易直非挠头道：哎呀，这件神器不知去向，换一件吧。");
+            var frags = shenqi_frags(me);
+            var color = obj.query_grade_color ? obj.query_grade_color() : "hiw";
+            var lines = [];
+            lines.push("\n<" + color + ">" + obj.name + "</" + color + ">");
+            if (obj.desc) lines.push(obj.desc);
+            if (obj.prop) lines.push("<" + color + ">" + UTIL.prop_toString(obj.prop) + "</" + color + ">");
+            lines.push("\n<hiz>── 兑换需求 ──</hiz>");
+            lines.push("<hiw>神魂碎片×" + SHENQI_NEED + " + 神器碎片×" + SHENQI_NEED + "</hiw>");
+            lines.push("<hiw>你现有：神魂碎片×" + frags.soul + "、神器碎片×" + frags.art + "</hiw>");
+            lines.push(frags.soul >= SHENQI_NEED && frags.art >= SHENQI_NEED ? "<hig>碎片充足，可以兑换。</hig>" : "<hir>碎片不足。</hir>");
+            me.notify(lines.join("\n"));
+            me.send_commands("shenqi_confirm_" + (idx + 1) + " " + this.id, "确认兑换", "shenqi_duihuan " + this.id, "返回");
+        });
+        // 确认兑换：扣除碎片并发放神器
+        this.add_action("shenqi_confirm_" + (idx + 1), null, function (me, par) {
+            var frags = shenqi_frags(me);
+            if (frags.soul < SHENQI_NEED || frags.art < SHENQI_NEED) {
+                return me.notify("<hiw>易直非说道：碎片不够啊，需要</hiw><hir>神魂碎片×" + SHENQI_NEED + "</hir><hiw>（当前" + frags.soul + "）、</hiw><hir>神器碎片×" + SHENQI_NEED + "</hir><hiw>（当前" + frags.art + "），凑齐了再来吧。</hiw>");
+            }
+            var soul = me.find_obj_bypath("eq/lv6/wushen/shenhunsuipian");
+            var art = me.find_obj_bypath("eq/lv6/wushen/shenqisuipian");
+            me.remove_obj(soul, SHENQI_NEED);
+            me.remove_obj(art, SHENQI_NEED);
+            var got = me.add_obj("eq/lv6/wushen/" + key, 1);
+            if (got) {
+                me.notify("\n<hig>易直非郑重地将" + got.color_name + "</hig><hiw>交到你手中：</hiw><hiy>“此乃上古神器，望你善加利用！”</hiy>");
+            }
+        });
+    }).call(this, i);
+}
