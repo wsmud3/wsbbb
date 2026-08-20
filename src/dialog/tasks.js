@@ -115,13 +115,14 @@ export default {
                 break;
             }
         }
-        this.create_items();
+        if (this.isShow) this.create_items();
     }, onData: function (data) {
 
         if (data.id) return this.update_item(data);
+        this.items = data.items;
+        if (!this.isShow) return;
         Dialog.title("任务列表");
         Dialog.icon("exclamation-sign");
-        this.items = data.items;
         this.create_items();
     },
     show: function () {

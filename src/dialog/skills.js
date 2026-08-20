@@ -208,10 +208,9 @@ export default {
         }
         if (data.books) {
             this.books = this.format_books(data.books);
-            if (this.isShow || !Dialog.master.isShow)
-                return this.showBooks();
-            else
-                return Dialog.master.showBooks();
+            if (this.isShow) return this.showBooks();
+            if (Dialog.master.isShow) return Dialog.master.showBooks();
+            return;
         }
         if (data.id && !data.desc) {
             if (data.from)
@@ -262,8 +261,10 @@ export default {
             if (this.skill_element && this.skill_element_id === data.remove) {
                 this.hide();
             }
-            this.createSkillItems(this.items);
-            this.create_footer();
+            if (this.isShow) {
+                this.createSkillItems(this.items);
+                this.create_footer();
+            }
             return;
         }
         if (data.sk_group >= 0) {

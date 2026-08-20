@@ -70,7 +70,7 @@ export default {
             return this.showUnread();
         }
         this.items = data.items;
-        this.create_items();
+        if (this.isShow) this.create_items();
     }, showUnread: function () {
         showFlag("events", this.unRead);
     },

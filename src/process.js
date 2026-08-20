@@ -141,9 +141,8 @@ const Process = {
         // 统一用最简单的方式：不用动画，直接设置 CSS
         $(".login-content").hide();
         $(".container").css({"display": "flex", "opacity": "1"});
+        Dialog.reset();
         $(".content-room").removeClass("hide").css("display", "");
-        $(".dialog").addClass("hide");
-        Dialog.isShow = false;
 
         // DOM 状态诊断
         setTimeout(function() {
@@ -419,8 +418,7 @@ const Process = {
     }, updatemap: function (x) {
         MAP.UpdateMap(x.map, x);
     }, dialog: function (data) {
-        console.log("[reconnect] dialog type=", data.dialog, "keys=", Object.keys(data).join(","));
-        Dialog.show(data.dialog, data);
+        Dialog.receive(data.dialog, data);
     }, relation: function (data) {
         Dialog.relation.onData(data);
     }, team_data: function (data) {

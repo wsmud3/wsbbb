@@ -70,15 +70,9 @@ export function connectServer(server, pid) {
             Process.room_path = null;
             Process.room_exits = null;
             Process.clear();
-            // 强制清理所有 dialog 状态，防止残留导致元素引用失效
-            Dialog.isShow = false;
-            Dialog.curItem = null;
-            // 清空对话框内容，避免残留 DOM 引用
-            var dc = $(".dialog>.dialog-content");
-            if (dc.length) dc.empty();
-            $(".dialog>.dialog-footer").empty();
-            $(".content-room").removeClass("hide");
-            $(".dialog").addClass("hide");
+            // 公共外壳和子对话框的状态必须一起重置；只清 DOM
+            // 会留下 child.isShow=true 和已脱离 DOM 的 element 引用。
+            Dialog.reset();
             document.querySelectorAll('.dialog-backdrop, .modal-backdrop, .overlay').forEach(function(el) {
                 el.remove();
             });
@@ -134,17 +128,6 @@ export function onLogin() {
     if (Process.channel) {
         Process.channel.allow_scroll = true;
         Process.channel.scroll_button.hide();
-    }
-    // After reconnect, refresh the currently open dialog to restore its data
-    if (Dialog.isShow && Dialog.curItem) {
-        var cur = Dialog[Dialog.curItem];
-        if (cur === Dialog.pack) {
-            cur.isShow = false;
-            cur.show();
-        } else if (cur === Dialog.skills) {
-            cur.isShow = false;
-            cur.show();
-        }
     }
 }
 

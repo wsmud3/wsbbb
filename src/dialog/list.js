@@ -54,8 +54,10 @@ export default {
 
             Dialog.title("你的仓库中有" + this.store_count + "/" + this.max_store_count + "件物品");
         }
-        this.update_pack();
-        if (data.money != undefined) this.show_footer(data.money);
+        if (this.isShow && Dialog.curItem === "list") {
+            this.update_pack();
+            if (data.money != undefined) this.show_footer(data.money);
+        }
     }, find_item: function (otype, id) {
         var items = Dialog.pack.items;
         if (otype == 2) items = this.selllist;
@@ -118,7 +120,7 @@ export default {
         }
         if (gongji >= 0) {
             this.gongji = gongji;
-            this.show_footer(gongji);
+            if (this.isShow && Dialog.curItem === "list") this.show_footer(gongji);
         }
     },
     show: function (data) {

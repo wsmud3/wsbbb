@@ -374,12 +374,12 @@ export default {
     update_lock: function (data) {
         if (data.unlock >= 0 && jh_fb.items) {
             jh_fb.update_unlock(data.unlock);
-            if (this.selected_item === jh_fb)
+            if (this.isShow && this.selected_item === jh_fb)
                 jh_fb.show(this.listElement, this.descElement);
         }
         if (data.unlock2 >= 0 && jh_ar.items) {
             jh_ar.update_unlock(data.unlock2);
-            if (this.selected_item === jh_ar)
+            if (this.isShow && this.selected_item === jh_ar)
                 jh_ar.show(this.listElement, this.descElement);
         }
 

@@ -360,7 +360,8 @@ export default {
 
 
     show_moeny: function () {
-        if (!this.isShow) return;//+ "<span cmd='sell all'>清理包裹</span></div>"
+        if (!this.isShow || (this === Dialog.pack && Dialog.curItem !== "pack")
+            || (this === Dialog.pack2 && Dialog.curItem !== "pack2")) return;
         let mstr = Util.moneyToStr(this.money);
         let str = [];
         for (let i = 0; i < 3; i++) {
@@ -419,7 +420,9 @@ export default {
         SendCommand(cmd + " " + item);
     },
     show_items: function () {
-        if (!this.packElement) return;
+        if (!this.packElement || !this.isShow
+            || (this === Dialog.pack && Dialog.curItem !== "pack")
+            || (this === Dialog.pack2 && Dialog.curItem !== "pack2")) return;
         this.createItems();
         this.create_eqs();
         Dialog.icon("briefcase");

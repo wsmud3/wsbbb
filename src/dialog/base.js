@@ -24,7 +24,30 @@ import DialogList from './list.js';
 import DialogAutoPfm from './auto_pfm.js';
 import DialogZc from './zc.js';
 
+// These dialogs receive asynchronous model updates from the server. Such an
+// update must never be treated as a request to open/switch the public dialog.
+// Examples include login pack snapshots, item/title rewards, skill changes,
+// event badges and administrator announcements.
+const BACKGROUND_DIALOGS = new Set([
+    "pack", "skills", "tasks", "jh", "events", "message", "list"
+]);
 
+// A few commands intentionally return their first screen as dialog data rather
+// than opening a shell before the request. Keep those explicit responses
+// working while all other unsolicited dialog data stays in the background.
+function shouldOpenFromData(name, data) {
+    if (!data) return false;
+    if (name === "list") return !!(data.stores || data.selllist);
+    if (name === "pack2") return !!data.items;
+    return name === "trade" || name === "auto_pfm" || name === "zc";
+}
+
+const DIALOG_NAMES = [
+    "score", "map", "keys", "setting", "extend", "channel", "pack",
+    "skills", "tasks", "shop", "message", "stats", "jh", "relation",
+    "team", "party", "trade", "events", "pm", "pack2", "master",
+    "list", "auto_pfm", "zc"
+];
 
 const Dialog = {
     isShow: false,
@@ -54,106 +77,75 @@ const Dialog = {
     auto_pfm: DialogAutoPfm,
     zc: DialogZc,
 
-    show: function (name, data) {
-        console.log("[DIALOG] show name=" + name + " hasData=" + !!data + " isShow=" + this.isShow + " curItem=" + this.curItem + " stack=" + new Error().stack.split("\n")[2].trim());
-        if (!name) return;
-		// Toggle: clicking the same dialog button without data closes it
-		if (!data && this.isShow && name === this.curItem) {
-			return this.hide();
-		}
+    getDialog: function (name) {
+        if (!name) return null;
         const dialog = this[name];
         if (!dialog) throw new Error('没有' + name);
         if (!dialog.created) {
             dialog.init();
             dialog.created = true;
         }
-        // Prevent background data updates from hijacking the currently open
-        // dialog (e.g. buying items, dungeon sweep, auto-store, learning skills,
-        // events badge updates). These are silent data changes that should not
-        // switch panels.
-        if (data && this.isShow && name != this.curItem
-            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events" || name === "message" || name === "tasks")) {
-            // 注意：与下方 139 行的 hasInteractive 保持一致，纯 items 更新
-            // 不算交互数据，否则背包刷新（任务奖励/登录刷新等）会劫持
-            // 当前打开的对话框，把用户切换到空白面板
-            var hasInteractive = data.rcdesc || data.jldesc || data.xqdesc || data.desc;
-            // tasks 的 desc 推送是任务完成的后台更新（服务端 task.js 下发），
-            // 不是用户主动查看，且 tasks 没有 init_element 方法，带 desc 强开面板会崩溃
-            if (!hasInteractive || name === "tasks") {
-                dialog.onData(data);
-                return;
-            }
-            // Redirect recast/jinglian/xiangqian to message area instead of switching dialog
-            if ((name === "pack" || name === "pack2") && (data.rcdesc || data.jldesc || data.xqdesc)) {
-                dialog.onData(data);
-                return;
-            }
-        }
-        // When no dialog is open, silently process ALL server-pushed data
-        // without opening a panel. Dialog should only open on explicit user
-        // button clicks, never from automated server data pushes (e.g. pack
-        // refresh on login, skill updates, event badge changes).
-        if (data && !this.isShow
-            && (name === "pack" || name === "pack2" || name === "list" || name === "skills" || name === "jh" || name === "events" || name === "message" || name === "tasks")) {
-            dialog.onData(data);
+        return dialog;
+    },
+
+    // Entry point for server type="dialog" packets. Receiving model data is
+    // deliberately separate from show(), which represents an actual UI open.
+    receive: function (name, data) {
+        if (!name || !data) return;
+        const dialog = this.getDialog(name);
+        const isCurrent = this.isShow && this.curItem === name;
+
+        // A delayed close from a previous command must not close or create the
+        // dialog the player is looking at now.
+        if (data.close) {
+            if (isCurrent) this.hide();
             return;
         }
-        // Forward skills desc data to master dialog if it's currently open,
-        // avoiding panel switch that would break the master skill view
-        if (data && this.isShow && name === "skills" && data.desc
-            && this.curItem === "master" && this.master && this.master.isShow) {
-            this.master.onData(data);
+
+        // Data for the panel already selected by the player is safe to render.
+        if (isCurrent) {
+            dialog.onData && dialog.onData(data);
             return;
         }
-        // Forward pack item desc data to list dialog if it's open,
-        // avoiding panel switch that would show an empty backpack
-        if (data && this.isShow && name === "pack" && (data.desc || data.rcdesc || data.jldesc || data.xqdesc)
-            && this.curItem === "list" && this.list && this.list.isShow) {
-            this.pack.onData(data);
+
+        // Preserve the handful of server responses whose documented behaviour
+        // is to open a new panel (warehouse/shop list, target pack, trade, etc.).
+        if (shouldOpenFromData(name, data)) {
+            this.show(name, data);
             return;
         }
-        // Ensure dialog is open, but skip pack fetch when data is provided
-        if (!this.isShow || name != this.curItem) {
-            // Prevent item-only pack updates (e.g. task rewards) from
-            // hijacking the active dialog to an empty pack panel
-            if (data && name === "pack" && data.name && !data.items
-                && !data.desc && !data.rcdesc && !data.jldesc && !data.xqdesc
-                && this.curItem && this.curItem !== "pack") {
-                this.pack.onData(data);
-                return;
-            }
-            if (this.curItem && name != this.curItem) {
-                Dialog[Dialog.curItem].close && Dialog[Dialog.curItem].close();
-                Dialog[Dialog.curItem].isShow = false;
-                Dialog.contentElement.empty();
-                Dialog.footer("");
-                // Ensure init runs fully: reset isShow since the previous
-                // dialog was closed directly without going through Dialog.close()
-                this.isShow = false;
-            }
-            this.init();
-            this.curItem = name;
-            if (!data) {
-                dialog.show(null);
-            }
-            Process.message.scroll2end();
+
+        // Known background models update caches/badges only. They can no longer
+        // make the public header visible or replace another panel.
+        if (BACKGROUND_DIALOGS.has(name)) {
+            dialog.onData && dialog.onData(data);
+            return;
         }
-        if (data) {
-            // Only auto-open dialog for interactive content (rcdesc/jldesc/xqdesc/desc)
-            // Simple item updates should NOT open the dialog
-            var hasInteractive = data.rcdesc || data.jldesc || data.xqdesc || data.desc;
-            if (!dialog.isShow && hasInteractive) {
-                dialog.isShow = true;
-                dialog.init_element();
-                dialog.element.appendTo(Dialog.contentElement);
-            }
-            // For non-interactive data, only call onData if dialog is already shown
-            // or if the data doesn't need interactive display (simple updates)
-            if (dialog.isShow || !hasInteractive) {
-                dialog.onData(data);
-            }
+
+        console.warn("[DIALOG] ignored unsolicited data for " + name);
+    },
+
+    show: function (name, data) {
+        if (!name) return;
+        if (!data && this.isShow && name === this.curItem) return this.hide();
+
+        const dialog = this.getDialog(name);
+        if (this.curItem && name !== this.curItem) {
+            const current = this[this.curItem];
+            current && current.close && current.close();
+            if (current) current.isShow = false;
+            this.contentElement && this.contentElement.empty();
+            this.footerElement && this.footer("");
+            this.isShow = false;
         }
-    },    select: function (name) {
+
+        this.init();
+        this.curItem = name;
+        if (data) dialog.onData && dialog.onData(data);
+        else dialog.show && dialog.show(null);
+        Process.message.scroll2end();
+    },
+    select: function (name) {
         if (this.isShow && name == this.curItem) return this.hide();
         if (this.curItem && name != this.curItem) {
             Dialog[Dialog.curItem].close && Dialog[Dialog.curItem].close();
@@ -166,8 +158,7 @@ const Dialog = {
         this.curItem = name;
     },
     init: function () {
-        console.log("[DIALOG] init called, isShow=" + this.isShow + " stack=" + new Error().stack.split("\n")[2].trim());
-        if (this.isShow) return;
+        if (this.isShow && this.element && !this.element.hasClass("hide")) return;
         if (!this.isInit) {
             this.contentElement = $(".dialog>.dialog-content");
             this.titleElement = $(".dialog>.dialog-header>.dialog-title");
@@ -217,7 +208,6 @@ const Dialog = {
         html ? this.footerElement.html(html) : this.footerElement.empty();
     },
     close: function () {
-        if (!Dialog.isShow) return;
         // 同 hide()：不依赖 this（可能被 DOM 事件调用），显式用 Dialog.curItem
         var cur = Dialog.curItem;
         if (cur) {
@@ -227,7 +217,40 @@ const Dialog = {
         Dialog.isShow = false;
         Dialog.curItem = null;
         $(".content-room").removeClass("hide");
-        Dialog.element.addClass("hide");
+        if (Dialog.element) Dialog.element.addClass("hide");
+        else $(".dialog").addClass("hide");
+    },
+    // Disconnect/login can arrive while any child dialog owns detached DOM.
+    // Reset the public shell and every child flag atomically so the next server
+    // snapshot cannot encounter a stale `isShow` reference.
+    reset: function () {
+        for (let i = 0; i < DIALOG_NAMES.length; i++) {
+            const child = this[DIALOG_NAMES[i]];
+            if (!child) continue;
+            child.isShow = false;
+            if (child.objelement) {
+                child.objelement.remove();
+                child.objelement = null;
+            }
+            if (child.skill_element) {
+                child.skill_element.remove();
+                child.skill_element = null;
+            }
+            child.skill_element_id = null;
+        }
+        if (this.message) {
+            this.message._inDetail = false;
+            this.message.detailID = null;
+        }
+        this.isShow = false;
+        this.curItem = null;
+        const content = this.contentElement || $(".dialog>.dialog-content");
+        const footer = this.footerElement || $(".dialog>.dialog-footer");
+        content.empty();
+        footer.empty();
+        $(".dialog>.dialog-header>.dialog-title").empty();
+        $(".content-room").removeClass("hide");
+        $(".dialog").addClass("hide");
     },
     injectStyle: function (css) {
         const style = document.createElement("style");
