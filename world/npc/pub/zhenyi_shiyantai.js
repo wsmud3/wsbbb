@@ -30,10 +30,21 @@ this.on_create = function (path, par) {
 
 this.add_action("zhenyi_trial", "开启试炼", function (me) {
     if (!this.zhenyi_key || !WORLD.ZHENYI) return me.notify("这道试炼尚未准备好。"), false;
-    if (me.environment && me.environment.no_fight) {
-        return WORLD.ZHENYI.start_trial(me, this.zhenyi_id);
+    var data = WORLD.ZHENYI.serialize(me), item = null;
+    if (data && data.list) {
+        for (var i = 0; i < data.list.length; i++) {
+            if (data.list[i].id === this.zhenyi_id) { item = data.list[i]; break; }
+        }
     }
-    return WORLD.ZHENYI.start_trial(me, this.zhenyi_id);
+    if (!item) return me.notify("你还没有资格参悟这道真意。"), false;
+    if (item.daily >= item.daily_limit) return me.notify("这项试炼今日已达十次。"), false;
+    var commands = ["zhenyi challenge " + this.zhenyi_id, "进入试炼"];
+    if (item.cleared) {
+        commands.push("zhenyi sweep " + this.zhenyi_id + " 1", "扫荡一次");
+        commands.push("zhenyi sweep " + this.zhenyi_id + " 10", "扫荡十次");
+    }
+    me.send_commands.apply(me, commands);
+    return true;
 });
 
 // 即使未来某个公共房间取消 no_fight，也不能直接攻击引路人。
