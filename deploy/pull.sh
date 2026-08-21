@@ -23,19 +23,16 @@ log() { echo "[$(date '+%F %T')] $1" >> "$LOG"; }
 build_frontend() {
     local current_ref
     current_ref=$(git rev-parse HEAD)
-    local built_ref
-    built_ref=$(cat log/last_built_ref 2>/dev/null || true)
-    if [ "$built_ref" = "$current_ref" ]; then
-        return 0
-    fi
-
-    # 自愈清理：root 属主的构建产物 mud 无法覆盖，会阻塞构建。
+    # 前端产物不入库，且旧服务器可能残留错误的 last_built_ref；每轮部署
+    # 都重建一次，确保 www/ 一定对应当前代码，而不是只相信记录文件。
     find www -user root -delete 2>/dev/null || true
     if npm run build >> "$LOG" 2>&1; then
         echo "$current_ref" > log/last_built_ref
         log "前端构建完成 ${current_ref:0:7}（www/ 已更新）"
+        return 0
     else
         log "错误：前端构建失败 ${current_ref:0:7}，前端保持旧版本，下轮自动重试"
+        return 1
     fi
 }
 
@@ -56,8 +53,8 @@ REMOTE=$(git rev-parse origin/main)
 
 # 无更新，什么都不做（避免无意义 reload）
 if [ "$LOCAL" = "$REMOTE" ]; then
-    # 即使没有新提交，也要补做上次失败或尚未执行的前端构建。
-    build_frontend
+    # 即使没有新提交，也要确认前端产物可正常生成。
+    build_frontend || true
     exit 0
 fi
 
@@ -90,7 +87,10 @@ if ! git merge --ff-only -q origin/main; then
 fi
 
 # 合并完成后再构建，确保 www/ 与当前实际运行的提交一致。
-build_frontend
+if ! build_frontend; then
+    log "中止：前端构建失败，暂不 reload，等待下一轮重试"
+    exit 0
+fi
 
 # ---------- 6. 重启并健康检查 ----------
 pm2 reload all
