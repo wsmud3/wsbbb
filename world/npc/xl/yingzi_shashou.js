@@ -18,6 +18,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("xl_yingzi_defeated", 1);
-    killer.set_temp("zy_xl_4", 1);
-    killer.notify('<hig>影子杀手消散！你领悟了暗杀真意——「血债」。</hig>');
+    killer.notify('<hig>影子杀手消散！你窥见了暗杀真意——「血债」。</hig>');
 };

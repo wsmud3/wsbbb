@@ -114,6 +114,8 @@ WORLD = {
         this.SERVERID = this.SERVER.id;
 
         await db.initDataDir();
+        // 真意是命令、地图、NPC和战斗共同依赖的数据层，须在资源扫描前初始化。
+        BASE.CREATE(__PATH.WORLD, "zhenyi");
         loadResource();
         await this.DATA.load();
         await this.LISTENER.start(this.SERVER.port);

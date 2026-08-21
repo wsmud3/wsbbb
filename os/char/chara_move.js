@@ -76,6 +76,11 @@ CHARACTER.prototype.moveto = function (rm, leave_msg, in_msg, dir) {
     }
     if (!next_room) return false;
 
+    // 门派禁地的第二道权限校验：拦截直传房间、旧存档房间和其它绕过江湖地图的移动。
+    if (this.is_player && WORLD.ZHENYI && next_room.parent && WORLD.ZHENYI.find_by_key(next_room.parent.id)) {
+        if (!WORLD.ZHENYI.can_enter_area(this, next_room.parent.id)) return false;
+    }
+
     if (next_room.is_full()) {
         //如果房间人数过多，创建投影
         next_room = next_room.create_shadow();

@@ -153,6 +153,7 @@ CHARACTER.prototype.end_fight = function () {
     this.auto_skills = null;  // 重置自动技能列表，下次战斗重新初始化
     this.clear_combat_status();
     this.clear_combat_prop();
+    if (WORLD.ZHENYI) WORLD.ZHENYI.on_combat_end(this);
     return false;
 }
 CHARACTER.prototype.query_enemy = function () {
@@ -194,6 +195,7 @@ CHARACTER.prototype.end_attack = function (target) {
         target.end_fight();
         return this.end_fight();
     } else if (target.hp <= 0 && target.die(this) !== false) {
+        if (WORLD.ZHENYI) WORLD.ZHENYI.on_kill(this, target);
         target.end_fight();
 
         this.enemy.remove(target);

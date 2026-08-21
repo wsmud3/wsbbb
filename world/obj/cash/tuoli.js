@@ -58,6 +58,10 @@ this.on_use = function (me) {
             start_msg: "<hir>$N突然觉得一生所学忘了个精光，头痛难忍，惨叫一声昏了过去……</hir>\n"
         });
         let fam = me.family;
+        if (WORLD.ZHENYI) {
+            WORLD.ZHENYI.forget_family(me, fam.id);
+            me.notify("<hir>随着师门武学散去，你也遗忘了原门派的全部真意与悟痕。</hir>");
+        }
         me.family = FAMILIES.NONE;
         me.add_title("普通百姓", "family");
         me.remove_temp("master");

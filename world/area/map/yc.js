@@ -26,19 +26,18 @@ this.map = [
     { n: "九天玄女化身台", id: "yc/xuannvhuashentai",  p: [0, -12], exits: ["north", "south", "west"] },
     { n: "素心问道台",     id: "yc/suxinwendao",       p: [-1, -12], exits: ["east"] },
     { n: "瑶池传承殿",     id: "yc/chuanchengdian",    p: [0, -13], exits: ["south"] },
+    { n: "九天演法台",     id: "yc/jiutantai",         p: [1, 0],   exits: ["west"] },
 ];
 this.drops = [];
 this.quick_drops = [{ obj: "money/silver", min: 1, max: 10 }];
 this.on_enter = function (me) {
-    if (me.family !== FAMILIES.SUNV) return me.notify("只有素女道弟子才能进入九天瑶池。");
-    if (me.level < 4) return me.notify("你境界未到武帝，无法承受瑶池中的九天之力。");
-    if (me.query_temp("wd_level", 0) < 100) return me.notify("你尚未通过武道塔第一百层，瑶池之门不会为你开启。");
-    me.set_bool('fb2', this.jd_index, true);
+    if (!WORLD.ZHENYI || !WORLD.ZHENYI.can_enter_area(me, "yc")) return false;
     var next_room = ROOM.Get("yc/yaochishanmen");
     var copy_room = next_room.query_copy2(me);
     if (!copy_room) copy_room = next_room.create_copy2(me);
 };
 this.on_leave = function (me) {
+    if (me.query_temp("zy_trial_active") && WORLD.ZHENYI) WORLD.ZHENYI.fail_trial(me, "你离开了九天瑶池。");
     var copy_room = this.rooms[0].query_copy2(me);
     if (copy_room) copy_room.clear_copy(me);
     me.remove_temp("yc_progress"); me.remove_temp("yc_jt_active");

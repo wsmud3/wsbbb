@@ -17,6 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>木行灵消散！你领悟了真意——「木行·缚」。</hig>");
-    killer.set_temp("zy_yc_5", 1);
+    killer.notify("<hig>木行灵消散！你窥见了真意——「木行·缚」。</hig>");
 };

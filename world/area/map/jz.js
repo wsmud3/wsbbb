@@ -37,6 +37,7 @@ this.map = [
     { n: "无剑虚空",       id: "jz/wujianxukong",    p: [0, -18], exits: ["north", "south"] },
     { n: "终极剑台",       id: "jz/zhongjijiantai",  p: [0, -19], exits: ["north", "south"] },
     { n: "剑道传承殿",     id: "jz/chuanchengdian",  p: [0, -20], exits: ["south"] },
+    { n: "剑心问意台",     id: "jz/wuyitai",         p: [1, 0],   exits: ["west"] },
 ];
 
 this.drops = [];
@@ -46,19 +47,7 @@ this.quick_drops = [
 ];
 
 this.on_enter = function (me) {
-    // 门派限制
-    if (me.family !== FAMILIES.HUASHAN)
-        return me.notify("只有华山派弟子才能踏入剑冢。");
-
-    // 境界限制：武帝 (level >= 4)
-    if (me.level < 4)
-        return me.notify("你境界未到武帝，无法承受剑冢中的剑意。");
-
-    // 武道塔限制
-    if (me.query_temp("wd_level", 0) < 100)
-        return me.notify("你尚未通过武道塔第一百层，剑冢之门不会为你开启。");
-
-    me.set_bool('fb2', this.jd_index, true);
+    if (!WORLD.ZHENYI || !WORLD.ZHENYI.can_enter_area(me, "jz")) return false;
     var next_room = ROOM.Get("jz/houshan");
     var copy_room = next_room.query_copy2(me);
     if (!copy_room) {
@@ -67,6 +56,7 @@ this.on_enter = function (me) {
 };
 
 this.on_leave = function (me) {
+    if (me.query_temp("zy_trial_active") && WORLD.ZHENYI) WORLD.ZHENYI.fail_trial(me, "你离开了独孤剑冢。");
     var copy_room = this.rooms[0].query_copy2(me);
     if (copy_room) {
         copy_room.clear_copy(me);

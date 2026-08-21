@@ -17,6 +17,5 @@ this.skill_map(
     ["fuhuquan", 2800, "unarmed"], ["weituogun", 2800, "parry"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>金刚护法消散！你领悟了真意——「达摩真意·四」。</hig>");
-    killer.set_temp("zy_dmd_4", 1);
+    killer.notify("<hig>金刚护法消散！你窥见了真意——「达摩真意·四」。</hig>");
 };

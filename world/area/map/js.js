@@ -26,19 +26,18 @@ this.map = [
     { n: "损泽室",         id: "js/sunzeshi",         p: [0, -17], exits: ["north", "south"] },
     { n: "降龙幻影台",     id: "js/xianglongtai",     p: [0, -18], exits: ["north", "south"] },
     { n: "君山传承殿",     id: "js/chuanchengdian",   p: [0, -19], exits: ["south"] },
+    { n: "君山传武堂",     id: "js/chuanwutang",      p: [-1, 0],  exits: ["east"] },
 ];
 this.drops = [];
 this.quick_drops = [{ obj: "money/silver", min: 1, max: 10 }];
 this.on_enter = function (me) {
-    if (me.family !== FAMILIES.GAIBANG) return me.notify("只有丐帮弟子才能进入君山密录。");
-    if (me.level < 4) return me.notify("你境界未到武帝，无法承受降龙掌意。");
-    if (me.query_temp("wd_level", 0) < 100) return me.notify("你尚未通过武道塔第一百层，密录之门不会为你开启。");
-    me.set_bool('fb2', this.jd_index, true);
+    if (!WORLD.ZHENYI || !WORLD.ZHENYI.can_enter_area(me, "js")) return false;
     var next_room = ROOM.Get("js/junshandukou");
     var copy_room = next_room.query_copy2(me);
     if (!copy_room) copy_room = next_room.create_copy2(me);
 };
 this.on_leave = function (me) {
+    if (me.query_temp("zy_trial_active") && WORLD.ZHENYI) WORLD.ZHENYI.fail_trial(me, "你离开了君山密录。");
     var copy_room = this.rooms[0].query_copy2(me);
     if (copy_room) copy_room.clear_copy(me);
     me.remove_temp("js_progress"); me.remove_temp("js_xl_active");

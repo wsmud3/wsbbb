@@ -27,19 +27,18 @@ this.map = [
     { n: "禅定密室三",     id: "dmd/chanding3",        p: [1, -17], exits: ["west"] },
     { n: "达摩武意殿",     id: "dmd/damowuyidian",     p: [0, -18], exits: ["north", "south"] },
     { n: "禅武传承殿",     id: "dmd/chuanchengdian",   p: [0, -19], exits: ["south"] },
+    { n: "禅武印心台",     id: "dmd/chanwutai",        p: [-1, 0],  exits: ["east"] },
 ];
 this.drops = [];
 this.quick_drops = [{ obj: "money/silver", min: 1, max: 10 }];
 this.on_enter = function (me) {
-    if (me.family !== FAMILIES.SHAOLIN) return me.notify("只有少林派弟子才能进入达摩洞。");
-    if (me.level < 4) return me.notify("你境界未到武帝，无法承受洞中禅武之力。");
-    if (me.query_temp("wd_level", 0) < 100) return me.notify("你尚未通过武道塔第一百层，达摩洞不会为你开启。");
-    me.set_bool('fb2', this.jd_index, true);
+    if (!WORLD.ZHENYI || !WORLD.ZHENYI.can_enter_area(me, "dmd")) return false;
     var next_room = ROOM.Get("dmd/shaoshishandao");
     var copy_room = next_room.query_copy2(me);
     if (!copy_room) copy_room = next_room.create_copy2(me);
 };
 this.on_leave = function (me) {
+    if (me.query_temp("zy_trial_active") && WORLD.ZHENYI) WORLD.ZHENYI.fail_trial(me, "你离开了达摩洞。");
     var copy_room = this.rooms[0].query_copy2(me);
     if (copy_room) copy_room.clear_copy(me);
     me.remove_temp("dmd_progress"); me.remove_temp("dmd_cw_active");

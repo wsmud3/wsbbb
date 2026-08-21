@@ -16,6 +16,5 @@ this.skill_map(
     ["jingangquan", 2500, "unarmed"], ["yijinjing", 2500, "force"], ["hunyuanyiqi", 2500, "force"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>心魔·贪消散！你领悟了真意——「达摩真意·一」。</hig>");
-    killer.set_temp("zy_dmd_1", 1);
+    killer.notify("<hig>心魔·贪消散！你窥见了真意——「达摩真意·一」。</hig>");
 };

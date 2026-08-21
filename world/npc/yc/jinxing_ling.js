@@ -17,6 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>金行灵消散！你领悟了真意——「金行·锐」。</hig>");
-    killer.set_temp("zy_yc_1", 1);
+    killer.notify("<hig>金行灵消散！你窥见了真意——「金行·锐」。</hig>");
 };

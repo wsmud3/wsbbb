@@ -256,25 +256,36 @@
 .dialog-zhenyi {
     min-width: 360px;
     height: 29em;
-    padding-top: 0.5em;
+    padding: 0.5em;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .dialog-zhenyi>.zy-header {
-    line-height: 2em;
-    padding-left: 1em;
-    margin-bottom: 0.8em;
+    line-height: 1.7em;
+    padding: 0.45em 0.7em;
+    margin-bottom: 0.6em;
+    color: #aaa;
+    background: #111;
+    border: 1px solid #292929;
+    border-radius: 4px;
+}
+
+.dialog-zhenyi .zy-area,
+.dialog-zhenyi .zy-res,
+.dialog-zhenyi .zy-cost {
+    color: #888;
+    font-size: 0.82em;
 }
 
 .dialog-zhenyi>.zy-item {
-    line-height: 2.2em;
-    padding-left: 1.2em;
+    line-height: 1.55em;
+    padding: 0.55em 0.65em;
     border-radius: 4px;
-    border-left-width: 2px;
+    border-left-width: 3px;
     border-left-style: solid;
-    border-left-color: gray;
-    white-space: nowrap;
-    overflow-x: auto;
-    margin-bottom: 0.4em;
+    border-left-color: #555;
+    margin-bottom: 0.55em;
     background-color: #111;
 }
 
@@ -285,11 +296,10 @@
 
 .dialog-zhenyi>.zy-acquired {
     border-left-color: #FFA500;
-    cursor: pointer;
 }
 
 .dialog-zhenyi>.zy-locked {
-    opacity: 0.5;
+    border-left-color: #444;
 }
 
 .dialog-zhenyi>.zy-item>.zy-icon {
@@ -299,8 +309,15 @@
 
 .dialog-zhenyi>.zy-item>.zy-name {
     display: inline-block;
-    min-width: 6em;
+    min-width: 7em;
     font-weight: bold;
+}
+
+.dialog-zhenyi .zy-level {
+    display: inline-block;
+    min-width: 4em;
+    color: #d0a95f;
+    font-size: 0.85em;
 }
 
 .dialog-zhenyi>.zy-item>.zy-mech {
@@ -311,7 +328,59 @@
 }
 
 .dialog-zhenyi>.zy-item>.zy-desc {
+    display: block;
     color: #aaa;
     font-size: 0.85em;
-    margin-left: 0.5em;
+    margin: 0.3em 0 0.2em 1.8em;
+    white-space: normal;
+}
+
+.dialog-zhenyi .zy-trial {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5em;
+    color: #999;
+    font-size: 0.8em;
+    border-top: 1px solid #262626;
+    padding-top: 0.3em;
+}
+
+.dialog-zhenyi .zy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35em;
+    margin-top: 0.45em;
+}
+
+.dialog-zhenyi .zy-btn {
+    display: inline-block;
+    min-width: 4em;
+    padding: 0.25em 0.65em;
+    color: #7fd9d9;
+    text-align: center;
+    background: #292929;
+    border: 1px solid #414141;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.84em;
+}
+
+.dialog-zhenyi .zy-btn:active {
+    background: #3b3b3b;
+}
+
+.dialog-zhenyi .zy-use {
+    color: #72d572;
+}
+
+.dialog-zhenyi .zy-upgrade {
+    color: #e5bd65;
+}
+
+.dialog-zhenyi .zy-btn.disabled {
+    color: #666;
+    background: #1b1b1b;
+    border-color: #292929;
+    cursor: default;
 }

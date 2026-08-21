@@ -19,6 +19,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("yc_boss_defeated", 1);
-    killer.set_temp("zy_yc_7", 1);
     killer.notify("<hig>试炼完成！传承的记忆涌入了你的心神。</hig>");
 };

@@ -74,7 +74,9 @@ this.enter = function (me, sk, pfmid) {
 
     var lv = me.query_skill(sp_skill.id, 0);
     if (is_ref) lv = parseInt(lv / 2);
-    if (me.mp < pfm.query_mp(me, lv)) {
+    var pfm_mp = pfm.query_mp(me, lv);
+    if (WORLD.ZHENYI) pfm_mp = WORLD.ZHENYI.pfm_cost(me, pfm, sp_skill, pfm_mp);
+    if (me.mp < pfm_mp) {
         return me.notify("你的内力不够，无法使用" + name);
     }
     if (pfm.check && !pfm.check(me,
@@ -124,6 +126,7 @@ this.enter = function (me, sk, pfmid) {
 
 
     var isrelease = false;
+    var zy_pfm_started = false;
 
     if (me.query_temp("sealed_pfm")) {
         me.send_room("<hir>$N被天地之力封印，技能" + pfm.name + "无法施展！</hir>\n");
@@ -147,6 +150,7 @@ this.enter = function (me, sk, pfmid) {
             //me.attack_skill = sp_skill;
             me.remove_status('weapon', true);
         }
+        if (WORLD.ZHENYI) zy_pfm_started = !!WORLD.ZHENYI.begin_pfm(me, pfm, sp_skill);
         isrelease = pfm.use(me, target, lv, sk) != false;
         if (isrelease) {
             // 记录最后使用的绝招（供左右互搏等技能使用）
@@ -155,11 +159,13 @@ this.enter = function (me, sk, pfmid) {
         }
     }
 
+    if (WORLD.ZHENYI && zy_pfm_started) WORLD.ZHENYI.end_pfm(me, target, pfm, sp_skill, isrelease);
+
 
 
 
     if (isrelease) {
-        me.add_mp(-pfm.query_mp(me, lv) || 0);
+        me.add_mp(-pfm_mp || 0);
         //释放成功才算释放时间
         // if (!pfm.use_type) {
         //     //保存目标被释放的技能
@@ -171,6 +177,7 @@ this.enter = function (me, sk, pfmid) {
         else me.release_time = 0;
 
         var distime = pfm.query_distime(me, lv, is_ref);
+        if (WORLD.ZHENYI) distime = WORLD.ZHENYI.pfm_cooldown(me, pfm, sp_skill, distime);
         var rtime = isrelease ? pfm.query_releasetime(me, lv) : 0;
 
         me.set_temp(key, 1, distime + rtime);

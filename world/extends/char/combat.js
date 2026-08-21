@@ -193,6 +193,11 @@ CHARACTER.prototype.do_attack = function (par) {
             this.send_combat("<HIM>$N的内力侵入$n经脉，造成内伤！</HIM>\n", target);
         }
 
+        // 真意攻击钩子。管理器会统一拒绝grade 6红技能，避免单个技能漏判。
+        if (WORLD.ZHENYI && sh > 0) {
+            sh = WORLD.ZHENYI.modify_attack(this, target, par, sh, attackskill);
+        }
+
         if (target.force_skill.on_force_parry) {
             par.power_gj = power_gj;
             sh -= target.force_skill.on_force_parry(target, this, sh, par);
@@ -214,10 +219,12 @@ CHARACTER.prototype.do_attack = function (par) {
             sh = target.damage(sh, this, par.diff_fy);
 
         if (par.is_parry) {
+            if (WORLD.ZHENYI) WORLD.ZHENYI.on_parry(target);
             this.send_combat((par.parry_msg || target.parry_skill.query_parry_action(target, this, weapon_type)) + "\n", target);
             if (sh > 0) {
                 target.send_combat(query_status_msg(target.hp, target.max_hp));
                 target.on_damage && target.on_damage(this, sh);
+                if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
             }
             // ZC passive: 反击(招架) - counter-attack on successful parry
             var zcCounterParry = target.query_prop("zc_counter_parry") || 0;
@@ -247,6 +254,7 @@ CHARACTER.prototype.do_attack = function (par) {
                     , target);
                 target.send_combat(query_status_msg(target.hp, target.max_hp));
                 target.on_damage && target.on_damage(this, sh);
+                if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
 
                 // ZC passive: 吸血(武器) - lifesteal from damage dealt
                 var zcLifesteal = this.query_prop("zc_lifesteal") || 0;
@@ -317,6 +325,7 @@ CHARACTER.prototype.do_attack = function (par) {
     }
     // ZC passive: 反击(轻功) - counter-attack on successful dodge
     if (par.is_dodge && target.fight_type && this.hp > 0) {
+        if (WORLD.ZHENYI) WORLD.ZHENYI.on_dodge(target);
         var zcCounterDodge = target.query_prop("zc_counter_dodge") || 0;
         if (zcCounterDodge > 0) {
             var cdDmg = target.gj * zcCounterDodge;
@@ -408,6 +417,8 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy) {
     if (sh > 0 && this.force_skill.on_damage) {
         sh = this.force_skill.on_damage(this, from, sh);
     }
+
+    if (WORLD.ZHENYI && sh > 0) sh = WORLD.ZHENYI.modify_damage(this, from, sh);
 
     // ZC passive: 守护 - damage reduction as self HP decreases
     var zcGuardian = this.query_prop("zc_guardian") || 0;

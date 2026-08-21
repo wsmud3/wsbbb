@@ -18,6 +18,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>镜中我破碎！你领悟了真意——「逍遥真意·镜心」。</hig>");
-    killer.set_temp("zy_lhfd_4", 1);
+    killer.notify("<hig>镜中我破碎！你窥见了真意——「逍遥真意·镜心」。</hig>");
 };
