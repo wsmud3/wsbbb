@@ -36,7 +36,15 @@ for (let api of API_PATHS) {
 }
 
 
-app.use(express.static(path.join(__dirname, 'www')));
+app.use(express.static(path.join(__dirname, 'www'), {
+    // index.html 引用 Vite 生成的哈希 bundle；入口禁止缓存，避免浏览器或 APK
+    // WebView 一直使用旧入口而看不到已构建的新前端。
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        }
+    }
+}));
 
 
 app.disable('x-powered-by');
