@@ -9,3 +9,4 @@ this.add_action("meditate", "在蒲团上打坐", function (me) {
     me.set_temp("zw_meditated", 1);
     me.notify("<hig>你在张三丰曾经打坐的蒲团上盘膝坐下。洞中七年的寂静仿佛穿越时光降临——你感受到了「太极无疆」的境界碎片。在最终战中，你的太极真意效果将得到增强。</hig>");
 });
+this.set_npc("pub/zhenyi_shiyantai#zw_5");

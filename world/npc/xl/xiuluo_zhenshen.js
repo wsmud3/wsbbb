@@ -18,5 +18,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("xl_boss_defeated", 1);
-    killer.notify('<hig>修罗真身消散！你窥见了暗杀真意——「修罗道」。</hig>');
+    killer.notify('<hig>修罗真身轰然散去，暗殿中的杀意随之退潮。</hig>');
 };

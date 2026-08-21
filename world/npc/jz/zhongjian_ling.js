@@ -22,6 +22,5 @@ this.skill_map(
 );
 
 this.on_die = function (killer) {
-    killer.notify("<hig>重剑剑灵轰然倒塌，化作一地玄铁碎片。第三重剑意——「重剑」在你心中留下浅痕。</hig>");
-    killer.set_temp("jz_zhongjian", 1);
+    killer.notify("<hig>重剑剑灵轰然倒塌，化作一地玄铁碎片。</hig>");
 };

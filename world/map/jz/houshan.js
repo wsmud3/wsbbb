@@ -7,3 +7,4 @@ this.no_fight = true;
 this.add_action("look_around", "环顾四周", function (me) {
     me.notify("你仔细打量着周围的环境。石阶的磨损痕迹显示，这里曾有大量人往来——但那是很久以前的事了。路旁一块半埋的石碑上刻着：「剑冢禁地，擅入者死。」落款处是一道深达三寸的指痕。");
 });
+this.set_npc("pub/zhenyi_shiyantai#jz_1");

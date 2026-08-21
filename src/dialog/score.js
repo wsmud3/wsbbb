@@ -22,7 +22,6 @@ export default {
             this.zy_key = data.zy_key;
             this.zy_area = data.zy_area;
             this.zy_xuanjing = data.zy_xuanjing || 0;
-            this.zy_energy_cost = data.zy_energy_cost || 20;
             this.create_zhenyi();
         } else {
             if (data.id && data.id != this.uid) {
@@ -136,29 +135,29 @@ export default {
     create_zhenyi: function () {
         var panel = $(".dialog-zhenyi");
         var html = [];
-        html.push("<div class='zy-header'><hic>");
+        html.push("<div class='score-section zy-header'><hic>【");
         html.push(this.zy_name);
-        html.push("</hic>　", this.zy_area || "门派禁地", "　玄晶：<hiy>", this.zy_xuanjing, "</hiy></div>");
+        html.push("】</hic>　", this.zy_area || "门派禁地", "　玄晶：<hiy>", this.zy_xuanjing, "</hiy></div>");
         for (var i = 0; i < this.zhenyiList.length; i++) {
             var z = this.zhenyiList[i];
-            html.push("<div class='zy-item");
+            html.push("<div class='skill-item zy-item");
             if (z.acquired) {
                 html.push(z.active ? " zy-active" : " zy-acquired");
             } else {
                 html.push(" zy-locked");
             }
             html.push("'>");
-            html.push("<div class='zy-title'>");
+            html.push("<span class='zy-state'>");
             if (z.active) html.push("<hig>已启用</hig> ");
             else if (z.acquired) html.push("<hio>已领悟</hio> ");
             else html.push("<ord>未领悟</ord> ");
-            html.push("<span class='zy-name'>");
+            html.push("</span><span class='zy-name'>");
             html.push(z.name);
             html.push("</span> <span class='zy-level'>", z.acquired ? ("第" + z.level + "重") : "", "</span> <span class='zy-mech'>[");
             html.push(z.mech);
-            html.push("]</span></div><div class='zy-desc'>");
+            html.push("]</span><br /><span class='zy-desc'>");
             html.push(z.desc);
-            html.push("</div><div class='zy-status'>悟痕：", z.material, "</div>");
+            html.push("</span><div class='zy-status'>悟痕：", z.material, "</div>");
             if (z.acquired && z.level < 10) html.push("<div class='zy-cost'>下重需要玄晶 ", z.cost_xj, "、悟痕 ", z.cost_mat, "</div>");
             else if (z.level >= 10) html.push("<div class='zy-cost'><hig>已臻圆满</hig></div>");
             html.push("<div class='item-commands'>");

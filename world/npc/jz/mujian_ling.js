@@ -24,6 +24,5 @@ this.skill_map(
 );
 
 this.on_die = function (killer) {
-    killer.notify("<hig>木剑剑灵手中的朽木剑寸寸碎裂，它的人影也随之化作漫天木屑。第四重剑意——「木剑」在你心中留下浅痕。</hig>\n\n<hic>一块深褐色的木片落在你手中——「木剑之心」。</hic>在最终一战中，它将为你免疫一次致命伤害。");
-    killer.set_temp("jz_mujian", 1);
+    killer.notify("<hig>木剑剑灵手中的朽木剑寸寸碎裂，人影也化作漫天木屑。</hig>");
 };

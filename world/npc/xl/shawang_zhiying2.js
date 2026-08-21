@@ -16,6 +16,5 @@ this.skill_map(
     ["kuangfengkuaijian", 2800, ["sword", "parry"]], ["huashanxinfa", 2800, "force"], ["feiyanhuixiang", 2800, "dodge"]
 );
 this.on_die = function(killer) {
-    killer.notify('<hig>杀手之王·夜影的暗杀记忆涌入你的心神！你窥见了暗杀真意——「暗步」。</hig>');
+    killer.notify('<hig>杀手之王·夜影的执影散去，剑光归于寂静。</hig>');
 };
-

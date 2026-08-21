@@ -11,3 +11,4 @@ this.add_action("rest", "饮玄武池水", function (me) {
     me.mp = me.max_mp;
     me.notify("<hig>你捧起一掬池水饮下。一股冰凉清冽的真气涌入四肢百骸，全身状态恢复至巅峰。</hig>");
 });
+this.set_npc("pub/zhenyi_shiyantai#zw_3");

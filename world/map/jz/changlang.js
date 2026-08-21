@@ -19,3 +19,4 @@ this.add_action("examine_mujian", "观摩木剑", function (me) {
 this.add_action("examine_wujian", "凝视空剑架", function (me) {
     me.notify("\n<hig>你凝视着第五座空空如也的剑架。</hig>\n\n下方只有四个字：<hic>「自此无剑」</hic>\n\n突然，一道苍老的声音从你的心底升起——\n\n「剑已在心中，何须陈列？」\n\n你猛地回头，长廊中只有你一人。但那声音仍在回荡。");
 });
+this.set_npc("pub/zhenyi_shiyantai#jz_2");

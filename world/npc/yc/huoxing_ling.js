@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>火行灵消散！你窥见了真意——「火行·灼」。</hig>");
+    killer.notify("<hig>火行灵消散，殿中火光重新归于平静。</hig>");
 };

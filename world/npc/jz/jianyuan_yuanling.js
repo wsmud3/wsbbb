@@ -22,6 +22,6 @@ this.skill_map(
 );
 
 this.on_die = function (killer) {
-    killer.notify("<hig>怨灵化作一缕紫烟消散。千年的悔恨终于得以安息。你获得了大量剑意碎片。</hig>");
+    killer.notify("<hig>怨灵化作一缕紫烟消散，千年的悔恨终于得以安息。</hig>");
     killer.add_temp("jz_mark", 2);
 };

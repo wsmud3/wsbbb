@@ -255,24 +255,17 @@
 
 .dialog-zhenyi {
     min-width: 360px;
-    height: 29em;
-    padding-top: 0.5em;
+    max-height: 35em;
     overflow-y: auto;
 }
 
 .dialog-zhenyi>.zy-header {
-    line-height: 1em;
-    padding: 0.5em;
-    border-radius: 4px;
-    border-left: 2px solid gray;
     margin-bottom: 0.5em;
-    background-color: #111;
-    color: #C0C0C0;
 }
 
 .dialog-zhenyi>.zy-item {
     line-height: 2em;
-    padding-left: 1.5em;
+    padding-left: 0.75em;
     border-radius: 4px;
     border-left-width: 2px;
     border-left-style: solid;
@@ -280,6 +273,7 @@
     overflow-x: auto;
     margin-bottom: 0.5em;
     background-color: #111;
+    cursor: default;
 }
 
 .dialog-zhenyi>.zy-active {
@@ -300,9 +294,8 @@
     overflow-x: auto;
 }
 
-.dialog-zhenyi .zy-name {
-}
-
+.dialog-zhenyi .zy-state,
+.dialog-zhenyi .zy-name,
 .dialog-zhenyi .zy-level,
 .dialog-zhenyi .zy-mech,
 .dialog-zhenyi .zy-status,

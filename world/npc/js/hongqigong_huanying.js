@@ -19,5 +19,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("js_boss_defeated", 1);
-    killer.notify("<hig>洪七公·降龙幻影消散！你窥见了真意——「降龙真意·二」。</hig>");
+    killer.notify("<hig>洪七公的降龙幻影消散，龙吟声渐渐远去。</hig>");
 };
