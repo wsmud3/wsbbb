@@ -17,7 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>降龙守卫消散！你领悟了真意——「降龙真意·一」。</hig>");
-    killer.set_temp("zy_js_1", 1);
-    killer.set_temp("zy_js_2", 1);
+    killer.notify("<hig>降龙守卫消散！你窥见了真意——「降龙真意·一」。</hig>");
 };

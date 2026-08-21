@@ -13,6 +13,4 @@ this.skill_map(
 this.on_die = function (killer) {
     killer.notify("<hig>太极化身化作漫天阴阳二气，融入你的体内。张三丰的声音最后响起：「太极无疆。愿你能走到我不曾到达的彼岸。」</hig>");
     killer.set_temp("zw_complete_flag", 1);
-    killer.set_temp("zy_zw_4", 1);
-    killer.set_temp("zy_zw_5", 1);
 };

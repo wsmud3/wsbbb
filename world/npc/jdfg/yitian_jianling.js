@@ -17,6 +17,5 @@ this.skill_map(
     ["jiuyinbaiguzhao", 2800, "unarmed"], ["jindingzhang", 2800, "unarmed"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>倚天剑灵消散！你领悟了真意——「金顶真意·二」。</hig>");
-    killer.set_temp("zy_jdfg_2", 1);
+    killer.notify("<hig>倚天剑灵消散！你窥见了真意——「金顶真意·二」。</hig>");
 };

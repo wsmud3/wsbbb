@@ -19,6 +19,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("yc_xinmo_defeated", 1);
-    killer.set_temp("zy_yc_6", 1);
     killer.notify("<hig>心魔溃散！你的道心愈发坚定。</hig>");
 };

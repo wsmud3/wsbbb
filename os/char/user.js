@@ -309,6 +309,9 @@ this.long_name();
 WORLD.STATS.checkStats(this);
 try { this.send_loginmessage(); } catch (e) {}
 if (this.family) try { this.family.on_login(this); } catch (e) {}
+// 兼容更新前已经达到武帝并通过百层、但尚未写入禁地解锁位的角色。
+try { this.check_unlock_sect_jds(); } catch (e) {}
+try { if (WORLD.ZHENYI) WORLD.ZHENYI.migrate(this); } catch (e) {}
 if (this.query_temp("pt")) WORLD.COMMANDS["party"].on_user_login(this, true);
 var new_lv = this.query_temp("new");
 var rm;

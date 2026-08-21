@@ -10,6 +10,7 @@ this.fbs = [];
 this.regex = /^(\w+)?\s?(lock|\d+)?(?:\s(start[1|2|3]?))?$/;
 this.enter = function (me, type, arg, isstart) {
     if (!me.is_player) return;
+    if (WORLD.ZHENYI) WORLD.ZHENYI.check_unlock(me, true);
     var unlock = me.query_temp("fb", 0);
     var unlock2 = me.query_temp("fb2", 0);
     if (arg == "lock")

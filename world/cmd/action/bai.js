@@ -47,6 +47,7 @@ this.enter = function (me, target) {
         if (is_reset)
             WORLD.DATA.reset_famtops(me, FAMILIES.NONE);
         me.send_room("<HIG>$n说道：好吧，" + target.callme() + "就收下你了。</HIG>\n$n决定收$N为弟子。\n$N跪下来向$n恭恭敬敬的磕了四个响头,叫道：「师父！」", target);
+        me.check_unlock_sect_jds && me.check_unlock_sect_jds();
         return me.notify("<hic>恭喜你成为" + title + "，师门将持续向你发放物资(任务栏领取)。</hic>\n");
 
 

@@ -16,6 +16,5 @@ this.skill_map(
     ["huifengjian", 2800, ["sword", "parry"]], ["emeixinfa", 2800, "force"], ["zhutianbu", 2800, "dodge"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>金刚剑灵消散！你领悟了真意——「金顶真意·三」。</hig>");
-    killer.set_temp("zy_jdfg_3", 1);
+    killer.notify("<hig>金刚剑灵消散！你窥见了真意——「金顶真意·三」。</hig>");
 };

@@ -10,6 +10,5 @@ this.skill_map(
     ["taijijian", 2800, ["sword", "parry"]], ["taijishengong", 2800, "force"], ["tiyunzong", 2800, "dodge"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>太极守卫消散！你领悟了真意——「真武剑意·三」。</hig>");
-    killer.set_temp("zy_zw_3", 1);
+    killer.notify("<hig>太极守卫消散！你窥见了真意——「真武剑意·三」。</hig>");
 };

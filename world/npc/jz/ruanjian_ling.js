@@ -22,7 +22,6 @@ this.skill_map(
 );
 
 this.on_die = function (killer) {
-    killer.notify("<hig>软剑剑灵化作一缕紫烟，缠绕你的指尖后消散。第二重剑意——「软剑」已融入你的心神。</hig>");
+    killer.notify("<hig>软剑剑灵化作一缕紫烟，缠绕你的指尖后消散。第二重剑意——「软剑」在你心中留下浅痕。</hig>");
     killer.set_temp("jz_ruanjian", 1);
-    killer.set_temp("zy_jz_2", 1);
 };

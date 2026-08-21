@@ -14,7 +14,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "concurrently \"npm run web\" \"npm run os\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/validate_rooms.js"
   },
   "author": "",
   "license": "ISC",

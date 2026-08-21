@@ -16,7 +16,6 @@ this.skill_map(
     ["kuangfengkuaijian", 2800, ["sword", "parry"]], ["huashanxinfa", 2800, "force"], ["feiyanhuixiang", 2800, "dodge"]
 );
 this.on_die = function(killer) {
-    killer.set_temp("zy_xl_1", 1);
-    killer.notify('<hig>杀手之王·无名的暗杀记忆涌入你的心神！你领悟了暗杀真意——「影遁」。</hig>');
+    killer.notify('<hig>杀手之王·无名的暗杀记忆涌入你的心神！你窥见了暗杀真意——「影遁」。</hig>');
 };
 

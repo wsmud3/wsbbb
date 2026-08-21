@@ -141,6 +141,9 @@ USER.prototype.isenable_area = function (fb) {
 }
 
 USER.prototype.check_unlock_sect_jds = function () {
+    if (WORLD.ZHENYI && WORLD.ZHENYI.check_unlock) {
+        return WORLD.ZHENYI.check_unlock(this, false);
+    }
     var FAMILY_TO_JDS = {
         HUASHAN: 2, WUDANG: 3, SHAOLIN: 4, EMEI: 5,
         GAIBANG: 6, XIAOYAO: 7, SHASHOU: 8, SUNV: 9,
@@ -152,7 +155,7 @@ USER.prototype.check_unlock_sect_jds = function () {
     if (!this.family) return;
     var jd = FAMILY_TO_JDS[this.family.id];
     if (!jd) return;
-    if (this.level >= 4 && this.query_temp("wd_level", 0) >= 100) {
+    if (this.level >= 5 && (this.query_temp("wd_level", 0) >= 100 || this.query_temp("wd100", 0))) {
         if (!this.query_bool("fb2", jd)) {
             this.set_bool("fb2", jd, true);
             this.send('<him>你冥冥中感到远处传来呼唤，似乎在催促你前往，你已解锁【' + JDS_NAMES[jd] + '】。</him>');

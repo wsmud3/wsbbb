@@ -22,7 +22,6 @@ this.skill_map(
 );
 
 this.on_die = function (killer) {
-    killer.notify("<hig>利剑剑灵化作漫天青光，消散在黑暗之中。第一重剑意——「利剑」已融入你的心神。</hig>");
+    killer.notify("<hig>利剑剑灵化作漫天青光，消散在黑暗之中。第一重剑意——「利剑」在你心中留下浅痕。</hig>");
     killer.set_temp("jz_lijian", 1);
-    killer.set_temp("zy_jz_1", 1);
 };

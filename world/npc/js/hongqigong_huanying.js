@@ -19,8 +19,5 @@ this.skill_map(
 
 this.on_die = function(killer) {
     killer.set_temp("js_boss_defeated", 1);
-    killer.notify("<hig>洪七公·降龙幻影消散！你领悟了真意——「降龙真意·二」。</hig>");
-    killer.set_temp("zy_js_3", 1);
-    killer.set_temp("zy_js_4", 1);
-    killer.set_temp("zy_js_5", 1);
+    killer.notify("<hig>洪七公·降龙幻影消散！你窥见了真意——「降龙真意·二」。</hig>");
 };

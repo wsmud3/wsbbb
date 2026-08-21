@@ -16,7 +16,6 @@ this.skill_map(
     ["kuangfengkuaijian", 2850, ["sword", "parry"]], ["huashanxinfa", 2850, "force"], ["feiyanhuixiang", 2850, "dodge"]
 );
 this.on_die = function(killer) {
-    killer.set_temp("zy_xl_3", 1);
-    killer.notify('<hig>杀手之王·无常的暗杀记忆涌入你的心神！你领悟了暗杀真意——「刺穴」。</hig>');
+    killer.notify('<hig>杀手之王·无常的暗杀记忆涌入你的心神！你窥见了暗杀真意——「刺穴」。</hig>');
 };
 
