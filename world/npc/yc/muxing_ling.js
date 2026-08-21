@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>木行灵消散！你窥见了真意——「木行·缚」。</hig>");
+    killer.notify("<hig>木行灵消散，藤影慢慢退回池畔。</hig>");
 };

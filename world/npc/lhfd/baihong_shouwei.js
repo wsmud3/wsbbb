@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>白虹守卫消散！你窥见了真意——「逍遥真意·白虹」。</hig>");
+    killer.notify("<hig>白虹守卫消散，掌风渐渐归于无形。</hig>");
 };

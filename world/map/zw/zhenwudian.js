@@ -7,3 +7,4 @@ this.no_fight = true;
 this.add_action("enter_secret", "踏入太极图", function (me) {
     me.notify("\n<hig>你一步踏入太极图中。阴阳二气环绕周身，天地倒转——</hig>\n\n眼前景色骤变，你发现自己站在一座由八卦巨石组成的阵法之前。");
 });
+this.set_npc("pub/zhenyi_shiyantai#zw_1");

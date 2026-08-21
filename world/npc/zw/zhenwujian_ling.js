@@ -11,5 +11,5 @@ this.skill_map(
 );
 this.on_die = function (killer) {
 	    killer.set_temp("zw_zhenwu", 1);
-	    killer.notify("<hig>真武剑灵消散！你窥见了真意——「真武剑意·一」。</hig>");
+	    killer.notify("<hig>真武剑灵消散，剑台上的阴阳鱼重新缓缓转动。</hig>");
 	};

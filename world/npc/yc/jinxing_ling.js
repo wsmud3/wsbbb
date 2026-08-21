@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>金行灵消散！你窥见了真意——「金行·锐」。</hig>");
+    killer.notify("<hig>金行灵消散，金铁之声逐渐远去。</hig>");
 };

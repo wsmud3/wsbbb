@@ -13,6 +13,7 @@
         HUASHAN: {
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
+            guideNames: ["守剑老人", "回锋剑客", "负剑道人", "洗剑客", "无剑客"],
             list: [
                 zy(1, "利剑·争锋", "破式", "施展破气诀等本门非红色攻击命中时，伤害提高约1.6%～8.4%，并额外获得3～17点破防；数值随真意重数和门派平衡系数成长。", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
                 zy(2, "软剑·回锋", "反击", "成功招架后获得10秒回锋标记；下一次本门非红色武学攻击伤害提高约4.6%～17.8%，触发后消耗标记。", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
@@ -24,6 +25,7 @@
         WUDANG: {
             name: "太极真意", key: "zw", jd: 3, area: "真武秘境", balance: 1.00,
             trialRoom: "zw/yanwutai_trial", guide: "执符道人",
+            guideNames: ["听劲道人", "抱元道者", "缠丝剑侍", "守缺真人", "真武道童"],
             list: [
                 zy(1, "借力", "蓄劲", "成功招架2次后获得借力层数；12秒内下一次本门非红色武学伤害提高约6.8%～18.6%，触发后清空层数。", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
                 zy(2, "化劲", "卸力", "受到伤害时，每8秒首次受击减伤约4.9%～11.7%；只减免该次伤害，不改变对方攻击效果。", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
@@ -35,6 +37,7 @@
         SHAOLIN: {
             name: "禅武真意", key: "dmd", jd: 4, area: "达摩洞", balance: 1.00,
             trialRoom: "dmd/chanwutai_trial", guide: "守洞老僧",
+            guideNames: ["金刚护法", "狮吼罗汉", "般若行者", "罗汉堂首座", "面壁老僧"],
             list: [
                 zy(1, "金刚不坏", "不灭", "每10分钟最多抵挡一次致命伤害，将本次伤害压至1点；仅对自身生效。", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
                 zy(2, "狮子吼", "震慑", "狮子吼命中后额外施加约0.7～1.4秒忙乱，12秒冷却；原技能的内力差昏迷规则不变。", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
@@ -46,6 +49,7 @@
         EMEI: {
             name: "金顶真意", key: "jdfg", jd: 5, area: "金顶佛光", balance: 1.16,
             trialRoom: "jdfg/wuxiangtai_trial", guide: "佛灯女尼",
+            guideNames: ["慈航师太", "怒目师太", "双仪剑侍", "倚天剑师", "摄魄行者"],
             list: [
                 zy(1, "慈航愿", "回春", "鹤翔庄或游龙庄成功生效后，立即回复最大气血约1.1%～6.0%；不改变原有队友治疗效果。", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
                 zy(2, "金顶怒目", "反震", "成功招架后获得6秒反震标记；下一次受击时反弹所受伤害约7.3%～18.1%，每8秒最多触发一次，且反伤不超过自身攻击力50%。", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
@@ -57,6 +61,7 @@
         GAIBANG: {
             name: "降龙真意", key: "js", jd: 6, area: "君山密录", balance: 0.92,
             trialRoom: "js/chuanwutang_trial", guide: "传功长老",
+            guideNames: ["降龙长老", "飞龙舵主", "摆尾长老", "君山老帮众", "六龙传功使"],
             list: [
                 zy(1, "亢龙有悔", "刚劲", "施展降龙时，本门非红色武学伤害提高约1.4%～8.0%，并额外获得约3～17点破防。", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
                 zy(2, "飞龙在天", "连掌", "十八掌连续命中时获得掌势层数，最多5层，每层使后续本门非红色武学伤害提高约0.7%～1.4%；层数12秒未续则消失。", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
@@ -68,6 +73,7 @@
         XIAOYAO: {
             name: "逍遥真意", key: "lhfd", jd: 7, area: "琅嬛福地", balance: 0.90,
             trialRoom: "lhfd/wendaotai_trial", guide: "玉像侍者",
+            guideNames: ["北冥客", "凌波玉女", "白虹使", "生死符使", "琅嬛守卷人"],
             list: [
                 zy(1, "北冥鲸吞", "纳气", "北冥相关绝招成功命中后，吸取目标最大内力约0.6%～1.5%，并转化为自身内力；自身最多获得最大内力的3%。", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
                 zy(2, "凌波残影", "轻灵", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.7%～15.5%，命中提高20%，触发后消耗。", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
@@ -79,6 +85,7 @@
         SHASHOU: {
             name: "暗杀真意", key: "xl", jd: 8, area: "修罗暗殿", balance: 1.22,
             trialRoom: "xl/shengloutai_trial", guide: "暗殿司命",
+            guideNames: ["无痕影使", "踏雪客", "穿心刺客", "血债判官", "修罗使"],
             list: [
                 zy(1, "无声影遁", "先手", "无痕成功生效后，20秒内下一次本门非红色武学命中会封锁目标绝招约0.8～1.5秒；每20秒最多触发一次。", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
                 zy(2, "踏雪暗步", "追魂", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.0%～15.0%，命中提高25%，触发后消耗。", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
@@ -90,6 +97,7 @@
         SUNV: {
             name: "九天真意", key: "yc", jd: 9, area: "九天瑶池", balance: 1.26,
             trialRoom: "yc/jiutantai_trial", guide: "瑶池玉使",
+            guideNames: ["神霄雷使", "玄女侍", "魅魂宫人", "紫电使", "守一仙子"],
             list: [
                 zy(1, "神霄·雷贯", "雷霆", "天打五雷轰或阳雷荡邪秽造成伤害时叠加雷贯，最多5层、每层持续12秒；后续攻击按层数获得3、6、9、12、15点破防。", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
                 zy(2, "玄女·法相", "法相", "玄女法相成功生效后获得15秒法相护持；期间受到伤害减免约4.6%～14.3%，不改变法相原有攻击和容貌加成。", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),
@@ -157,6 +165,16 @@
         }
         me.remove_temp("zy_active_" + data.key);
         me.remove_temp("zy_yc_6"); me.remove_temp("zy_yc_7");
+        // 清理旧版禁地 NPC 直接发放的草创真意。新系统只认五道正式真意。
+        var legacyKeys = [
+            "jz_lijian", "jz_ruanjian", "jz_zhongjian", "jz_mujian", "jz_wujian",
+            "zw_zhenwu", "dmd_intent_1", "dmd_intent_2", "dmd_intent_3", "dmd_intent_4",
+            "jdfg_intent_1", "jdfg_intent_2", "jdfg_intent_3", "jdfg_intent_4",
+            "lhfd_intent_1", "lhfd_intent_2", "lhfd_intent_3", "lhfd_intent_4", "lhfd_intent_5",
+            "xl_shadow", "xl_step", "xl_puncture", "xl_debt", "xl_asura",
+            "yc_jin", "yc_shui", "yc_mu", "yc_huo", "yc_tu"
+        ];
+        for (var lk = 0; lk < legacyKeys.length; lk++) me.remove_temp(legacyKeys[lk]);
     }
 
     function checkUnlock(me, silent) {

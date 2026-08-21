@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>水行灵消散！你窥见了真意——「水行·润」。</hig>");
+    killer.notify("<hig>水行灵消散，池面恢复了原先的宁静。</hig>");
 };

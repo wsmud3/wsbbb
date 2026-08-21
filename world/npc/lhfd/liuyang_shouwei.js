@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>六阳守卫消散！你窥见了真意——「逍遥真意·六阳」。</hig>");
+    killer.notify("<hig>六阳守卫消散，炽热掌风渐渐冷却。</hig>");
 };

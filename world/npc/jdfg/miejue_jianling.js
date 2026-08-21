@@ -16,5 +16,5 @@ this.skill_map(
     ["huifengjian", 2800, ["sword", "parry"]], ["emeixinfa", 2800, "force"], ["zhutianbu", 2800, "dodge"]
 );
 this.on_die = function (killer) {
-    killer.notify("<hig>灭绝剑灵消散！你窥见了真意——「金顶真意·四」。</hig>");
+    killer.notify("<hig>灭绝剑灵消散，冷冽剑气渐渐淡去。</hig>");
 };

@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>降龙守卫消散！你窥见了真意——「降龙真意·一」。</hig>");
+    killer.notify("<hig>降龙守卫的掌意散去，石室重新归于寂静。</hig>");
 };

@@ -17,5 +17,5 @@ this.skill_map(
 );
 
 this.on_die = function(killer) {
-    killer.notify("<hig>土行灵消散！你窥见了真意——「土行·固」。</hig>");
+    killer.notify("<hig>土行灵消散，脚下的震动渐渐停止。</hig>");
 };

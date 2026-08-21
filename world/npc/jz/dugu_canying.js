@@ -27,6 +27,5 @@ this.skill_map(
 // 第二阶段通过on_heart_beat在room层处理
 
 this.on_die = function (killer) {
-    killer.notify("\n<hig>独孤剑意残影化作漫天光雨，如星辰般没入你的体内。</hig>\n\n一道苍老的声音在你心中响起——\n\n「多谢。一千年了，我终于……败了。」\n「这一剑，是我千年所悟。接好了。」\n\n第五重剑意——<hic>「无剑」</hic>在你心中留下浅痕。");
-    killer.set_temp("jz_wujian", 1);
+    killer.notify("<hig>独孤剑意残影化作漫天光雨，剑冢重新归于寂静。</hig>");
 };
