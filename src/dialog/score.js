@@ -113,11 +113,6 @@ export default {
         else if (item == 3) {
             if (!this.zhenyiList)
                 SendCommand("zhenyi");
-            panel.on("click", ".zy-btn:not(.disabled)", function (e) {
-                e.stopPropagation();
-                var elem = $(e.currentTarget);
-                SendCommand("zhenyi " + elem.attr("data-action") + " " + elem.attr("data-id") + (elem.attr("data-count") ? " " + elem.attr("data-count") : ""));
-            });
         }
     },
 
@@ -141,43 +136,42 @@ export default {
     create_zhenyi: function () {
         var panel = $(".dialog-zhenyi");
         var html = [];
-        html.push("<div class='zy-header'><div><hic>");
+        html.push("<div class='zy-header'><hic>");
         html.push(this.zy_name);
-        html.push("</hic><span class='zy-area'> · ", this.zy_area || "门派禁地", "</span></div>");
-        html.push("<div class='zy-res'>玄晶 <hiy>", this.zy_xuanjing, "</hiy>　单次试炼消耗 <hic>", this.zy_energy_cost, "</hic> 精力</div></div>");
+        html.push("</hic>　", this.zy_area || "门派禁地", "　玄晶：<hiy>", this.zy_xuanjing, "</hiy>　试炼消耗：<hic>", this.zy_energy_cost, "</hic>精力</div>");
         for (var i = 0; i < this.zhenyiList.length; i++) {
             var z = this.zhenyiList[i];
             html.push("<div class='zy-item");
             if (z.acquired) {
                 html.push(z.active ? " zy-active" : " zy-acquired");
-                html.push("'>");
             } else {
-                html.push(" zy-locked'>");
+                html.push(" zy-locked");
             }
-            html.push("<span class='zy-icon'>");
+            html.push("'>");
+            html.push("<div class='zy-title'><span class='zy-icon'>");
             html.push(z.acquired ? (z.active ? "<hig>●</hig>" : "<hio>○</hio>") : "<ord>○</ord>");
-            html.push("</span>");
-            html.push("<span class='zy-name'>");
+            html.push("</span><span class='zy-name'>");
             html.push(z.name);
-            html.push("</span>");
-            html.push("<span class='zy-level'>", z.acquired ? ("第" + z.level + "重") : "未领悟", "</span>");
-            html.push("<span class='zy-mech'>[");
+            html.push("</span> <span class='zy-level'>", z.acquired ? ("第" + z.level + "重") : "未领悟", "</span> <span class='zy-mech'>[");
             html.push(z.mech);
-            html.push("]</span>");
-            html.push("<span class='zy-desc'>");
+            html.push("]</span></div><div class='zy-desc'>");
             html.push(z.desc);
-            html.push("</span>");
-            html.push("<div class='zy-trial'><span><hio>试炼：</hio>", z.trial, "</span><span>今日 ", z.daily, "/", z.daily_limit, "</span><span>悟痕 ", z.material, "</span></div>");
-            if (z.acquired && z.level < 10) html.push("<div class='zy-cost'>下重需玄晶 ", z.cost_xj, "、悟痕 ", z.cost_mat, "</div>");
+            html.push("</div><div class='zy-status'>试炼：", z.trial, "　今日：", z.daily, "/", z.daily_limit, "　悟痕：", z.material, "</div>");
+            if (z.acquired && z.level < 10) html.push("<div class='zy-cost'>下重需要玄晶 ", z.cost_xj, "、悟痕 ", z.cost_mat, "</div>");
             else if (z.level >= 10) html.push("<div class='zy-cost'><hig>已臻圆满</hig></div>");
-            html.push("<div class='zy-actions'>");
-            if (z.acquired) html.push("<span class='zy-btn zy-use' data-action='active' data-id='", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
-            html.push("<span class='zy-btn", z.daily >= z.daily_limit ? " disabled" : "", "' data-action='challenge' data-id='", z.id, "'>挑战</span>");
+            html.push("<div class='item-commands'>");
+            if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
+            if (z.daily < z.daily_limit) html.push("<span cmd='zhenyi challenge ", z.id, "'>挑战</span>");
+            else html.push("<span class='zy-disabled'>挑战</span>");
             if (z.cleared) {
-                html.push("<span class='zy-btn", z.daily >= z.daily_limit ? " disabled" : "", "' data-action='sweep' data-id='", z.id, "' data-count='1'>扫荡一次</span>");
-                html.push("<span class='zy-btn", z.daily >= z.daily_limit ? " disabled" : "", "' data-action='sweep' data-id='", z.id, "' data-count='10'>扫荡十次</span>");
+                if (z.daily < z.daily_limit) {
+                    html.push("<span cmd='zhenyi sweep ", z.id, " 1'>扫荡一次</span>");
+                    html.push("<span cmd='zhenyi sweep ", z.id, " 10'>扫荡十次</span>");
+                } else {
+                    html.push("<span class='zy-disabled'>扫荡</span>");
+                }
             }
-            if (z.acquired && z.level < 10) html.push("<span class='zy-btn zy-upgrade' data-action='upgrade' data-id='", z.id, "'>升级</span>");
+            if (z.acquired && z.level < 10) html.push("<span cmd='zhenyi upgrade ", z.id, "'>升级</span>");
             html.push("</div>");
             html.push("</div>");
         }
