@@ -261,18 +261,21 @@
 }
 
 .dialog-zhenyi>.zy-header {
-    line-height: 2em;
-    padding-left: 1em;
+    line-height: 1em;
+    padding: 0.5em;
+    border-radius: 4px;
+    border-left: 2px solid gray;
     margin-bottom: 0.5em;
-    border-bottom: 1px solid #343434;
-    color: #888;
+    background-color: #111;
+    color: #C0C0C0;
 }
 
 .dialog-zhenyi>.zy-item {
     line-height: 2em;
-    padding: 0 0.5em 0.35em 1em;
+    padding-left: 1.5em;
     border-radius: 4px;
-    border-left: 2px solid gray;
+    border-left-width: 2px;
+    border-left-style: solid;
     white-space: normal;
     overflow-x: auto;
     margin-bottom: 0.5em;
@@ -297,15 +300,7 @@
     overflow-x: auto;
 }
 
-.dialog-zhenyi .zy-icon {
-    display: inline-block;
-    width: 1.5em;
-}
-
 .dialog-zhenyi .zy-name {
-    display: inline-block;
-    min-width: 7em;
-    font-weight: bold;
 }
 
 .dialog-zhenyi .zy-level,
@@ -319,27 +314,22 @@
 .dialog-zhenyi .zy-desc {
     color: #aaa;
     font-size: 0.85em;
-    line-height: 1.5em;
-    margin-left: 1.8em;
+    line-height: 1.4em;
+    padding: 0.15em 0.5em 0.15em 0;
     white-space: normal;
 }
 
 .dialog-zhenyi .zy-status,
 .dialog-zhenyi .zy-cost {
     line-height: 1.5em;
-    margin-left: 1.8em;
+    padding-left: 0;
 }
 
 .dialog-zhenyi .item-commands {
-    margin-left: 1.8em;
+    padding-left: 0;
 }
 
 .dialog-zhenyi .zy-disabled {
     color: #555;
-    cursor: default;
-}
-
-.dialog-zhenyi .zy-hint {
-    color: #777;
     cursor: default;
 }

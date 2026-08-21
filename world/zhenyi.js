@@ -14,88 +14,88 @@
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             list: [
-                zy(1, "利剑·争锋", "破式", "独孤九剑的破式更锐，命中后获得少量穿透。", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
-                zy(2, "软剑·回锋", "反击", "招架后蓄下一道回锋剑气，强化下一次非红色剑法攻击。", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
-                zy(3, "重剑·崩岳", "破坚", "攻击气血充盈的敌人时追加有上限的崩岳伤害。", "重剑负山", "burst", ["dugujiujian/poqi", "huashanjianfa/jiang"], "jz_heavy"),
-                zy(4, "木剑·养意", "生息", "施展紫霞神功后回复气血，并短暂提高承伤能力。", "木剑守拙", "endure", ["zixiashengong/xi"], "jz_wood"),
-                zy(5, "无剑·无招", "剑势", "无招期间的首轮攻势获得额外剑意伤害。", "无剑胜有", "master", ["dugujiujian/wu"], "jz_formless")
+                zy(1, "利剑·争锋", "破式", "施展破气诀等本门非红色攻击命中时，伤害提高约1.6%～8.4%，并额外获得3～17点破防；数值随真意重数和门派平衡系数成长。", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
+                zy(2, "软剑·回锋", "反击", "成功招架后获得10秒回锋标记；下一次本门非红色武学攻击伤害提高约4.6%～17.8%，触发后消耗标记。", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
+                zy(3, "重剑·崩岳", "破坚", "目标当前气血高于70%时，本门非红色武学伤害提高约2.1%～8.3%；不额外触发独立伤害。", "重剑负山", "burst", ["dugujiujian/poqi", "huashanjianfa/jiang"], "jz_heavy"),
+                zy(4, "木剑·养意", "生息", "成功施展紫气东来后，立即回复最大气血约0.8%～3.6%，并获得8秒护意；护意期间受伤减免约2.9%～10.0%。", "木剑守拙", "endure", ["zixiashengong/xi"], "jz_wood"),
+                zy(5, "无剑·无招", "剑势", "施展无招期间，本门非红色武学首轮攻击伤害提高约4.6%～17.8%；同一轮10秒内只触发一次。", "无剑胜有", "master", ["dugujiujian/wu"], "jz_formless")
             ]
         },
         WUDANG: {
             name: "太极真意", key: "zw", jd: 3, area: "真武秘境", balance: 1.00,
             trialRoom: "zw/yanwutai_trial", guide: "执符道人",
             list: [
-                zy(1, "借力", "蓄劲", "连续招架可积蓄来力，并在下一击中归还。", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
-                zy(2, "化劲", "卸力", "承受重击时化去部分劲力，触发后短暂休息。", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
-                zy(3, "粘劲", "缠势", "太极绕字、震字命中时有间隔地延长牵制。", "粘随关", "control", ["taijijian/rao", "taijiquan/zhen"], "zw_stick"),
-                zy(4, "乱环", "守御", "气血越低，太极守势提供的减伤越明显。", "乱环关", "endure", ["taijijian/sui"], "zw_circle"),
-                zy(5, "无极", "归元", "濒危时归元一次，并强化真武除邪的周转。", "无极关", "master", ["taijishengong/tu"], "zw_wuji")
+                zy(1, "借力", "蓄劲", "成功招架2次后获得借力层数；12秒内下一次本门非红色武学伤害提高约6.8%～18.6%，触发后清空层数。", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
+                zy(2, "化劲", "卸力", "受到伤害时，每8秒首次受击减伤约4.9%～11.7%；只减免该次伤害，不改变对方攻击效果。", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
+                zy(3, "粘劲", "缠势", "绕字诀命中后额外忙乱约0.6～1.2秒，10秒冷却；震字诀命中后封锁对方绝招约1.0～1.6秒。", "粘随关", "control", ["taijijian/rao", "taijiquan/zhen"], "zw_stick"),
+                zy(4, "乱环", "守御", "气血越低减伤越高，最高约为当前损失气血比例×1.4%～10.4%，总减伤封顶25%。", "乱环关", "endure", ["taijijian/sui"], "zw_circle"),
+                zy(5, "无极", "归元", "气血低于18%时每10分钟触发一次，回复最大气血约0.9%～11.7%并清除负面状态；真武除邪精力消耗降低约4%～7.8%，调息同幅缩短。", "无极关", "master", ["taijishengong/tu"], "zw_wuji")
             ]
         },
         SHAOLIN: {
             name: "禅武真意", key: "dmd", jd: 4, area: "达摩洞", balance: 1.00,
             trialRoom: "dmd/chanwutai_trial", guide: "守洞老僧",
             list: [
-                zy(1, "金刚不坏", "不灭", "每场恶战可抵住一次致命伤，保留一线生机。", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
-                zy(2, "狮子吼", "震慑", "易筋经狮吼更凝练，命中后延长短暂震慑。", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
-                zy(3, "般若心", "封招", "惊魔一指与达摩三绝可短暂压住敌手绝招。", "般若试", "resource", ["yizhichan/zhen", "damojian/jiang"], "sl_prajna"),
-                zy(4, "罗汉阵", "镇守", "同时面对多名敌手时减伤，并以禅劲轻微反震。", "罗汉试", "endure", ["ranmudao/hu"], "sl_arhat"),
-                zy(5, "禅定", "清净", "佛光守护、一苇渡江消耗与调息时间略减。", "禅定试", "master", ["yijinjing/foguang", "shaolinshenfa/lingbo"], "sl_meditate")
+                zy(1, "金刚不坏", "不灭", "每10分钟最多抵挡一次致命伤害，将本次伤害压至1点；仅对自身生效。", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
+                zy(2, "狮子吼", "震慑", "狮子吼命中后额外施加约0.7～1.4秒忙乱，12秒冷却；原技能的内力差昏迷规则不变。", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
+                zy(3, "般若心", "封招", "惊魔一指或达摩三绝命中后，封锁目标绝招约1.0～1.6秒；仅影响绝招，不影响普通攻击。", "般若试", "resource", ["yizhichan/zhen", "damojian/jiang"], "sl_prajna"),
+                zy(4, "罗汉阵", "镇守", "同时被2名以上敌人攻击时获得减伤，基础为4%，每多1名敌人增加2.5%，每重再增加0.3%，总减伤封顶18%；不附加反伤。", "罗汉试", "endure", ["ranmudao/hu"], "sl_arhat"),
+                zy(5, "禅定", "清净", "佛光守护与一苇渡江的精力消耗降低约4%～10%，调息时间降低约3.5%～9%；不改变技能本身效果。", "禅定试", "master", ["yijinjing/foguang", "shaolinshenfa/lingbo"], "sl_meditate")
             ]
         },
         EMEI: {
             name: "金顶真意", key: "jdfg", jd: 5, area: "金顶佛光", balance: 1.16,
             trialRoom: "jdfg/wuxiangtai_trial", guide: "佛灯女尼",
             list: [
-                zy(1, "慈航愿", "回春", "临济庄法的回复更深，弱势时额外获得生息。", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
-                zy(2, "金顶怒目", "反震", "金顶绵掌招架后以掌劲回敬敌手。", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
-                zy(3, "灭绝双仪", "剑契", "灭剑、绝剑交替施展时，下一击威力提高。", "双剑试", "precision", ["huifengjian/mie", "huifengjian/jue"], "em_twin"),
-                zy(4, "倚天破魔", "破邪", "倚天剑诀与号令天下对增益中的敌手更具穿透。", "倚天试", "burst", ["yitianjianfa/yi", "yitianjianfa/hao"], "em_yitian"),
-                zy(5, "九阴摄魄", "夺魄", "九阴白骨爪命中气血充盈之敌时追加阴劲。", "摄魄试", "master", ["jiuyinbaiguzhao/duo", "jiuyinbaiguzhao/juan", "jiuyinbaiguzhao2/po", "jiuyinbaiguzhao2/juan"], "em_nineyin")
+                zy(1, "慈航愿", "回春", "鹤翔庄或游龙庄成功生效后，立即回复最大气血约1.1%～6.0%；不改变原有队友治疗效果。", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
+                zy(2, "金顶怒目", "反震", "成功招架后获得6秒反震标记；下一次受击时反弹所受伤害约7.3%～18.1%，每8秒最多触发一次，且反伤不超过自身攻击力50%。", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
+                zy(3, "灭绝双仪", "剑契", "灭剑与绝剑成功交替后，12秒内下一次本门非红色武学伤害提高约8.0%～18.1%，触发后消耗。", "双剑试", "precision", ["huifengjian/mie", "huifengjian/jue"], "em_twin"),
+                zy(4, "倚天破魔", "破邪", "施展倚天剑诀或号令天下时，伤害提高约2.5%～9.8%，并额外获得约3～17点破防；不强化任何grade6技能。", "倚天试", "burst", ["yitianjianfa/yi", "yitianjianfa/hao"], "em_yitian"),
+                zy(5, "九阴摄魄", "夺魄", "目标当前气血高于80%时，本门非红色武学伤害提高约4.3%～18.1%；目标低于80%后不再触发。", "摄魄试", "master", ["jiuyinbaiguzhao/duo", "jiuyinbaiguzhao/juan", "jiuyinbaiguzhao2/po", "jiuyinbaiguzhao2/juan"], "em_nineyin")
             ]
         },
         GAIBANG: {
             name: "降龙真意", key: "js", jd: 6, area: "君山密录", balance: 0.92,
             trialRoom: "js/chuanwutang_trial", guide: "传功长老",
             list: [
-                zy(1, "亢龙有悔", "刚劲", "降龙一式获得少量破防，重在一发收放。", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
-                zy(2, "飞龙在天", "连掌", "十八掌连续命中时逐步积蓄掌势，设有层数上限。", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
-                zy(3, "神龙摆尾", "制敌", "打狗棒绊倒敌手后，下一击获得增伤。", "摆尾试", "control", ["dagoubang/chan", "jiaohuabangfa/wu"], "gb_tail"),
-                zy(4, "龙战于野", "血战", "自身气血偏低时，非红色门派武学伤害提高。", "龙战试", "endure", ["huntianqigong/power"], "gb_field"),
-                zy(5, "时乘六龙", "龙劲", "施展降龙绝招后凝聚一道有上限的后续龙劲。", "六龙试", "master", ["xianglongzhang/qi", "xianglongzhang/shiba"], "gb_six")
+                zy(1, "亢龙有悔", "刚劲", "施展降龙时，本门非红色武学伤害提高约1.4%～8.0%，并额外获得约3～17点破防。", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
+                zy(2, "飞龙在天", "连掌", "十八掌连续命中时获得掌势层数，最多5层，每层使后续本门非红色武学伤害提高约0.7%～1.4%；层数12秒未续则消失。", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
+                zy(3, "神龙摆尾", "制敌", "绊字诀命中后获得12秒摆尾标记；下一次本门非红色武学伤害提高约6.2%～19.7%，触发后消耗。", "摆尾试", "control", ["dagoubang/chan", "jiaohuabangfa/wu"], "gb_tail"),
+                zy(4, "龙战于野", "血战", "自身气血低于40%时，本门非红色武学伤害提高约3.5%～14.4%；气血恢复至40%以上后停止。", "龙战试", "endure", ["huntianqigong/power"], "gb_field"),
+                zy(5, "时乘六龙", "龙劲", "降龙或十八掌成功后获得12秒龙劲；下一次本门非红色武学伤害提高约5.0%～16.7%，触发后消耗。", "六龙试", "master", ["xianglongzhang/qi", "xianglongzhang/shiba"], "gb_six")
             ]
         },
         XIAOYAO: {
             name: "逍遥真意", key: "lhfd", jd: 7, area: "琅嬛福地", balance: 0.90,
             trialRoom: "lhfd/wendaotai_trial", guide: "玉像侍者",
             list: [
-                zy(1, "北冥鲸吞", "纳气", "北冥绝招命中后吸纳少量内力并回复自身。", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
-                zy(2, "凌波残影", "轻灵", "闪避后积下一缕残影，下一击命中与威力略增。", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
-                zy(3, "白虹贯日", "掌力", "内力充盈时白虹掌力更盛，同时额外消耗少量内力。", "白虹试", "burst", ["liuyangzhang/po"], "xy_baihong"),
-                zy(4, "生死符", "寒毒", "生死符的寒劲持续更久，并追加有上限的内息伤害。", "生死试", "control", ["liuyangzhang/zhong"], "xy_talisman"),
-                zy(5, "无相御风", "化用", "小无相功化用非红色绝招时，额外消耗与调息略减。", "无相试", "master", ["xiaowuxianggong/duo", "xiaowuxianggong/wuwo"], "xy_formless")
+                zy(1, "北冥鲸吞", "纳气", "北冥相关绝招成功命中后，吸取目标最大内力约0.6%～1.5%，并转化为自身内力；自身最多获得最大内力的3%。", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
+                zy(2, "凌波残影", "轻灵", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.7%～15.5%，命中提高20%，触发后消耗。", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
+                zy(3, "白虹贯日", "掌力", "当前内力高于80%时，白虹掌力命中伤害提高约5.0%～14.4%，并额外消耗最大内力1%。", "白虹试", "burst", ["liuyangzhang/po"], "xy_baihong"),
+                zy(4, "生死符", "寒毒", "生死符命中后，额外造成目标最大内力约0.2%～0.6%的伤害，单次不超过目标本次所受伤害25%，8秒冷却。", "生死试", "control", ["liuyangzhang/zhong"], "xy_talisman"),
+                zy(5, "无相御风", "化用", "小无相功的无相、无我释放已化用的非红色绝招时，精力消耗降低约5%～12%，调息降低约4.5%～11.7%，最低仍保留4秒调息。", "无相试", "master", ["xiaowuxianggong/duo", "xiaowuxianggong/wuwo"], "xy_formless")
             ]
         },
         SHASHOU: {
             name: "暗杀真意", key: "xl", jd: 8, area: "修罗暗殿", balance: 1.22,
             trialRoom: "xl/shengloutai_trial", guide: "暗殿司命",
             list: [
-                zy(1, "无声影遁", "先手", "脱战后第一记非红色门派绝招短暂封住敌手。", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
-                zy(2, "踏雪暗步", "追魂", "无痕与暗器起手获得更高命中，闪避后积蓄追击。", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
-                zy(3, "穿心刺穴", "破绽", "穿心掌、飞刀对高血量目标获得明显穿透。", "刺穴试", "burst", ["chuanxinzhang/chuan", "feidao/jiang"], "ss_puncture"),
-                zy(4, "血债必偿", "追命", "击败敌手后保留一次追命增伤，脱战仍可短暂保留。", "血债试", "master", ["shashengjue/power"], "ss_debt"),
-                zy(5, "杀生修罗", "绝境", "低血量时强化杀生诀与漫天花雨；屠神大法为grade6，不受强化。", "修罗试", "endure", ["shashengjue/power", "shashengjue/tuoli", "mantianhuayu/wu"], "ss_asura")
+                zy(1, "无声影遁", "先手", "无痕成功生效后，20秒内下一次本门非红色武学命中会封锁目标绝招约0.8～1.5秒；每20秒最多触发一次。", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
+                zy(2, "踏雪暗步", "追魂", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.0%～15.0%，命中提高25%，触发后消耗。", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
+                zy(3, "穿心刺穴", "破绽", "目标当前气血高于80%时，本门非红色武学伤害提高约5.5%～17.8%，并额外获得10～20点破防。", "刺穴试", "burst", ["chuanxinzhang/chuan", "feidao/jiang"], "ss_puncture"),
+                zy(4, "血债必偿", "追命", "击杀目标后获得120秒血债标记；下一次本门非红色武学伤害提高约7.5%～20.0%，触发后消耗。", "血债试", "master", ["shashengjue/power"], "ss_debt"),
+                zy(5, "杀生修罗", "绝境", "自身气血低于30%时，本门非红色武学伤害提高约6.7%～20.8%，并额外获得8～18点破防；不强化任何grade6技能。", "修罗试", "endure", ["shashengjue/power", "shashengjue/tuoli", "mantianhuayu/wu"], "ss_asura")
             ]
         },
         SUNV: {
             name: "九天真意", key: "yc", jd: 9, area: "九天瑶池", balance: 1.26,
             trialRoom: "yc/jiutantai_trial", guide: "瑶池玉使",
             list: [
-                zy(1, "神霄·雷贯", "雷霆", "神霄雷法连续命中时逐步提高穿透。", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
-                zy(2, "玄女·法相", "法相", "玄女法相的守御与持续作战能力提高。", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),
-                zy(3, "天魔·魅魂", "摄心", "魅魂与极乐六性命中后增强下一轮攻势。", "魅魂试", "control", ["sunvxinjing/meihun", "jileliuxing/liuxing"], "sn_charm"),
-                zy(4, "紫电·惊霆", "麻痹", "紫电功雷招追加灼伤，麻痹触发有独立间隔。", "紫电试", "resource", ["zidianjin/chunlei", "zidianjin/tianlei", "zidianjin2/jinglei", "zidianjin2/tianlei"], "sn_purple"),
-                zy(5, "应身·守一", "转伤", "应身守御可将部分伤害转耗内力，内力不足时停止。", "应身试", "master", [], "sn_guard")
+                zy(1, "神霄·雷贯", "雷霆", "天打五雷轰或阳雷荡邪秽造成伤害时叠加雷贯，最多5层、每层持续12秒；后续攻击按层数获得3、6、9、12、15点破防。", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
+                zy(2, "玄女·法相", "法相", "玄女法相成功生效后获得15秒法相护持；期间受到伤害减免约4.6%～14.3%，不改变法相原有攻击和容貌加成。", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),
+                zy(3, "天魔·魅魂", "摄心", "魅魂或极乐六性成功命中后获得12秒摄心标记；下一次本门非红色武学伤害提高约5.0%～15.6%，触发后消耗。", "魅魂试", "control", ["sunvxinjing/meihun", "jileliuxing/liuxing"], "sn_charm"),
+                zy(4, "紫电·惊霆", "麻痹", "春雷暴殛或天打雷劈屠真龙施展期间，伤害提高约4.9%～15.5%；每9秒最多追加一次额外雷伤，伤害为攻击力约8%～18%且不超过本次伤害30%。", "紫电试", "resource", ["zidianjin/chunlei", "zidianjin/tianlei", "zidianjin2/jinglei", "zidianjin2/tianlei"], "sn_purple"),
+                zy(5, "应身·守一", "转伤", "当前内力大于0时，每次受伤将伤害的约5.0%～15.6%转为内力消耗；累计减伤最高25%，内力耗尽后停止。", "应身试", "master", [], "sn_guard")
             ]
         }
     };
