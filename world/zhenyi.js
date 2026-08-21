@@ -12,7 +12,7 @@
     var DATA = {
         HUASHAN: {
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
-            trialRoom: "jz/wuyitai", guide: "守冢剑侍",
+            trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             list: [
                 zy(1, "利剑·争锋", "破式", "独孤九剑的破式更锐，命中后获得少量穿透。", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
                 zy(2, "软剑·回锋", "反击", "招架后蓄下一道回锋剑气，强化下一次非红色剑法攻击。", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
@@ -23,7 +23,7 @@
         },
         WUDANG: {
             name: "太极真意", key: "zw", jd: 3, area: "真武秘境", balance: 1.00,
-            trialRoom: "zw/yanwutai", guide: "执符道人",
+            trialRoom: "zw/yanwutai_trial", guide: "执符道人",
             list: [
                 zy(1, "借力", "蓄劲", "连续招架可积蓄来力，并在下一击中归还。", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
                 zy(2, "化劲", "卸力", "承受重击时化去部分劲力，触发后短暂休息。", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
@@ -34,7 +34,7 @@
         },
         SHAOLIN: {
             name: "禅武真意", key: "dmd", jd: 4, area: "达摩洞", balance: 1.00,
-            trialRoom: "dmd/chanwutai", guide: "守洞老僧",
+            trialRoom: "dmd/chanwutai_trial", guide: "守洞老僧",
             list: [
                 zy(1, "金刚不坏", "不灭", "每场恶战可抵住一次致命伤，保留一线生机。", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
                 zy(2, "狮子吼", "震慑", "易筋经狮吼更凝练，命中后延长短暂震慑。", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
@@ -45,7 +45,7 @@
         },
         EMEI: {
             name: "金顶真意", key: "jdfg", jd: 5, area: "金顶佛光", balance: 1.16,
-            trialRoom: "jdfg/wuxiangtai", guide: "佛灯女尼",
+            trialRoom: "jdfg/wuxiangtai_trial", guide: "佛灯女尼",
             list: [
                 zy(1, "慈航愿", "回春", "临济庄法的回复更深，弱势时额外获得生息。", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
                 zy(2, "金顶怒目", "反震", "金顶绵掌招架后以掌劲回敬敌手。", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
@@ -56,7 +56,7 @@
         },
         GAIBANG: {
             name: "降龙真意", key: "js", jd: 6, area: "君山密录", balance: 0.92,
-            trialRoom: "js/chuanwutang", guide: "传功长老",
+            trialRoom: "js/chuanwutang_trial", guide: "传功长老",
             list: [
                 zy(1, "亢龙有悔", "刚劲", "降龙一式获得少量破防，重在一发收放。", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
                 zy(2, "飞龙在天", "连掌", "十八掌连续命中时逐步积蓄掌势，设有层数上限。", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
@@ -67,7 +67,7 @@
         },
         XIAOYAO: {
             name: "逍遥真意", key: "lhfd", jd: 7, area: "琅嬛福地", balance: 0.90,
-            trialRoom: "lhfd/wendaotai", guide: "玉像侍者",
+            trialRoom: "lhfd/wendaotai_trial", guide: "玉像侍者",
             list: [
                 zy(1, "北冥鲸吞", "纳气", "北冥绝招命中后吸纳少量内力并回复自身。", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
                 zy(2, "凌波残影", "轻灵", "闪避后积下一缕残影，下一击命中与威力略增。", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
@@ -78,7 +78,7 @@
         },
         SHASHOU: {
             name: "暗杀真意", key: "xl", jd: 8, area: "修罗暗殿", balance: 1.22,
-            trialRoom: "xl/shengloutai", guide: "暗殿司命",
+            trialRoom: "xl/shengloutai_trial", guide: "暗殿司命",
             list: [
                 zy(1, "无声影遁", "先手", "脱战后第一记非红色门派绝招短暂封住敌手。", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
                 zy(2, "踏雪暗步", "追魂", "无痕与暗器起手获得更高命中，闪避后积蓄追击。", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
@@ -89,7 +89,7 @@
         },
         SUNV: {
             name: "九天真意", key: "yc", jd: 9, area: "九天瑶池", balance: 1.26,
-            trialRoom: "yc/jiutantai", guide: "瑶池玉使",
+            trialRoom: "yc/jiutantai_trial", guide: "瑶池玉使",
             list: [
                 zy(1, "神霄·雷贯", "雷霆", "神霄雷法连续命中时逐步提高穿透。", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
                 zy(2, "玄女·法相", "法相", "玄女法相的守御与持续作战能力提高。", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),

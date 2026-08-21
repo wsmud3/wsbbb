@@ -20,6 +20,25 @@ BACKUP_DIR=data/backup/db
 
 log() { echo "[$(date '+%F %T')] $1" >> "$LOG"; }
 
+build_frontend() {
+    local current_ref
+    current_ref=$(git rev-parse HEAD)
+    local built_ref
+    built_ref=$(cat log/last_built_ref 2>/dev/null || true)
+    if [ "$built_ref" = "$current_ref" ]; then
+        return 0
+    fi
+
+    # 自愈清理：root 属主的构建产物 mud 无法覆盖，会阻塞构建。
+    find www -user root -delete 2>/dev/null || true
+    if npm run build >> "$LOG" 2>&1; then
+        echo "$current_ref" > log/last_built_ref
+        log "前端构建完成 ${current_ref:0:7}（www/ 已更新）"
+    else
+        log "错误：前端构建失败 ${current_ref:0:7}，前端保持旧版本，下轮自动重试"
+    fi
+}
+
 # ---------- 0. 工作区必须干净，否则不动 ----------
 if ! git diff --quiet || ! git diff --cached --quiet; then
     log "跳过：工作区不干净（存在未提交改动），拒绝自动部署"
@@ -35,25 +54,12 @@ fi
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 
-# ---------- 1.5 前端构建：代码比上次构建新就重建（即使没有新提交） ----------
-# www/ 是 gitignore 的本地构建产物，不入版本库；这里保证拉取后的
-# 前端代码能自动构建生效（同时修复 pull.sh 自身更新后不触发构建的问题）
-BUILT_REF_FILE=log/last_built_ref
-BUILT_REF=$(cat "$BUILT_REF_FILE" 2>/dev/null || true)
-if [ "$BUILT_REF" != "$LOCAL" ]; then
-    # 自愈清理：root 属主的构建产物 mud 无法覆盖，会阻塞构建
-    # （www 目录本身属主为 mud，cron 可以删除其中的 root 文件）
-    find www -user root -delete 2>/dev/null || true
-    if npm run build >> "$LOG" 2>&1; then
-        echo "$LOCAL" > "$BUILT_REF_FILE"
-        log "前端构建完成 ${LOCAL:0:7}（www/ 已更新）"
-    else
-        log "错误：前端构建失败 ${LOCAL:0:7}，前端保持旧版本，下轮自动重试"
-    fi
-fi
-
 # 无更新，什么都不做（避免无意义 reload）
-[ "$LOCAL" = "$REMOTE" ] && exit 0
+if [ "$LOCAL" = "$REMOTE" ]; then
+    # 即使没有新提交，也要补做上次失败或尚未执行的前端构建。
+    build_frontend
+    exit 0
+fi
 
 # ---------- 2. 关键文件校验：目标提交必须包含关键文件 ----------
 for f in $KEY_FILES; do
@@ -82,6 +88,9 @@ if ! git merge --ff-only -q origin/main; then
     log "错误：merge --ff-only 失败，保持当前版本不变"
     exit 0
 fi
+
+# 合并完成后再构建，确保 www/ 与当前实际运行的提交一致。
+build_frontend
 
 # ---------- 6. 重启并健康检查 ----------
 pm2 reload all
