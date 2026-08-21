@@ -161,8 +161,7 @@ export default {
             else if (z.level >= 10) html.push("<div class='zy-cost'><hig>已臻圆满</hig></div>");
             html.push("<div class='item-commands'>");
             if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
-            if (z.daily < z.daily_limit) html.push("<span cmd='zhenyi challenge ", z.id, "'>挑战</span>");
-            else html.push("<span class='zy-disabled'>挑战</span>");
+            html.push("<span class='zy-hint'>前往禁地点击试炼引路人开启</span>");
             if (z.cleared) {
                 if (z.daily < z.daily_limit) {
                     html.push("<span cmd='zhenyi sweep ", z.id, " 1'>扫荡一次</span>");

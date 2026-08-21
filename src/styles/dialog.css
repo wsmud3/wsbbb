@@ -338,3 +338,8 @@
     color: #555;
     cursor: default;
 }
+
+.dialog-zhenyi .zy-hint {
+    color: #777;
+    cursor: default;
+}
