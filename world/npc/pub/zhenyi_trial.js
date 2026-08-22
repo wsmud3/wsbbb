@@ -11,7 +11,8 @@ this.init_trial = function (player, data, intent) {
     this.trial_id = intent.id;
     this.trial_mode = intent.mode;
     this.name = "<hiy>" + intent.trial + "·武意化身</hiy>";
-    this.desc = "这是【" + intent.trial + "】凝成的武意化身。此试考校“" + intent.mech + "”之理：" + intent.desc;
+    var level = WORLD.ZHENYI.get_level(player, data.key, intent.id) || 1;
+    this.desc = "这是【" + intent.trial + "】凝成的武意化身。此试考校“" + intent.mech + "”之理：" + WORLD.ZHENYI.describe(data, intent, level);
 
     var skillLv = Math.max(800, Math.min(3000, player.skill_limit ? player.skill_limit() : 1500));
     this.skill_map(

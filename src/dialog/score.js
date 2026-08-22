@@ -21,7 +21,6 @@ export default {
             this.zy_name = data.zy_name;
             this.zy_key = data.zy_key;
             this.zy_area = data.zy_area;
-            this.zy_xuanjing = data.zy_xuanjing || 0;
             this.create_zhenyi();
         } else {
             if (data.id && data.id != this.uid) {
@@ -48,7 +47,6 @@ export default {
         this.footer[1][1] = $(this.template_score2);
         this.footer[2][1] = $(this.template_title);
         this.footer[3][1] = $(this.template_zhenyi);
-        Dialog.injectStyle(this.css);
     },
     init_elem: function () {
         Dialog.init();
@@ -110,8 +108,14 @@ export default {
             }.bind(this));
         }
         else if (item == 3) {
-            if (!this.zhenyiList)
-                SendCommand("zhenyi");
+            panel.off("click.zhenyi", ".zy-item").on("click.zhenyi", ".zy-item", function (e) {
+                this.show_zhenyi_detail($(e.currentTarget));
+            }.bind(this));
+            panel.off("click.zhenyi", ".zy-detail .sub-close").on("click.zhenyi", ".zy-detail .sub-close", function () {
+                panel.find(".zy-detail").remove();
+            });
+            // 每次切回真意页都刷新一次，避免玄晶、悟痕和启用状态使用旧缓存。
+            SendCommand("zhenyi");
         }
     },
 
@@ -135,38 +139,51 @@ export default {
     create_zhenyi: function () {
         var panel = $(".dialog-zhenyi");
         var html = [];
-        html.push("<div class='score-section zy-header'><hic>【");
+        html.push("<div class='zy-summary'><hio>");
         html.push(this.zy_name);
-        html.push("】</hic>　", this.zy_area || "门派禁地", "　玄晶：<hiy>", this.zy_xuanjing, "</hiy></div>");
+        html.push("</hio><span>", this.zy_area || "门派禁地", "</span></div>");
         for (var i = 0; i < this.zhenyiList.length; i++) {
             var z = this.zhenyiList[i];
-            html.push("<div class='skill-item zy-item");
-            if (z.acquired) {
-                html.push(z.active ? " zy-active" : " zy-acquired");
-            } else {
-                html.push(" zy-locked");
-            }
-            html.push("'>");
-            html.push("<span class='zy-state'>");
-            if (z.active) html.push("<hig>已启用</hig> ");
-            else if (z.acquired) html.push("<hio>已领悟</hio> ");
-            else html.push("<ord>未领悟</ord> ");
-            html.push("</span><span class='zy-name'>");
-            html.push(z.name);
-            html.push("</span> <span class='zy-level'>", z.acquired ? ("第" + z.level + "重") : "", "</span> <span class='zy-mech'>[");
-            html.push(z.mech);
-            html.push("]</span><br /><span class='zy-desc'>");
-            html.push(z.desc);
-            html.push("</span><div class='zy-status'>悟痕：", z.material, "</div>");
-            if (z.acquired && z.level < 10) html.push("<div class='zy-cost'>下重需要玄晶 ", z.cost_xj, "、悟痕 ", z.cost_mat, "</div>");
-            else if (z.level >= 10) html.push("<div class='zy-cost'><hig>已臻圆满</hig></div>");
-            html.push("<div class='item-commands'>");
-            if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
-            if (z.acquired && z.level < 10) html.push("<span cmd='zhenyi upgrade ", z.id, "'>升级</span>");
-            html.push("</div>");
+            html.push("<div class='skill-item zy-item grade", z.grade || 0, z.acquired ? "" : " zy-locked", z.active ? " enable" : "", "' data-zy-id='", z.id, "'>");
+            html.push("<span class='glyphicon glyphicon-ok enable-flag'></span>");
+            html.push("<span class='zy-name'>", z.name, "</span>");
+            html.push("<span class='skill-level'>");
+            if (z.active) html.push("<hig>已启用</hig> · ");
+            html.push(z.acquired ? ("第" + z.level + "重") : "未领悟");
+            html.push("</span>");
             html.push("</div>");
         }
         panel.html(html.join(""));
+    },
+
+    show_zhenyi_detail: function (elem) {
+        if (!elem || !this.zhenyiList) return;
+        var id = parseInt(elem.attr("data-zy-id"));
+        var z = null;
+        for (var i = 0; i < this.zhenyiList.length; i++) {
+            if (parseInt(this.zhenyiList[i].id) === id) {
+                z = this.zhenyiList[i];
+                break;
+            }
+        }
+        if (!z) return;
+
+        var panel = elem.closest(".dialog-zhenyi");
+        panel.find(".zy-detail").remove();
+        var html = ["<div class='zy-detail'>"];
+        html.push("<div class='zy-detail-title'><hio>【", z.mech, "】</hio>", z.trial ? ("　" + z.trial) : "", "</div>");
+        html.push("<div class='zy-desc'>", z.desc, "</div>");
+        if (z.acquired && z.level >= 10) html.push("<div class='zy-meta'><hig>已臻圆满</hig></div>");
+        else if (!z.acquired) {
+            html.push("<div class='zy-meta'>完成对应禁地试炼后领悟</div>");
+        }
+        if (z.mechanic_only) html.push("<div class='zy-meta'><hiy>纯机制真意，无需升级。</hiy></div>");
+        html.push("<div class='item-commands'>");
+        if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
+        if (z.acquired && z.level < 10 && !z.mechanic_only) html.push("<span cmd='zhenyi upgrade ", z.id, "'>升级</span>");
+        html.push("<span class='sub-close' style='float:right;color:#888;cursor:pointer'>✕</span>");
+        html.push("</div></div>");
+        $(html.join("")).insertAfter(elem);
     },
 
 

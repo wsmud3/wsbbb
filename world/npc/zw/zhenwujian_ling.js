@@ -10,6 +10,5 @@ this.skill_map(
     ["taijijian", 2800, ["sword", "parry"]], ["taijishengong", 2800, "force"], ["tiyunzong", 2800, "dodge"]
 );
 this.on_die = function (killer) {
-	    killer.set_temp("zw_zhenwu", 1);
 	    killer.notify("<hig>真武剑灵消散，剑台上的阴阳鱼重新缓缓转动。</hig>");
 	};

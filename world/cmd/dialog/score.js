@@ -94,6 +94,8 @@ this.enter = function (me, arg) {
     // 检测门派禁地是否已解锁，控制真意面板显示
     var has_jd = false;
     if (target.is_player && target.family) {
+        // 旧角色第一次打开属性页时也立即补发，不依赖重新升级或再打一次百层。
+        if (WORLD.ZHENYI) WORLD.ZHENYI.check_unlock(target, true);
         var jd = FAMILY_TO_JDS[target.family.id];
         if (jd) has_jd = target.query_bool("fb2", jd);
     }

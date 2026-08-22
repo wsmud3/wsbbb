@@ -515,6 +515,8 @@ ROOM.prototype.clear_copy = function (me) {
     if (!this.is_copy_room) return;
     let id = this.parent.query_owner(me);
     if (id !== this.owner) return;//只能清除自己或队伍创建的副本
+    // 真意禁地为同门公共地图，单个玩家离开时不能销毁所有人的公共实例。
+    if (WORLD.ZHENYI && WORLD.ZHENYI.is_public_owner(id)) return;
     var name = "fb/";
     for (var key in me.temp) {
         if (key.startsWith(name)) {

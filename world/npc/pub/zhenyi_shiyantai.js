@@ -25,7 +25,7 @@ this.on_create = function (path, par) {
     this.zhenyi_key = key;
     this.zhenyi_id = intent.id;
     this.name = (data.guideNames && data.guideNames[intent.id - 1]) || data.guide;
-    this.desc = "此人镇守【" + intent.trial + "】一脉试场。" + intent.desc + "\n试炼须入独立副本，此处只可请教与开启，不可击杀。";
+    this.desc = "此人镇守【" + intent.trial + "】一脉试场。试炼须入独立副本，准确效果可在属性页的真意列表中查看；此处只可请教与开启，不可击杀。";
 };
 
 this.add_action("zhenyi_trial", "开启试炼", function (me) {
@@ -38,7 +38,15 @@ this.add_action("zhenyi_trial", "开启试炼", function (me) {
     }
     if (!item) return me.notify("你还没有资格参悟这道真意。"), false;
     if (item.daily >= item.daily_limit) return me.notify("这项试炼今日已达十次。"), false;
-    me.send_commands("zhenyi challenge " + this.zhenyi_id, "进入试炼");
+    if (item.cleared) {
+        me.send_commands(
+            "zhenyi challenge " + this.zhenyi_id, "进入试炼",
+            "zhenyi sweep " + this.zhenyi_id + " 1", "扫荡一次",
+            "zhenyi sweep " + this.zhenyi_id + " 10", "扫荡十次"
+        );
+    } else {
+        me.send_commands("zhenyi challenge " + this.zhenyi_id, "进入试炼");
+    }
     return true;
 });
 

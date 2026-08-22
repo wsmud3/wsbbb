@@ -2,6 +2,10 @@ AREA.prototype.notify_update = function () {
     this.json = null;
 }
 AREA.prototype.query_owner = function (me) {
+    // 门派禁地是同门共享的公共实例；真意试炼则用玩家独立 owner 隔离。
+    if (WORLD.ZHENYI && WORLD.ZHENYI.find_by_key(this.id)) {
+        return me.query_temp("zy_trial_owner", "") || WORLD.ZHENYI.public_owner(this.id);
+    }
     return me.query_teamid();
 }
 AREA.prototype.clear_copy = function (me) {

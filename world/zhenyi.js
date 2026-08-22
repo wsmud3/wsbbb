@@ -15,11 +15,11 @@
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             guideNames: ["守剑老人", "回锋剑客", "负剑道人", "洗剑客", "无剑客"],
             list: [
-                zy(1, "利剑·争锋", "破式", "施展破气诀等本门非红色攻击命中时，伤害提高约1.6%～8.4%，并额外获得3～17点破防；数值随真意重数和门派平衡系数成长。", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
-                zy(2, "软剑·回锋", "反击", "成功招架后获得10秒回锋标记；下一次本门非红色武学攻击伤害提高约4.6%～17.8%，触发后消耗标记。", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
-                zy(3, "重剑·崩岳", "破坚", "目标当前气血高于70%时，本门非红色武学伤害提高约2.1%～8.3%；不额外触发独立伤害。", "重剑负山", "burst", ["dugujiujian/poqi", "huashanjianfa/jiang"], "jz_heavy"),
-                zy(4, "木剑·养意", "生息", "成功施展紫气东来后，立即回复最大气血约0.8%～3.6%，并获得8秒护意；护意期间受伤减免约2.9%～10.0%。", "木剑守拙", "endure", ["zixiashengong/xi"], "jz_wood"),
-                zy(5, "无剑·无招", "剑势", "施展无招期间，本门非红色武学首轮攻击伤害提高约4.6%～17.8%；同一轮10秒内只触发一次。", "无剑胜有", "master", ["dugujiujian/wu"], "jz_formless")
+                zy(1, "利剑·争锋", "破式", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
+                zy(2, "软剑·回锋", "反击", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
+                zy(3, "重剑·崩岳", "破坚", "重剑负山", "burst", ["dugujiujian/poqi", "huashanjianfa/jiang"], "jz_heavy"),
+                zy(4, "木剑·养意", "生息", "木剑守拙", "endure", ["zixiashengong/xi"], "jz_wood"),
+                zy(5, "无剑·无招", "剑势", "无剑胜有", "master", ["dugujiujian/wu"], "jz_formless")
             ]
         },
         WUDANG: {
@@ -27,11 +27,11 @@
             trialRoom: "zw/yanwutai_trial", guide: "执符道人",
             guideNames: ["听劲道人", "抱元道者", "缠丝剑侍", "守缺真人", "真武道童"],
             list: [
-                zy(1, "借力", "蓄劲", "成功招架2次后获得借力层数；12秒内下一次本门非红色武学伤害提高约6.8%～18.6%，触发后清空层数。", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
-                zy(2, "化劲", "卸力", "受到伤害时，每8秒首次受击减伤约4.9%～11.7%；只减免该次伤害，不改变对方攻击效果。", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
-                zy(3, "粘劲", "缠势", "绕字诀命中后额外忙乱约0.6～1.2秒，10秒冷却；震字诀命中后封锁对方绝招约1.0～1.6秒。", "粘随关", "control", ["taijijian/rao", "taijiquan/zhen"], "zw_stick"),
-                zy(4, "乱环", "守御", "气血越低减伤越高，最高约为当前损失气血比例×1.4%～10.4%，总减伤封顶25%。", "乱环关", "endure", ["taijijian/sui"], "zw_circle"),
-                zy(5, "无极", "归元", "气血低于18%时每10分钟触发一次，回复最大气血约0.9%～11.7%并清除负面状态；真武除邪精力消耗降低约4%～7.8%，调息同幅缩短。", "无极关", "master", ["taijishengong/tu"], "zw_wuji")
+                zy(1, "借力", "蓄劲", "听劲关", "counter", ["taijiquan/zhen", "taijijian/lian"], "zw_borrow"),
+                zy(2, "化劲", "卸力", "化劲关", "endure", ["taijishengong/tu"], "zw_yield"),
+                zy(3, "粘劲", "缠势", "粘随关", "control", ["taijijian/rao", "taijiquan/zhen"], "zw_stick"),
+                zy(4, "乱环", "守御", "乱环关", "endure", ["taijijian/sui"], "zw_circle"),
+                zy(5, "无极", "归元", "无极关", "master", ["taijishengong/tu"], "zw_wuji")
             ]
         },
         SHAOLIN: {
@@ -39,11 +39,11 @@
             trialRoom: "dmd/chanwutai_trial", guide: "守洞老僧",
             guideNames: ["金刚护法", "狮吼罗汉", "般若行者", "罗汉堂首座", "面壁老僧"],
             list: [
-                zy(1, "金刚不坏", "不灭", "每10分钟最多抵挡一次致命伤害，将本次伤害压至1点；仅对自身生效。", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
-                zy(2, "狮子吼", "震慑", "狮子吼命中后额外施加约0.7～1.4秒忙乱，12秒冷却；原技能的内力差昏迷规则不变。", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
-                zy(3, "般若心", "封招", "惊魔一指或达摩三绝命中后，封锁目标绝招约1.0～1.6秒；仅影响绝招，不影响普通攻击。", "般若试", "resource", ["yizhichan/zhen", "damojian/jiang"], "sl_prajna"),
-                zy(4, "罗汉阵", "镇守", "同时被2名以上敌人攻击时获得减伤，基础为4%，每多1名敌人增加2.5%，每重再增加0.3%，总减伤封顶18%；不附加反伤。", "罗汉试", "endure", ["ranmudao/hu"], "sl_arhat"),
-                zy(5, "禅定", "清净", "佛光守护与一苇渡江的精力消耗降低约4%～10%，调息时间降低约3.5%～9%；不改变技能本身效果。", "禅定试", "master", ["yijinjing/foguang", "shaolinshenfa/lingbo"], "sl_meditate")
+                zy(1, "金刚不坏", "不灭", "金刚试", "endure", ["yijinjing/zhao"], "sl_vajra"),
+                zy(2, "狮子吼", "震慑", "狮吼试", "control", ["yijinjing/roar"], "sl_roar"),
+                zy(3, "般若心", "封招", "般若试", "resource", ["yizhichan/zhen", "damojian/jiang"], "sl_prajna"),
+                zy(4, "罗汉阵", "镇守", "罗汉试", "endure", ["ranmudao/hu"], "sl_arhat"),
+                zy(5, "禅定", "清净", "禅定试", "master", ["yijinjing/foguang", "shaolinshenfa/lingbo"], "sl_meditate")
             ]
         },
         EMEI: {
@@ -51,11 +51,11 @@
             trialRoom: "jdfg/wuxiangtai_trial", guide: "佛灯女尼",
             guideNames: ["慈航师太", "怒目师太", "双仪剑侍", "倚天剑师", "摄魄行者"],
             list: [
-                zy(1, "慈航愿", "回春", "鹤翔庄或游龙庄成功生效后，立即回复最大气血约1.1%～6.0%；不改变原有队友治疗效果。", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
-                zy(2, "金顶怒目", "反震", "成功招架后获得6秒反震标记；下一次受击时反弹所受伤害约7.3%～18.1%，每8秒最多触发一次，且反伤不超过自身攻击力50%。", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
-                zy(3, "灭绝双仪", "剑契", "灭剑与绝剑成功交替后，12秒内下一次本门非红色武学伤害提高约8.0%～18.1%，触发后消耗。", "双剑试", "precision", ["huifengjian/mie", "huifengjian/jue"], "em_twin"),
-                zy(4, "倚天破魔", "破邪", "施展倚天剑诀或号令天下时，伤害提高约2.5%～9.8%，并额外获得约3～17点破防；不强化任何grade6技能。", "倚天试", "burst", ["yitianjianfa/yi", "yitianjianfa/hao"], "em_yitian"),
-                zy(5, "九阴摄魄", "夺魄", "目标当前气血高于80%时，本门非红色武学伤害提高约4.3%～18.1%；目标低于80%后不再触发。", "摄魄试", "master", ["jiuyinbaiguzhao/duo", "jiuyinbaiguzhao/juan", "jiuyinbaiguzhao2/po", "jiuyinbaiguzhao2/juan"], "em_nineyin")
+                zy(1, "慈航愿", "回春", "慈航试", "endure", ["linjizhuang/xi", "linjizhuang/huifu", "linjizhuang2/xi", "linjizhuang2/huifu"], "em_mercy"),
+                zy(2, "金顶怒目", "反震", "怒目试", "counter", ["jindingzhang/po"], "em_wrath"),
+                zy(3, "灭绝双仪", "剑契", "双剑试", "precision", ["huifengjian/mie", "huifengjian/jue"], "em_twin"),
+                zy(4, "倚天破魔", "破邪", "倚天试", "burst", ["yitianjianfa/yi", "yitianjianfa/hao"], "em_yitian"),
+                zy(5, "九阴摄魄", "夺魄", "摄魄试", "master", ["jiuyinbaiguzhao/duo", "jiuyinbaiguzhao/juan", "jiuyinbaiguzhao2/po", "jiuyinbaiguzhao2/juan"], "em_nineyin")
             ]
         },
         GAIBANG: {
@@ -63,11 +63,11 @@
             trialRoom: "js/chuanwutang_trial", guide: "传功长老",
             guideNames: ["降龙长老", "飞龙舵主", "摆尾长老", "君山老帮众", "六龙传功使"],
             list: [
-                zy(1, "亢龙有悔", "刚劲", "施展降龙时，本门非红色武学伤害提高约1.4%～8.0%，并额外获得约3～17点破防。", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
-                zy(2, "飞龙在天", "连掌", "十八掌连续命中时获得掌势层数，最多5层，每层使后续本门非红色武学伤害提高约0.7%～1.4%；层数12秒未续则消失。", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
-                zy(3, "神龙摆尾", "制敌", "绊字诀命中后获得12秒摆尾标记；下一次本门非红色武学伤害提高约6.2%～19.7%，触发后消耗。", "摆尾试", "control", ["dagoubang/chan", "jiaohuabangfa/wu"], "gb_tail"),
-                zy(4, "龙战于野", "血战", "自身气血低于40%时，本门非红色武学伤害提高约3.5%～14.4%；气血恢复至40%以上后停止。", "龙战试", "endure", ["huntianqigong/power"], "gb_field"),
-                zy(5, "时乘六龙", "龙劲", "降龙或十八掌成功后获得12秒龙劲；下一次本门非红色武学伤害提高约5.0%～16.7%，触发后消耗。", "六龙试", "master", ["xianglongzhang/qi", "xianglongzhang/shiba"], "gb_six")
+                zy(1, "亢龙有悔", "刚劲", "亢龙试", "burst", ["xianglongzhang/qi"], "gb_kanglong"),
+                zy(2, "飞龙在天", "连掌", "飞龙试", "precision", ["xianglongzhang/shiba"], "gb_flying"),
+                zy(3, "神龙摆尾", "制敌", "摆尾试", "control", ["dagoubang/chan", "jiaohuabangfa/wu"], "gb_tail"),
+                zy(4, "龙战于野", "血战", "龙战试", "endure", ["huntianqigong/power"], "gb_field"),
+                zy(5, "时乘六龙", "龙劲", "六龙试", "master", ["xianglongzhang/qi", "xianglongzhang/shiba"], "gb_six")
             ]
         },
         XIAOYAO: {
@@ -75,11 +75,11 @@
             trialRoom: "lhfd/wendaotai_trial", guide: "玉像侍者",
             guideNames: ["北冥客", "凌波玉女", "白虹使", "生死符使", "琅嬛守卷人"],
             list: [
-                zy(1, "北冥鲸吞", "纳气", "北冥相关绝招成功命中后，吸取目标最大内力约0.6%～1.5%，并转化为自身内力；自身最多获得最大内力的3%。", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
-                zy(2, "凌波残影", "轻灵", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.7%～15.5%，命中提高20%，触发后消耗。", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
-                zy(3, "白虹贯日", "掌力", "当前内力高于80%时，白虹掌力命中伤害提高约5.0%～14.4%，并额外消耗最大内力1%。", "白虹试", "burst", ["liuyangzhang/po"], "xy_baihong"),
-                zy(4, "生死符", "寒毒", "生死符命中后，额外造成目标最大内力约0.2%～0.6%的伤害，单次不超过目标本次所受伤害25%，8秒冷却。", "生死试", "control", ["liuyangzhang/zhong"], "xy_talisman"),
-                zy(5, "无相御风", "化用", "小无相功的无相、无我释放已化用的非红色绝招时，精力消耗降低约5%～12%，调息降低约4.5%～11.7%，最低仍保留4秒调息。", "无相试", "master", ["xiaowuxianggong/duo", "xiaowuxianggong/wuwo"], "xy_formless")
+                zy(1, "北冥鲸吞", "纳气", "北冥试", "resource", ["beimingshengong/huifu", "beimingshengong/power"], "xy_beiming"),
+                zy(2, "凌波残影", "轻灵", "凌波试", "precision", ["lingboweibu/lingbo"], "xy_lingbo"),
+                zy(3, "白虹贯日", "掌力", "白虹试", "burst", ["liuyangzhang/po"], "xy_baihong"),
+                zy(4, "生死符", "寒毒", "生死试", "control", ["liuyangzhang/zhong"], "xy_talisman"),
+                zy(5, "无相御风", "化用", "无相试", "master", ["xiaowuxianggong/duo", "xiaowuxianggong/wuwo"], "xy_formless")
             ]
         },
         SHASHOU: {
@@ -87,11 +87,11 @@
             trialRoom: "xl/shengloutai_trial", guide: "暗殿司命",
             guideNames: ["无痕影使", "踏雪客", "穿心刺客", "血债判官", "修罗使"],
             list: [
-                zy(1, "无声影遁", "先手", "无痕成功生效后，20秒内下一次本门非红色武学命中会封锁目标绝招约0.8～1.5秒；每20秒最多触发一次。", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
-                zy(2, "踏雪暗步", "追魂", "成功闪避后获得10秒残影；下一次本门非红色武学伤害提高约4.0%～15.0%，命中提高25%，触发后消耗。", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
-                zy(3, "穿心刺穴", "破绽", "目标当前气血高于80%时，本门非红色武学伤害提高约5.5%～17.8%，并额外获得10～20点破防。", "刺穴试", "burst", ["chuanxinzhang/chuan", "feidao/jiang"], "ss_puncture"),
-                zy(4, "血债必偿", "追命", "击杀目标后获得120秒血债标记；下一次本门非红色武学伤害提高约7.5%～20.0%，触发后消耗。", "血债试", "master", ["shashengjue/power"], "ss_debt"),
-                zy(5, "杀生修罗", "绝境", "自身气血低于30%时，本门非红色武学伤害提高约6.7%～20.8%，并额外获得8～18点破防；不强化任何grade6技能。", "修罗试", "endure", ["shashengjue/power", "shashengjue/tuoli", "mantianhuayu/wu"], "ss_asura")
+                zy(1, "无声影遁", "先手", "匿影试", "precision", ["taxuexunmei/power"], "ss_shadow"),
+                zy(2, "踏雪暗步", "追魂", "暗步试", "precision", ["taxuexunmei/power", "mantianhuayu/luo"], "ss_step"),
+                zy(3, "穿心刺穴", "破绽", "刺穴试", "burst", ["chuanxinzhang/chuan", "feidao/jiang"], "ss_puncture"),
+                zy(4, "血债必偿", "追命", "血债试", "master", ["shashengjue/power"], "ss_debt"),
+                zy(5, "杀生修罗", "绝境", "修罗试", "endure", ["shashengjue/power", "shashengjue/tuoli", "mantianhuayu/wu"], "ss_asura")
             ]
         },
         SUNV: {
@@ -99,22 +99,27 @@
             trialRoom: "yc/jiutantai_trial", guide: "瑶池玉使",
             guideNames: ["神霄雷使", "玄女侍", "魅魂宫人", "紫电使", "守一仙子"],
             list: [
-                zy(1, "神霄·雷贯", "雷霆", "天打五雷轰或阳雷荡邪秽造成伤害时叠加雷贯，最多5层、每层持续12秒；后续攻击按层数获得3、6、9、12、15点破防。", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
-                zy(2, "玄女·法相", "法相", "玄女法相成功生效后获得15秒法相护持；期间受到伤害减免约4.6%～14.3%，不改变法相原有攻击和容貌加成。", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),
-                zy(3, "天魔·魅魂", "摄心", "魅魂或极乐六性成功命中后获得12秒摄心标记；下一次本门非红色武学伤害提高约5.0%～15.6%，触发后消耗。", "魅魂试", "control", ["sunvxinjing/meihun", "jileliuxing/liuxing"], "sn_charm"),
-                zy(4, "紫电·惊霆", "麻痹", "春雷暴殛或天打雷劈屠真龙施展期间，伤害提高约4.9%～15.5%；每9秒最多追加一次额外雷伤，伤害为攻击力约8%～18%且不超过本次伤害30%。", "紫电试", "resource", ["zidianjin/chunlei", "zidianjin/tianlei", "zidianjin2/jinglei", "zidianjin2/tianlei"], "sn_purple"),
-                zy(5, "应身·守一", "转伤", "当前内力大于0时，每次受伤将伤害的约5.0%～15.6%转为内力消耗；累计减伤最高25%，内力耗尽后停止。", "应身试", "master", [], "sn_guard")
+                zy(1, "神霄·雷贯", "雷霆", "神霄试", "precision", ["shenxiaojiumie/wulei", "shenxiaojiumie/yanglei", "shenxiaojiumie2/wulei", "shenxiaojiumie2/yanglei"], "sn_thunder"),
+                zy(2, "玄女·法相", "法相", "法相试", "endure", ["sunvxinjing/faxiang"], "sn_avatar"),
+                zy(3, "天魔·魅魂", "摄心", "魅魂试", "control", ["sunvxinjing/meihun", "jileliuxing/liuxing"], "sn_charm"),
+                zy(4, "紫电·惊霆", "麻痹", "紫电试", "resource", ["zidianjin/chunlei", "zidianjin/tianlei", "zidianjin2/jinglei", "zidianjin2/tianlei"], "sn_purple"),
+                zy(5, "应身·守一", "转伤", "应身试", "master", [], "sn_guard")
             ]
         }
     };
 
-    function zy(id, name, mech, desc, trialName, mode, pfms, effect) {
-        return { id: id, name: name, mech: mech, desc: desc, trial: trialName, mode: mode, pfms: pfms || [], effect: effect };
+    function zy(id, name, mech, trialName, mode, pfms, effect) {
+        return { id: id, name: name, mech: mech, trial: trialName, mode: mode, pfms: pfms || [], effect: effect };
     }
 
     var UPGRADE_XJ = [0, 0, 100, 150, 220, 300, 400, 520, 660, 820, 1000];
     var UPGRADE_MAT = [0, 0, 5, 8, 12, 18, 25, 34, 45, 58, 75];
     var MAX_LEVEL = 10, DAILY_LIMIT = 10, ENERGY_COST = 20;
+    // 与技能、装备共用 grade 0～6 及其颜色。真意重数提升时跨越品质档位。
+    var LEVEL_GRADES = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6];
+    var GRADE_TAGS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+    // 绿色为基准；后续品质以温和系数参与全部可成长数值，避免只换颜色不换强度。
+    var GRADE_SCALES = [1, 1, 1.05, 1.10, 1.15, 1.20, 1.25];
 
     function familyId(me) { return me && me.family && me.family.id; }
     function familyData(me) { return DATA[familyId(me)]; }
@@ -130,12 +135,87 @@
     function levelKey(key, id) { return "zy_level_" + token(key, id); }
     function clearKey(key, id) { return "zy_clear_" + token(key, id); }
     function matKey(key, id) { return "zy_mat_" + token(key, id); }
+    function matPath(key, id) { return "st/zhenyi_hen#" + token(key, id); }
+    function removeAllMaterial(me, key, id) {
+        if (!me.find_obj_bypath || !me.remove_obj) return;
+        var obj = me.find_obj_bypath(matPath(key, id));
+        if (obj) me.remove_obj(obj, obj.count || 1);
+    }
     function dailyKey(key, id) { return "zy_daily_" + token(key, id); }
+    function gradeForLevel(level) { return LEVEL_GRADES[Math.max(0, Math.min(MAX_LEVEL, parseInt(level) || 0))]; }
+    function scaleFor(data, level) {
+        var grade = gradeForLevel(level);
+        return data.balance * (0.55 + level * 0.075) * GRADE_SCALES[grade];
+    }
+    function publicOwner(key) { return "zhenyi_public:" + key; }
+    function trialOwner(me, key) { return "zhenyi_trial:" + key + ":" + me.id; }
+    function trimNumber(value, digits) {
+        var text = Number(value).toFixed(digits === undefined ? 1 : digits);
+        return text.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
+    }
+    function percent(value) { return trimNumber(value * 100, 2) + "%"; }
+    function seconds(value) { return trimNumber(value / 1000, 2) + "秒"; }
+    function colorIntentName(intent, grade) {
+        var tag = GRADE_TAGS[grade] || "wht";
+        return "<" + tag + ">" + intent.name + "</" + tag + ">";
+    }
     function hasTower100(me) { return me.query_temp("wd_level", 0) >= 100 || !!me.query_temp("wd100", 0); }
     function canUnlock(me, data) { return !!(me && data && familyId(me) === KEY_TO_FAMILY[data.key] && me.level >= 5 && hasTower100(me)); }
 
+    // 面板描述与实际结算共用同一组公式；level 为 0 时显示第一重预览。
+    function describeIntent(data, intent, level) {
+        level = Math.max(1, Math.min(MAX_LEVEL, parseInt(level) || 1));
+        var s = scaleFor(data, level), e = intent.effect;
+        switch (e) {
+            case "jz_edge": return "绑定绝招命中时，技能伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
+            case "jz_counter": return "成功招架后获得10秒回锋；下一次技能伤害提高" + percent((0.08 + level * 0.008) * s) + "，触发后消耗。";
+            case "jz_heavy": return "目标当前气血高于70%时，技能伤害提高" + percent((0.035 + level * 0.004) * s) + "。";
+            case "jz_wood": return "紫气东来成功后回复最大气血" + percent((0.012 + level * 0.002) * s) + "，并获得8秒护意；护意减伤" + percent((0.05 + level * 0.004) * s) + "。";
+            case "jz_formless": return "施展无招期间，首轮技能伤害提高" + percent((0.08 + level * 0.006) * s) + "；10秒内只触发一次。";
+            case "zw_borrow": return "成功招架2次后，12秒内下一次技能伤害提高" + percent((0.10 + level * 0.008) * s) + "，触发后清空层数。";
+            case "zw_yield": return "受到伤害时，每8秒首次受击减伤" + percent((0.07 + level * 0.005) * s) + "。";
+            case "zw_stick": return "绕字诀或震字诀命中后，使目标忙乱" + seconds((500 + level * 70) * s) + "；同一目标10秒内只受一次。";
+            case "zw_circle": return "减伤率等于已损气血比例×" + percent((0.14 + level * 0.008) * s) + "，最终减伤上限25%。";
+            case "zw_wuji": return "气血低于18%时每600秒触发一次，回复最大气血" + percent((0.05 + level * 0.004) * s) + "并清除负面状态；真武除邪精力消耗降低" + percent(0.06 * s) + "，调息降低" + percent(0.06 * s) + "。";
+            case "sl_vajra": return "纯机制：每600秒最多抵挡一次致命伤害，将该次伤害压至仅余1点气血。";
+            case "sl_roar": return "狮子吼命中后额外使目标忙乱" + seconds((600 + level * 80) * s) + "；同一目标12秒内只受一次。";
+            case "sl_prajna": return "惊魔一指或达摩三绝命中后，封锁目标绝招" + seconds((900 + level * 70) * s) + "。";
+            case "sl_arhat": return "同时被2名敌人攻击时减伤" + percent((0.04 + level * 0.003) * s) + "；每多1名敌人增加" + percent(0.025 * s) + "，最终上限18%。";
+            case "sl_meditate": return "佛光守护与一苇渡江的精力消耗降低" + percent(0.08 * s) + "，调息降低" + percent(0.07 * s) + "。";
+            case "em_mercy": return "鹤翔庄或游龙庄成功生效后，回复最大气血" + percent((0.015 + level * 0.0025) * s) + "。";
+            case "em_wrath": return "成功招架后获得6秒反震；下一次受击反弹所受伤害的" + percent((0.10 + level * 0.006) * s) + "，8秒冷却，反伤不超过自身攻击力50%。";
+            case "em_twin": return "灭剑与绝剑成功交替后，12秒内下一次技能伤害提高" + percent((0.11 + level * 0.008) * s) + "。";
+            case "em_yitian": return "倚天剑诀或号令天下命中时，伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
+            case "em_nineyin": return "目标当前气血高于80%时，技能伤害提高" + percent((0.06 + level * 0.006) * s) + "。";
+            case "gb_kanglong": return "施展降龙时，技能伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
+            case "gb_flying": return "十八掌连续命中叠加掌势，最多5层、持续12秒；每层使后续技能伤害提高" + percent(0.012 * s) + "。";
+            case "gb_tail": return "绊字诀命中后获得12秒摆尾；下一次技能伤害提高" + percent((0.10 + level * 0.007) * s) + "。";
+            case "gb_field": return "自身气血低于40%时，技能伤害提高" + percent((0.06 + level * 0.006) * s) + "。";
+            case "gb_six": return "降龙或十八掌成功后获得12秒龙劲；下一次技能伤害提高" + percent((0.08 + level * 0.006) * s) + "。";
+            case "xy_beiming": return "北冥绑定绝招命中后，吸取目标最大内力的" + percent(0.01 * s) + "并转为自身内力；单次转化不超过自身最大内力3%。";
+            case "xy_lingbo": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percent((0.07 + level * 0.006) * s) + "，命中提高" + percent(0.20 * s) + "。";
+            case "xy_baihong": return "当前内力高于80%时，白虹掌力伤害提高" + percent((0.08 + level * 0.006) * s) + "，并消耗最大内力1%。";
+            case "xy_talisman": return "生死符命中后追加自身最大内力的" + percent((0.003 + level * 0.0004) * s) + "作为伤害，单次不超过本次已造成伤害25%，8秒冷却。";
+            case "xy_formless": return "无相、无我释放已化用的绝招时，精力消耗降低" + percent(0.10 * s) + "，调息降低" + percent(0.09 * s) + "，调息最低4秒。";
+            case "ss_shadow": return "无痕成功后，20秒内下一次伤害技能命中会封锁目标绝招" + seconds((700 + level * 80) * s) + "；20秒冷却。";
+            case "ss_step": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percent((0.07 + level * 0.006) * s) + "，命中提高" + percent(0.25 * s) + "。";
+            case "ss_puncture": return "目标当前气血高于80%时，技能伤害提高" + percent((0.09 + level * 0.007) * s) + "，破防增加" + Math.floor((10 + level) * s) + "点。";
+            case "ss_debt": return "击杀目标后获得120秒血债；下一次技能伤害提高" + percent((0.13 + level * 0.008) * s) + "。";
+            case "ss_asura": return "自身气血低于30%时，技能伤害提高" + percent((0.10 + level * 0.008) * s) + "，破防增加" + Math.floor((8 + level) * s) + "点。";
+            case "sn_thunder": return "绑定雷法命中叠加雷贯，最多5层、持续12秒；每层增加" + Math.max(1, Math.floor(3 * s)) + "点破防。";
+            case "sn_avatar": return "玄女法相成功后获得15秒护持，期间受到伤害降低" + percent((0.06 + level * 0.005) * s) + "。";
+            case "sn_charm": return "魅魂或极乐六性命中后获得12秒摄心；下一次技能伤害提高" + percent((0.08 + level * 0.006) * s) + "。";
+            case "sn_purple": return "春雷暴殛或天雷系绑定绝招伤害提高" + percent((0.07 + level * 0.006) * s) + "；每9秒追加一次攻击力的" + percent((0.08 + level * 0.01) * s) + "作为雷伤，且不超过本次已造成伤害30%。";
+            case "sn_guard": return "当前内力大于0时，将每次所受伤害的" + percent((0.08 + level * 0.006) * s) + "转为等量内力消耗；最终减伤上限25%。";
+        }
+        return "此真意当前没有可结算的数值效果。";
+    }
+
     function migrate(me) {
         var data = familyData(me);
+        var migrationStamp = "20260823:" + (familyId(me) || "NONE");
+        if (me.query_temp("zy_migrate_version", "") === migrationStamp) return;
+        var migrationComplete = true;
         // 兼容更新前已经判师、但旧真意字段仍残留的角色。
         for (var oldFamilyId in DATA) {
             var old = DATA[oldFamilyId];
@@ -143,15 +223,23 @@
             for (var oldId = 1; oldId <= 7; oldId++) {
                 me.remove_temp(acquiredKey(old.key, oldId)); me.remove_temp(levelKey(old.key, oldId));
                 me.remove_temp(clearKey(old.key, oldId)); me.remove_temp(matKey(old.key, oldId)); me.remove_temp(dailyKey(old.key, oldId));
+                removeAllMaterial(me, old.key, oldId);
             }
             me.remove_temp("zy_active_" + old.key); me.set_bool("fb2", old.jd, false);
         }
-        if (!data) { me.remove_temp("zy_active"); return; }
+        if (!data) { me.remove_temp("zy_active"); me.set_temp("zy_migrate_version", migrationStamp); return; }
         for (var i = 0; i < data.list.length; i++) {
             var item = data.list[i];
             if (me.query_temp(acquiredKey(data.key, item.id), 0) && !me.query_temp(levelKey(data.key, item.id), 0)) {
                 me.set_temp(levelKey(data.key, item.id), 1);
                 me.set_temp(clearKey(data.key, item.id), 1);
+            }
+            // 一次性把旧版角色计数迁移为可在背包中查看的真实道具。
+            var oldMat = parseInt(me.query_temp(matKey(data.key, item.id), 0)) || 0;
+            if (oldMat > 0 && me.add_obj) {
+                var migrated = me.add_obj(matPath(data.key, item.id), oldMat);
+                if (migrated) me.remove_temp(matKey(data.key, item.id));
+                else migrationComplete = false;
             }
         }
         if (!me.query_temp("zy_active", "")) {
@@ -175,6 +263,7 @@
             "yc_jin", "yc_shui", "yc_mu", "yc_huo", "yc_tu"
         ];
         for (var lk = 0; lk < legacyKeys.length; lk++) me.remove_temp(legacyKeys[lk]);
+        if (migrationComplete) me.set_temp("zy_migrate_version", migrationStamp);
     }
 
     function checkUnlock(me, silent) {
@@ -217,7 +306,7 @@
         if (!data || parts[0] !== data.key) return null;
         var intent = findIntent(data, parts[1]), lv = intent ? getLevel(me, data.key, intent.id) : 0;
         if (!intent || !lv) return null;
-        return { data: data, intent: intent, level: lv, scale: data.balance * (0.55 + lv * 0.075) };
+        return { data: data, intent: intent, level: lv, grade: gradeForLevel(lv), scale: scaleFor(data, lv) };
     }
     function setActive(me, id) {
         if (me.is_fighting && me.is_fighting()) return me.notify("战斗中不可更易真意。"), false;
@@ -226,7 +315,7 @@
         if (!intent || !getLevel(me, data.key, intent.id)) return me.notify("你尚未领悟这道真意。"), false;
         var value = token(data.key, intent.id);
         if (me.query_temp("zy_active", "") === value) { me.remove_temp("zy_active"); me.notify("你收敛心神，不再催动任何真意。"); }
-        else { me.set_temp("zy_active", value); me.notify("<hig>你开始催动【" + intent.name + "】。</hig>"); }
+        else { me.set_temp("zy_active", value); me.notify("你开始催动【" + colorIntentName(intent, gradeForLevel(getLevel(me, data.key, intent.id))) + "】。"); }
         clearCombatState(me);
         return true;
     }
@@ -240,10 +329,13 @@
         for (var i = 1; i <= 7; i++) {
             me.remove_temp(acquiredKey(data.key, i)); me.remove_temp(levelKey(data.key, i));
             me.remove_temp(clearKey(data.key, i)); me.remove_temp(matKey(data.key, i)); me.remove_temp(dailyKey(data.key, i));
+            removeAllMaterial(me, data.key, i);
         }
         var active = me.query_temp("zy_active", "");
         if (active && active.indexOf(data.key + "_") === 0) me.remove_temp("zy_active");
         me.remove_temp("zy_active_" + data.key); me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+        me.remove_temp("zy_migrate_version");
         clearCombatState(me); me.set_bool("fb2", data.jd, false);
     }
 
@@ -265,10 +357,16 @@
         try { npc = NPC.CLONE("pub/zhenyi_trial"); } catch (e) { return me.notify("试炼化身凝聚失败，请联系管理员。"), false; }
         if (!npc || !npc.init_trial) return me.notify("试炼化身凝聚失败。"), false;
         if (!me.expend_jingli(ENERGY_COST)) { npc.destroy(); return me.notify("参加试炼需要" + ENERGY_COST + "点精力。"), false; }
-        var room = baseRoom.query_copy2(me);
-        if (!room) room = baseRoom.create_copy2(me);
+        var owner = trialOwner(me, data.key);
+        var staleRoom = baseRoom.query_copy(owner);
+        if (staleRoom) staleRoom.clear_by_area(baseRoom.parent, owner);
+        me.set_temp("zy_trial_owner", owner);
+        me.set_temp("zy_trial_return", me.environment.path);
+        var room = baseRoom.create_copy(owner);
         if (!room || me.moveto(room, me.name + "步入试炼石门。", me.name + "踏入了试炼场。") === false) {
-            npc.destroy(); return me.notify("试炼场暂时无法进入。"), false;
+            npc.destroy(); me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+            if (room) room.clear_by_area(baseRoom.parent, owner);
+            return me.notify("试炼场暂时无法进入。"), false;
         }
         for (var i = room.items.length - 1; i >= 0; i--) {
             var old = room.items[i];
@@ -280,7 +378,31 @@
         npc.do_kill(me); return true;
     }
 
+    function returnFromTrial(me, key) {
+        if (!me) return;
+        var owner = me.query_temp("zy_trial_owner", "");
+        var returnPath = me.query_temp("zy_trial_return", "");
+        if (!owner) return;
+        me.call_out(function () {
+            var data = findDataByKey(key), shouldReturn = me.environment && me.environment.parent && me.environment.parent.id === key;
+            if (shouldReturn && data) {
+                var baseReturn = ROOM.Get(returnPath) || ROOM.Get(data.trialRoom).parent.rooms[0];
+                var publicRoom = baseReturn && (baseReturn.query_copy(publicOwner(key)) || baseReturn.create_copy(publicOwner(key)));
+                if (!publicRoom || me.moveto(publicRoom, me.name + "离开了真意试炼。", me.name + "自试炼石门中走出。") === false) {
+                    me.notify("试炼出口暂时无法开启，请使用地图传送离开后联系管理员。");
+                    return;
+                }
+            }
+            me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+            if (data) {
+                var trialBase = ROOM.Get(data.trialRoom), trialRoom = trialBase && trialBase.query_copy(owner);
+                if (trialRoom) trialRoom.clear_by_area(trialBase.parent, owner);
+            }
+        }, 0);
+    }
+
     function addXuanjing(me, count) { var obj = me.add_obj("st/xuanjing", count); return obj ? count : 0; }
+    function matCount(me, key, id) { var obj = me.find_obj_bypath(matPath(key, id)); return obj ? (obj.count || 1) : 0; }
     function reward(me, data, intent, count, isSweep) {
         var xj = 0, mat = 0, bonus = 0;
         for (var i = 0; i < count; i++) {
@@ -288,12 +410,12 @@
             mat += (isSweep ? 1 : 2) + (me.random(100) < 25 ? 1 : 0);
             if (me.random(100) < 20) bonus++;
         }
-        addXuanjing(me, xj); me.add_temp(matKey(data.key, intent.id), mat);
+        addXuanjing(me, xj); me.add_obj(matPath(data.key, intent.id), mat);
         var bonusName = "";
         if (bonus > 0) {
             var unlocked = [];
             for (var j = 0; j < data.list.length; j++) if (getLevel(me, data.key, data.list[j].id)) unlocked.push(data.list[j]);
-            if (unlocked.length) { var b = unlocked[me.random(unlocked.length)]; me.add_temp(matKey(data.key, b.id), bonus); bonusName = "，另得" + b.name + "悟痕×" + bonus; }
+            if (unlocked.length) { var b = unlocked[me.random(unlocked.length)]; me.add_obj(matPath(data.key, b.id), bonus); bonusName = "，另得" + b.name + "悟痕×" + bonus; }
         }
         me.notify("<hig>获得玄晶×" + xj + "、" + intent.name + "悟痕×" + mat + bonusName + "。</hig>");
     }
@@ -308,9 +430,16 @@
         }
         reward(me, data, intent, 1, false);
         if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
+        returnFromTrial(me, key);
         return true;
     }
-    function failTrial(me, reason) { if (!me) return; me.remove_temp("zy_trial_active"); if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>"); }
+    function failTrial(me, reason) {
+        if (!me) return;
+        var active = me.query_temp("zy_trial_active", ""), key = active ? active.split("_")[0] : (me.environment && me.environment.parent && me.environment.parent.id);
+        me.remove_temp("zy_trial_active");
+        if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>");
+        if (key) returnFromTrial(me, key);
+    }
     function sweep(me, id, count) {
         var data = familyData(me), intent = findIntent(data, id);
         if (!data || !intent) return me.notify("没有这项试炼。"), false;
@@ -327,20 +456,44 @@
     }
 
     function xuanjingCount(me) { var obj = me.find_obj_bypath("st/xuanjing"); return obj ? (obj.count || 1) : 0; }
-    function upgrade(me, id) {
+    function requestUpgrade(me, id) {
         if (me.is_fighting()) return me.notify("战斗中不可参悟升级。"), false;
         var data = familyData(me), intent = findIntent(data, id);
         if (!data || !intent) return me.notify("没有这道真意。"), false;
         var lv = getLevel(me, data.key, intent.id);
         if (!lv) return me.notify("你尚未领悟这道真意。"), false;
+        if (intent.effect === "sl_vajra") return me.notify("【" + intent.name + "】是纯机制真意，无需也不能升级。"), false;
         if (lv >= MAX_LEVEL) return me.notify("这道真意已臻圆满。"), false;
         var next = lv + 1, xj = UPGRADE_XJ[next], mat = UPGRADE_MAT[next];
+        var nowGrade = gradeForLevel(lv), nextGrade = gradeForLevel(next);
+        me.notify("【" + colorIntentName(intent, nowGrade) + "】第" + lv + "重将提升为【" + colorIntentName(intent, nextGrade) + "】第" + next + "重。");
+        me.notify("当前效果：" + describeIntent(data, intent, lv));
+        me.notify("<hig>升级后：" + describeIntent(data, intent, next) + "</hig>");
+        me.notify("消耗玄晶×" + xj + "（持有" + xuanjingCount(me) + "）、" + intent.name + "悟痕×" + mat + "（持有" + matCount(me, data.key, intent.id) + "）。");
+        me.send_commands("zhenyi upgrade_confirm " + intent.id + " " + lv, "确认升级", "zhenyi upgrade_cancel", "取消");
+        return true;
+    }
+    function confirmUpgrade(me, id, expectedLevel) {
+        if (me.is_fighting()) return me.notify("战斗中不可参悟升级。"), false;
+        var data = familyData(me), intent = findIntent(data, id);
+        if (!data || !intent) return me.notify("没有这道真意。"), false;
+        var lv = getLevel(me, data.key, intent.id);
+        if (!lv || lv !== parseInt(expectedLevel)) return me.notify("真意状态已经变化，请重新点击升级。"), false;
+        if (intent.effect === "sl_vajra" || lv >= MAX_LEVEL) return me.notify("这道真意不能继续升级。"), false;
+        var next = lv + 1, xj = UPGRADE_XJ[next], mat = UPGRADE_MAT[next];
         if (xuanjingCount(me) < xj) return me.notify("玄晶不足，需要" + xj + "枚。"), false;
-        if (me.query_temp(matKey(data.key, intent.id), 0) < mat) return me.notify(intent.name + "悟痕不足，需要" + mat + "份。"), false;
+        if (matCount(me, data.key, intent.id) < mat) return me.notify(intent.name + "悟痕不足，需要" + mat + "枚。"), false;
         var obj = me.find_obj_bypath("st/xuanjing");
         if (!obj || !me.remove_obj(obj, xj)) return me.notify("玄晶扣除失败。"), false;
-        me.add_temp(matKey(data.key, intent.id), -mat); me.set_temp(levelKey(data.key, intent.id), next);
-        me.notify("<him>【" + intent.name + "】提升至" + next + "重。</him>"); return true;
+        var material = me.find_obj_bypath(matPath(data.key, intent.id));
+        if (!material || !me.remove_obj(material, mat)) {
+            me.add_obj("st/xuanjing", xj);
+            return me.notify("悟痕扣除失败，玄晶已返还。"), false;
+        }
+        me.set_temp(levelKey(data.key, intent.id), next);
+        me.notify("<him>【" + colorIntentName(intent, gradeForLevel(next)) + "】提升至第" + next + "重。</him>");
+        if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
+        return true;
     }
     function serialize(me) {
         var data = familyData(me);
@@ -349,16 +502,15 @@
         migrate(me);
         var active = me.query_temp("zy_active", ""), list = [];
         for (var i = 0; i < data.list.length; i++) {
-            var item = data.list[i], lv = getLevel(me, data.key, item.id), next = Math.min(MAX_LEVEL, lv + 1);
-            list.push({ id: item.id, name: item.name, mech: item.mech, desc: item.desc, trial: item.trial,
-                acquired: lv > 0, active: active === token(data.key, item.id), level: lv,
-                material: me.query_temp(matKey(data.key, item.id), 0) || 0,
+            var item = data.list[i], lv = getLevel(me, data.key, item.id);
+            var grade = gradeForLevel(lv);
+            list.push({ id: item.id, name: item.name, mech: item.mech, desc: describeIntent(data, item, lv), trial: item.trial,
+                acquired: lv > 0, active: active === token(data.key, item.id), level: lv, grade: grade,
+                mechanic_only: item.effect === "sl_vajra", preview_level: lv || 1,
                 daily: dailyCount(me, data.key, item.id), daily_limit: DAILY_LIMIT,
-                cleared: !!me.query_temp(clearKey(data.key, item.id), 0),
-                cost_xj: lv > 0 && lv < MAX_LEVEL ? UPGRADE_XJ[next] : 0,
-                cost_mat: lv > 0 && lv < MAX_LEVEL ? UPGRADE_MAT[next] : 0 });
+                cleared: !!me.query_temp(clearKey(data.key, item.id), 0) });
         }
-        return { name: data.name, key: data.key, area: data.area, xuanjing: xuanjingCount(me), energy_cost: ENERGY_COST, list: list };
+        return { name: data.name, key: data.key, area: data.area, energy_cost: ENERGY_COST, list: list };
     }
 
     function allowedSkill(skill, me) {
@@ -379,13 +531,13 @@
     function pfmCost(me, pfm, skill, value) {
         var active = getActive(me);
         if (!pfmMatches(active, pfm && pfm.id, skill)) return value;
-        var effects = { sl_meditate: 8, xy_formless: 10, zw_wuji: 6, em_mercy: 6 }, pct = effects[active.intent.effect] || 0;
+        var effects = { sl_meditate: 8, xy_formless: 10, zw_wuji: 6 }, pct = effects[active.intent.effect] || 0;
         return pct ? Math.max(0, parseInt(value * (100 - pct * active.scale) / 100)) : value;
     }
     function pfmCooldown(me, pfm, skill, value) {
         var active = getActive(me);
         if (!pfmMatches(active, pfm && pfm.id, skill)) return value;
-        var effects = { sl_meditate: 7, xy_formless: 9, zw_wuji: 6, xy_lingbo: 7 }, pct = effects[active.intent.effect] || 0;
+        var effects = { sl_meditate: 7, xy_formless: 9, zw_wuji: 6 }, pct = effects[active.intent.effect] || 0;
         return pct ? Math.max(4000, parseInt(value * (100 - pct * active.scale) / 100)) : value;
     }
     function endPfm(me, target, pfm, skill, success) {
@@ -395,13 +547,13 @@
         if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * (0.012 + lv * 0.002) * s)); me.set_temp("zy_wood_guard", 1, 8000); }
         else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * (0.015 + lv * 0.0025) * s));
         else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * 0.01 * s), Math.floor(me.max_mp * 0.03)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
-        else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", 600 + lv * 80, 12000);
-        else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, 900 + lv * 70);
-        else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", 500 + lv * 70, 10000);
+        else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", (600 + lv * 80) * s, 12000);
+        else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, (900 + lv * 70) * s);
+        else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", (500 + lv * 70) * s, 10000);
         else if (effect === "gb_tail") me.set_temp("zy_tail", 1, 12000);
         else if (effect === "gb_six") me.set_temp("zy_six", 1, 12000);
         else if (effect === "em_twin") { var last = me.query_temp("zy_twin_last", ""); if (last && last !== pfm.id) me.set_temp("zy_twin", 1, 12000); me.set_temp("zy_twin_last", pfm.id, 20000); }
-        else if (effect === "ss_shadow" && target && !me.query_temp("zy_shadow_cd")) { target.set_temp("sealed_pfm", 1, 700 + lv * 80); me.set_temp("zy_shadow_cd", 1, 20000); }
+        else if (effect === "ss_shadow" && target && !me.query_temp("zy_shadow_cd")) { target.set_temp("sealed_pfm", 1, (700 + lv * 80) * s); me.set_temp("zy_shadow_cd", 1, 20000); }
         else if (effect === "sn_charm") me.set_temp("zy_charm", 1, 12000);
         else if (effect === "sn_avatar") me.set_temp("zy_avatar", 1, 15000);
     }
@@ -414,7 +566,7 @@
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me)) return sh;
         var e = active.intent.effect, lv = active.level, s = active.scale, bonus = 0, inPfm = me.query_temp("zy_pfm", "") === e;
-        if (inPfm) bonus += (0.025 + lv * 0.004) * s;
+        if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) bonus += (0.025 + lv * 0.004) * s;
         if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) {
             par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((5 + lv) * s));
         }
@@ -428,13 +580,13 @@
         else if (e === "gb_six" && me.query_temp("zy_six")) { bonus += (0.08 + lv * 0.006) * s; me.remove_temp("zy_six"); }
         else if (e === "em_twin" && me.query_temp("zy_twin")) { bonus += (0.11 + lv * 0.008) * s; me.remove_temp("zy_twin"); }
         else if (e === "em_nineyin" && target.max_hp && target.hp / target.max_hp > 0.8) bonus += (0.06 + lv * 0.006) * s;
-        else if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) { bonus += (0.07 + lv * 0.006) * s; par.mz = (par.mz || me.mz) * (e === "ss_step" ? 1.25 : 1.2); me.remove_temp("zy_lingbo"); }
+        else if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) { bonus += (0.07 + lv * 0.006) * s; par.mz = (par.mz || me.mz) * (1 + (e === "ss_step" ? 0.25 : 0.20) * s); me.remove_temp("zy_lingbo"); }
         else if (e === "xy_baihong" && inPfm && me.max_mp && me.mp / me.max_mp > 0.8) { bonus += (0.08 + lv * 0.006) * s; me.add_mp(-Math.floor(me.max_mp * 0.01)); }
-        else if (e === "ss_puncture" && target.max_hp && target.hp / target.max_hp > 0.8) { bonus += (0.09 + lv * 0.007) * s; par.diff_fy = Math.max(par.diff_fy || 0, 10 + lv); }
+        else if (e === "ss_puncture" && target.max_hp && target.hp / target.max_hp > 0.8) { bonus += (0.09 + lv * 0.007) * s; par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((10 + lv) * s)); }
         else if (e === "ss_debt" && me.query_temp("zy_debt")) { bonus += (0.13 + lv * 0.008) * s; me.remove_temp("zy_debt"); }
-        else if (e === "ss_asura" && me.max_hp && me.hp / me.max_hp < 0.3) { bonus += (0.10 + lv * 0.008) * s; par.diff_fy = Math.max(par.diff_fy || 0, 8 + lv); }
+        else if (e === "ss_asura" && me.max_hp && me.hp / me.max_hp < 0.3) { bonus += (0.10 + lv * 0.008) * s; par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((8 + lv) * s)); }
         else if (e === "sn_charm" && me.query_temp("zy_charm")) { bonus += (0.08 + lv * 0.006) * s; me.remove_temp("zy_charm"); }
-        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, me.add_temp("zy_thunder", 1, 12000)); par.diff_fy = Math.max(par.diff_fy || 0, th * 3); }
+        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, me.add_temp("zy_thunder", 1, 12000)); par.diff_fy = Math.max(par.diff_fy || 0, th * Math.max(1, Math.floor(3 * s))); }
         else if (e === "sn_purple" && inPfm) bonus += (0.07 + lv * 0.006) * s;
         return sh * (1 + bonus);
     }
@@ -461,7 +613,7 @@
         if (e === "jz_wood" && me.query_temp("zy_wood_guard")) reduction = (0.05 + lv * 0.004) * s;
         else if (e === "zw_yield" && !me.query_temp("zy_yield_cd")) { reduction = (0.07 + lv * 0.005) * s; me.set_temp("zy_yield_cd", 1, 8000); }
         else if (e === "zw_circle" && me.max_hp) reduction = Math.max(0, (1 - me.hp / me.max_hp) * (0.14 + lv * 0.008) * s);
-        else if (e === "sl_arhat" && me.enemy && me.enemy.length > 1) reduction = Math.min(0.18, (0.04 + me.enemy.length * 0.025 + lv * 0.003) * s);
+        else if (e === "sl_arhat" && me.enemy && me.enemy.length > 1) reduction = Math.min(0.18, (0.04 + (me.enemy.length - 2) * 0.025 + lv * 0.003) * s);
         else if (e === "sn_avatar" && me.query_temp("zy_avatar")) reduction = (0.06 + lv * 0.005) * s;
         else if (e === "sn_guard" && me.mp > 0) { var convert = Math.min(sh * (0.08 + lv * 0.006) * s, me.mp); me.add_mp(-Math.floor(convert)); sh -= convert; }
         sh *= (1 - Math.min(0.25, reduction));
@@ -480,9 +632,12 @@
     WORLD.ZHENYI = {
         DATA: DATA, FAMILY_TO_KEY: FAMILY_TO_KEY, MAX_LEVEL: MAX_LEVEL, DAILY_LIMIT: DAILY_LIMIT, ENERGY_COST: ENERGY_COST,
         family_data: familyData, find_by_key: findDataByKey, find_intent: findIntent, migrate: migrate,
+        public_owner: publicOwner, is_public_owner: function (owner) { return typeof owner === "string" && owner.indexOf("zhenyi_public:") === 0; },
+        grade_for_level: gradeForLevel, describe: describeIntent,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial,
-        complete_trial: completeTrial, fail_trial: failTrial, sweep: sweep, upgrade: upgrade,
+        complete_trial: completeTrial, fail_trial: failTrial, sweep: sweep,
+        request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
         modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
         modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill
