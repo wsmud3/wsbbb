@@ -12,6 +12,8 @@ this.enter = function (me, arg) {
     if (action === "active") WORLD.ZHENYI.set_active(me, parts[1]);
     else if (action === "challenge") WORLD.ZHENYI.start_trial(me, parts[1]);
     else if (action === "sweep") WORLD.ZHENYI.sweep(me, parts[1], parts[2]);
+    else if (action === "trial_complete") return WORLD.ZHENYI.finish_trial_action(me, false);
+    else if (action === "trial_exit") return WORLD.ZHENYI.finish_trial_action(me, true);
     else if (action === "upgrade") return WORLD.ZHENYI.request_upgrade(me, parts[1]);
     else if (action === "upgrade_confirm") return WORLD.ZHENYI.confirm_upgrade(me, parts[1], parts[2]);
     else if (action === "upgrade_cancel") return me.notify("已取消真意升级。");
@@ -28,3 +30,4 @@ this.send_panel = function (me) {
         zy_energy_cost: data.energy_cost
     }));
 };
+

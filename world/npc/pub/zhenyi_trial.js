@@ -10,6 +10,14 @@ this.init_trial = function (player, data, intent) {
     this.trial_key = data.key;
     this.trial_id = intent.id;
     this.trial_mode = intent.mode;
+    // 坚持类试炼只检查存活时间，武意化身不能被玩家击杀。
+    if (this.trial_mode === "endure") {
+        this.on_before_fight = function () { return false; };
+        this.on_kill = function () { return false; };
+    } else {
+        this.on_before_fight = null;
+        this.on_kill = null;
+    }
     this.name = "<hiy>" + intent.trial + "·武意化身</hiy>";
     var level = WORLD.ZHENYI.get_level(player, data.key, intent.id) || 1;
     var stats = WORLD.ZHENYI.trial_stats(intent);
@@ -65,7 +73,13 @@ this.trial_timeout = function () {
 this.on_die = function (killer) {
     if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
     if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);
+    if (this.trial_mode === "endure") {
+        this.hp = this.max_hp;
+        this.mp = this.max_mp;
+        return false;
+    }
     if (killer && killer === this.trial_owner && WORLD.ZHENYI) {
         WORLD.ZHENYI.complete_trial(killer, this.trial_key, this.trial_id);
     }
 };
+

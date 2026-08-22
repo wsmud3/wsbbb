@@ -1,4 +1,4 @@
-﻿
+
 ROOM = function () {
     this.name = "房间";
     this.desc = "";
@@ -310,7 +310,10 @@ ROOM.prototype.to_json = function () {
     // 全局功能按钮（动作栏内）
     obj.commands.push({ cmd: "cangku", name: "仓库" });
     obj.commands.push({ cmd: "killauto", name: "自动攻击" });
-    if (this.is_copy_room && !this.parent.not_fb) {
+    if (this.zhenyi_trial_room) {
+        obj.commands.push({ cmd: "zhenyi trial_complete", name: "完成副本" });
+        obj.commands.push({ cmd: "zhenyi trial_exit", name: "退出副本" });
+    } else if (this.is_copy_room && !this.parent.not_fb) {
         obj.commands.push({
             cmd: "cr",
             name: "完成副本"
@@ -333,6 +336,10 @@ ROOM.prototype.query_commands = function () {
                 cmd: cmd
             });
         }
+    }
+    if (this.zhenyi_trial_room) {
+        json.commands.push({ name: "完成副本", cmd: "zhenyi trial_complete" });
+        json.commands.push({ name: "退出副本", cmd: "zhenyi trial_exit" });
     }
 
     this.commands_json = JSON.stringify(json)
@@ -741,3 +748,4 @@ ROOM.prototype.query = function (id) {
     }
     return room;
 }
+

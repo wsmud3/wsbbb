@@ -454,6 +454,17 @@
     function currentAreaMatches(me, data) { return !!(me && me.environment && me.environment.parent && me.environment.parent.id === data.key); }
     function dailyCount(me, key, id) { return parseInt(me.query_temp(dailyKey(key, id), 0)) || 0; }
     function addDaily(me, key, id, count) { return me.add_temp(dailyKey(key, id), count, UTIL.diff_time()); }
+    // 真意试炼副本不应继承公共试场出口；完成/退出由动作栏提供。
+    function configureTrialRoom(room) {
+        if (!room) return room;
+        room.zhenyi_trial_room = true;
+        room.exits = {};
+        room.json = null;
+        room.commands_json = null;
+        room.room_exits_json = null;
+        if (room.exits_changed) room.exits_changed();
+        return room;
+    }
 
     function startTrial(me, id) {
         var data = familyData(me), intent = findIntent(data, id);
@@ -476,6 +487,7 @@
         me.set_temp("zy_trial_owner", owner);
         me.set_temp("zy_trial_return", me.environment.path);
         var room = baseRoom.create_copy(owner);
+        configureTrialRoom(room);
         if (!room || me.moveto(room, me.name + "步入试炼石门。", me.name + "踏入了试炼场。") === false) {
             npc.destroy(); me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
             if (room) room.clear_by_area(baseRoom.parent, owner);
@@ -515,6 +527,17 @@
     }
 
     function addXuanjing(me, count) { var obj = me.add_obj("st/xuanjing", count); return obj ? count : 0; }
+    function addMaterial(me, key, id, count) {
+        if (!me || !(count > 0)) return null;
+        var path = matPath(key, id), item = null;
+        // 先创建带参数的对象再交给角色合并，避免奖励链路丢失 zhenyi_hen 的参数。
+        if (typeof OBJ !== "undefined" && OBJ.CREATE) {
+            item = OBJ.CREATE(path, count);
+            if (item) item = me.add_obj(item);
+        }
+        if (!item) item = me.add_obj(path, count);
+        return item || null;
+    }
     function matCount(me, key, id) { var obj = me.find_obj_bypath(matPath(key, id)); return obj ? (obj.count || 1) : 0; }
     function reward(me, data, intent, count, isSweep) {
         var xj = 0, mat = 0, bonus = 0;
@@ -523,7 +546,20 @@
             mat += (isSweep ? 1 : 2) + (me.random(100) < 25 ? 1 : 0);
             if (me.random(100) < 20) bonus++;
         }
-        addXuanjing(me, xj); me.add_obj(matPath(data.key, intent.id), mat);
+        var material = addMaterial(me, data.key, intent.id, mat), materialCount = material ? mat : 0;
+        var safeBonusName = "";
+        if (bonus > 0) {
+            var unlockedSafe = [];
+            for (var sj = 0; sj < data.list.length; sj++) if (getLevel(me, data.key, data.list[sj].id)) unlockedSafe.push(data.list[sj]);
+            if (unlockedSafe.length) {
+                var safeBonus = unlockedSafe[me.random(unlockedSafe.length)];
+                if (addMaterial(me, data.key, safeBonus.id, bonus)) safeBonusName = "，另得" + safeBonus.name + "悟痕×" + bonus;
+            }
+        }
+        addXuanjing(me, xj);
+        me.notify("<hig>获得玄晶×" + xj + "、" + intent.name + "悟痕×" + materialCount + safeBonusName + "。</hig>");
+        if (materialCount < mat) me.notify("<hir>悟痕道具发放失败，请联系管理员检查背包空间。</hir>");
+        return;
         var bonusName = "";
         if (bonus > 0) {
             var unlocked = [];
@@ -552,6 +588,19 @@
         me.remove_temp("zy_trial_active");
         if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>");
         if (key) returnFromTrial(me, key);
+    }
+    function finishTrialAction(me, exitOnly) {
+        if (!me) return false;
+        var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0], id = bits && parseInt(bits[1]);
+        if (!active || !key || !(id >= 0)) return me.notify("你当前不在真意试炼副本中。"), false;
+        if (exitOnly) {
+            failTrial(me, "你主动退出了真意试炼。");
+            return true;
+        }
+        var data = findDataByKey(key), intent = findIntent(data, id);
+        if (intent && intent.mode === "endure") me.notify("请继续坚持至试炼计时结束；达成目标后会自动结算。");
+        else me.notify("请先完成试炼目标；击败武意化身后会自动结算。");
+        return false;
     }
     function sweep(me, id, count) {
         var data = familyData(me), intent = findIntent(data, id);
@@ -757,10 +806,12 @@
         grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
-        complete_trial: completeTrial, fail_trial: failTrial, sweep: sweep,
+        complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,
+        configure_trial_room: configureTrialRoom, add_material: addMaterial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
         modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
         modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill
     };
 })();
+
