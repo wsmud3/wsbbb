@@ -559,14 +559,6 @@
         addXuanjing(me, xj);
         me.notify("<hig>获得玄晶×" + xj + "、" + intent.name + "悟痕×" + materialCount + safeBonusName + "。</hig>");
         if (materialCount < mat) me.notify("<hir>悟痕道具发放失败，请联系管理员检查背包空间。</hir>");
-        return;
-        var bonusName = "";
-        if (bonus > 0) {
-            var unlocked = [];
-            for (var j = 0; j < data.list.length; j++) if (getLevel(me, data.key, data.list[j].id)) unlocked.push(data.list[j]);
-            if (unlocked.length) { var b = unlocked[me.random(unlocked.length)]; me.add_obj(matPath(data.key, b.id), bonus); bonusName = "，另得" + b.name + "悟痕×" + bonus; }
-        }
-        me.notify("<hig>获得玄晶×" + xj + "、" + intent.name + "悟痕×" + mat + bonusName + "。</hig>");
     }
     function completeTrial(me, key, id) {
         var data = findDataByKey(key), intent = findIntent(data, id);
