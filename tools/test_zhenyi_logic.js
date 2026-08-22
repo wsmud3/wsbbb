@@ -6,7 +6,7 @@ function player() {
     const temp = { wd100: 1, zy_jz_1: 1, zy_active_jz: 1, zy_mat_jz_1: 9, zy_zw_1: 1, zy_mat_zw_1: 9 };
     const bits = {};
     return {
-        family: { id: "HUASHAN" }, level: 5, temp, bits, items: [], commands: [], messages: [],
+        id: "tester", family: { id: "HUASHAN" }, level: 5, temp, bits, items: [], commands: [], messages: [],
         query_temp(key, def) { return this.temp[key] === undefined ? def : this.temp[key]; },
         set_temp(key, value) { this.temp[key] = value; return value; },
         add_temp(key, value) { this.temp[key] = (this.temp[key] || 0) + value; return this.temp[key]; },
@@ -56,10 +56,48 @@ assert.strictEqual(me.query_temp("zy_level_jz_1", 0), 2, "真意应升到第二�
 assert.strictEqual(WORLD.ZHENYI.serialize(me).list[0].grade, 2, "第二重应进入青色 grade 2");
 assert.ok(!/[约～]/.test(WORLD.ZHENYI.serialize(me).list[0].desc), "面板效果不得使用约数或范围措辞");
 
+for (const data of Object.values(WORLD.ZHENYI.DATA)) {
+    for (const intent of data.list) {
+        for (let level = 1; level <= 10; level++) {
+            const values = WORLD.ZHENYI.values_for(data, intent, level);
+            for (const value of Object.values(values)) assert.ok(Number.isInteger(value), `${data.key}_${intent.id} 第${level}重存在非整数效果`);
+            const desc = WORLD.ZHENYI.describe(data, intent, level);
+            assert.ok(!/\d+\.\d+/.test(desc), `${data.key}_${intent.id} 第${level}重描述出现小数`);
+            if (values.ignore) assert.ok(desc.includes(`${values.ignore}%`) && !desc.includes("点破防"), "忽视防御必须以准确百分比显示");
+        }
+    }
+}
+
+const firstTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.HUASHAN.list[0]);
+const finalTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.HUASHAN.list[4]);
+assert.deepStrictEqual([firstTrial.max_hp, firstTrial.gj, firstTrial.skill], [12000000, 140000, 2500], "第一档试炼应沿用旧 NPC 起步数值");
+assert.deepStrictEqual([finalTrial.max_hp, finalTrial.gj, finalTrial.skill], [30000000, 250000, 3000], "第五档试炼应沿用旧 NPC 后段数值");
+assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "jz/jianyi_yeling"), false, "禁地旧 NPC 不应继续生成");
+assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "pub/zhenyi_shiyantai#jz_1"), true, "正式试炼引导 NPC 必须保留");
+
+const combatant = player();
+combatant.temp.zy_level_jz_1 = 1;
+combatant.temp.zy_active = "jz_1";
+combatant.temp.zy_pfm = "jz_edge";
+const combatValues = WORLD.ZHENYI.values_for(WORLD.ZHENYI.DATA.HUASHAN, WORLD.ZHENYI.DATA.HUASHAN.list[0], 1);
+const combatPar = { diff_fy: 10 };
+const modifiedDamage = WORLD.ZHENYI.modify_attack(combatant, { hp: 100, max_hp: 100 }, combatPar, 100, { grade: 5, family: combatant.family });
+assert.strictEqual(combatPar.diff_fy, 10 + combatValues.ignore, "忽视防御应按百分比在原值上加算");
+assert.strictEqual(modifiedDamage, 100 * (1 + combatValues.damage / 100), "实战伤害必须读取与描述相同的整数百分比");
+
+const stale = player();
+stale.temp.zy_trial_active = "jz_1";
+stale.temp.zy_trial_owner = "zhenyi_trial:jz:tester";
+stale.temp.zy_trial_return = "jz/houshan";
+stale.environment = { path: "jz/houshan", owner: "zhenyi_public:jz", parent: { id: "jz" }, items: [] };
+assert.strictEqual(WORLD.ZHENYI.ensure_trial_state(stale, true), false, "NPC 已消失的旧试炼状态必须判为失效");
+assert.strictEqual(stale.query_temp("zy_trial_active", ""), "", "旧试炼残留必须自动清理");
+assert.ok(stale.messages.some(message => message.includes("残留状态已经自动清理")), "应告知玩家可以重新挑战");
+
 me.level = 4;
 assert.strictEqual(WORLD.ZHENYI.get_active(me), null, "未到武帝时真意不得生效");
 assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 6, family: me.family }, me), false, "grade 6 必须被运行时拦截");
 assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 5, family: { id: "HUASHAN" } }, me), false, "非同一门派对象不得被强化");
 assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 5, family: me.family }, me), true, "本门非红技能可受强化");
 
-console.log("真意逻辑通过：旧角色补发、悟痕道具迁移、二次确认升级、grade 成长、异门清理与 grade 6 技能拦截均正常。");
+console.log("真意逻辑通过：整数效果、百分比单位、旧角色迁移、残留试炼自愈、固定 NPC 档位、升级确认与技能边界均正常。");

@@ -118,8 +118,8 @@
     // 与技能、装备共用 grade 0～6 及其颜色。真意重数提升时跨越品质档位。
     var LEVEL_GRADES = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6];
     var GRADE_TAGS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
-    // 绿色为基准；后续品质以温和系数参与全部可成长数值，避免只换颜色不换强度。
-    var GRADE_SCALES = [1, 1, 1.05, 1.10, 1.15, 1.20, 1.25];
+    // 品质就是真意的强度档位。每次跨品质均获得明确跃升，重数负责同品质内的小幅成长。
+    var GRADE_SCALES = [1, 1, 1.20, 1.40, 1.60, 1.80, 2.00];
 
     function familyId(me) { return me && me.family && me.family.id; }
     function familyData(me) { return DATA[familyId(me)]; }
@@ -145,16 +145,15 @@
     function gradeForLevel(level) { return LEVEL_GRADES[Math.max(0, Math.min(MAX_LEVEL, parseInt(level) || 0))]; }
     function scaleFor(data, level) {
         var grade = gradeForLevel(level);
-        return data.balance * (0.55 + level * 0.075) * GRADE_SCALES[grade];
+        return data.balance * (0.85 + level * 0.05) * GRADE_SCALES[grade];
     }
     function publicOwner(key) { return "zhenyi_public:" + key; }
     function trialOwner(me, key) { return "zhenyi_trial:" + key + ":" + me.id; }
-    function trimNumber(value, digits) {
-        var text = Number(value).toFixed(digits === undefined ? 1 : digits);
-        return text.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
-    }
-    function percent(value) { return trimNumber(value * 100, 2) + "%"; }
-    function seconds(value) { return trimNumber(value / 1000, 2) + "秒"; }
+    function percentValue(value) { return Math.max(1, Math.round(value * 100)); }
+    function percentPointValue(value) { return Math.max(1, Math.round(value)); }
+    function secondValue(value) { return Math.max(1, Math.round(value / 1000)); }
+    function percentText(value) { return value + "%"; }
+    function secondsText(value) { return value + "秒"; }
     function colorIntentName(intent, grade) {
         var tag = GRADE_TAGS[grade] || "wht";
         return "<" + tag + ">" + intent.name + "</" + tag + ">";
@@ -162,58 +161,172 @@
     function hasTower100(me) { return me.query_temp("wd_level", 0) >= 100 || !!me.query_temp("wd100", 0); }
     function canUnlock(me, data) { return !!(me && data && familyId(me) === KEY_TO_FAMILY[data.key] && me.level >= 5 && hasTower100(me)); }
 
-    // 面板描述与实际结算共用同一组公式；level 为 0 时显示第一重预览。
-    function describeIntent(data, intent, level) {
+    // 所有玩家可见数字和战斗结算都只读取这里生成的整数，避免描述与实装分叉。
+    function valuesFor(data, intent, level) {
         level = Math.max(1, Math.min(MAX_LEVEL, parseInt(level) || 1));
         var s = scaleFor(data, level), e = intent.effect;
         switch (e) {
-            case "jz_edge": return "绑定绝招命中时，技能伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
-            case "jz_counter": return "成功招架后获得10秒回锋；下一次技能伤害提高" + percent((0.08 + level * 0.008) * s) + "，触发后消耗。";
-            case "jz_heavy": return "目标当前气血高于70%时，技能伤害提高" + percent((0.035 + level * 0.004) * s) + "。";
-            case "jz_wood": return "紫气东来成功后回复最大气血" + percent((0.012 + level * 0.002) * s) + "，并获得8秒护意；护意减伤" + percent((0.05 + level * 0.004) * s) + "。";
-            case "jz_formless": return "施展无招期间，首轮技能伤害提高" + percent((0.08 + level * 0.006) * s) + "；10秒内只触发一次。";
-            case "zw_borrow": return "成功招架2次后，12秒内下一次技能伤害提高" + percent((0.10 + level * 0.008) * s) + "，触发后清空层数。";
-            case "zw_yield": return "受到伤害时，每8秒首次受击减伤" + percent((0.07 + level * 0.005) * s) + "。";
-            case "zw_stick": return "绕字诀或震字诀命中后，使目标忙乱" + seconds((500 + level * 70) * s) + "；同一目标10秒内只受一次。";
-            case "zw_circle": return "减伤率等于已损气血比例×" + percent((0.14 + level * 0.008) * s) + "，最终减伤上限25%。";
-            case "zw_wuji": return "气血低于18%时每600秒触发一次，回复最大气血" + percent((0.05 + level * 0.004) * s) + "并清除负面状态；真武除邪精力消耗降低" + percent(0.06 * s) + "，调息降低" + percent(0.06 * s) + "。";
+            case "jz_edge": return { damage: percentValue((0.025 + level * 0.004) * s), ignore: percentPointValue((5 + level) * s) };
+            case "jz_counter": return { damage: percentValue((0.08 + level * 0.008) * s) };
+            case "jz_heavy": return { damage: percentValue((0.035 + level * 0.004) * s) };
+            case "jz_wood": return { heal: percentValue((0.012 + level * 0.002) * s), reduction: percentValue((0.05 + level * 0.004) * s) };
+            case "jz_formless": return { damage: percentValue((0.08 + level * 0.006) * s) };
+            case "zw_borrow": return { damage: percentValue((0.10 + level * 0.008) * s) };
+            case "zw_yield": return { reduction: percentValue((0.07 + level * 0.005) * s) };
+            case "zw_stick": return { busy: secondValue((500 + level * 70) * s) };
+            case "zw_circle": return { factor: percentValue((0.14 + level * 0.008) * s), cap: 30 };
+            case "zw_wuji": return { heal: percentValue((0.05 + level * 0.004) * s), cost: percentValue(0.06 * s), cooldown: percentValue(0.06 * s), minimum: 4 };
+            case "sl_vajra": return {};
+            case "sl_roar": return { busy: secondValue((600 + level * 80) * s) };
+            case "sl_prajna": return { seal: secondValue((900 + level * 70) * s) };
+            case "sl_arhat": return { reduction: percentValue((0.04 + level * 0.003) * s), per_enemy: percentValue(0.025 * s), cap: 30 };
+            case "sl_meditate": return { cost: percentValue(0.08 * s), cooldown: percentValue(0.07 * s), minimum: 4 };
+            case "em_mercy": return { heal: percentValue((0.015 + level * 0.0025) * s) };
+            case "em_wrath": return { reflect: percentValue((0.10 + level * 0.006) * s), cap: 50 };
+            case "em_twin": return { damage: percentValue((0.11 + level * 0.008) * s) };
+            case "em_yitian": return { damage: percentValue((0.025 + level * 0.004) * s), ignore: percentPointValue((5 + level) * s) };
+            case "em_nineyin": return { damage: percentValue((0.06 + level * 0.006) * s) };
+            case "gb_kanglong": return { damage: percentValue((0.025 + level * 0.004) * s), ignore: percentPointValue((5 + level) * s) };
+            case "gb_flying": return { damage: percentValue(0.012 * s) };
+            case "gb_tail": return { damage: percentValue((0.10 + level * 0.007) * s) };
+            case "gb_field": return { damage: percentValue((0.06 + level * 0.006) * s) };
+            case "gb_six": return { damage: percentValue((0.08 + level * 0.006) * s) };
+            case "xy_beiming": return { drain: percentValue(0.01 * s), cap: 5 };
+            case "xy_lingbo": return { damage: percentValue((0.07 + level * 0.006) * s), hit: percentValue(0.20 * s) };
+            case "xy_baihong": return { damage: percentValue((0.08 + level * 0.006) * s), cost: 1 };
+            case "xy_talisman": return { extra: percentValue((0.003 + level * 0.0004) * s), cap: 30 };
+            case "xy_formless": return { cost: percentValue(0.10 * s), cooldown: percentValue(0.09 * s), minimum: 4 };
+            case "ss_shadow": return { seal: secondValue((700 + level * 80) * s) };
+            case "ss_step": return { damage: percentValue((0.07 + level * 0.006) * s), hit: percentValue(0.25 * s) };
+            case "ss_puncture": return { damage: percentValue((0.09 + level * 0.007) * s), ignore: percentPointValue((10 + level) * s) };
+            case "ss_debt": return { damage: percentValue((0.13 + level * 0.008) * s) };
+            case "ss_asura": return { damage: percentValue((0.10 + level * 0.008) * s), ignore: percentPointValue((8 + level) * s) };
+            case "sn_thunder": return { ignore: percentPointValue(3 * s) };
+            case "sn_avatar": return { reduction: percentValue((0.06 + level * 0.005) * s) };
+            case "sn_charm": return { damage: percentValue((0.08 + level * 0.006) * s) };
+            case "sn_purple": return { damage: percentValue((0.07 + level * 0.006) * s), extra: percentValue((0.08 + level * 0.01) * s), cap: 40 };
+            case "sn_guard": return { convert: percentValue((0.08 + level * 0.006) * s), cap: 30 };
+        }
+        return {};
+    }
+
+    // 试炼化身沿用旧禁地 NPC 在武帝阶段的固定量级，不再随玩家属性倍乘。
+    var TRIAL_PROFILES = [null,
+        { max_hp: 12000000, max_mp: 6000000, gj: 140000, fy: 100000, mz: 140000, zj: 100000, ds: 100000, skill: 2500 },
+        { max_hp: 15000000, max_mp: 7500000, gj: 155000, fy: 110000, mz: 150000, zj: 110000, ds: 110000, skill: 2600 },
+        { max_hp: 18000000, max_mp: 9000000, gj: 170000, fy: 120000, mz: 160000, zj: 120000, ds: 120000, skill: 2700 },
+        { max_hp: 22000000, max_mp: 11000000, gj: 200000, fy: 140000, mz: 190000, zj: 150000, ds: 150000, skill: 2800 },
+        { max_hp: 30000000, max_mp: 15000000, gj: 250000, fy: 180000, mz: 220000, zj: 180000, ds: 180000, skill: 3000 }
+    ];
+    function trialStats(intent) {
+        var source = TRIAL_PROFILES[Math.max(1, Math.min(5, parseInt(intent && intent.id) || 1))], stats = {};
+        for (var key in source) stats[key] = source[key];
+        stats.timeout = intent && intent.mode === "burst" ? 120000 : (intent && intent.mode === "endure" ? 45000 : 180000);
+        return stats;
+    }
+
+    // 八处真意禁地只保留正式试炼引导 NPC；旧敌人脚本留档但不再生成。
+    function allowPublicNpc(roomPath, npcPath) {
+        var key = String(roomPath || "").replace(/\\/g, "/").split("/")[0];
+        if (!findDataByKey(key)) return true;
+        return String(npcPath || "").indexOf("pub/zhenyi_shiyantai#" + key + "_") === 0;
+    }
+
+    // 面板描述与实际结算共用 valuesFor；level 为 0 时显示第一重预览。
+    function describeIntent(data, intent, level) {
+        var v = valuesFor(data, intent, level), e = intent.effect;
+        switch (e) {
+            case "jz_edge": return "绑定绝招命中时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
+            case "jz_counter": return "成功招架后获得10秒回锋；下一次技能伤害提高" + percentText(v.damage) + "，触发后消耗。";
+            case "jz_heavy": return "目标当前气血高于70%时，技能伤害提高" + percentText(v.damage) + "。";
+            case "jz_wood": return "紫气东来成功后回复最大气血" + percentText(v.heal) + "，并获得8秒护意；护意减伤" + percentText(v.reduction) + "。";
+            case "jz_formless": return "施展无招期间，首轮技能伤害提高" + percentText(v.damage) + "；10秒内只触发一次。";
+            case "zw_borrow": return "成功招架2次后，12秒内下一次技能伤害提高" + percentText(v.damage) + "，触发后清空层数。";
+            case "zw_yield": return "受到伤害时，每8秒首次受击减伤" + percentText(v.reduction) + "。";
+            case "zw_stick": return "绕字诀或震字诀命中后，使目标忙乱" + secondsText(v.busy) + "；同一目标10秒内只受一次。";
+            case "zw_circle": return "减伤率等于已损气血比例×" + percentText(v.factor) + "，最终减伤上限" + percentText(v.cap) + "。";
+            case "zw_wuji": return "气血低于18%时每600秒触发一次，回复最大气血" + percentText(v.heal) + "并清除负面状态；真武除邪精力消耗降低" + percentText(v.cost) + "，调息降低" + percentText(v.cooldown) + "，调息最低" + v.minimum + "秒。";
             case "sl_vajra": return "纯机制：每600秒最多抵挡一次致命伤害，将该次伤害压至仅余1点气血。";
-            case "sl_roar": return "狮子吼命中后额外使目标忙乱" + seconds((600 + level * 80) * s) + "；同一目标12秒内只受一次。";
-            case "sl_prajna": return "惊魔一指或达摩三绝命中后，封锁目标绝招" + seconds((900 + level * 70) * s) + "。";
-            case "sl_arhat": return "同时被2名敌人攻击时减伤" + percent((0.04 + level * 0.003) * s) + "；每多1名敌人增加" + percent(0.025 * s) + "，最终上限18%。";
-            case "sl_meditate": return "佛光守护与一苇渡江的精力消耗降低" + percent(0.08 * s) + "，调息降低" + percent(0.07 * s) + "。";
-            case "em_mercy": return "鹤翔庄或游龙庄成功生效后，回复最大气血" + percent((0.015 + level * 0.0025) * s) + "。";
-            case "em_wrath": return "成功招架后获得6秒反震；下一次受击反弹所受伤害的" + percent((0.10 + level * 0.006) * s) + "，8秒冷却，反伤不超过自身攻击力50%。";
-            case "em_twin": return "灭剑与绝剑成功交替后，12秒内下一次技能伤害提高" + percent((0.11 + level * 0.008) * s) + "。";
-            case "em_yitian": return "倚天剑诀或号令天下命中时，伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
-            case "em_nineyin": return "目标当前气血高于80%时，技能伤害提高" + percent((0.06 + level * 0.006) * s) + "。";
-            case "gb_kanglong": return "施展降龙时，技能伤害提高" + percent((0.025 + level * 0.004) * s) + "，破防增加" + Math.floor((5 + level) * s) + "点。";
-            case "gb_flying": return "十八掌连续命中叠加掌势，最多5层、持续12秒；每层使后续技能伤害提高" + percent(0.012 * s) + "。";
-            case "gb_tail": return "绊字诀命中后获得12秒摆尾；下一次技能伤害提高" + percent((0.10 + level * 0.007) * s) + "。";
-            case "gb_field": return "自身气血低于40%时，技能伤害提高" + percent((0.06 + level * 0.006) * s) + "。";
-            case "gb_six": return "降龙或十八掌成功后获得12秒龙劲；下一次技能伤害提高" + percent((0.08 + level * 0.006) * s) + "。";
-            case "xy_beiming": return "北冥绑定绝招命中后，吸取目标最大内力的" + percent(0.01 * s) + "并转为自身内力；单次转化不超过自身最大内力3%。";
-            case "xy_lingbo": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percent((0.07 + level * 0.006) * s) + "，命中提高" + percent(0.20 * s) + "。";
-            case "xy_baihong": return "当前内力高于80%时，白虹掌力伤害提高" + percent((0.08 + level * 0.006) * s) + "，并消耗最大内力1%。";
-            case "xy_talisman": return "生死符命中后追加自身最大内力的" + percent((0.003 + level * 0.0004) * s) + "作为伤害，单次不超过本次已造成伤害25%，8秒冷却。";
-            case "xy_formless": return "无相、无我释放已化用的绝招时，精力消耗降低" + percent(0.10 * s) + "，调息降低" + percent(0.09 * s) + "，调息最低4秒。";
-            case "ss_shadow": return "无痕成功后，20秒内下一次伤害技能命中会封锁目标绝招" + seconds((700 + level * 80) * s) + "；20秒冷却。";
-            case "ss_step": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percent((0.07 + level * 0.006) * s) + "，命中提高" + percent(0.25 * s) + "。";
-            case "ss_puncture": return "目标当前气血高于80%时，技能伤害提高" + percent((0.09 + level * 0.007) * s) + "，破防增加" + Math.floor((10 + level) * s) + "点。";
-            case "ss_debt": return "击杀目标后获得120秒血债；下一次技能伤害提高" + percent((0.13 + level * 0.008) * s) + "。";
-            case "ss_asura": return "自身气血低于30%时，技能伤害提高" + percent((0.10 + level * 0.008) * s) + "，破防增加" + Math.floor((8 + level) * s) + "点。";
-            case "sn_thunder": return "绑定雷法命中叠加雷贯，最多5层、持续12秒；每层增加" + Math.max(1, Math.floor(3 * s)) + "点破防。";
-            case "sn_avatar": return "玄女法相成功后获得15秒护持，期间受到伤害降低" + percent((0.06 + level * 0.005) * s) + "。";
-            case "sn_charm": return "魅魂或极乐六性命中后获得12秒摄心；下一次技能伤害提高" + percent((0.08 + level * 0.006) * s) + "。";
-            case "sn_purple": return "春雷暴殛或天雷系绑定绝招伤害提高" + percent((0.07 + level * 0.006) * s) + "；每9秒追加一次攻击力的" + percent((0.08 + level * 0.01) * s) + "作为雷伤，且不超过本次已造成伤害30%。";
-            case "sn_guard": return "当前内力大于0时，将每次所受伤害的" + percent((0.08 + level * 0.006) * s) + "转为等量内力消耗；最终减伤上限25%。";
+            case "sl_roar": return "狮子吼命中后额外使目标忙乱" + secondsText(v.busy) + "；同一目标12秒内只受一次。";
+            case "sl_prajna": return "惊魔一指或达摩三绝命中后，封锁目标绝招" + secondsText(v.seal) + "。";
+            case "sl_arhat": return "同时被2名敌人攻击时减伤" + percentText(v.reduction) + "；每多1名敌人增加" + percentText(v.per_enemy) + "，最终上限" + percentText(v.cap) + "。";
+            case "sl_meditate": return "佛光守护与一苇渡江的精力消耗降低" + percentText(v.cost) + "，调息降低" + percentText(v.cooldown) + "，调息最低" + v.minimum + "秒。";
+            case "em_mercy": return "鹤翔庄或游龙庄成功生效后，回复最大气血" + percentText(v.heal) + "。";
+            case "em_wrath": return "成功招架后获得6秒反震；下一次受击反弹所受伤害的" + percentText(v.reflect) + "，8秒冷却，反伤不超过自身攻击力" + percentText(v.cap) + "。";
+            case "em_twin": return "灭剑与绝剑成功交替后，12秒内下一次技能伤害提高" + percentText(v.damage) + "。";
+            case "em_yitian": return "倚天剑诀或号令天下命中时，伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
+            case "em_nineyin": return "目标当前气血高于80%时，技能伤害提高" + percentText(v.damage) + "。";
+            case "gb_kanglong": return "施展降龙时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
+            case "gb_flying": return "十八掌连续命中叠加掌势，最多5层、持续12秒；每层使后续技能伤害提高" + percentText(v.damage) + "。";
+            case "gb_tail": return "绊字诀命中后获得12秒摆尾；下一次技能伤害提高" + percentText(v.damage) + "。";
+            case "gb_field": return "自身气血低于40%时，技能伤害提高" + percentText(v.damage) + "。";
+            case "gb_six": return "降龙或十八掌成功后获得12秒龙劲；下一次技能伤害提高" + percentText(v.damage) + "。";
+            case "xy_beiming": return "北冥绑定绝招命中后，吸取目标最大内力的" + percentText(v.drain) + "并转为自身内力；单次转化不超过自身最大内力" + percentText(v.cap) + "。";
+            case "xy_lingbo": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percentText(v.damage) + "，命中提高" + percentText(v.hit) + "。";
+            case "xy_baihong": return "当前内力高于80%时，白虹掌力伤害提高" + percentText(v.damage) + "，并消耗最大内力" + percentText(v.cost) + "。";
+            case "xy_talisman": return "生死符命中后追加自身最大内力的" + percentText(v.extra) + "作为伤害，单次不超过本次已造成伤害" + percentText(v.cap) + "，8秒冷却。";
+            case "xy_formless": return "无相、无我释放已化用的绝招时，精力消耗降低" + percentText(v.cost) + "，调息降低" + percentText(v.cooldown) + "，调息最低" + v.minimum + "秒。";
+            case "ss_shadow": return "无痕成功后，20秒内下一次伤害技能命中会封锁目标绝招" + secondsText(v.seal) + "；20秒冷却。";
+            case "ss_step": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percentText(v.damage) + "，命中提高" + percentText(v.hit) + "。";
+            case "ss_puncture": return "目标当前气血高于80%时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
+            case "ss_debt": return "击杀目标后获得120秒血债；下一次技能伤害提高" + percentText(v.damage) + "。";
+            case "ss_asura": return "自身气血低于30%时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
+            case "sn_thunder": return "绑定雷法命中叠加雷贯，最多5层、持续12秒；每层忽视防御提高" + percentText(v.ignore) + "。";
+            case "sn_avatar": return "玄女法相成功后获得15秒护持，期间受到伤害降低" + percentText(v.reduction) + "。";
+            case "sn_charm": return "魅魂或极乐六性命中后获得12秒摄心；下一次技能伤害提高" + percentText(v.damage) + "。";
+            case "sn_purple": return "春雷暴殛或天雷系绑定绝招伤害提高" + percentText(v.damage) + "；每9秒追加一次攻击力的" + percentText(v.extra) + "作为雷伤，且不超过本次已造成伤害" + percentText(v.cap) + "。";
+            case "sn_guard": return "当前内力大于0时，将每次所受伤害的" + percentText(v.convert) + "转为等量内力消耗；最终减伤上限" + percentText(v.cap) + "。";
         }
         return "此真意当前没有可结算的数值效果。";
     }
 
+    function clearTrialTemps(me) {
+        me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_owner");
+        me.remove_temp("zy_trial_return");
+        me.remove_temp("zy_trial_control_cd");
+        if (me.remove_status) me.remove_status("zy_trial_control", true);
+    }
+
+    // 热更新或重启会销毁旧试炼 NPC，但角色 temp 会持久化；每次进入系统都主动自愈。
+    function ensureTrialState(me, notify) {
+        if (!me) return false;
+        var active = me.query_temp("zy_trial_active", "");
+        if (!active) {
+            if (me.query_temp("zy_trial_owner", "") || me.query_temp("zy_trial_return", "")) clearTrialTemps(me);
+            return false;
+        }
+        var parts = active.split("_"), key = parts[0], data = findDataByKey(key);
+        var owner = me.query_temp("zy_trial_owner", ""), env = me.environment;
+        var liveNpc = false;
+        if (env && env.items) {
+            for (var i = 0; i < env.items.length; i++) {
+                if (env.items[i] && env.items[i].is_zhenyi_trial && env.items[i].trial_owner === me) { liveNpc = true; break; }
+            }
+        }
+        var valid = !!(data && owner && owner === trialOwner(me, key) && env && env.owner === owner &&
+            env.parent && env.parent.id === key && liveNpc);
+        if (valid) return true;
+
+        var oldOwner = owner, returnPath = me.query_temp("zy_trial_return", "");
+        if (data && typeof ROOM !== "undefined" && env && env.parent && env.parent.id === key && env.owner === oldOwner) {
+            var baseReturn = ROOM.Get(returnPath) || (ROOM.Get(data.trialRoom) && ROOM.Get(data.trialRoom).parent.rooms[0]);
+            var publicRoom = baseReturn && (baseReturn.query_copy(publicOwner(key)) || baseReturn.create_copy(publicOwner(key)));
+            if (publicRoom) me.moveto(publicRoom, me.name + "离开了失效的真意试炼。", me.name + "自黯淡的试炼石门中走出。");
+        }
+        clearTrialTemps(me);
+        if (data && oldOwner && typeof ROOM !== "undefined") {
+            var trialBase = ROOM.Get(data.trialRoom), staleRoom = trialBase && trialBase.query_copy(oldOwner);
+            if (staleRoom && me.environment !== staleRoom) staleRoom.clear_by_area(trialBase.parent, oldOwner);
+        }
+        if (notify) me.notify("先前未结束的真意试炼已失效，残留状态已经自动清理，可以重新挑战。");
+        return false;
+    }
+
     function migrate(me) {
+        ensureTrialState(me, false);
         var data = familyData(me);
-        var migrationStamp = "20260823:" + (familyId(me) || "NONE");
+        var migrationStamp = "20260823b:" + (familyId(me) || "NONE");
         if (me.query_temp("zy_migrate_version", "") === migrationStamp) return;
         var migrationComplete = true;
         // 兼容更新前已经判师、但旧真意字段仍残留的角色。
@@ -306,7 +419,7 @@
         if (!data || parts[0] !== data.key) return null;
         var intent = findIntent(data, parts[1]), lv = intent ? getLevel(me, data.key, intent.id) : 0;
         if (!intent || !lv) return null;
-        return { data: data, intent: intent, level: lv, grade: gradeForLevel(lv), scale: scaleFor(data, lv) };
+        return { data: data, intent: intent, level: lv, grade: gradeForLevel(lv), values: valuesFor(data, intent, lv) };
     }
     function setActive(me, id) {
         if (me.is_fighting && me.is_fighting()) return me.notify("战斗中不可更易真意。"), false;
@@ -320,7 +433,7 @@
         return true;
     }
     function clearCombatState(me) {
-        var keys = ["zy_pfm", "zy_pfm_id", "zy_counter", "zy_borrow", "zy_lingbo", "zy_tail", "zy_twin", "zy_charm", "zy_six"];
+        var keys = ["zy_pfm", "zy_pfm_id", "zy_counter", "zy_borrow", "zy_lingbo", "zy_tail", "zy_twin", "zy_charm", "zy_six", "zy_shadow_ready"];
         for (var i = 0; i < keys.length; i++) me.remove_temp(keys[i]);
     }
     function forgetFamily(me, oldFamilyId) {
@@ -333,8 +446,7 @@
         }
         var active = me.query_temp("zy_active", "");
         if (active && active.indexOf(data.key + "_") === 0) me.remove_temp("zy_active");
-        me.remove_temp("zy_active_" + data.key); me.remove_temp("zy_trial_active");
-        me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+        me.remove_temp("zy_active_" + data.key); clearTrialTemps(me);
         me.remove_temp("zy_migrate_version");
         clearCombatState(me); me.set_bool("fb2", data.jd, false);
     }
@@ -349,6 +461,7 @@
         if (!canEnterArea(me, data.key)) return false;
         if (!currentAreaMatches(me, data)) return me.notify("你须先进入【" + data.area + "】。"), false;
         if (me.is_fighting()) return me.notify("你尚在战斗，不能另启试炼。"), false;
+        ensureTrialState(me, !!me.query_temp("zy_trial_active", ""));
         if (me.query_temp("zy_trial_active", "")) return me.notify("你已有一项真意试炼尚未结束。"), false;
         if (dailyCount(me, data.key, intent.id) >= DAILY_LIMIT) return me.notify("这项试炼今日已达十次。"), false;
         var baseRoom = ROOM.Get(data.trialRoom);
@@ -531,29 +644,30 @@
     function pfmCost(me, pfm, skill, value) {
         var active = getActive(me);
         if (!pfmMatches(active, pfm && pfm.id, skill)) return value;
-        var effects = { sl_meditate: 8, xy_formless: 10, zw_wuji: 6 }, pct = effects[active.intent.effect] || 0;
-        return pct ? Math.max(0, parseInt(value * (100 - pct * active.scale) / 100)) : value;
+        var pct = active.values.cost || 0;
+        return pct ? Math.max(0, Math.floor(value * (100 - pct) / 100)) : value;
     }
     function pfmCooldown(me, pfm, skill, value) {
         var active = getActive(me);
         if (!pfmMatches(active, pfm && pfm.id, skill)) return value;
-        var effects = { sl_meditate: 7, xy_formless: 9, zw_wuji: 6 }, pct = effects[active.intent.effect] || 0;
-        return pct ? Math.max(4000, parseInt(value * (100 - pct * active.scale) / 100)) : value;
+        var pct = active.values.cooldown || 0;
+        var minimum = (active.values.minimum || 4) * 1000;
+        return pct ? Math.max(minimum, Math.floor(value * (100 - pct) / 100)) : value;
     }
     function endPfm(me, target, pfm, skill, success) {
         var active = getActive(me);
         if (!success || !pfmMatches(active, pfm && pfm.id, skill)) return;
-        var lv = active.level, s = active.scale, effect = active.intent.effect;
-        if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * (0.012 + lv * 0.002) * s)); me.set_temp("zy_wood_guard", 1, 8000); }
-        else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * (0.015 + lv * 0.0025) * s));
-        else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * 0.01 * s), Math.floor(me.max_mp * 0.03)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
-        else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", (600 + lv * 80) * s, 12000);
-        else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, (900 + lv * 70) * s);
-        else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", (500 + lv * 70) * s, 10000);
+        var effect = active.intent.effect, v = active.values;
+        if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.set_temp("zy_wood_guard", 1, 8000); }
+        else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * v.heal / 100));
+        else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * v.drain / 100), Math.floor(me.max_mp * v.cap / 100)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
+        else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", v.busy * 1000, 12000);
+        else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, v.seal * 1000);
+        else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", v.busy * 1000, 10000);
         else if (effect === "gb_tail") me.set_temp("zy_tail", 1, 12000);
         else if (effect === "gb_six") me.set_temp("zy_six", 1, 12000);
         else if (effect === "em_twin") { var last = me.query_temp("zy_twin_last", ""); if (last && last !== pfm.id) me.set_temp("zy_twin", 1, 12000); me.set_temp("zy_twin_last", pfm.id, 20000); }
-        else if (effect === "ss_shadow" && target && !me.query_temp("zy_shadow_cd")) { target.set_temp("sealed_pfm", 1, (700 + lv * 80) * s); me.set_temp("zy_shadow_cd", 1, 20000); }
+        else if (effect === "ss_shadow" && !me.query_temp("zy_shadow_cd")) { me.set_temp("zy_shadow_ready", 1, 20000); me.set_temp("zy_shadow_cd", 1, 20000); }
         else if (effect === "sn_charm") me.set_temp("zy_charm", 1, 12000);
         else if (effect === "sn_avatar") me.set_temp("zy_avatar", 1, 15000);
     }
@@ -562,42 +676,48 @@
         target.set_temp(id + "_cd", 1, cooldown); target.add_status({ id: id, name: name, duration: duration, downside: true, prop: { is_busy: 1 } });
     }
 
+    function addIgnore(par, value) {
+        par.diff_fy = Math.min(100, (par.diff_fy || 0) + value);
+    }
     function modifyAttack(me, target, par, sh, skill) {
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me)) return sh;
-        var e = active.intent.effect, lv = active.level, s = active.scale, bonus = 0, inPfm = me.query_temp("zy_pfm", "") === e;
-        if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) bonus += (0.025 + lv * 0.004) * s;
+        var e = active.intent.effect, v = active.values, bonus = 0, inPfm = me.query_temp("zy_pfm", "") === e;
+        if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) bonus += v.damage / 100;
         if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) {
-            par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((5 + lv) * s));
+            addIgnore(par, v.ignore);
         }
-        if (e === "jz_counter" && me.query_temp("zy_counter")) { bonus += (0.08 + lv * 0.008) * s; me.remove_temp("zy_counter"); }
-        else if (e === "jz_heavy" && target.max_hp && target.hp / target.max_hp > 0.7) bonus += (0.035 + lv * 0.004) * s;
-        else if (e === "jz_formless" && inPfm && !me.query_temp("zy_formless_cd")) { bonus += (0.08 + lv * 0.006) * s; me.set_temp("zy_formless_cd", 1, 10000); }
-        else if (e === "zw_borrow" && me.query_temp("zy_borrow", 0) >= 2) { bonus += (0.10 + lv * 0.008) * s; me.remove_temp("zy_borrow"); }
-        else if (e === "gb_field" && me.max_hp && me.hp / me.max_hp < 0.4) bonus += (0.06 + lv * 0.006) * s;
-        else if (e === "gb_flying" && inPfm) { var st = Math.min(5, me.add_temp("zy_flying", 1, 12000)); bonus += st * 0.012 * s; }
-        else if (e === "gb_tail" && me.query_temp("zy_tail")) { bonus += (0.10 + lv * 0.007) * s; me.remove_temp("zy_tail"); }
-        else if (e === "gb_six" && me.query_temp("zy_six")) { bonus += (0.08 + lv * 0.006) * s; me.remove_temp("zy_six"); }
-        else if (e === "em_twin" && me.query_temp("zy_twin")) { bonus += (0.11 + lv * 0.008) * s; me.remove_temp("zy_twin"); }
-        else if (e === "em_nineyin" && target.max_hp && target.hp / target.max_hp > 0.8) bonus += (0.06 + lv * 0.006) * s;
-        else if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) { bonus += (0.07 + lv * 0.006) * s; par.mz = (par.mz || me.mz) * (1 + (e === "ss_step" ? 0.25 : 0.20) * s); me.remove_temp("zy_lingbo"); }
-        else if (e === "xy_baihong" && inPfm && me.max_mp && me.mp / me.max_mp > 0.8) { bonus += (0.08 + lv * 0.006) * s; me.add_mp(-Math.floor(me.max_mp * 0.01)); }
-        else if (e === "ss_puncture" && target.max_hp && target.hp / target.max_hp > 0.8) { bonus += (0.09 + lv * 0.007) * s; par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((10 + lv) * s)); }
-        else if (e === "ss_debt" && me.query_temp("zy_debt")) { bonus += (0.13 + lv * 0.008) * s; me.remove_temp("zy_debt"); }
-        else if (e === "ss_asura" && me.max_hp && me.hp / me.max_hp < 0.3) { bonus += (0.10 + lv * 0.008) * s; par.diff_fy = Math.max(par.diff_fy || 0, Math.floor((8 + lv) * s)); }
-        else if (e === "sn_charm" && me.query_temp("zy_charm")) { bonus += (0.08 + lv * 0.006) * s; me.remove_temp("zy_charm"); }
-        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, me.add_temp("zy_thunder", 1, 12000)); par.diff_fy = Math.max(par.diff_fy || 0, th * Math.max(1, Math.floor(3 * s))); }
-        else if (e === "sn_purple" && inPfm) bonus += (0.07 + lv * 0.006) * s;
+        if (e === "jz_counter" && me.query_temp("zy_counter")) { bonus += v.damage / 100; me.remove_temp("zy_counter"); }
+        else if (e === "jz_heavy" && target.max_hp && target.hp / target.max_hp > 0.7) bonus += v.damage / 100;
+        else if (e === "jz_formless" && inPfm && !me.query_temp("zy_formless_cd")) { bonus += v.damage / 100; me.set_temp("zy_formless_cd", 1, 10000); }
+        else if (e === "zw_borrow" && me.query_temp("zy_borrow", 0) >= 2) { bonus += v.damage / 100; me.remove_temp("zy_borrow"); }
+        else if (e === "gb_field" && me.max_hp && me.hp / me.max_hp < 0.4) bonus += v.damage / 100;
+        else if (e === "gb_flying" && inPfm) { var st = Math.min(5, me.add_temp("zy_flying", 1, 12000)); bonus += st * v.damage / 100; }
+        else if (e === "gb_tail" && me.query_temp("zy_tail")) { bonus += v.damage / 100; me.remove_temp("zy_tail"); }
+        else if (e === "gb_six" && me.query_temp("zy_six")) { bonus += v.damage / 100; me.remove_temp("zy_six"); }
+        else if (e === "em_twin" && me.query_temp("zy_twin")) { bonus += v.damage / 100; me.remove_temp("zy_twin"); }
+        else if (e === "em_nineyin" && target.max_hp && target.hp / target.max_hp > 0.8) bonus += v.damage / 100;
+        else if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) { bonus += v.damage / 100; par.mz = (par.mz || me.mz) * (1 + v.hit / 100); me.remove_temp("zy_lingbo"); }
+        else if (e === "xy_baihong" && inPfm && me.max_mp && me.mp / me.max_mp > 0.8) { bonus += v.damage / 100; me.add_mp(-Math.floor(me.max_mp * v.cost / 100)); }
+        else if (e === "ss_puncture" && target.max_hp && target.hp / target.max_hp > 0.8) { bonus += v.damage / 100; addIgnore(par, v.ignore); }
+        else if (e === "ss_debt" && me.query_temp("zy_debt")) { bonus += v.damage / 100; me.remove_temp("zy_debt"); }
+        else if (e === "ss_asura" && me.max_hp && me.hp / me.max_hp < 0.3) { bonus += v.damage / 100; addIgnore(par, v.ignore); }
+        else if (e === "sn_charm" && me.query_temp("zy_charm")) { bonus += v.damage / 100; me.remove_temp("zy_charm"); }
+        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, me.add_temp("zy_thunder", 1, 12000)); addIgnore(par, th * v.ignore); }
+        else if (e === "sn_purple" && inPfm) bonus += v.damage / 100;
         return sh * (1 + bonus);
     }
     function afterAttack(me, target, par, dealt, skill) {
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me) || !(dealt > 0)) return;
-        var e = active.intent.effect, lv = active.level, s = active.scale;
+        var e = active.intent.effect, v = active.values;
+        if (e === "ss_shadow" && me.query_temp("zy_shadow_ready")) {
+            me.remove_temp("zy_shadow_ready"); target.set_temp("sealed_pfm", 1, v.seal * 1000);
+        }
         if (e === "xy_talisman" && me.query_temp("zy_pfm", "") === e && !target.query_temp("zy_talisman_cd")) {
-            target.set_temp("zy_talisman_cd", 1, 8000); var extra = Math.min(Math.floor(me.max_mp * (0.003 + lv * 0.0004) * s), Math.floor(dealt * 0.25)); if (extra > 0) target.damage(extra, me, 100);
+            target.set_temp("zy_talisman_cd", 1, 8000); var extra = Math.min(Math.floor(me.max_mp * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (extra > 0) target.damage(extra, me, 100);
         } else if (e === "sn_purple" && me.query_temp("zy_pfm", "") === e && !target.query_temp("zy_purple_cd")) {
-            target.set_temp("zy_purple_cd", 1, 9000); var burn = Math.min(Math.floor(me.gj * (0.08 + lv * 0.01) * s), Math.floor(dealt * 0.3)); if (burn > 0) target.damage(burn, me, 100);
+            target.set_temp("zy_purple_cd", 1, 9000); var burn = Math.min(Math.floor(me.gj * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (burn > 0) target.damage(burn, me, 100);
         }
     }
     function onParry(me) {
@@ -609,19 +729,19 @@
     function onDodge(me) { var active = getActive(me); if (active && (active.intent.effect === "xy_lingbo" || active.intent.effect === "ss_step")) me.set_temp("zy_lingbo", 1, 10000); }
     function modifyDamage(me, from, sh) {
         var active = getActive(me); if (!active || !(sh > 0)) return sh;
-        var e = active.intent.effect, lv = active.level, s = active.scale, reduction = 0;
-        if (e === "jz_wood" && me.query_temp("zy_wood_guard")) reduction = (0.05 + lv * 0.004) * s;
-        else if (e === "zw_yield" && !me.query_temp("zy_yield_cd")) { reduction = (0.07 + lv * 0.005) * s; me.set_temp("zy_yield_cd", 1, 8000); }
-        else if (e === "zw_circle" && me.max_hp) reduction = Math.max(0, (1 - me.hp / me.max_hp) * (0.14 + lv * 0.008) * s);
-        else if (e === "sl_arhat" && me.enemy && me.enemy.length > 1) reduction = Math.min(0.18, (0.04 + (me.enemy.length - 2) * 0.025 + lv * 0.003) * s);
-        else if (e === "sn_avatar" && me.query_temp("zy_avatar")) reduction = (0.06 + lv * 0.005) * s;
-        else if (e === "sn_guard" && me.mp > 0) { var convert = Math.min(sh * (0.08 + lv * 0.006) * s, me.mp); me.add_mp(-Math.floor(convert)); sh -= convert; }
-        sh *= (1 - Math.min(0.25, reduction));
+        var e = active.intent.effect, v = active.values, reduction = 0;
+        if (e === "jz_wood" && me.query_temp("zy_wood_guard")) reduction = v.reduction / 100;
+        else if (e === "zw_yield" && !me.query_temp("zy_yield_cd")) { reduction = v.reduction / 100; me.set_temp("zy_yield_cd", 1, 8000); }
+        else if (e === "zw_circle" && me.max_hp) reduction = Math.min(v.cap / 100, Math.max(0, (1 - me.hp / me.max_hp) * v.factor / 100));
+        else if (e === "sl_arhat" && me.enemy && me.enemy.length > 1) reduction = Math.min(v.cap / 100, (v.reduction + (me.enemy.length - 2) * v.per_enemy) / 100);
+        else if (e === "sn_avatar" && me.query_temp("zy_avatar")) reduction = v.reduction / 100;
+        else if (e === "sn_guard" && me.mp > 0) { var convert = Math.min(sh * v.convert / 100, sh * v.cap / 100, me.mp); me.add_mp(-Math.floor(convert)); sh -= convert; }
+        sh *= (1 - reduction);
         if (e === "sl_vajra" && sh >= me.hp && me.hp > 1 && !me.query_temp("zy_vajra_cd")) { sh = me.hp - 1; me.set_temp("zy_vajra_cd", 1, 600000); me.notify("<hiy>金刚不坏真意护住你最后一线生机！</hiy>"); }
-        else if (e === "zw_wuji" && me.max_hp && me.hp / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * (0.05 + lv * 0.004) * s)); me.clear_downside && me.clear_downside(); }
+        else if (e === "zw_wuji" && me.max_hp && me.hp / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.clear_downside && me.clear_downside(); }
         if (e === "em_wrath" && me.query_temp("zy_wrath_ready") && from && from.hp > 0 && !me._zy_reflecting) {
             me.remove_temp("zy_wrath_ready"); me.set_temp("zy_wrath_cd", 1, 8000);
-            var reflect = Math.min(Math.floor(sh * (0.10 + lv * 0.006) * s), Math.floor(me.gj * 0.5));
+            var reflect = Math.min(Math.floor(sh * v.reflect / 100), Math.floor(me.gj * v.cap / 100));
             if (reflect > 0) { me._zy_reflecting = true; from.damage(reflect, me, 100); me._zy_reflecting = false; }
         }
         return Math.max(0, sh);
@@ -633,9 +753,10 @@
         DATA: DATA, FAMILY_TO_KEY: FAMILY_TO_KEY, MAX_LEVEL: MAX_LEVEL, DAILY_LIMIT: DAILY_LIMIT, ENERGY_COST: ENERGY_COST,
         family_data: familyData, find_by_key: findDataByKey, find_intent: findIntent, migrate: migrate,
         public_owner: publicOwner, is_public_owner: function (owner) { return typeof owner === "string" && owner.indexOf("zhenyi_public:") === 0; },
-        grade_for_level: gradeForLevel, describe: describeIntent,
+        allow_public_npc: allowPublicNpc, trial_stats: trialStats,
+        grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
-        set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial,
+        set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,

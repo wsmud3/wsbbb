@@ -146,6 +146,7 @@ ROOM.prototype.set_npc = function () {
         if (typeof name == "string") name = [name, 1];
         var obj_path = name[0];
         if (!obj_path) continue;
+        if (WORLD.ZHENYI && WORLD.ZHENYI.allow_public_npc && !WORLD.ZHENYI.allow_public_npc(this.path, obj_path)) continue;
         for (var j = 0; j < name[1]; j++) {
             var obj = NPC.CLONE(obj_path);
             if (obj) {
