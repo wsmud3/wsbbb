@@ -311,7 +311,6 @@ ROOM.prototype.to_json = function () {
     obj.commands.push({ cmd: "cangku", name: "仓库" });
     obj.commands.push({ cmd: "killauto", name: "自动攻击" });
     if (this.zhenyi_trial_room) {
-        obj.commands.push({ cmd: "zhenyi trial_complete", name: "完成副本" });
         obj.commands.push({ cmd: "zhenyi trial_exit", name: "退出副本" });
     } else if (this.is_copy_room && !this.parent.not_fb) {
         obj.commands.push({
@@ -338,7 +337,6 @@ ROOM.prototype.query_commands = function () {
         }
     }
     if (this.zhenyi_trial_room) {
-        json.commands.push({ name: "完成副本", cmd: "zhenyi trial_complete" });
         json.commands.push({ name: "退出副本", cmd: "zhenyi trial_exit" });
     }
 

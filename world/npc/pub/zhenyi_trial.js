@@ -78,8 +78,17 @@ this.on_die = function (killer) {
     }
     if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
     if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);
-    if (killer && killer === this.trial_owner && WORLD.ZHENYI) {
-        WORLD.ZHENYI.complete_trial(killer, this.trial_key, this.trial_id);
+    var owner = this.trial_owner;
+    var sameOwner = !!(owner && killer && (killer === owner || (killer.id && owner.id && killer.id === owner.id)));
+    // 试炼房间只允许入场玩家存在；即使底层死亡回调没有带出 killer，
+    // 只要持有者仍在本副本内，也应按该持有者结算，避免奖励丢失。
+    var ownerInRoom = !!(owner && owner.environment && owner.environment === this.environment);
+    if ((sameOwner || ownerInRoom) && WORLD.ZHENYI) {
+        // 先记录一次性成功标记，再按入场玩家结算；不要把奖励绑定到战斗链路
+        // 中可能被包装/替换的 killer 引用上。
+        owner.set_temp && owner.set_temp("zy_trial_npc_dead", this.trial_key + "_" + this.trial_id, 120000);
+        var completed = WORLD.ZHENYI.complete_trial(owner, this.trial_key, this.trial_id);
+        if (!completed && killer !== owner) WORLD.ZHENYI.complete_trial(killer, this.trial_key, this.trial_id);
     }
 };
 

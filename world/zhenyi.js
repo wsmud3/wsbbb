@@ -282,6 +282,8 @@
 
     function clearTrialTemps(me) {
         me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_npc_dead");
+        me.remove_temp("zy_trial_completed");
         me.remove_temp("zy_trial_owner");
         me.remove_temp("zy_trial_return");
         me.remove_temp("zy_trial_control_cd");
@@ -518,6 +520,7 @@
                     return;
                 }
             }
+            me.remove_temp("zy_trial_completed");
             me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
             if (data) {
                 var trialBase = ROOM.Get(data.trialRoom), trialRoom = trialBase && trialBase.query_copy(owner);
@@ -563,8 +566,15 @@
     function completeTrial(me, key, id) {
         var data = findDataByKey(key), intent = findIntent(data, id);
         if (!me || !data || !intent || familyId(me) !== KEY_TO_FAMILY[key]) return false;
-        if (me.query_temp("zy_trial_active", "") !== token(key, intent.id)) return false;
+        var trialToken = token(key, intent.id);
+        var active = me.query_temp("zy_trial_active", "");
+        // 化身死亡回调发生在战斗对象清理期间，极少数情况下 active 会先被清理；
+        // 由化身回调写入的一次性成功标记仍可完成本次结算，避免“化身已死但未解锁/无悟痕”。
+        if (active !== trialToken && me.query_temp("zy_trial_npc_dead", "") !== trialToken) return false;
         me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_npc_dead");
+        // 动作栏可能在自动结算后短暂残留，保留短时完成标记使退出命令幂等。
+        me.set_temp("zy_trial_completed", trialToken, 10000);
         if (!getLevel(me, key, intent.id)) {
             me.set_temp(acquiredKey(key, intent.id), 1); me.set_temp(levelKey(key, intent.id), 1); me.set_temp(clearKey(key, intent.id), 1);
             me.notify("<him>试炼石壁上道韵流转，你领悟了【" + intent.name + "】！</him>");
@@ -578,13 +588,29 @@
         if (!me) return;
         var active = me.query_temp("zy_trial_active", ""), key = active ? active.split("_")[0] : (me.environment && me.environment.parent && me.environment.parent.id);
         me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_npc_dead");
+        me.remove_temp("zy_trial_completed");
         if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>");
         if (key) returnFromTrial(me, key);
     }
     function finishTrialAction(me, exitOnly) {
         if (!me) return false;
         var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0], id = bits && parseInt(bits[1]);
-        if (!active || !key || !(id >= 0)) return me.notify("你当前不在真意试炼副本中。"), false;
+        if (!active || !key || !(id >= 0)) {
+            // 成功击杀后结算会立即清掉 active；客户端可能仍提交旧动作栏命令，
+            // 此时应返回明确的幂等提示，而不是误报玩家“不在副本”。
+            if (me.query_temp("zy_trial_completed", "")) {
+                return me.notify("该真意试炼已经结算，无法重复操作。"), true;
+            }
+            if (me.environment && me.environment.zhenyi_trial_room) {
+                if (me.query_temp("zy_trial_owner", "")) {
+                    failTrial(me, "你主动退出了真意试炼。");
+                    return true;
+                }
+                return me.notify("该真意试炼已经结算，无法重复操作。"), false;
+            }
+            return me.notify("该真意试炼已经结束，无法重复操作。"), false;
+        }
         if (exitOnly) {
             failTrial(me, "你主动退出了真意试炼。");
             return true;
