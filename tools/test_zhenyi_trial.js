@@ -35,6 +35,7 @@ const npcSource = fs.readFileSync(path.join(root, "world", "npc", "pub", "zhenyi
 assert.ok(roomSource.includes("zhenyi_trial_room") && roomSource.includes("zhenyi trial_complete") && roomSource.includes("zhenyi trial_exit"));
 assert.ok(commandSource.includes('action === "trial_complete"') && commandSource.includes('action === "trial_exit"'));
 assert.ok(npcSource.includes('this.trial_mode === "endure"') && npcSource.includes("this.on_before_fight") && npcSource.includes("this.on_kill"));
-assert.ok(npcSource.includes("this.hp = this.max_hp") && npcSource.includes("return false"));
+assert.ok(npcSource.includes("this.hp = 1") && npcSource.includes("return false"));
+assert.ok(npcSource.indexOf('this.trial_mode === "endure"') < npcSource.indexOf("clearTimeout(this.trial_timeout_handler)"), "坚持类 NPC 被误击杀时不能清掉存活计时器");
 console.log("真意试炼副本、动作栏、悟痕物品和坚持类 NPC 保护校验通过");
 

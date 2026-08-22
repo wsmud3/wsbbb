@@ -71,13 +71,13 @@ this.trial_timeout = function () {
 };
 
 this.on_die = function (killer) {
-    if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
-    if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);
+    // 不可击杀的坚持类试炼不能清掉计时器，否则玩家误触攻击会让试炼永远无法结算。
     if (this.trial_mode === "endure") {
-        this.hp = this.max_hp;
-        this.mp = this.max_mp;
+        this.hp = 1;
         return false;
     }
+    if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
+    if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);
     if (killer && killer === this.trial_owner && WORLD.ZHENYI) {
         WORLD.ZHENYI.complete_trial(killer, this.trial_key, this.trial_id);
     }
