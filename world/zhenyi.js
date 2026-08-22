@@ -298,8 +298,9 @@
             if (me.query_temp("zy_trial_owner", "") || me.query_temp("zy_trial_return", "")) clearTrialTemps(me);
             return false;
         }
-        var parts = active.split("_"), key = parts[0], data = findDataByKey(key);
+        var parts = active.split("_"), key = parts[0], trialId = parseInt(parts[1]), data = findDataByKey(key);
         var owner = me.query_temp("zy_trial_owner", ""), env = me.environment;
+        var completed = me.query_temp("zy_trial_completed", "") === token(key, trialId);
         var liveNpc = false;
         if (env && env.items) {
             for (var i = 0; i < env.items.length; i++) {
@@ -307,7 +308,7 @@
             }
         }
         var valid = !!(data && owner && owner === trialOwner(me, key) && env && env.owner === owner &&
-            env.parent && env.parent.id === key && liveNpc);
+            env.parent && env.parent.id === key && (liveNpc || completed));
         if (valid) return true;
 
         var oldOwner = owner, returnPath = me.query_temp("zy_trial_return", "");
@@ -456,7 +457,7 @@
     function currentAreaMatches(me, data) { return !!(me && me.environment && me.environment.parent && me.environment.parent.id === data.key); }
     function dailyCount(me, key, id) { return parseInt(me.query_temp(dailyKey(key, id), 0)) || 0; }
     function addDaily(me, key, id, count) { return me.add_temp(dailyKey(key, id), count, UTIL.diff_time()); }
-    // 真意试炼副本不应继承公共试场出口；完成/退出由动作栏提供。
+    // 真意试炼副本不应继承公共试场出口；完成确认由动作栏提供。
     function configureTrialRoom(room) {
         if (!room) return room;
         room.zhenyi_trial_room = true;
@@ -476,6 +477,7 @@
         if (me.is_fighting()) return me.notify("你尚在战斗，不能另启试炼。"), false;
         ensureTrialState(me, !!me.query_temp("zy_trial_active", ""));
         if (me.query_temp("zy_trial_active", "")) return me.notify("你已有一项真意试炼尚未结束。"), false;
+        if (getLevel(me, data.key, intent.id)) return me.notify("你已解锁【" + intent.name + "】，无法进入试炼。"), false;
         if (dailyCount(me, data.key, intent.id) >= DAILY_LIMIT) return me.notify("这项试炼今日已达十次。"), false;
         var baseRoom = ROOM.Get(data.trialRoom);
         if (!baseRoom) return me.notify("试炼场暂不可用，请联系管理员。"), false;
@@ -568,20 +570,20 @@
         if (!me || !data || !intent || familyId(me) !== KEY_TO_FAMILY[key]) return false;
         var trialToken = token(key, intent.id);
         var active = me.query_temp("zy_trial_active", "");
+        var completed = me.query_temp("zy_trial_completed", "");
         // 化身死亡回调发生在战斗对象清理期间，极少数情况下 active 会先被清理；
-        // 由化身回调写入的一次性成功标记仍可完成本次结算，避免“化身已死但未解锁/无悟痕”。
-        if (active !== trialToken && me.query_temp("zy_trial_npc_dead", "") !== trialToken) return false;
-        me.remove_temp("zy_trial_active");
+        // 由化身回调写入的一次性成功标记仍可完成本次解锁，避免“化身已死但未解锁”。
+        if (active !== trialToken && me.query_temp("zy_trial_npc_dead", "") !== trialToken && completed !== trialToken) return false;
+        if (completed === trialToken) return true;
         me.remove_temp("zy_trial_npc_dead");
-        // 动作栏可能在自动结算后短暂残留，保留短时完成标记使退出命令幂等。
-        me.set_temp("zy_trial_completed", trialToken, 10000);
+        // 保留 active 和副本，等待玩家通过动作栏“完成副本”确认离场。
+        me.set_temp("zy_trial_completed", trialToken);
         if (!getLevel(me, key, intent.id)) {
             me.set_temp(acquiredKey(key, intent.id), 1); me.set_temp(levelKey(key, intent.id), 1); me.set_temp(clearKey(key, intent.id), 1);
             me.notify("<him>试炼石壁上道韵流转，你领悟了【" + intent.name + "】！</him>");
         }
-        reward(me, data, intent, 1, false);
+        me.notify("<hig>试炼目标已完成，请点击动作栏“完成副本”确认离场。</hig>");
         if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
-        returnFromTrial(me, key);
         return true;
     }
     function failTrial(me, reason) {
@@ -593,32 +595,43 @@
         if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>");
         if (key) returnFromTrial(me, key);
     }
-    function finishTrialAction(me, exitOnly) {
+    function finishTrialAction(me) {
         if (!me) return false;
         var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0], id = bits && parseInt(bits[1]);
         if (!active || !key || !(id >= 0)) {
-            // 成功击杀后结算会立即清掉 active；客户端可能仍提交旧动作栏命令，
-            // 此时应返回明确的幂等提示，而不是误报玩家“不在副本”。
-            if (me.query_temp("zy_trial_completed", "")) {
-                return me.notify("该真意试炼已经结算，无法重复操作。"), true;
-            }
-            if (me.environment && me.environment.zhenyi_trial_room) {
-                if (me.query_temp("zy_trial_owner", "")) {
-                    failTrial(me, "你主动退出了真意试炼。");
-                    return true;
-                }
-                return me.notify("该真意试炼已经结算，无法重复操作。"), false;
-            }
-            return me.notify("该真意试炼已经结束，无法重复操作。"), false;
-        }
-        if (exitOnly) {
-            failTrial(me, "你主动退出了真意试炼。");
-            return true;
+            return me.notify("你当前不在真意试炼副本中。"), false;
         }
         var data = findDataByKey(key), intent = findIntent(data, id);
+        if (me.query_temp("zy_trial_completed", "") === token(key, intent && intent.id)) {
+            me.notify("真意试炼已完成，是否确认完成副本并离开？");
+            me.send_commands("zhenyi trial_confirm", "确认完成并离开", "zhenyi trial_cancel", "暂不离开");
+            return true;
+        }
         if (intent && intent.mode === "endure") me.notify("请继续坚持至试炼计时结束；达成目标后会自动结算。");
         else me.notify("请先完成试炼目标；击败武意化身后会自动结算。");
         return false;
+    }
+    function confirmTrial(me) {
+        if (!me) return false;
+        var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0], id = bits && parseInt(bits[1]);
+        var data = findDataByKey(key), intent = findIntent(data, id);
+        if (!active || !key || !(id >= 0) || !intent || me.query_temp("zy_trial_completed", "") !== token(key, intent.id)) {
+            return me.notify("请先完成真意试炼目标。"), false;
+        }
+        me.remove_temp("zy_trial_active");
+        me.remove_temp("zy_trial_npc_dead");
+        me.remove_temp("zy_trial_completed");
+        if (me.end_fight) me.end_fight();
+        returnFromTrial(me, key);
+        return true;
+    }
+    function cancelTrial(me) {
+        if (!me) return false;
+        if (me.query_temp("zy_trial_completed", "")) {
+            me.notify("已取消离场，你仍在真意试炼副本中。");
+            return true;
+        }
+        return me.notify("真意试炼尚未完成。"), false;
     }
     function sweep(me, id, count) {
         var data = familyData(me), intent = findIntent(data, id);
@@ -825,6 +838,7 @@
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,
+        confirm_trial: confirmTrial, cancel_trial: cancelTrial,
         configure_trial_room: configureTrialRoom, add_material: addMaterial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,

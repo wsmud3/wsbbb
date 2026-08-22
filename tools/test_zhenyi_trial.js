@@ -30,12 +30,13 @@ assert.strictEqual(item.count, 3);
 
 // 化身死亡回调即使先清掉 active，也必须凭一次性成功标记完成解锁和奖励。
 const completed = {
-    id: "trial-player", family: { id: "HUASHAN" }, temp: { zy_trial_npc_dead: "jz_1" },
+    id: "trial-player", family: { id: "HUASHAN" }, temp: { zy_trial_active: "jz_1", zy_trial_npc_dead: "jz_1" },
     items: [], messages: [],
     query_temp(key, def) { return this.temp[key] === undefined ? def : this.temp[key]; },
     set_temp(key, value) { this.temp[key] = value; },
     remove_temp(key) { delete this.temp[key]; },
     notify(msg) { this.messages.push(msg); },
+    send_commands(...args) { this.commands = args; },
     call_out() {},
     random() { return 0; },
     find_obj_bypath(path) { return this.items.find(obj => obj.path === path); },
@@ -49,7 +50,12 @@ const completed = {
 };
 assert.strictEqual(WORLD.ZHENYI.complete_trial(completed, "jz", 1), true, "化身死亡标记必须触发试炼结算");
 assert.strictEqual(completed.temp.zy_jz_1, 1, "击杀化身后必须解锁真意");
-assert.ok(completed.find_obj_bypath("st/zhenyi_hen#jz_1"), "击杀化身后必须获得悟痕道具");
+assert.strictEqual(completed.temp.zy_trial_completed, "jz_1", "完成试炼后必须保留待确认离场标记");
+assert.strictEqual(completed.find_obj_bypath("st/zhenyi_hen#jz_1"), undefined, "手动试炼不应发放悟痕掉落");
+assert.strictEqual(WORLD.ZHENYI.finish_trial_action(completed), true, "完成副本应打开主消息页确认");
+assert.deepStrictEqual(completed.commands, ["zhenyi trial_confirm", "确认完成并离开", "zhenyi trial_cancel", "暂不离开"]);
+assert.strictEqual(WORLD.ZHENYI.confirm_trial(completed), true, "确认完成副本应离开试炼");
+assert.strictEqual(completed.temp.zy_trial_active, undefined, "确认离场后必须清理试炼状态");
 
 const root = path.join(__dirname, "..");
 const roomSource = fs.readFileSync(path.join(root, "os", "room", "room.js"), "utf8");
@@ -57,13 +63,13 @@ const movementSource = fs.readFileSync(path.join(root, "os", "char", "chara_move
 const commandSource = fs.readFileSync(path.join(root, "world", "cmd", "skill", "zhenyi.js"), "utf8");
 const npcSource = fs.readFileSync(path.join(root, "world", "npc", "pub", "zhenyi_trial.js"), "utf8");
 const zhenyiSource = fs.readFileSync(path.join(root, "world", "zhenyi.js"), "utf8");
-assert.ok(roomSource.includes("zhenyi_trial_room") && !roomSource.includes("zhenyi trial_complete") && roomSource.includes("zhenyi trial_exit"));
+assert.ok(roomSource.includes("zhenyi_trial_room") && roomSource.includes("zhenyi trial_complete") && !roomSource.includes("zhenyi trial_exit"));
 assert.ok(movementSource.includes("cur_room.zhenyi_trial_room") && movementSource.includes('"zy_trial_active"'), "试炼中不能用 goto 或直传绕过动作栏离场");
-assert.ok(commandSource.includes('action === "trial_complete"') && commandSource.includes('action === "trial_exit"'));
+assert.ok(commandSource.includes('action === "trial_complete"') && commandSource.includes('action === "trial_confirm"') && commandSource.includes('action === "trial_cancel"'));
 assert.ok(npcSource.includes('this.trial_mode === "endure"') && npcSource.includes("this.on_before_fight") && npcSource.includes("this.on_kill"));
 assert.ok(npcSource.includes("this.hp = 1") && npcSource.includes("return false"));
 assert.ok(npcSource.includes("zy_trial_npc_dead") && npcSource.includes("complete_trial(owner"));
-assert.ok(zhenyiSource.includes("zy_trial_completed") && zhenyiSource.includes("无法重复操作"));
+assert.ok(zhenyiSource.includes("zy_trial_completed") && zhenyiSource.includes("confirmTrial") && zhenyiSource.includes("你已解锁"));
 assert.ok(npcSource.indexOf('this.trial_mode === "endure"') < npcSource.indexOf("clearTimeout(this.trial_timeout_handler)"), "坚持类 NPC 被误击杀时不能清掉存活计时器");
 console.log("真意试炼副本、动作栏、悟痕物品和坚持类 NPC 保护校验通过");
 
