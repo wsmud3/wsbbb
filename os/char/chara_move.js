@@ -1,4 +1,4 @@
-﻿
+
 
 function sendOutMessage(player, dir) {
     dir = dirs[dir] || "";
@@ -75,6 +75,12 @@ CHARACTER.prototype.moveto = function (rm, leave_msg, in_msg, dir) {
         }
     }
     if (!next_room) return false;
+
+    // 真意试炼只能通过动作栏结算或退出；拦截 goto/直传等绕过房间出口的移动。
+    if (this.is_player && cur_room && cur_room.zhenyi_trial_room && this.query_temp("zy_trial_active", "")) {
+        this.notify("试炼尚未结束，只能使用动作栏的完成副本或退出副本。");
+        return false;
+    }
 
     // 门派禁地的第二道权限校验：拦截直传房间、旧存档房间和其它绕过江湖地图的移动。
     if (this.is_player && WORLD.ZHENYI && next_room.parent && WORLD.ZHENYI.find_by_key(next_room.parent.id)) {
@@ -229,3 +235,4 @@ CHARACTER.prototype.team_out = function (msg) {
 
     }
 }
+

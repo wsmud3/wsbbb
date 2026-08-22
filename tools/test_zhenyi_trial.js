@@ -30,9 +30,11 @@ assert.strictEqual(item.count, 3);
 
 const root = path.join(__dirname, "..");
 const roomSource = fs.readFileSync(path.join(root, "os", "room", "room.js"), "utf8");
+const movementSource = fs.readFileSync(path.join(root, "os", "char", "chara_move.js"), "utf8");
 const commandSource = fs.readFileSync(path.join(root, "world", "cmd", "skill", "zhenyi.js"), "utf8");
 const npcSource = fs.readFileSync(path.join(root, "world", "npc", "pub", "zhenyi_trial.js"), "utf8");
 assert.ok(roomSource.includes("zhenyi_trial_room") && roomSource.includes("zhenyi trial_complete") && roomSource.includes("zhenyi trial_exit"));
+assert.ok(movementSource.includes("cur_room.zhenyi_trial_room") && movementSource.includes('"zy_trial_active"'), "试炼中不能用 goto 或直传绕过动作栏离场");
 assert.ok(commandSource.includes('action === "trial_complete"') && commandSource.includes('action === "trial_exit"'));
 assert.ok(npcSource.includes('this.trial_mode === "endure"') && npcSource.includes("this.on_before_fight") && npcSource.includes("this.on_kill"));
 assert.ok(npcSource.includes("this.hp = 1") && npcSource.includes("return false"));
