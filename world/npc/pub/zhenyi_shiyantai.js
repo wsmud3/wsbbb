@@ -25,7 +25,14 @@ this.on_create = function (path, par) {
     this.zhenyi_key = key;
     this.zhenyi_id = intent.id;
     this.name = (data.guideNames && data.guideNames[intent.id - 1]) || data.guide;
-    this.desc = "此人镇守【" + intent.trial + "】一脉试场。试炼须入独立副本，准确效果可在属性页的真意列表中查看；此处只可请教与开启，不可击杀。";
+    var appearances = [
+        "一名身姿挺拔、目光锐利的守试者",
+        "一名衣袍宽整、神色从容的守试者",
+        "一名气息沉稳、身形厚重的守试者",
+        "一名衣袂翻飞、目光凌厉的守试者",
+        "一名神情淡然、周身气息浑然的守试者"
+    ];
+    this.desc = (appearances[intent.id - 1] || "一名神色沉静的守试者") + "，镇守【" + intent.trial + "】试场。";
 };
 
 this.add_action("zhenyi_trial", "开启试炼", function (me) {

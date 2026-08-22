@@ -25,6 +25,8 @@ for (const redundantDetail of ["当前第", "第一重效果预览", "grade_name
     assert.ok(!panel.includes(redundantDetail), `真意详情不应重复显示：${redundantDetail}`);
 }
 assert.ok(guide.includes('"扫荡一次"') && guide.includes('"扫荡十次"'), "扫荡入口必须位于禁地试炼 NPC");
+assert.ok(guide.includes("身姿挺拔、目光锐利的守试者") && guide.includes("镇守【"), "试炼引导 NPC 描述应只保留外貌与镇守试炼");
+assert.ok(!guide.includes("准确效果可在属性页") && !guide.includes("此处只可请教与开启，不可击杀"), "试炼引导 NPC 描述不应重复流程说明");
 assert.ok(material.includes("combined: true") && material.includes("zhenyi_hen#"), "悟痕必须是可堆叠的真实背包道具");
 assert.ok(movement.includes("can_enter_area") && movement.includes("find_by_key(next_room.parent.id)"), "直传房间也必须校验门派禁地权限");
 assert.ok(area.includes("public_owner") && area.includes("zy_trial_owner"), "公共禁地与独立试炼必须使用不同实例 owner");
