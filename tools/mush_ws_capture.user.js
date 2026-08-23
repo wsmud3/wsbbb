@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 副本地图探索采集器
 // @namespace    wsbbb.tools
-// @version      2.0.2
+// @version      2.0.3
 // @description  进入副本后按服务器返回的出口自动探索，记录房间、出口和 NPC 查看结果；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -356,6 +356,7 @@
     }
     if (queuedExits.length && !exp.current.exits.length) exp.current.exits = queuedExits;
     if (queuedItems.length && !exp.current.items.length) exp.current.items = queuedItems;
+    exp.seen.add(key);
     exp.current.name = event && event.name ? String(event.name) : exp.current.name || "";
     exp.current.desc = event && event.desc ? String(event.desc) : exp.current.desc || "";
     exp.current.finished = false;
@@ -512,7 +513,7 @@
       "min-width:260px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.0.2</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.0.3</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='enter'>进入并探索</button>", "<button data-action='current'>探索当前副本</button>",
