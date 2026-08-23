@@ -344,6 +344,11 @@
       const frame = { key, parentKey: pending.fromKey, parentDirection: pending.direction, exits: [], tried: {} };
       const reverse = REVERSE[pending.direction];
       if (reverse) frame.tried[reverse] = true;
+      // 普通房间的出口是成对的；父房间的反向出口就是刚走过的边，不能再次当成新分支。
+      const parentFrame = exp.stack[exp.stack.length - 1];
+      if (parentFrame && reverse && parentFrame.exits.some(exit => exit.direction === reverse)) {
+        parentFrame.tried[reverse] = true;
+      }
       exp.stack.push(frame);
       exp.current = frame;
       exp.seen.add(key);
