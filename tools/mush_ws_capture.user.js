@@ -315,6 +315,11 @@
     const key = roomKey(event);
     const queuedExits = exp.incomingExits || [];
     const queuedItems = exp.incomingItems || [];
+    // 忽略移动完成后迟到的旧 room 事件，避免把 DFS 栈重置到错误房间。
+    if (!exp.pending && exp.current && exp.current.key !== key) {
+      mark(`忽略迟到房间事件：${key}`);
+      return;
+    }
     if (exp.pending) {
       const pending = exp.pending;
       clearTimer("roomTimer");
