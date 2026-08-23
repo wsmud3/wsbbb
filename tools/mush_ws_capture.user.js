@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 副本地图探索采集器
 // @namespace    wsbbb.tools
-// @version      2.1.0
+// @version      2.1.1
 // @description  进入副本后按服务器返回的出口自动探索，记录房间、出口和 NPC 查看结果；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -28,6 +28,7 @@
     hooks: {},
     panel: null,
     timer: null,
+    passiveRoom: null,
     explorer: {
       running: false,
       entering: false,
@@ -301,6 +302,50 @@
     else state.rooms[index] = Object.assign({}, state.rooms[index], snapshot);
   }
 
+  function passiveRoomFor(event) {
+    const key = roomKey(event);
+    if (!state.passiveRoom || state.passiveRoom.key !== key) {
+      state.passiveRoom = {
+        key,
+        name: "",
+        desc: "",
+        exits: [],
+        exit_history: [],
+        commands: [],
+        items: [],
+        finished: true,
+      };
+    }
+    return state.passiveRoom;
+  }
+
+  function capturePassiveEvent(event) {
+    if (!event || !event.type) return;
+    if (event.type === "room") {
+      const room = passiveRoomFor(event);
+      room.name = event.name ? String(event.name) : room.name;
+      room.desc = event.desc ? String(event.desc) : room.desc;
+      if (event.commands) room.commands = normalizeCommands(event.commands);
+      saveRoom(room);
+      return;
+    }
+    if (!state.passiveRoom) return;
+    if (event.type === "exits") {
+      state.passiveRoom.exits = normalizeExits(event.items);
+      recordExitState(state.passiveRoom, state.passiveRoom.exits);
+      saveRoom(state.passiveRoom);
+    } else if (event.type === "items") {
+      state.passiveRoom.items = normalizeItems(event.items);
+      saveRoom(state.passiveRoom);
+    } else if (event.type === "itemadd" && event.id != null) {
+      const items = state.passiveRoom.items || [];
+      if (!items.some(item => String(item.id) === String(event.id))) items.push(event);
+      state.passiveRoom.items = items;
+      saveRoom(state.passiveRoom);
+    }
+    updatePanel();
+  }
+
   function inspectRoom(room, token, done) {
     const commands = [];
     (room.items || []).forEach(item => {
@@ -421,7 +466,11 @@
 
   function handleExplorerEvent(event) {
     const exp = state.explorer;
-    if (!exp.running || !event || !event.type) return;
+    if (!event || !event.type) return;
+    if (!exp.running) {
+      capturePassiveEvent(event);
+      return;
+    }
     if (event.type === "combat") {
       exp.waitingCombat = !!event.start && !event.end;
       if (!exp.waitingCombat && exp.current && !exp.current.finished) schedule("finishTimer", () => finishRoom(exp.token), 500, exp.token);
@@ -566,6 +615,7 @@
   function stopExplorer(reason) {
     const exp = state.explorer;
     if (exp.running && reason) mark(`探索停止：${reason}`);
+    if (exp.current) state.passiveRoom = exp.current;
     exp.running = false;
     exp.entering = false;
     exp.pending = null;
@@ -598,7 +648,7 @@
       "min-width:260px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.1.0</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.1.1</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='enter'>进入并探索</button>", "<button data-action='current'>探索当前副本</button>",
