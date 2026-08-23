@@ -278,6 +278,10 @@
     const exp = state.explorer;
     const room = exp.current;
     if (!exp.running || !room || token !== exp.token || room.finished) return;
+    if (exp.waitingCombat) {
+      schedule("finishTimer", () => finishRoom(token), 1000, token);
+      return;
+    }
     room.finished = true;
     if (exp.incomingExits) room.exits = exp.incomingExits;
     if (exp.incomingItems) room.items = exp.incomingItems;
