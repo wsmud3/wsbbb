@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 副本地图探索采集器
 // @namespace    wsbbb.tools
-// @version      2.1.1
+// @version      2.1.2
 // @description  进入副本后按服务器返回的出口自动探索，记录房间、出口和 NPC 查看结果；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -29,6 +29,7 @@
     panel: null,
     timer: null,
     passiveRoom: null,
+    lastCommand: null,
     explorer: {
       running: false,
       entering: false,
@@ -108,15 +109,23 @@
     const signature = exitsSignature(exits);
     if (!room.exit_history) room.exit_history = [];
     if (room.exit_history.some(state => state.signature === signature)) return;
-    room.exit_history.push({
+    const transition = {
       observed_at: new Date().toISOString(),
       signature,
       exits: exits.map(exit => Object.assign({}, exit)),
-    });
+    };
+    if (state.lastCommand && Date.now() - state.lastCommand.at <= 15000) {
+      transition.trigger = Object.assign({}, state.lastCommand);
+    }
+    room.exit_history.push(transition);
   }
 
   function record(direction, data, url) {
     state.frames.push({ t: Date.now(), direction, url: url || "", data: textOf(data) });
+    if (direction === "out") {
+      const command = textOf(data).trim();
+      if (command) state.lastCommand = { command, at: Date.now(), url: url || "" };
+    }
     updatePanel();
   }
 
@@ -648,7 +657,7 @@
       "min-width:260px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.1.1</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.1.2</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='enter'>进入并探索</button>", "<button data-action='current'>探索当前副本</button>",
