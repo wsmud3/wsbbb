@@ -15,7 +15,10 @@
 (function () {
   "use strict";
 
-  if (window.__WSBBB_MUSH_CAPTURE__) return;
+  // Tampermonkey 默认可能运行在隔离世界；unsafeWindow 才是原版页面的全局对象。
+  const page = typeof unsafeWindow !== "undefined" ? unsafeWindow : window;
+
+  if (page.__WSBBB_MUSH_CAPTURE__) return;
 
   const state = {
     version: 2,
@@ -66,7 +69,7 @@
   }
 
   function hookWebSocket() {
-    const Native = window.WebSocket;
+    const Native = page.WebSocket;
     if (typeof Native !== "function" || Native.__WSBBB_CAPTURE__) return;
 
     function CapturedWebSocket(url, protocols) {
@@ -86,12 +89,12 @@
       try { Object.defineProperty(CapturedWebSocket, key, { value: Native[key] }); } catch (_) { }
     });
     CapturedWebSocket.__WSBBB_CAPTURE__ = true;
-    window.WebSocket = CapturedWebSocket;
+    page.WebSocket = CapturedWebSocket;
     state.hooks.websocket = true;
   }
 
   function hookGameApi() {
-    const api = window.WG;
+    const api = page.WG;
     if (!api) return;
 
     if (typeof api.SendCmd === "function" && !api.SendCmd.__WSBBB_CAPTURE__) {
@@ -118,7 +121,7 @@
   }
 
   function raidReady() {
-    return !!(window.ToRaid && typeof window.ToRaid.perform === "function");
+    return !!(page.ToRaid && typeof page.ToRaid.perform === "function");
   }
 
   // wsmud_Raid 的 @fb 参数是副本编号，不是中文名称。
@@ -140,7 +143,7 @@
     const item = SUPPORTED.find(row => row[0] === number);
     const name = item ? item[1] : `副本${number}`;
     mark(`${name}-自动开始`);
-    window.ToRaid.perform(`@fb ${number} ${mode == null ? 0 : mode}`, `WSBBB采集-${name}`);
+    page.ToRaid.perform(`@fb ${number} ${mode == null ? 0 : mode}`, `WSBBB采集-${name}`);
     return true;
   }
 
@@ -152,12 +155,12 @@
     if (!confirm("将按顺序运行神龙教及公开流程插件支持的后续副本。请确认角色能自动战斗，期间不要手动操作。")) return;
     const source = SUPPORTED.map(row => `@fb ${row[0]} 0`).join("\n");
     mark("神龙教及后续公开副本-自动开始");
-    window.ToRaid.perform(source, "WSBBB采集-神龙教及后续");
+    page.ToRaid.perform(source, "WSBBB采集-神龙教及后续");
   }
 
   function stopAll() {
-    if (raidReady()) window.ToRaid.perform("@stop WSBBB采集-神龙教及后续", "WSBBB采集-停止");
-    if (window.WG && typeof window.WG.SendCmd === "function") window.WG.SendCmd("stopstate");
+    if (raidReady()) page.ToRaid.perform("@stop WSBBB采集-神龙教及后续", "WSBBB采集-停止");
+    if (page.WG && typeof page.WG.SendCmd === "function") page.WG.SendCmd("stopstate");
     mark("自动采集已请求停止");
   }
 
@@ -219,8 +222,8 @@
     runAll,
     stop: stopAll,
   };
-  window.__WSBBB_MUSH_CAPTURE__ = api;
-  window.MUSH_CAPTURE = api;
+  page.__WSBBB_MUSH_CAPTURE__ = api;
+  page.MUSH_CAPTURE = api;
   console.info("[WSBBB] 原版采集器已加载。可执行 MUSH_CAPTURE.status() 检查，或使用右上角面板。");
 
   function tick() {
