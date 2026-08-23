@@ -6,7 +6,7 @@
 
 1. 在 Tampermonkey 中删除或停用旧版同名脚本，然后安装仓库内 `tools/mush_ws_capture.user.js` 的完整内容。
 2. 确认脚本匹配 `http://mush.aize.org/*` 或 `https://mush.aize.org/*`，重新打开原版页面并硬刷新一次。
-3. 页面右上角应出现 **WSBBB 副本地图探索采集器 2.0** 面板。
+3. 页面右上角应出现 **WSBBB 副本地图探索采集器 2.0.1** 面板。
 4. 若仍没有面板，在原版页面控制台执行：
 
    ```js
