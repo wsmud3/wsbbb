@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 数据采集与自动副本
 // @namespace    wsbbb.tools
-// @version      1.1.0
+// @version      1.1.1
 // @description  在已登录的原版页面中记录数据，并调用原版流程插件自动运行副本；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -186,7 +186,7 @@
       "min-width:235px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 原版采集器 1.1</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 原版采集器 1.1.1</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='mark'>标记</button>", "<button data-action='export'>导出</button>",
