@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 副本地图探索采集器
 // @namespace    wsbbb.tools
-// @version      2.0.6
+// @version      2.1.0
 // @description  进入副本后按服务器返回的出口自动探索，记录房间、出口和 NPC 查看结果；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -86,6 +86,32 @@
     if (typeof value === "string") return value;
     if (value == null) return "";
     try { return JSON.stringify(value); } catch (_) { return String(value); }
+  }
+
+  function normalizeCommands(commands) {
+    if (!Array.isArray(commands)) return [];
+    return commands
+      .filter(command => command && command.cmd)
+      .map(command => ({ cmd: String(command.cmd), name: command.name == null ? "" : String(command.name) }));
+  }
+
+  function exitsSignature(exits) {
+    return (exits || [])
+      .map(exit => `${exit.direction}=${exit.target || ""}`)
+      .sort()
+      .join("|");
+  }
+
+  function recordExitState(room, exits) {
+    if (!room || !Array.isArray(exits)) return;
+    const signature = exitsSignature(exits);
+    if (!room.exit_history) room.exit_history = [];
+    if (room.exit_history.some(state => state.signature === signature)) return;
+    room.exit_history.push({
+      observed_at: new Date().toISOString(),
+      signature,
+      exits: exits.map(exit => Object.assign({}, exit)),
+    });
   }
 
   function record(direction, data, url) {
@@ -265,6 +291,8 @@
       name: room.name || "",
       desc: room.desc || "",
       exits: room.exits || [],
+      exit_history: room.exit_history || [],
+      commands: room.commands || [],
       items: room.items || [],
       inspected_at: new Date().toISOString(),
     };
@@ -381,6 +409,8 @@
     exp.seen.add(key);
     exp.current.name = event && event.name ? String(event.name) : exp.current.name || "";
     exp.current.desc = event && event.desc ? String(event.desc) : exp.current.desc || "";
+    if (event && event.commands) exp.current.commands = normalizeCommands(event.commands);
+    recordExitState(exp.current, exp.current.exits);
     exp.current.finished = false;
     exp.incomingExits = null;
     exp.incomingItems = null;
@@ -405,7 +435,10 @@
     if (event.type === "exits") {
       const exits = normalizeExits(event.items);
       exp.incomingExits = exits;
-      if (exp.current) exp.current.exits = exits;
+      if (exp.current) {
+        exp.current.exits = exits;
+        recordExitState(exp.current, exits);
+      }
       return;
     }
     if (event.type === "items") {
@@ -565,7 +598,7 @@
       "min-width:260px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.0.6</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.1.0</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='enter'>进入并探索</button>", "<button data-action='current'>探索当前副本</button>",
