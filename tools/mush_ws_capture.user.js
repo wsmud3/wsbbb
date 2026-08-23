@@ -34,6 +34,7 @@
       token: 0,
       current: null,
       stack: [],
+      seen: new Set(),
       pending: null,
       incomingExits: null,
       incomingItems: null,
@@ -305,7 +306,7 @@
       exp.pending = null;
       if (pending.backtrack) {
         if (key === pending.parentKey) {
-          exp.stack.pop();
+          if (pending.popFrame !== false) exp.stack.pop();
           exp.current = exp.stack[exp.stack.length - 1] || null;
           schedule("stepTimer", stepExplorer, 300, exp.token);
         } else {
@@ -326,9 +327,26 @@
         schedule("stepTimer", stepExplorer, 300, exp.token);
         return;
       }
+      // 目标房间可能已经探索过、但不在当前 DFS 栈中。先原路返回，不要把它当新分支。
+      if (exp.seen.has(key)) {
+        const reverse = REVERSE[pending.direction];
+        if (!reverse) return stopExplorer(`无法从已访问房间回退：${pending.direction}`);
+        exp.pending = { fromKey: key, direction: reverse, parentKey: pending.fromKey, backtrack: true, popFrame: false };
+        mark(`已访问房间，回退 ${reverse}`);
+        sendCommand(`go ${reverse}`);
+        schedule("roomTimer", () => {
+          if (!exp.pending) return;
+          mark(`已访问房间回退无响应：${reverse}`);
+          stopExplorer("回退失败");
+        }, 5000, exp.token);
+        return;
+      }
       const frame = { key, parentKey: pending.fromKey, parentDirection: pending.direction, exits: [], tried: {} };
+      const reverse = REVERSE[pending.direction];
+      if (reverse) frame.tried[reverse] = true;
       exp.stack.push(frame);
       exp.current = frame;
+      exp.seen.add(key);
     }
 
     exp.entering = false;
@@ -385,14 +403,14 @@
     if (!exp.running || exp.waitingCombat || !exp.current) return;
     if (state.rooms.length >= exp.maxRooms) return stopExplorer("达到房间上限");
     const frame = exp.current;
+    // 先筛选，只有真正发送的方向才标记 tried；否则会把被跳过的出口误标成已探索。
     const candidate = (frame.exits || []).find(exit => {
-      if (frame.tried[exit.direction]) return false;
-      frame.tried[exit.direction] = true;
-      if (exit.direction === "out") return false;
+      if (frame.tried[exit.direction] || exit.direction === "out") return false;
       const target = exit.target || "";
-      return !target || !exp.stack.some(item => item.key === target);
+      return !target || !exp.seen.has(target);
     });
     if (candidate) {
+      frame.tried[candidate.direction] = true;
       const command = `go ${candidate.direction}`;
       exp.pending = { fromKey: frame.key, direction: candidate.direction, backtrack: false };
       mark(`移动 ${command}`);
@@ -430,6 +448,7 @@
     exp.token += 1;
     exp.current = null;
     exp.stack = [];
+    exp.seen = new Set();
     exp.pending = null;
     exp.incomingExits = null;
     exp.incomingItems = null;
