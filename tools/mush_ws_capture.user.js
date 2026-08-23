@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         武神传说 MUD 副本地图探索采集器
 // @namespace    wsbbb.tools
-// @version      2.0.4
+// @version      2.0.5
 // @description  进入副本后按服务器返回的出口自动探索，记录房间、出口和 NPC 查看结果；不读取密码。
 // @match        http://mush.aize.org/*
 // @match        https://mush.aize.org/*
@@ -47,15 +47,26 @@
     },
   };
 
+  // 原框架的 room.exits 同时使用短方向和长方向；副本中最常见的是 e/w/n/s。
   const DIRECTIONS = [
-    "north", "south", "east", "west", "northup", "southup", "eastup", "westup",
-    "northdown", "southdown", "eastdown", "westdown", "up", "down", "enter", "out",
+    "w", "n", "s", "e", "nw", "sw", "ne", "se",
+    "west", "north", "south", "east", "northwest", "southwest", "northeast", "southeast",
+    "d", "u", "down", "up",
+    "wd", "nd", "sd", "ed", "wu", "nu", "su", "eu",
+    "westdown", "northdown", "southdown", "eastdown", "westup", "northup", "southup", "eastup",
+    "enter", "out", "s1d", "n1d", "e1d", "w1d",
   ];
   const REVERSE = {
+    w: "e", e: "w", n: "s", s: "n", nw: "se", se: "nw", ne: "sw", sw: "ne",
     north: "south", south: "north", east: "west", west: "east",
-    northup: "southdown", southdown: "northup", southup: "northdown", northdown: "southup",
-    eastup: "westdown", westdown: "eastup", westup: "eastdown", eastdown: "westup",
-    up: "down", down: "up",
+    northwest: "southeast", southeast: "northwest", northeast: "southwest", southwest: "northeast",
+    d: "u", u: "d", down: "up", up: "down",
+    wd: "eu", eu: "wd", nd: "su", su: "nd", sd: "nu", nu: "sd", ed: "wu", wu: "ed",
+    westdown: "eastup", eastup: "westdown", northdown: "southup", southup: "northdown",
+    westup: "eastdown", eastdown: "westup",
+    enter: "out", out: "enter",
+    n1d: "s1d", s1d: "n1d", e1d: "w1d", w1d: "e1d",
+    left: "right", right: "left", forward: "back", back: "forward",
   };
 
   // 这里只保存进入副本所需的入口；后续移动完全以原版返回的 exits 为准。
@@ -202,8 +213,10 @@
 
   function normalizeExits(items) {
     if (!items || typeof items !== "object") return [];
-    return DIRECTIONS
-      .filter(direction => Object.prototype.hasOwnProperty.call(items, direction))
+    const keys = Object.keys(items).filter(direction => String(direction).trim());
+    const order = new Map(DIRECTIONS.map((direction, index) => [direction, index]));
+    keys.sort((a, b) => (order.has(a) ? order.get(a) : DIRECTIONS.length) - (order.has(b) ? order.get(b) : DIRECTIONS.length));
+    return keys
       .map(direction => ({ direction, target: exitTarget(items[direction]) }));
   }
 
@@ -221,6 +234,8 @@
     const exits = [];
     if (g.exits && typeof g.exits.forEach === "function") {
       g.exits.forEach((value, direction) => exits.push({ direction, target: exitTarget(value && value.exits != null ? value.exits : value) }));
+    } else if (g.exits && typeof g.exits === "object") {
+      Object.keys(g.exits).forEach(direction => exits.push({ direction, target: exitTarget(g.exits[direction]) }));
     }
     const items = [];
     if (g.items && typeof g.items.forEach === "function") g.items.forEach((value, id) => items.push(Object.assign({ id }, value)));
@@ -332,6 +347,8 @@
         const reverse = REVERSE[pending.direction];
         if (!reverse) return stopExplorer(`无法从已访问房间回退：${pending.direction}`);
         exp.pending = { fromKey: key, direction: reverse, parentKey: pending.fromKey, backtrack: true, popFrame: false };
+        exp.incomingExits = null;
+        exp.incomingItems = null;
         mark(`已访问房间，回退 ${reverse}`);
         sendCommand(`go ${reverse}`);
         schedule("roomTimer", () => {
@@ -399,6 +416,38 @@
     }
   }
 
+  // 移动消息与 room 事件偶尔会乱序或延迟。超时后先重试，若页面全局状态已经
+  // 更新但 hook 漏掉了 room 事件，则用 G 当前房间补一次同步，避免误判为停止。
+  function waitForRoom(command, pending, label) {
+    const exp = state.explorer;
+    schedule("roomTimer", () => {
+      if (!exp.running || exp.pending !== pending) return;
+      const snapshot = pageSnapshot();
+      if (snapshot.path && snapshot.path !== pending.fromKey) {
+        mark(`${label}事件缺失，按当前房间补同步`);
+        exp.incomingExits = snapshot.exits;
+        exp.incomingItems = snapshot.items;
+        beginRoom({ type: "room", path: snapshot.path, name: snapshot.name, desc: snapshot.desc });
+        return;
+      }
+      pending.retries = (pending.retries || 0) + 1;
+      if (pending.retries <= 2) {
+        mark(`${label}无房间响应，重试 ${pending.retries}/2`);
+        sendCommand(command);
+        waitForRoom(command, pending, label);
+        return;
+      }
+      if (pending.backtrack) {
+        mark(`${label}多次无响应`);
+        stopExplorer("回退失败");
+      } else {
+        mark(`${label}多次无响应，跳过该出口`);
+        exp.pending = null;
+        stepExplorer();
+      }
+    }, 8000, exp.token);
+  }
+
   function stepExplorer() {
     const exp = state.explorer;
     if (!exp.running || exp.waitingCombat || !exp.current) return;
@@ -415,27 +464,24 @@
       frame.tried[candidate.direction] = true;
       const command = `go ${candidate.direction}`;
       exp.pending = { fromKey: frame.key, direction: candidate.direction, backtrack: false };
+      // 清掉上一房间的异步 exits/items，避免新房间尚未推送事件时误用旧出口。
+      exp.incomingExits = null;
+      exp.incomingItems = null;
       mark(`移动 ${command}`);
       sendCommand(command);
-      schedule("roomTimer", () => {
-        if (!exp.pending) return;
-        mark(`移动无房间响应：${candidate.direction}`);
-        exp.pending = null;
-        stepExplorer();
-      }, 5000, exp.token);
+      waitForRoom(command, exp.pending, `移动 ${candidate.direction}`);
       return;
     }
     if (exp.stack.length <= 1) return stopExplorer("当前区域没有新的出口");
     const reverse = REVERSE[frame.parentDirection];
     if (!reverse) return stopExplorer(`无法回退：${frame.parentDirection}`);
     exp.pending = { fromKey: frame.key, direction: reverse, parentKey: frame.parentKey, backtrack: true };
+    exp.incomingExits = null;
+    exp.incomingItems = null;
     mark(`回退 ${reverse}`);
-    sendCommand(`go ${reverse}`);
-    schedule("roomTimer", () => {
-      if (!exp.pending) return;
-      mark(`回退无房间响应：${reverse}`);
-      stopExplorer("回退失败");
-    }, 5000, exp.token);
+    const command = `go ${reverse}`;
+    sendCommand(command);
+    waitForRoom(command, exp.pending, `回退 ${reverse}`);
   }
 
   function startExplorer(number, enter) {
@@ -514,7 +560,7 @@
       "min-width:260px", "text-align:left",
     ].join(";");
     panel.innerHTML = [
-      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.0.4</div>",
+      "<div style='font-weight:bold;color:#ffd24a;margin-bottom:4px'>WSBBB 副本地图探索采集器 2.0.5</div>",
       "<div id='wsbbb-capture-status'>初始化中</div>",
       "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:3px'>",
       "<button data-action='enter'>进入并探索</button>", "<button data-action='current'>探索当前副本</button>",
