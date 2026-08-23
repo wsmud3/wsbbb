@@ -22,7 +22,7 @@ this.parry_actions = [
     "$n旋身一剑，以风卸力，将$P的攻击荡开。"
 ];
 
-this.can_enables = ["sword", "parry"];
+this.can_enables = ["sword"];
 
 this.learn_condition = {
     max_mp: 5000,
@@ -40,11 +40,6 @@ this.query_enable_prop = function (lv) {
             diff_fy_per: 5 + Math.floor(lv / 200),       // 破防（忽视对方防御）
             add_sh_per: 5 + Math.floor(lv / 200),        // 终伤（最终伤害）
             desc: "被动：命中敌方时叠加风意，每层提升2%攻击速度（内置冷却为当前攻击速度）；风意可使攻击速度突破0.5秒下限，最高提升至0.25秒"
-        },
-        parry: {
-            zj: 10 + Math.floor(lv * 2),                 // 招架
-            diff_sh_per: 5 + Math.floor(lv / 200),       // 伤害减免
-            zj_per: 5 + Math.floor(lv / 200)             // 百分比招架
         }
     };
 };
