@@ -17,6 +17,12 @@ USER.prototype.recount = function () {
     } else {
         this.gjsd = 500;
     }
+    // 武学被动可突破攻速下限（如疾风剑法将 0.5 秒下限提升至 0.25 秒）
+    if (this.attack_skill && this.attack_skill.on_recount_gjsd) {
+        var jf_gjsd = this.attack_skill.on_recount_gjsd(this);
+        if (jf_gjsd > 0) this.gjsd = jf_gjsd;
+    }
+
 
     this.gj = parseInt(this.str + (this.query_prop("gj") + this.query_prop("str") * this.str / 10) * (100 + this.query_prop("gj_per")) / 100);
     this.fy = parseInt(((this.str + this.con) / 10 + this.query_prop("fy") + this.query_prop("con") * this.con / 10) * (100 + this.query_prop("fy_per")) / 100);

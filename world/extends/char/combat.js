@@ -8,6 +8,12 @@ CHARACTER.prototype.recount = function () {
     } else {
         this.gjsd = 500;
     }
+    // 武学被动可突破攻速下限（如疾风剑法将 0.5 秒下限提升至 0.25 秒）
+    if (this.attack_skill && this.attack_skill.on_recount_gjsd) {
+        var jf_gjsd = this.attack_skill.on_recount_gjsd(this);
+        if (jf_gjsd > 0) this.gjsd = jf_gjsd;
+    }
+
 
     // NPC战斗属性：如果模板中已显式设定（gj>0），则保留设定值，避免后天属性被公式重复计算
     // 未设定的NPC（如动物/简单怪物）仍由基础属性+后天加成公式计算
