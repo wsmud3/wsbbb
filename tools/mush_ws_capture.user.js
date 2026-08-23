@@ -48,7 +48,7 @@
 
   const DIRECTIONS = [
     "north", "south", "east", "west", "northup", "southup", "eastup", "westup",
-    "northdown", "southdown", "eastdown", "westdown", "up", "down", "enter",
+    "northdown", "southdown", "eastdown", "westdown", "up", "down", "enter", "out",
   ];
   const REVERSE = {
     north: "south", south: "north", east: "west", west: "east",
