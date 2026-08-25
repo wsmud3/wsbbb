@@ -178,7 +178,6 @@ const Process = {
             return SendCommand("status " + sid + " " + pid);
         }
         var id = $(this).attr("itemid");
-        console.log(id);
         if (id) {
             if (id == Process.player) {
                 var name = $(this).find(".item-name").html();
