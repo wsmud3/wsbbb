@@ -95,7 +95,7 @@ export default {
         else if (item == 2) {
             if (!this.titles)
                 SendCommand("score title");
-            panel.on("click", ".btn-noused", function (e) {
+            panel.off("click", ".btn-noused").on("click", ".btn-noused", function (e) {
                 var elem = $(e.target);
                 if (elem.is("red")) elem = elem.parent();
                 var index = parseInt(elem.attr("index"));
@@ -408,3 +408,4 @@ export default {
 
 
 };
+
