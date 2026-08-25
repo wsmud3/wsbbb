@@ -39,6 +39,12 @@ function shouldOpenFromData(name, data) {
     if (!data) return false;
     if (name === "list") return !!(data.stores || data.selllist);
     if (name === "pack2") return !!data.items;
+    // `cha <npc>` returns the mentor skill list as a `master` dialog.  It is
+    // an explicit panel-opening response, not a background skill update.
+    if (name === "master") return Array.isArray(data.items);
+    // Shop updates also use this dialog name, so only its initial sell list
+    // may open the panel when no shop is currently selected.
+    if (name === "shop") return Array.isArray(data.selllist);
     return name === "trade" || name === "auto_pfm" || name === "zc";
 }
 
