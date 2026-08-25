@@ -101,21 +101,26 @@ class GameMainPage extends Page {
     }
 
     on_mount() {
-        $(".container").on("click", ContainerCommand);
-        $(".channel-box").on("click", "span", ChannelChanged);
+        $(".container").off(".game-main").on("click.game-main", ContainerCommand);
+        $(".channel-box").off(".game-main").on("click.game-main", "span", ChannelChanged);
 
-        $(".combat-commands").on("click", ".pfm-item", Combat.Perform).on('wheel', Combat.Scroll);
-        $(".room-commands").on('wheel', Combat.Scroll);
-        $(".sender-box").on("keyup", OnSendBoxKeyDown);
+        $(".combat-commands").off(".game-main")
+            .on("click.game-main", ".pfm-item", Combat.Perform)
+            .on("wheel.game-main", Combat.Scroll);
+        $(".room-commands").off(".game-main").on("wheel.game-main", Combat.Scroll);
+        $(".sender-box").off(".game-main").on("keyup.game-main", OnSendBoxKeyDown);
 
-        $(".room_items").on("click", ".room-item", Process.selectItem);
-        $(".bottom-bar").on("click", '.tool-item,.state-bar,.item-command', MenuClick);
-        $(".map-panel").on("click", open_map);
-        $(".sender-btn").on("click", SendChatMessage);
+        $(".room_items").off(".game-main").on("click.game-main", ".room-item", Process.selectItem);
+        $(".bottom-bar").off(".game-main")
+            .on("click.game-main", '.tool-item,.state-bar,.item-command', MenuClick);
+        $(".map-panel").off(".game-main").on("click.game-main", open_map);
+        $(".sender-btn").off(".game-main").on("click.game-main", SendChatMessage);
 
-        $(".room_exits").on("pointerdown",
-            Process.before_click_exits).on("pointerup", Process.click_exits);
-        $(".room-title>.map-icon").on("click", MAP.LoadMap.bind(MAP));
+        $(".room_exits").off(".game-main")
+            .on("pointerdown.game-main", Process.before_click_exits)
+            .on("pointerup.game-main", Process.click_exits);
+        $(".room-title>.map-icon").off(".game-main")
+            .on("click.game-main", MAP.LoadMap.bind(MAP));
     }
 }
 
@@ -231,8 +236,9 @@ function ShowEmotePanel() {
 }
 function ContainerCommand(e) {
     var elem = $(e.target);
+    var commandElem = elem.closest("[cmd]");
+    if (commandElem.length) elem = commandElem;
     var cmd = elem.attr("cmd");
-    if (!cmd) cmd = elem.parent().attr("cmd");
     if (cmd) {
         let char = cmd[0];
         if (char == "_") {
