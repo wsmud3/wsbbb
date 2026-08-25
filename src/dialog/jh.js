@@ -336,8 +336,9 @@ export default {
         if (this.isShow) return;
         if (!this.element)
             this.element = $("<div class='dialog-fb'><div class='fb-left'></div><div class='fb-right'></div></div>");
-        this.listElement = this.element.find(".fb-left").on("click",
-            ".fb-item,.fam-item", this.item_click);
+        this.listElement = this.element.find(".fb-left");
+        this.listElement.off("click", ".fb-item,.fam-item")
+            .on("click", ".fb-item,.fam-item", this.item_click);
         this.descElement = this.element.find(".fb-right");
         Dialog.title("江湖");
         Dialog.icon("home");
@@ -534,3 +535,4 @@ const jh_css = `
     opacity: 0.6;
 }
 `;
+
