@@ -196,8 +196,10 @@ export default {
         Dialog.title(this.selectedItem.name);
 
         Dialog.contentElement.html(this.element);
-        this.element.on("click", ".top-item", this.itemClick);
-        this.left_silder.on("click", ".stats-silder", this.silderClick);
+        this.element.off("click", ".top-item")
+            .on("click", ".top-item", this.itemClick);
+        this.left_silder.off("click", ".stats-silder")
+            .on("click", ".stats-silder", this.silderClick);
         this.isShow = true;
     }, load_stats: function () {
         let type = this.selectedItem.cmd;
@@ -376,3 +378,4 @@ const stats_css = `
     line-height: 2.5em;
 }
 `;
+
