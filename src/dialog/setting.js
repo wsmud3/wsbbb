@@ -108,11 +108,15 @@ export default {
         this.child = null;
 
         if (item == "setting") {
-            this.selectitem.on("click", ".switch", this.switchClick);
-            this.selectitem.on("click", ".color-item", this.colorClick);
+            this.selectitem.off("click", ".switch")
+                .on("click", ".switch", this.switchClick);
+            this.selectitem.off("click", ".color-item")
+                .on("click", ".color-item", this.colorClick);
         } else if (item == "custom") {
-            this.selectitem.on("click", ".switch", this.switchClick);
-            this.selectitem.on("click", ".setting-ok", this.save_custom);
+            this.selectitem.off("click", ".switch")
+                .on("click", ".switch", this.switchClick);
+            this.selectitem.off("click", ".setting-ok")
+                .on("click", ".setting-ok", this.save_custom);
         } else {
             this.child = Dialog[item];
             this.child.show(this.selectitem);
@@ -1081,3 +1085,4 @@ const setting_css = `
 .pfm-row.disabled .pfm-name { color: #555; text-decoration: line-through; }
 .pfm-hint { font-size: 0.7rem; color: #666; margin: 4px 0 0 0.625em; }
 `;
+
