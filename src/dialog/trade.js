@@ -42,8 +42,10 @@ export default {
             this.leftElement = $(this.element.children()[0]);
             this.rightElement = $(this.element.children()[1]);
         }
-        this.leftElement.on("click", ".obj-item", this.left_click);
-        this.rightElement.on("click", ".obj-item", this.right_click);
+        this.leftElement.off("click", ".obj-item")
+            .on("click", ".obj-item", this.left_click);
+        this.rightElement.off("click", ".obj-item")
+            .on("click", ".obj-item", this.right_click);
         this.element.appendTo(Dialog.contentElement.empty());
         this.create_footer();
         this.isShow = true;
@@ -150,3 +152,4 @@ export default {
         this.enable_item(obj, true);
     }
 }
+
