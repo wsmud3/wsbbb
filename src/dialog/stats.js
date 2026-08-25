@@ -56,6 +56,16 @@ export default {
                 this.show_desc("上次更新：" + dt.getHours() + ":" + dt.getMinutes());
         }
 
+    }, resetSession: function () {
+        for (const key of Object.keys(this)) {
+            if (key.indexOf("last_") === 0) delete this[key];
+        }
+        if (this.element) this.element.remove();
+        this.element = null;
+        this.container = null;
+        this.left_silder = null;
+        this.selectedItem = this.footers[0];
+        this.isShow = false;
     }, create_other: function (items, type) {
         var html = [];
         if (!items || !items.length) {
