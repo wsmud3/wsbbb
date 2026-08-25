@@ -144,8 +144,10 @@ export default {
             this.leftElement = $(children[1]);
             this.rightElement = $(children[2]);
         }
-        this.element.on("click", ".obj-item", Dialog.list.item_click);
-        this.element.on("click", ".otype-item", Dialog.list.otype_click);
+        this.element.off("click", ".obj-item")
+            .on("click", ".obj-item", Dialog.list.item_click);
+        this.element.off("click", ".otype-item")
+            .on("click", ".otype-item", Dialog.list.otype_click);
         this.element.appendTo(Dialog.contentElement.empty());
         this.isShow = true;
 
@@ -285,3 +287,4 @@ export default {
         Util.checkScroll(elem);
     }
 };
+
