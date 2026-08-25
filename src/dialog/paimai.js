@@ -103,7 +103,8 @@ export default {
         Dialog.icon("shopping-cart");
         Dialog.footer("");
         this.element.appendTo(Dialog.contentElement);
-        this.element.on('click', '.pm-item', this.select_item);
+        this.element.off('click', '.pm-item')
+            .on('click', '.pm-item', this.select_item);
         this.isShow = true;
     },
     select_item: function () {
@@ -157,3 +158,4 @@ export default {
         return num > 9 ? num.toString() : "0" + num.toString();
     }
 };
+
