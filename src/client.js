@@ -15,6 +15,11 @@ const SessionToken = "p";
 
 export function connectServer(server, pid) {
     if (IsConnecting) return;
+    if (!server || !server.ip) {
+        IsConnecting = false;
+        ReceiveMessage("<red>鐠囧嘲鍘涢柅澶嬪閺堝秴濮熼崳顭掔礉閸愬秷绻樼悰宀€骞囬幋蹇旀惙娴ｆ嚎鈧?/red>");
+        return;
+    }
 
     SelectedServer = server;
     console.log("閲嶆柊杩炴帴", GameClient == null ? "鏈繛鎺? : "宸茶繛鎺?);
@@ -102,6 +107,7 @@ export function SendCommand(cmd) {
     if (IsConnecting) return;
     if (!GameClient || !GameClient.Connected()) {
         LastCommand = cmd;
+        if (!SelectedServer) return ReceiveMessage("<red>鐠囧嘲鍘涢柅澶嬪閺堝秴濮熼崳顭掔礉閸愬秷绻樼悰宀€骞囬幋蹇旀惙娴ｆ嚎鈧?/red>");
         ReceiveMessage("<red>杩炴帴涓柇锛屾鍦ㄩ噸鏂拌繛绾?..</red>");
         return connectServer(SelectedServer);
     }
