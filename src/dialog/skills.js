@@ -16,7 +16,8 @@ export default {
             this.element = $('<div class="dialog-skills"></div>');
             Dialog.footerElement.on("click", ".sk-group", Dialog.skills.eq_group_click);
         }
-        this.element.on("click", ".skill-item", Dialog.skills.item_click);
+        this.element.off("click", ".skill-item")
+            .on("click", ".skill-item", Dialog.skills.item_click);
     },
     hide: function () {
         if (this.skill_element) {
@@ -294,7 +295,8 @@ export default {
             Dialog.footerElement
                 .on("click", ".sk-group", Dialog.skills.eq_group_click);
         }
-        this.element.on("click", ".skill-item", Dialog.skills.item_click);
+        this.element.off("click", ".skill-item")
+            .on("click", ".skill-item", Dialog.skills.item_click);
         this.element.appendTo(Dialog.contentElement);
         this.element.removeClass("hide-item");
         Dialog.icon("book");
@@ -553,3 +555,4 @@ const skills_css = `
 }
 
 `;
+
