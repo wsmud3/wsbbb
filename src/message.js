@@ -43,7 +43,7 @@ const MessageQueue = {
         if (!queue.length) {
             queue.push($("<pre></pre>").appendTo(this.container));
         }
-        if (this.count > this.max) {
+        if (this.count >= this.max) {
             if (queue.length >= this.size) {
                 queue.splice(0, 1)[0].remove();
             }
@@ -61,8 +61,11 @@ const MessageQueue = {
         }
         this.pages.length = 0;
         this.count = 0;
+        this.allow_scroll = true;
+        if (this.scroll_button) this.scroll_button.hide();
     },
     is_end: function () {
+        if (!this.container || !this.container[0]) return true;
         const elem = this.container[0];
         const scrollHeight = elem.scrollHeight;
         const clientHeight = elem.clientHeight;
@@ -70,6 +73,7 @@ const MessageQueue = {
         return scrollTop + clientHeight >= scrollHeight - 50;
     },
     scroll2end: function () {
+        if (!this.container || !this.container[0]) return;
         const elem = this.container[0];
         const scrollHeight = elem.scrollHeight;
         const clientHeight = elem.clientHeight;
