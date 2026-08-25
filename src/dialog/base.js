@@ -241,6 +241,7 @@ const Dialog = {
             const child = this[DIALOG_NAMES[i]];
             if (!child) continue;
             child.isShow = false;
+            if (typeof child.resetSession === "function") child.resetSession();
             if (child.objelement) {
                 child.objelement.remove();
                 child.objelement = null;
