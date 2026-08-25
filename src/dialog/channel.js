@@ -1,16 +1,17 @@
 
 
 export default {
-    footer: [["全部", ""], ["世界", "chat"], ["队伍", "tm"], ["门派", "fam"], ["全区", "es"], ["帮派", "pty"], ["系统", "sys"]],
+    footer: [["鍏ㄩ儴", ""], ["涓栫晫", "chat"], ["闃熶紞", "tm"], ["闂ㄦ淳", "fam"], ["鍏ㄥ尯", "es"], ["甯淳", "pty"], ["绯荤粺", "sys"]],
     isScroll: true,
     last_click: 0,
     show: function (nosend) {
-        // 防连点守卫：吞掉 500ms 内的重复点击。
-        // 注意条件必须是 <500（原来写成 >500 导致首次点击必然被吞掉，
-        // 只有快速双击才能打开频道）
-        if (nosend !== null && Date.now() - this.last_click < 500) {
-            this.last_click = Date.now();
-            return;
+        // 闃茶繛鐐瑰畧鍗細鍚炴帀 500ms 鍐呯殑閲嶅鐐瑰嚮銆?
+        // 娉ㄦ剰鏉′欢蹇呴』鏄?<500锛堝師鏉ュ啓鎴?>500 瀵艰嚧棣栨鐐瑰嚮蹇呯劧琚悶鎺夛紝
+        // 鍙湁蹇€熷弻鍑绘墠鑳芥墦寮€棰戦亾锛?
+        if (nosend !== null) {
+            const now = Date.now();
+            if (now - this.last_click < 500) return;
+            this.last_click = now;
         }
         if (Dialog.channel.isShow) return;
         Dialog.select("channel");
@@ -57,20 +58,20 @@ export default {
         switch (data.ch) {
             case "tm":
                 color = "hig";
-                name = "队伍";
+                name = "闃熶紞";
                 break;
             case "fam":
                 color = "hiy";
-                name = data.fam || "门派";
+                name = data.fam || "闂ㄦ淳";
                 break;
             case "rumor":
                 color = "him";
-                name = "谣言";
-                data.name = "某人";
+                name = "璋ｈ█";
+                data.name = "鏌愪汉";
                 break;
             case "sys":
                 color = "hir";
-                name = "系统";
+                name = "绯荤粺";
                 data.name = "";
                 break;
             case "es":
@@ -80,24 +81,24 @@ export default {
                 break;
             case "pty":
                 color = "hiz";
-                name = "帮派";
+                name = "甯淳";
                 break;
             default:
-                name = ["闲聊", "闲聊", "闲聊", "<hiy>宗师</hiy>", "<HIZ>武圣</HIZ>", "<hio>武帝</hio>", "<ord>武神</ord>"][data.lv];
+                name = ["闂茶亰", "闂茶亰", "闂茶亰", "<hiy>瀹楀笀</hiy>", "<HIZ>姝﹀湥</HIZ>", "<hio>姝﹀笣</hio>", "<ord>姝︾</ord>"][data.lv];
                 if (data.lv6) {
-                    name = ["<ord>武神</ord>", "<ord>剑神</ord>", "<ord>刀皇</ord>", "<ord>兵主</ord>", "<ord>战神</ord>"][data.lv6];
+                    name = ["<ord>姝︾</ord>", "<ord>鍓戠</ord>", "<ord>鍒€鐨?/ord>", "<ord>鍏典富</ord>", "<ord>鎴樼</ord>"][data.lv6];
                 }
                 break;
         }
-        var html = ["<", color, ">【"];
+        var html = ["<", color, ">銆?];
         html.push(name);
-        html.push("】");
+        html.push("銆?);
         if (data.name) {
             html.push("<span");
             if (data.uid) html.push(" cmd='look3 " + data.uid + "'");
             html.push(">");
             html.push(data.name);
-            html.push("</span>：");
+            html.push("</span>锛?);
         }
         html.push(data.content);
         // if (isTop) {
@@ -105,7 +106,7 @@ export default {
         // }
         var str = html.join("");
         if (this.datas.length > 800) {
-            // 保留最近 200 条（原来先 length=0 再 splice 是无效操作，等于全清空）
+            // 淇濈暀鏈€杩?200 鏉★紙鍘熸潵鍏?length=0 鍐?splice 鏄棤鏁堟搷浣滐紝绛変簬鍏ㄦ竻绌猴級
             this.datas.splice(0, this.datas.length - 200);
         }
         // Classify rumor as sys for filtering, but don't mutate input
@@ -120,3 +121,4 @@ export default {
     }
 
 };
+
