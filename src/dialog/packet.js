@@ -451,8 +451,10 @@ export default {
         if (this.isShow) return SendCommand(this.items ? "pack none" : "pack");
         this.isShow = true;
         this.init_element();
-        this.packElement.on("click", ".obj-item", Dialog.pack.item_click)
-        this.eqElement.on("click", ".eq-item", Dialog.pack.eqitem_click);
+        this.packElement.off("click", ".obj-item")
+            .on("click", ".obj-item", Dialog.pack.item_click);
+        this.eqElement.off("click", ".eq-item")
+            .on("click", ".eq-item", Dialog.pack.eqitem_click);
         this.packElement.removeClass('cleanup');
         this.element.appendTo(Dialog.contentElement);
 
@@ -867,3 +869,4 @@ const list_css = `
     color: var(--border-color);
 
 }`;
+
