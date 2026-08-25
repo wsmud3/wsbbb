@@ -351,11 +351,15 @@ const Process = {
 
         var result = null, roomdesc = room.desc || "";
         while ((result = this.roomHiddenItemsReg.exec(roomdesc)) !== null) {
-
-            room.commands.push({
-                cmd: result[1],
-                name: result[2]
+            var exists = room.commands.some(function (command) {
+                return command && command.cmd === result[1] && command.name === result[2];
             });
+            if (!exists) {
+                room.commands.push({
+                    cmd: result[1],
+                    name: result[2]
+                });
+            }
         }
 
 
