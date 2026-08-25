@@ -24,6 +24,8 @@ const Process = {
         Dialog.skills.items = null;
 
         this.state(null);
+        this.states = null;
+        this.timer = null;
     },
     init: function () {
         Process.itemsElement = $(".room_items");
@@ -88,7 +90,7 @@ const Process = {
             }
         } else {
             Confirm.Show({
-                content: "<span class='input-error'>" + (x.message || "删除失败") + "</span>",
+                content: "<span class='input-error'>" + (x.message || "鍒犻櫎澶辫触") + "</span>",
             });
         }
     }, cross: function (data) {
@@ -107,7 +109,7 @@ const Process = {
             Dialog.skills.items = null;
             Dialog.skills.isShow = false;
         }
-        console.log("重新连接到", serv.Name);
+        console.log("閲嶆柊杩炴帴鍒?, serv.Name);
         if (!data.pid) Process.die({ relive: true });
         connectServer(serv, data.pid);
     }
@@ -133,19 +135,18 @@ const Process = {
     }, loginerror: function (msg) {
         $(".container").hide();
         $(".login-content").show();
-        showLoader("<strong>登陆失败：</strong>" + msg.msg + "");
+        showLoader("<strong>鐧婚檰澶辫触锛?/strong>" + msg.msg + "");
 
         //hide2show ("#role_panel");
     }, login: function (x) {
         console.log("[reconnect] Process.login x.id=", x.id, "cur player=", Process.player);
-        // 统一用最简单的方式：不用动画，直接设置 CSS
+        // 缁熶竴鐢ㄦ渶绠€鍗曠殑鏂瑰紡锛氫笉鐢ㄥ姩鐢伙紝鐩存帴璁剧疆 CSS
         $(".login-content").hide();
         $(".container").css({"display": "flex", "opacity": "1"});
         Dialog.reset();
         $(".content-room").removeClass("hide").css("display", "");
 
-        // DOM 状态诊断
-        setTimeout(function() {
+        // DOM 鐘舵€佽瘖鏂?        setTimeout(function() {
             var cr = $(".content-room");
             console.log("[reconnect] DOM: content-room.display=" + cr.css("display") +
                 " hide=" + cr.hasClass("hide") +
@@ -182,14 +183,14 @@ const Process = {
             if (id == Process.player) {
                 var name = $(this).find(".item-name").html();
 
-                var cmds = [{ cmd: "look " + id, name: "查看" },
-                { cmd: "dazuo", name: "打坐" },
-                { cmd: "liaoshang", name: "疗伤" }];
+                var cmds = [{ cmd: "look " + id, name: "鏌ョ湅" },
+                { cmd: "dazuo", name: "鎵撳潗" },
+                { cmd: "liaoshang", name: "鐤椾激" }];
                 if (Dialog.team.items && Dialog.team.items.length) {
-                    cmds.push({ cmd: "team out", name: "退出队伍" });
+                    cmds.push({ cmd: "team out", name: "閫€鍑洪槦浼? });
                     if (Dialog.team.isCap) {
-                        cmds.push({ cmd: "team dismiss", name: "解散队伍" });
-                        cmds.push({ cmd: "team set", name: "更改分配方式" });
+                        cmds.push({ cmd: "team dismiss", name: "瑙ｆ暎闃熶紞" });
+                        cmds.push({ cmd: "team set", name: "鏇存敼鍒嗛厤鏂瑰紡" });
                     }
                 }
                 Process.item({
@@ -209,6 +210,7 @@ const Process = {
         if (w > 100) w = 100;
         return w;
     }, itemremove: function (data) {
+        if (!data) return;
         var item = Combat.STATUS[data.id];
         if (item) {
             for (var si in item.items) {
@@ -222,8 +224,11 @@ const Process = {
             delete Combat.STATUS[data.id];
         }
 
-        Process.cur_room.items.RemoveAt(x => x.id === data.id);
+        if (Process.cur_room && Array.isArray(Process.cur_room.items)) {
+            Process.cur_room.items.RemoveAt(x => x.id === data.id);
+        }
     }, itemadd: function (data) {
+        if (!data) return;
         if (Setting.off_plist && data.p && data.id != Process.player) {
             return;
         }
@@ -239,23 +244,24 @@ const Process = {
         Process.cur_room.items.push(item);
     }
     , items: function (room) {
+        if (!room) return;
+        if (!Array.isArray(room.items)) room.items = [];
         console.log("[reconnect] Process.items items=", room.items ? room.items.length : 0);
         Process.itemsElement.empty();
-        Combat.STATUS = {};//更换房间，状态信息清空
-        for (var i = 0; i < room.items.length; i++) {
+        Combat.STATUS = {};//鏇存崲鎴块棿锛岀姸鎬佷俊鎭竻绌?        for (var i = 0; i < room.items.length; i++) {
             var item = room.items[i];
             if (!item) continue;
             item.player = item.p;
             if (item.m) {
-                item.type = '师父';
+                item.type = '甯堢埗';
                 item.master = 1;
             }
             if (item.f) {
-                item.type = '随从';
+                item.type = '闅忎粠';
                 item.follower = 1;
             }
             if (item.l) {
-                item.type = '商人';
+                item.type = '鍟嗕汉';
                 item.trader = 1;
             }
             if (Setting.off_plist && item.p && item.id != Process.player) {
@@ -313,17 +319,21 @@ const Process = {
         return str.join("");
     },
     room: function (room) {
-        console.log("[reconnect] Process.room path=", room.path, "room_path=", Process.room_path);
-        $(".room_items").html("");
+        if (!room) return;
+        const sameRoom = Process.room_path === room.path;
+        if (!Array.isArray(room.items)) {
+            room.items = sameRoom && Process.cur_room && Array.isArray(Process.cur_room.items)
+                ? Process.cur_room.items : [];
+        }
+        if (!sameRoom) $(".room_items").html("");
         $(".room-name").html(room.name);
         $(".room_desc").html(room.desc);
         Process.room_name = room.name;
-        if (!Setting.keep_msg) {
+        if (!sameRoom && !Setting.keep_msg) {
             Process.message.clear();
-        } else if (Setting.keep_msg) {
-            ReceiveMessage("你来到了" + room.name + "。");
+        } else if (!sameRoom && Setting.keep_msg) {
+            ReceiveMessage("浣犳潵鍒颁簡" + room.name + "銆?);
         }
-        if (Process.room_path == room.path) return;
         if (Setting.show_roomitem) {
             Process.searchItems(room);
         }
@@ -335,8 +345,11 @@ const Process = {
         MAP.SetRoom(room);
     }, roomHiddenItemsReg: /<\w{3}\scmd=['"](.+?)['"]>(.+?)<\/\w{3}>/g,
     searchItems: function (room) {
+        if (!room) return;
+        if (!Array.isArray(room.commands)) room.commands = [];
+        this.roomHiddenItemsReg.lastIndex = 0;
 
-        var result = null, roomdesc = room.desc;
+        var result = null, roomdesc = room.desc || "";
         while ((result = this.roomHiddenItemsReg.exec(roomdesc)) !== null) {
 
             room.commands.push({
@@ -370,11 +383,13 @@ const Process = {
             elem.prev().attr("fill", "#232323");
         SendCommand("go " + dir);
     }, query_rmitem: function (id) {
+        if (!this.cur_room || !Array.isArray(this.cur_room.items)) return;
         for (let item of this.cur_room.items) {
             if (item.id === id) return item;
         }
     },
     item: function (item) {
+        if (!item) return;
         ReceiveMessage(item.desc);
         item.commands = item.commands ?? [];
         let npc = Process.query_rmitem(item.id);
@@ -437,7 +452,7 @@ const Process = {
         Combat.ClearDistime(data);
     }, pay: function (data) {
         if (data.pay === 3) {//wxqr
-            ReceiveMessage('<yel>请打开微信扫描二维码支付：</yel>\n');
+            ReceiveMessage('<yel>璇锋墦寮€寰俊鎵弿浜岀淮鐮佹敮浠橈細</yel>\n');
             let div = $('<div style="width:100%;text-align:center;"><img style="border:solid 2px #808088" src="' + data.url + '"/></div>');
 
             div.children(0).on('load', function () {
@@ -512,9 +527,9 @@ const Process = {
             return Process.state({});
         }
         Process.state({
-            state: "<hiw>你已经死亡：</hiw>",
+            state: "<hiw>浣犲凡缁忔浜★細</hiw>",
             no_stop: true,
-            desc: ["<blk>一股阴冷的气息包围着你。</blk>", "<blu>朦胧中你好像听到有人在喊：过来吧，过来吧！</blu>"],
+            desc: ["<blk>涓€鑲￠槾鍐风殑姘旀伅鍖呭洿鐫€浣犮€?/blk>", "<blu>鏈﹁儳涓綘濂藉儚鍚埌鏈変汉鍦ㄥ枈锛氳繃鏉ュ惂锛岃繃鏉ュ惂锛?/blu>"],
             commands: data.commands,
             interval: 12000
         });
@@ -537,9 +552,13 @@ const Process = {
     }
 };
 function ReceiveMessage(x) {
+    if (x == null || !Process.message) return;
+    if (x instanceof Error) x = x.message;
+    if (typeof x !== "string") x = String(x);
     Process.message.push(x);
     Process.message.scroll2end();
 }
 
 
 export default Process;
+
