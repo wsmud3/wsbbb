@@ -5,6 +5,8 @@ import { WS_HOST, WS_PORT } from './server-config.js';
 let IsConnecting = false;
 let ChangeServer = false;
 let ReconnectTimer = null;
+let ServerListTimer = null;
+let ConnectionGeneration = 0;
 let RECONNECT_TIMEOUT = 15000; // 15 seconds to complete reconnection
 let LastPlayerId = null; // 鏂嚎鍓嶄繚鐣欙紝閲嶈繛鏃惰嚜鍔ㄧ櫥褰曠敤
 export let GameClient = null;
@@ -22,25 +24,40 @@ export function connectServer(server, pid) {
     }
 
     SelectedServer = server;
+    const generation = ++ConnectionGeneration;
+    if (ServerListTimer) {
+        clearTimeout(ServerListTimer);
+        ServerListTimer = null;
+    }
     console.log("閲嶆柊杩炴帴", GameClient == null ? "鏈繛鎺? : "宸茶繛鎺?);
     closeServer();
 
     // 閲嶈繛瓒呮椂淇濇姢锛歂绉掑唴娌℃敹鍒?login 鍝嶅簲鍒欏己鍒跺埛鏂伴〉闈?
     if (ReconnectTimer) clearTimeout(ReconnectTimer);
     ReconnectTimer = setTimeout(function() {
+        if (generation !== ConnectionGeneration) return;
+        ReconnectTimer = null;
         console.log("閲嶈繛瓒呮椂锛屽埛鏂伴〉闈?);
         location.reload();
     }, RECONNECT_TIMEOUT);
-    GameClient = new WSClient(server.ip, server.port, server.id || server.ID);
+    const client = new WSClient(server.ip, server.port, server.id || server.ID);
+    GameClient = client;
     IsConnecting = true;
-    GameClient.OnError = (err) => {
+    const isCurrent = () => generation === ConnectionGeneration && GameClient === client;
+    client.OnError = (err) => {
+        if (!isCurrent()) return;
         IsConnecting = false;
+        if (ReconnectTimer) {
+            clearTimeout(ReconnectTimer);
+            ReconnectTimer = null;
+        }
         if (err) {
             if (err.isTrusted) err = "鏈嶅姟鍣ㄦ病鏈夊搷搴旓紝璇风◢鍚庨噸璇?;
             showLoader("<strong>杩炴帴澶辫触锛?/strong>" + err + "");
         }
     }
-    GameClient.OnConnect = () => {
+    client.OnConnect = () => {
+        if (!isCurrent()) return;
         IsConnecting = false;
         console.log("[reconnect] OnConnect pid=", pid, "Process.player=", Process.player, "LastPlayerId=", LastPlayerId);
         if (!pid && !Process.player && !LastPlayerId) {
@@ -59,13 +76,19 @@ export function connectServer(server, pid) {
         }
     }
 
-    GameClient.OnClose = () => {
+    client.OnClose = () => {
+        if (!isCurrent()) return;
         IsConnecting = false;
         if (ChangeServer) {
             ChangeServer = false;
             return;
         }
-        if (GameClient.Connected()) return;
+        if (client.Connected()) return;
+
+        if (ReconnectTimer) {
+            clearTimeout(ReconnectTimer);
+            ReconnectTimer = null;
+        }
 
         if (Process.player) {
             // 淇濆瓨鐜╁ID鐢ㄤ簬鑷姩閲嶈繛锛屼絾瑕佸畬鍏ㄩ噸缃甎I鐘舵€侀伩鍏嶆柊鏃ф暟鎹啿绐?
@@ -88,14 +111,16 @@ export function connectServer(server, pid) {
             $(".state-bar").empty().css('visibility', 'hidden');
             ReceiveMessage("<red>浣犵殑杩炴帴涓柇浜嗭紝鐐瑰嚮浠绘剰鎸夐挳閲嶆柊杩炵嚎...</red>");
         } else {
-            setTimeout(() => {
+            if (ServerListTimer) clearTimeout(ServerListTimer);
+            ServerListTimer = setTimeout(() => {
+                if (generation !== ConnectionGeneration || GameClient !== client) return;
                 hide2show($("#slist_panel"));
             }, 3000);
         }
     }
-    GameClient.OnData = ReceiveData;
-    GameClient.OnMessage = ReceiveMessage;
-    GameClient.Connect();
+    client.OnData = ReceiveData;
+    client.OnMessage = ReceiveMessage;
+    client.Connect();
 }
 
 export function isConnected() {
@@ -121,6 +146,10 @@ export function onLogin() {
     if (ReconnectTimer) {
         clearTimeout(ReconnectTimer);
         ReconnectTimer = null;
+    }
+    if (ServerListTimer) {
+        clearTimeout(ServerListTimer);
+        ServerListTimer = null;
     }
 
     // 鐧诲綍鎴愬姛鍚庢竻闄ゆ柇绾垮墠淇濆瓨鐨勭帺瀹禝D鍜屽懡浠?
