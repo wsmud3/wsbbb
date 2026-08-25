@@ -34,8 +34,7 @@ this.skill_map(
 this.on_checkskill = function (me) {
     if (!me.query_temp("wg_sr")) {
         me.send_room("武馆教习瞄了$N一眼：100两白银，先交钱再学功夫，包教包会。");
-
-        return me.notify_fail('{type:"cmds",items:{cmd:"give ' + this.id + ' 10000 money",name:"交报名费"}}');
+        me.send_commands("give " + this.id + " 10000 money", "交报名费");
     }
     return true;
 }
