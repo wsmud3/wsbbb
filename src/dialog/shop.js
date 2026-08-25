@@ -9,13 +9,27 @@ export default {
     close: function () {
         this.element.remove();
         this.isShow = false;
+    }, resetSession: function () {
+        if (this.element) this.element.remove();
+        this.element = null;
+        this.isShow = false;
+        this.selected_item = 0;
+        this.idx = null;
+        this.list0 = null;
+        this.list1 = null;
+        this.list2 = null;
+        this.money = 0;
+        this.cash_money = 0;
+        this.act_money = 0;
+        this.act_name = null;
+        this.footers = this.footers.slice(0, 2);
     }, onData: function (data) {
         // The first shop response can arrive before the dialog shell has been
         // mounted (Dialog.receive opens data-first panels through onData).
         // Mount it here without issuing a second shop request.
         if (!this.isShow && (data.selllist || data.stores)) this.show(data);
-        if (data.money) {
-            let ms = data.money ?? [0, 0];
+        if (Array.isArray(data.money)) {
+            let ms = data.money;
             this.money = ms[0];
             this.cash_money = ms[1];
             if (ms.length > 2) {
@@ -40,12 +54,14 @@ export default {
             return;
         }
 
-        if (!data.idx) return;
+        if (data.idx === undefined || data.idx === null) return;
+        if (!Array.isArray(data.selllist)) return;
         this.idx = data.idx;
         this.list0 = this.format_items(data.selllist[0], 0);
         this.list1 = this.format_items(data.selllist[1], 1);
         if (data.selllist.length > 2)
             this.list2 = this.format_items(data.selllist[2], 2);
+        else this.list2 = null;
 
         this.show_items();
     },
@@ -81,6 +97,7 @@ export default {
     },
     format_items: function (ary, mtype) {
         let items = [];
+        if (!Array.isArray(ary)) return items;
         for (let data of ary) {
             if (!data) continue;
             let item = {
@@ -119,7 +136,7 @@ export default {
     }
     , show_items: function () {
         if (!this.isShow) return;
-        this.create_items([this.list0, this.list1, this.list2][this.selected_item]);
+        this.create_items([this.list0, this.list1, this.list2][this.selected_item] || []);
     }, get_item: function (id) {
 
         if (this.list0) for (let item of this.list0) if (item.id === id) return item;
@@ -139,6 +156,7 @@ export default {
         else SendCommand("shop " + this.idx);
     }, create_items: function (items) {
         let str = [];
+        if (!Array.isArray(items)) items = [];
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
             if (item.removed) {
