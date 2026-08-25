@@ -139,7 +139,8 @@ export default {
         SendCommand("party load");
         this.isShow = true;
         Dialog.title("");
-        this.element.on("click", '.party-role', this.show_commands);
+        this.element.off("click", '.party-role')
+            .on("click", '.party-role', this.show_commands);
         Dialog.icon("flag");
     },
     levels: ["", "<hio>帮主<hio>", "<hiz>副帮主</hiz>", "<hiy>长老</hiy>", "<hic>堂主</hic>", "帮众"],
@@ -269,3 +270,4 @@ export default {
         this.isShow = false;
     }
 };
+
