@@ -23,7 +23,11 @@ this.enter = function (me, arg) {
             if (target.on_checkskill) {
                 if (target.on_checkskill(me) == false) return;
             } else {
-                if (me.user_level < 4 && !target.is(me.query_temp("master")))
+                // A NPC with on_master is a valid teacher candidate. Its
+                // on_master hook is reserved for `bai`; learning itself keeps
+                // enforcing the existing master/sect checks, so viewing the
+                // skill list is useful even before the player has joined.
+                if (!target.on_master && me.user_level < 4 && !target.is(me.query_temp("master")))
                     return me.notify("你只能查看自己师父的技能。");
             }
         }
