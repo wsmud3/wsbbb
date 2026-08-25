@@ -10,11 +10,31 @@ export default {
     },
     close: function () {
         this.hide();
+    }, resetSession: function () {
+        if (this.element) this.element.remove();
+        this.element = null;
+        this.leftElement = null;
+        this.rightElement = null;
+        this.typeElement = null;
+        this.stores = null;
+        this.selllist = null;
+        this.isstore = false;
+        this.store_count = 0;
+        this.max_store_count = 0;
+        this.selected_type = 0;
+        this.pendingUpdates = [];
+        this.isShow = false;
     },
     updateitem: function (data) {
         if (data.store) {
-            if (!this.stores || !this.isShow)
+            if (!Array.isArray(this.stores) || !this.isShow)
                 return Dialog.pack.onData({ remove: data.store, id: data.id });
+            if (!Array.isArray(Dialog.pack.items)) {
+                this.pendingUpdates = this.pendingUpdates || [];
+                this.pendingUpdates.push(data);
+                if (this.pendingUpdates.length > 50) this.pendingUpdates.shift();
+                return;
+            }
             var item = this.find_item(1, data.id);
             var store_item = this.find_item(3, data.storeid);
             if (!item) {
@@ -62,12 +82,15 @@ export default {
         var items = Dialog.pack.items;
         if (otype == 2) items = this.selllist;
         else if (otype == 3) items = this.stores;
+        if (!Array.isArray(items)) return;
         for (var i = 0; i < items.length; i++) {
             if (items[i].id == id) { return items[i]; }
         }
     }, formatItems: function (data) {
         let items = [];
+        if (!Array.isArray(data)) return items;
         for (let item of data) {
+            if (!Array.isArray(item)) continue;
             items.push({
                 name: item[0], id: item[1],
                 count: item[2], grade: item[3],
@@ -76,11 +99,11 @@ export default {
         }
         return items;
     }, onData: function (data) {
-        if (data.id) {
+        if (data.id !== undefined && data.id !== null) {
             return this.updateitem(data);
         }
         var gongji = data.gongji ?? data.jungong ?? data.yaoyuan ?? data.mvalue;
-        if (data.selllist) {
+        if (Array.isArray(data.selllist)) {
             this.show();
             this.isstore = false;
             this.gongji = gongji;
@@ -96,7 +119,7 @@ export default {
             Dialog.icon("shopping-cart");
             if (data.seller) this.seller = data.seller;
             this.update_pack();
-        } else if (data.stores) {
+        } else if (Array.isArray(data.stores)) {
             this.show();
             this.typeElement.show();
             this.isstore = true;
@@ -109,18 +132,23 @@ export default {
                 this.typeElement.hide();
                 this.store_count = data.stores.length;
             }
+            const maxStoreCount = Number(data.max_store_count) || 0;
             this.create_items(this.stores, this.leftElement, 3,
-                Math.max(data.max_store_count, 100));
+                Math.max(maxStoreCount, 100));
             this.leftElement[0].scrollTop = 0;
             Dialog.titleElement.html("你的仓库中有" + this.store_count + "/"
                 + data.max_store_count + "件物品");
-            this.max_store_count = data.max_store_count;
+            this.max_store_count = maxStoreCount;
             Dialog.icon("lock");
             this.update_pack();
         }
         if (gongji >= 0) {
             this.gongji = gongji;
             if (this.isShow && Dialog.curItem === "list") this.show_footer(gongji);
+        }
+        if (Array.isArray(Dialog.pack.items) && this.pendingUpdates && this.pendingUpdates.length) {
+            const pending = this.pendingUpdates.splice(0);
+            for (const update of pending) this.updateitem(update);
         }
     },
     show: function (data) {

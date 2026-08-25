@@ -25,8 +25,10 @@ export const Confirm = {
         if (!Confirm.isShow) return;
         Confirm.element.css("display", "none");
         Confirm.isShow = false;
-        if (!isok && this.Parameter.onCancle)
-            this.Parameter.onCancle();
+        if (!isok) {
+            const onCancel = this.Parameter.onCancel || this.Parameter.onCancle;
+            if (typeof onCancel === "function") onCancel();
+        }
     },
     Init: function () {
         if (this._init) return;
@@ -38,16 +40,22 @@ export const Confirm = {
         this.content = this.element.find(".dialog-content");
         this.btn = this.element.find(".dialog-btn");
         this.element.on("click", ".btn-ok", function (e) {
-            if (Confirm.Parameter.content === Confirm.count_element) {
-                var text = Confirm.count_element.find("input");
-                var v = parseInt(text.val());
-                if (v.toString() == "NaN") v = 0;
-                if (v > Confirm.max_count) v = Confirm.max_count;
-                Confirm.Parameter.onOK(v);
-            } else {
-                Confirm.Parameter.onOK();
+            try {
+                if (Confirm.Parameter.content === Confirm.count_element) {
+                    var text = Confirm.count_element.find("input");
+                    var v = Number.parseInt(text.val(), 10);
+                    var max = Number.isFinite(Confirm.max_count) && Confirm.max_count > 0
+                        ? Confirm.max_count : 1000;
+                    if (!Number.isFinite(v)) v = 1;
+                    v = Math.max(1, Math.min(v, max));
+                    text.val(v);
+                    Confirm.Parameter.onOK(v);
+                } else {
+                    Confirm.Parameter.onOK();
+                }
+            } finally {
+                Confirm.Close(true);
             }
-            Confirm.Close(true);
             return false;
         });
         this.element.on("click", ".btn", function (e) {
@@ -55,8 +63,8 @@ export const Confirm = {
             var elem = $(e.target);
             var type = parseInt(elem.attr("ac"));
             var text = elem.parent().find("input");
-            var v = parseInt(text.val());
-            if (v.toString() == "NaN") v = 0;
+            var v = Number.parseInt(text.val(), 10);
+            if (!Number.isFinite(v)) v = 0;
             if (type == -10) {
                 v -= 10;
             } else if (type == 10) {

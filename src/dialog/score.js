@@ -47,6 +47,17 @@ export default {
         this.footer[2][1] = $(this.template_title);
         this.footer[3][1] = $(this.template_zhenyi);
     },
+    resetSession: function () {
+        this.data = null;
+        this.has_jd = false;
+        this.titles = null;
+        this.zhenyiList = null;
+        this.zy_name = null;
+        this.zy_key = null;
+        this.zy_area = null;
+        this.uid = null;
+        this.selectIndex = 0;
+    },
     init_elem: function () {
         Dialog.init();
         Dialog.curItem = "score";

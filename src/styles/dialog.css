@@ -294,6 +294,35 @@
     color: var(--border-color);
 }
 
+@media (max-width: 480px) {
+    .dialog-score,
+    .dialog-score2,
+    .dialog-titles,
+    .dialog-zhenyi {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .dialog>.dialog-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        min-height: 2.5em;
+        height: auto;
+        white-space: normal;
+        overflow-x: auto;
+    }
+
+    .dialog>.dialog-footer>.item-commands {
+        float: none;
+        margin-left: auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
 .dialog-zhenyi>.zy-item>.enable-flag {
     display: none;
     color: var(--border-color);
