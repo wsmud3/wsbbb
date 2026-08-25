@@ -9,7 +9,8 @@ export default {
         SendCommand("team");
         this.isShow = true;
         Dialog.title("队伍");
-        this.element.on("click", ".team-item", this.clickItem);
+        this.element.off("click", ".team-item")
+            .on("click", ".team-item", this.clickItem);
         Dialog.icon("list");
     },
     items: [],
@@ -73,3 +74,4 @@ export default {
         $(html.join("")).appendTo(elem);
     }
 };
+
