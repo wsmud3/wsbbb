@@ -1,14 +1,13 @@
 
 
 export default {
-    footer: [["属性", null],
-    ["详细", null], ["称号", null], ["真意", null]],
+    footer: [["灞炴€?, null],
+    ["璇︾粏", null], ["绉板彿", null], ["鐪熸剰", null]],
 
     selectIndex: 0,
     onData: function (data) {
-        console.log(data);
         this.data = data;
-        // 存储禁地解锁状态，控制真意面板显示
+        // 瀛樺偍绂佸湴瑙ｉ攣鐘舵€侊紝鎺у埗鐪熸剰闈㈡澘鏄剧ず
         if (data.has_jd !== undefined) this.has_jd = data.has_jd;
         this.init_elem();
         Dialog.titleElement.html(data.name);
@@ -54,14 +53,14 @@ export default {
         if (this.isShow) return;
         Dialog.footer("");
 
-        // 门派禁地未解锁时隐藏真意面板
+        // 闂ㄦ淳绂佸湴鏈В閿佹椂闅愯棌鐪熸剰闈㈡澘
         var showCount = this.has_jd ? this.footer.length : (this.footer.length - 1);
         for (var i = 0; i < showCount; i++) {
             $("<span class='footer-item " + (this.selectIndex == i ? "select" : "") + "' for='" + i + "'>"
                 + this.footer[i][0] + "</span>").appendTo(Dialog.footerElement);
         }
         this.isShow = true;
-        // 如果之前选中了不存在的标签则回退
+        // 濡傛灉涔嬪墠閫変腑浜嗕笉瀛樺湪鐨勬爣绛惧垯鍥為€€
         if (this.selectIndex >= showCount) this.selectIndex = 0;
         this.footerChanged(this.selectIndex);
 
@@ -114,8 +113,7 @@ export default {
             panel.off("click.zhenyi", ".zy-detail .sub-close").on("click.zhenyi", ".zy-detail .sub-close", function () {
                 panel.find(".zy-detail").remove();
             });
-            // 每次切回真意页都刷新一次，避免玄晶、悟痕和启用状态使用旧缓存。
-            SendCommand("zhenyi");
+            // 姣忔鍒囧洖鐪熸剰椤甸兘鍒锋柊涓€娆★紝閬垮厤鐜勬櫠銆佹偀鐥曞拰鍚敤鐘舵€佷娇鐢ㄦ棫缂撳瓨銆?            SendCommand("zhenyi");
         }
     },
 
@@ -128,12 +126,12 @@ export default {
             html.push("<span class='btn-noused' index='");
             html.push(i);
             html.push("'>");
-            html.push(this.titles[i].use ? "<red>取消</red>" : "使用");
+            html.push(this.titles[i].use ? "<red>鍙栨秷</red>" : "浣跨敤");
             html.push("</span>");
 
             html.push("</div>");
         }
-        panel.html(html.length ? html.join("") : "<div class='empty'>你还没有获得任何称号</div>");
+        panel.html(html.length ? html.join("") : "<div class='empty'>浣犺繕娌℃湁鑾峰緱浠讳綍绉板彿</div>");
     },
 
     create_zhenyi: function () {
@@ -141,15 +139,15 @@ export default {
         var html = [];
         html.push("<div class='zy-summary'><hio>");
         html.push(this.zy_name);
-        html.push("</hio><span>", this.zy_area || "门派禁地", "</span></div>");
+        html.push("</hio><span>", this.zy_area || "闂ㄦ淳绂佸湴", "</span></div>");
         for (var i = 0; i < this.zhenyiList.length; i++) {
             var z = this.zhenyiList[i];
             html.push("<div class='skill-item zy-item grade", z.grade || 0, z.acquired ? "" : " zy-locked", z.active ? " enable" : "", "' data-zy-id='", z.id, "'>");
             html.push("<span class='glyphicon glyphicon-ok enable-flag'></span>");
             html.push("<span class='zy-name'>", z.name, "</span>");
             html.push("<span class='skill-level'>");
-            if (z.active) html.push("<hig>已启用</hig> · ");
-            html.push(z.acquired ? ("第" + z.level + "重") : "未领悟");
+            if (z.active) html.push("<hig>宸插惎鐢?/hig> 路 ");
+            html.push(z.acquired ? ("绗? + z.level + "閲?) : "鏈鎮?);
             html.push("</span>");
             html.push("</div>");
         }
@@ -171,17 +169,17 @@ export default {
         var panel = elem.closest(".dialog-zhenyi");
         panel.find(".zy-detail").remove();
         var html = ["<div class='zy-detail'>"];
-        html.push("<div class='zy-detail-title'><hio>【", z.mech, "】</hio>", z.trial ? ("　" + z.trial) : "", "</div>");
+        html.push("<div class='zy-detail-title'><hio>銆?, z.mech, "銆?/hio>", z.trial ? ("銆€" + z.trial) : "", "</div>");
         html.push("<div class='zy-desc'>", z.desc, "</div>");
-        if (z.acquired && z.level >= 10) html.push("<div class='zy-meta'><hig>已臻圆满</hig></div>");
+        if (z.acquired && z.level >= 10) html.push("<div class='zy-meta'><hig>宸茶嚮鍦嗘弧</hig></div>");
         else if (!z.acquired) {
-            html.push("<div class='zy-meta'>完成对应禁地试炼后领悟</div>");
+            html.push("<div class='zy-meta'>瀹屾垚瀵瑰簲绂佸湴璇曠偧鍚庨鎮?/div>");
         }
-        if (z.mechanic_only) html.push("<div class='zy-meta'><hiy>纯机制真意，无需升级。</hiy></div>");
+        if (z.mechanic_only) html.push("<div class='zy-meta'><hiy>绾満鍒剁湡鎰忥紝鏃犻渶鍗囩骇銆?/hiy></div>");
         html.push("<div class='item-commands'>");
-        if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
-        if (z.acquired && z.level < 10 && !z.mechanic_only) html.push("<span cmd='zhenyi upgrade ", z.id, "'>升级</span>");
-        html.push("<span class='sub-close' style='float:right;color:#888;cursor:pointer'>✕</span>");
+        if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "鍗镐笅" : "鍚敤", "</span>");
+        if (z.acquired && z.level < 10 && !z.mechanic_only) html.push("<span cmd='zhenyi upgrade ", z.id, "'>鍗囩骇</span>");
+        html.push("<span class='sub-close' style='float:right;color:#888;cursor:pointer'>鉁?/span>");
         html.push("</div></div>");
         $(html.join("")).insertAfter(elem);
     },
@@ -191,140 +189,140 @@ export default {
 <div class="dialog-score" cellpadding="0" cellspacing="1">
             <div class="score-section">
                 <span class="title">
-                    <hic>【性别】</hic>
+                    <hic>銆愭€у埆銆?/hic>
                 </span><span data-prop="gender" class="value"></span>
                 <span class="title">
-                    <hic>【等级】</hic>
+                    <hic>銆愮瓑绾с€?/hic>
                 </span><span data-prop="level" class="value"></span><br />
                 <span class="title">
-                    <hic>【年龄】</hic>
+                    <hic>銆愬勾榫勩€?/hic>
                 </span><span data-prop="age" style="width:10em;" class="value">14</span><br />
                 <span class="title">
-                    <hic>【经验】</hic>
+                    <hic>銆愮粡楠屻€?/hic>
                 </span>
                 <hic><span data-prop="exp" class="value">0</span></hic>
                 <span class="title">
-                    <hic>【潜能】</hic>
+                    <hic>銆愭綔鑳姐€?/hic>
                 </span>
                 <hic><span data-prop="pot" class="value">0</span></hic>
             </div>
             <div class="score-section">
                 <div><span class="title">
-                        <hig>【气血】</hig>
+                        <hig>銆愭皵琛€銆?/hig>
                     </span>
                     <hig><span data-prop="hp" class="value"
                             style="text-align:right">0</span><span>&nbsp;/&nbsp;</span><span class="value"
                             data-prop="max_hp">0</span></hig>
                 </div>
                 <div><span class="title">
-                        <hig>【内力】</hig>
+                        <hig>銆愬唴鍔涖€?/hig>
                     </span>
                     <hig><span data-prop="mp" class="value"
                             style="text-align:right">0</span><span>&nbsp;/&nbsp;</span><span class="value"
                             data-prop="max_mp">0</span></hig>
                 </div>
                 <span class="title" style="width:6em;">
-                    <hic>【内力上限】</hic>
+                    <hic>銆愬唴鍔涗笂闄愩€?/hic>
                 </span>
                 <hic><span data-prop="limit_mp" class="value">0</span></hic><br />
                 <span class="title" style="width:6em;">
-                    <hic>【精力】</hic>
+                    <hic>銆愮簿鍔涖€?/hic>
                 </span>
                 <hic><span data-prop="jingli" class="value">0</span></hic>
             </div>
             <div class="score-section">
                 <span class="title">
-                    <hiy>【臂力】</hiy>
+                    <hiy>銆愯噦鍔涖€?/hiy>
                 </span><span class="value">
                     <hiy><span data-prop="str">0</span></hiy>
                     <NOR> (+<span data-prop="str_add">0</span>)</NOR>
                 </span>
                 <span class="title">
-                    <hiy>【根骨】</hiy>
+                    <hiy>銆愭牴楠ㄣ€?/hiy>
                 </span><span class="value">
                     <hiy><span data-prop="con">0</span></hiy>
                     <NOR>(+<span data-prop="con_add">0</span>)</NOR>
                 </span><br />
                 <span class="title">
-                    <hiy>【身法】</hiy>
+                    <hiy>銆愯韩娉曘€?/hiy>
                 </span><span class="value">
                     <hiy><span data-prop="dex">0</span></hiy>
                     <NOR>(+<span data-prop="dex_add">0</span>)</NOR>
                 </span>
                 <span class="title">
-                    <hiy>【悟性】</hiy>
+                    <hiy>銆愭偀鎬с€?/hiy>
                 </span><span class="value">
                     <hiy><span data-prop="int">0</span></hiy>
                     <NOR>(+<span data-prop="int_add">0</span>)</NOR>
                 </span><br />
                 <span class="title">
-                    <hiy>【容貌】</hiy>
+                    <hiy>銆愬璨屻€?/hiy>
                 </span><span class="value">
                     <hiy><span data-prop="per">0</span></hiy>
                 </span>
             </div>
             <div class="score-section">
                 <span class="title">
-                    <hic>【攻击】</hic>
+                    <hic>銆愭敾鍑汇€?/hic>
                 </span>
                 <hic><span data-prop="gj" class="value">0</span></hic>
                 <span class="title">
-                    <hic>【防御】</hic>
+                    <hic>銆愰槻寰°€?/hic>
                 </span>
                 <hic><span data-prop="fy" class="value">0</span></hic><br />
                 <span class="title">
-                    <hic>【命中】</hic>
+                    <hic>銆愬懡涓€?/hic>
                 </span>
                 <hic><span data-prop="mz" class="value">0</span></hic>
                 <span class="title">
-                    <hic>【躲闪】</hic>
+                    <hic>銆愯翰闂€?/hic>
                 </span>
                 <hic><span data-prop="ds" class="value">0</span></hic><br />
                 <span class="title">
-                    <hic>【招架】</hic>
+                    <hic>銆愭嫑鏋躲€?/hic>
                 </span>
                 <hic><span data-prop="zj" class="value">0</span></hic>
                 <span class="title">
-                    <hic>【暴击】</hic>
+                    <hic>銆愭毚鍑汇€?/hic>
                 </span>
                 <hic><span data-prop="bj" class="value">0</span></hic><br />
                 <span class="title" style="width:6em;">
-                    <hic>【攻击速度】</hic>
+                    <hic>銆愭敾鍑婚€熷害銆?/hic>
                 </span>
                 <hic><span data-prop="gjsd" class="value">0</span></hic>
             </div>
             <div class="score-section">
                 <span class="title">
-                    <hic>【门派】</hic>
+                    <hic>銆愰棬娲俱€?/hic>
                 </span>
-                <hic><span data-prop="family" class="value">无门无派</span></hic><br />
+                <hic><span data-prop="family" class="value">鏃犻棬鏃犳淳</span></hic><br />
                 <span class="title">
-                    <hic>【师傅】</hic>
+                    <hic>銆愬笀鍌呫€?/hic>
                 </span>
-                <hic><span data-prop="master" class="value">无</span></hic><br />
+                <hic><span data-prop="master" class="value">鏃?/span></hic><br />
                 <span class="title">
-                    <hic>【功绩】</hic>
+                    <hic>銆愬姛缁┿€?/hic>
                 </span>
                 <hic><span data-prop="gongji" class="value">0</span></hic><br />
             </div>
         </div>`,
     template_score2: `     <div class="dialog-score2">
             <span class="title">
-                <hic>【最终伤害】</hic>
+                <hic>銆愭渶缁堜激瀹炽€?/hic>
             </span>
             <hic>
                 <span data-prop="add_sh" class="value">0</span>
             </hic>
             <br />
             <span class="title">
-                <hic>【忽视防御】</hic>
+                <hic>銆愬拷瑙嗛槻寰°€?/hic>
             </span>
             <hic>
                 <span data-prop="diff_fy" class="value">0</span>
             </hic><br />
 
             <span class="title">
-                <hic>【暴击伤害】</hic>
+                <hic>銆愭毚鍑讳激瀹炽€?/hic>
             </span>
             <hic>
                 <span data-prop="add_bj" class="value">0</span>
@@ -332,68 +330,68 @@ export default {
             <br />
 
             <span class="title">
-                <hic>【伤害减免】</hic>
+                <hic>銆愪激瀹冲噺鍏嶃€?/hic>
             </span>
             <hic>
                 <span data-prop="diff_sh" class="value">0</span>
             </hic>
             <br />
             <span class="title">
-                <hic>【暴击抵抗】</hic>
+                <hic>銆愭毚鍑绘姷鎶椼€?/hic>
             </span>
             <hic>
                 <span data-prop="diff_bj" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【释放时间减少】</hic>
+                <hic>銆愰噴鏀炬椂闂村噺灏戙€?/hic>
             </span>
             <hic>
                 <span data-prop="releasetime" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【忙乱时间】</hic>
+                <hic>銆愬繖涔辨椂闂淬€?/hic>
             </span>
             <hic>
                 <span data-prop="busy" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【忽视忙乱】</hic>
+                <hic>銆愬拷瑙嗗繖涔便€?/hic>
             </span>
             <hic>
                 <span data-prop="diff_busy" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【冷却时间减少】</hic>
+                <hic>銆愬喎鍗存椂闂村噺灏戙€?/hic>
             </span>
             <hic>
                 <span data-prop="distime" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【内力消耗减少】</hic>
+                <hic>銆愬唴鍔涙秷鑰楀噺灏戙€?/hic>
             </span>
             <hic>
                 <span data-prop="expend_mp" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【负面抵抗】</hic>
+                <hic>銆愯礋闈㈡姷鎶椼€?/hic>
             </span>
             <hic>
                 <span data-prop="downside_per" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【打坐效率】</hic>
+                <hic>銆愭墦鍧愭晥鐜囥€?/hic>
             </span>
             <hic>
                 <span data-prop="dazuo_per" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【学习效率】</hic>
+                <hic>銆愬涔犳晥鐜囥€?/hic>
             </span>
             <hic>
                 <span data-prop="study_per" class="value">0</span>
             </hic><br />
             <span class="title">
-                <hic>【练习效率】</hic>
+                <hic>銆愮粌涔犳晥鐜囥€?/hic>
             </span>
             <hic>
                 <span data-prop="lianxi_per" class="value">0</span>
