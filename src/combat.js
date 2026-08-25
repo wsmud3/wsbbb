@@ -49,8 +49,8 @@ const Combat = {
         // if (!Combat.IsShow) return;
         // this.append_items(cmds, panel);
     },
-    def_actions: [{ cmd: "dazuo", name: "打坐" },
-    { cmd: "liaoshang", name: "疗伤" }],
+    def_actions: [{ cmd: "dazuo", name: "鎵撳潗" },
+    { cmd: "liaoshang", name: "鐤椾激" }],
 
     refActions: function () {
         let actions = [...this.def_actions];
@@ -94,7 +94,9 @@ const Combat = {
             if (item.cmd === cmd) {
                 if (data.remove) {
                     this.object_actions.splice(i, 1);
-                    return item.elem.remove();
+                    if (item._ani_timer) clearTimeout(item._ani_timer);
+                    if (item.elem) item.elem.remove();
+                    return;
                 }
                 else {
                     this.ANI_OBJ(item, data.time, data.time);
@@ -110,14 +112,21 @@ const Combat = {
         }
         this.object_actions.push({
             cmd: "use " + id,
-            name: name.replace(/\<.+?\>/g, "")
+            name: String(name || "").replace(/\<.+?\>/g, "")
         });
         this.create_actions();
     }
     , ANI_OBJ: function (obj, time, ani_time) {
-
+        if (!obj || !obj.elem || !time || ani_time <= 0) {
+            if (obj) obj._ani_timer = null;
+            if (obj && obj.elem) obj.elem.css("backgroundSize", "0% 100%");
+            return;
+        }
         let elem = obj.elem;
-        if (!elem) return;
+        if (!elem.length || !elem[0].isConnected) {
+            obj._ani_timer = null;
+            return;
+        }
         var cur_per = ani_time * 100 / time;
         if (cur_per > 0) {
             elem.css("backgroundSize", cur_per + "% 100%");
@@ -126,7 +135,7 @@ const Combat = {
             elem.css("backgroundSize", "0% 100%");
         }
         obj.disper = cur_per;
-        setTimeout(Combat.ANI_OBJ, 1000, obj, time, ani_time - 1000);
+        obj._ani_timer = setTimeout(Combat.ANI_OBJ, 1000, obj, time, ani_time - 1000);
     }
     , create_skillItems: function (items) {
         var elem = $(".combat-commands").empty();
@@ -398,3 +407,4 @@ const Combat = {
 
 };
 export default Combat;
+
