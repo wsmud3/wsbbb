@@ -98,6 +98,13 @@ const Dialog = {
     // deliberately separate from show(), which represents an actual UI open.
     receive: function (name, data) {
         if (!name || !data) return;
+        // A stale server/plugin packet must not throw from getDialog() and
+        // interrupt processing of subsequent messages. Only registered dialog
+        // names can affect the public header; unknown names are safely ignored.
+        if (!DIALOG_NAMES.includes(name)) {
+            console.warn("[DIALOG] ignored unknown dialog " + name);
+            return;
+        }
         const dialog = this.getDialog(name);
         const isCurrent = this.isShow && this.curItem === name;
 
@@ -266,3 +273,4 @@ const Dialog = {
 };
 
 export default Dialog;
+
