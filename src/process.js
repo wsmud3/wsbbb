@@ -26,6 +26,17 @@ const Process = {
         this.state(null);
         this.states = null;
         this.timer = null;
+        if (this.message) {
+            this.message.clear();
+            this.message.allow_scroll = true;
+            this.message.scroll_button.hide();
+        }
+        if (this.channel) {
+            this.channel.clear();
+            this.channel.allow_scroll = true;
+            this.channel.scroll_button.hide();
+        }
+        if (Dialog.channel) Dialog.channel.datas = [];
     },
     init: function () {
         Process.itemsElement = $(".room_items");
