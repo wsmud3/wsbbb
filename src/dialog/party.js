@@ -143,7 +143,7 @@ export default {
             .on("click", '.party-role', this.show_commands);
         Dialog.icon("flag");
     },
-    levels: ["", "<hio>帮主<hio>", "<hiz>副帮主</hiz>", "<hiy>长老</hiy>", "<hic>堂主</hic>", "帮众"],
+    levels: ["", "<hio>帮主</hio>", "<hiz>副帮主</hiz>", "<hiy>长老</hiy>", "<hic>堂主</hic>", "帮众"],
     level_roles: [1, 20, 30, 40, 50, 60],
     level: 5,
     get_role: function (id) {
