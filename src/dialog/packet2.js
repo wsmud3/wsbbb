@@ -79,8 +79,10 @@ export default {
         if (this.isShow) return;
         this.isShow = true;
         this.init_element();
-        this.packElement.on("click", ".obj-item", this.item_click)
-        this.eqElement.on("click", ".eq-item", this.eqitem_click);
+        this.packElement.off("click", ".obj-item")
+            .on("click", ".obj-item", this.item_click);
+        this.eqElement.off("click", ".eq-item")
+            .on("click", ".eq-item", this.eqitem_click);
         this.element.appendTo(Dialog.contentElement);
     }
     , item_click: function (e) {
@@ -109,3 +111,4 @@ export default {
     }
 
 };
+
