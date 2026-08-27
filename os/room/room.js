@@ -451,6 +451,9 @@ ROOM.prototype.update = function (file) {
             this.replaceRoom(rm, newRm);
             newRm.owner = key;
             this.copy_rooms[key] = newRm;
+            if (WORLD.ZHENYI && WORLD.ZHENYI.rehydrate_trial_room) {
+                WORLD.ZHENYI.rehydrate_trial_room(newRm, key);
+            }
         }
         oldroom.copy_rooms = null;
     } else {
@@ -470,6 +473,13 @@ ROOM.prototype.replaceRoom = function (oldroom, newRoom) {
         if (items[i].is_player || items[i].master) {
             newRoom.items.push(items[i]);
             items[i].environment = newRoom;
+        } else if (items[i].is_zhenyi_trial) {
+            // 真意化身由新房间按角色状态重建；旧计时器必须先终止，避免热更新后反向判负。
+            if (items[i].trial_timeout_handler) clearTimeout(items[i].trial_timeout_handler);
+            if (items[i].trial_tick_handler) clearTimeout(items[i].trial_tick_handler);
+            if (items[i].end_fight) items[i].end_fight();
+            items[i].trial_owner = null;
+            items[i].environment = null;
         }
     }
     oldroom.destroy();

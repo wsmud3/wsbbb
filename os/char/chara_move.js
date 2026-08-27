@@ -77,7 +77,7 @@ CHARACTER.prototype.moveto = function (rm, leave_msg, in_msg, dir) {
     if (!next_room) return false;
 
     // 真意试炼只能通过动作栏结算或退出；拦截 goto/直传等绕过房间出口的移动。
-    if (this.is_player && cur_room && cur_room.zhenyi_trial_room && this.query_temp("zy_trial_active", "")) {
+    if (this.is_player && cur_room && cur_room.zhenyi_trial_room && this.query_temp("zy_trial_active", "") && !this.query_temp("zy_trial_exiting", 0)) {
         if (this.query_temp("zy_trial_completed", "")) this.notify("试炼已完成，请使用动作栏的完成副本确认离场。");
         else this.notify("试炼尚未结束，只能使用动作栏的完成副本。");
         return false;

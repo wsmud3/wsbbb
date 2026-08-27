@@ -11,11 +11,11 @@
     "os": "node main.js",
     "os-debug": "node  --inspect-brk main.js",
     "dev": "vite",
-    "build": "vite build",
+    "build": "node tools/clean_vite_assets.js && vite build",
     "preview": "vite preview",
     "start": "concurrently \"npm run web\" \"npm run os\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js"
+    "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/test_zhenyi_trial.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js"
   },
   "author": "",
   "license": "ISC",

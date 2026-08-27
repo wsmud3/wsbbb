@@ -151,18 +151,19 @@ this.enter = function (me, sk, pfmid) {
             me.remove_status('weapon', true);
         }
         if (WORLD.ZHENYI) zy_pfm_started = !!WORLD.ZHENYI.begin_pfm(me, pfm, sp_skill);
-        isrelease = pfm.use(me, target, lv, sk) != false;
-        if (isrelease) {
-            // 记录最后使用的绝招（供左右互搏等技能使用）
-            me.set_temp("sk/last_pfm_id", pfm.id, 30000);
-            me.set_temp("sk/last_pfm_lv", lv, 30000);
+        try {
+            isrelease = pfm.use(me, target, lv, sk) != false;
+            if (isrelease) {
+                // 记录最后使用的绝招（供左右互搏等技能使用）
+                me.set_temp("sk/last_pfm_id", pfm.id, 30000);
+                me.set_temp("sk/last_pfm_lv", lv, 30000);
+            }
+        } finally {
+            // 无论绝招成功、主动返回 false 或抛错，都必须结束本次真意上下文。
+            if (WORLD.ZHENYI && zy_pfm_started) WORLD.ZHENYI.end_pfm(me, target, pfm, sp_skill, isrelease);
+            zy_pfm_started = false;
         }
     }
-
-    if (WORLD.ZHENYI && zy_pfm_started) WORLD.ZHENYI.end_pfm(me, target, pfm, sp_skill, isrelease);
-
-
-
 
     if (isrelease) {
         me.add_mp(-pfm_mp || 0);

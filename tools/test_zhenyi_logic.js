@@ -78,12 +78,72 @@ assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "pub/zhenyi_shiya
 const combatant = player();
 combatant.temp.zy_level_jz_1 = 1;
 combatant.temp.zy_active = "jz_1";
-combatant.temp.zy_pfm = "jz_edge";
+const combatSkill = { grade: 5, family: combatant.family };
+const combatPfm = { id: "dugujiujian/pojian" };
+assert.ok(WORLD.ZHENYI.begin_pfm(combatant, combatPfm, combatSkill), "绑定绝招应建立本次释放上下文");
 const combatValues = WORLD.ZHENYI.values_for(WORLD.ZHENYI.DATA.HUASHAN, WORLD.ZHENYI.DATA.HUASHAN.list[0], 1);
 const combatPar = { diff_fy: 10 };
-const modifiedDamage = WORLD.ZHENYI.modify_attack(combatant, { hp: 100, max_hp: 100 }, combatPar, 100, { grade: 5, family: combatant.family });
+const modifiedDamage = WORLD.ZHENYI.modify_attack(combatant, { hp: 100, max_hp: 100 }, combatPar, 100, combatSkill);
 assert.strictEqual(combatPar.diff_fy, 10 + combatValues.ignore, "忽视防御应按百分比在原值上加算");
 assert.strictEqual(modifiedDamage, 100 * (1 + combatValues.damage / 100), "实战伤害必须读取与描述相同的整数百分比");
+WORLD.ZHENYI.end_pfm(combatant, null, combatPfm, combatSkill, false);
+assert.strictEqual(combatant.query_temp("zy_pfm", ""), "", "绝招失败后必须清除真意释放上下文");
+const afterFailedPfm = WORLD.ZHENYI.modify_attack(combatant, { hp: 100, max_hp: 100 }, { diff_fy: 10 }, 100, combatSkill);
+assert.strictEqual(afterFailedPfm, 100, "失败绝招不得强化后续普通攻击");
+
+const flying = player();
+flying.family = { id: "GAIBANG" };
+flying.temp.zy_js_2 = 1;
+flying.temp.zy_level_js_2 = 1;
+flying.temp.zy_active = "js_2";
+const flyingSkill = { grade: 5, family: flying.family };
+const flyingPfm = { id: "xianglongzhang/shiba" };
+WORLD.ZHENYI.begin_pfm(flying, flyingPfm, flyingSkill);
+const firstFlyingDamage = WORLD.ZHENYI.modify_attack(flying, { hp: 100, max_hp: 100 }, {}, 100, flyingSkill);
+assert.strictEqual(firstFlyingDamage, 100, "首击结算前不能预先增加连续命中层数");
+assert.strictEqual(flying.query_temp("zy_flying", 0), 0, "未确认命中前不得叠层");
+WORLD.ZHENYI.after_attack(flying, { query_temp() {}, set_temp() {}, damage() {} }, {}, 100, flyingSkill);
+assert.strictEqual(flying.query_temp("zy_flying", 0), 1, "造成实际伤害后才增加连续命中层数");
+WORLD.ZHENYI.end_pfm(flying, null, flyingPfm, flyingSkill, true);
+
+const talisman = player();
+talisman.family = { id: "XIAOYAO" };
+talisman.max_mp = 10000;
+talisman.temp.zy_lhfd_4 = 1;
+talisman.temp.zy_level_lhfd_4 = 1;
+talisman.temp.zy_active = "lhfd_4";
+const talismanSkill = { grade: 5, family: talisman.family };
+const talismanPfm = { id: "liuyangzhang/zhong" };
+const damageArgs = [];
+const talismanTarget = {
+    temp: {},
+    query_temp(key) { return this.temp[key]; },
+    set_temp(key, value) { this.temp[key] = value; },
+    damage(...args) { damageArgs.push(args); }
+};
+WORLD.ZHENYI.begin_pfm(talisman, talismanPfm, talismanSkill);
+WORLD.ZHENYI.after_attack(talisman, talismanTarget, {}, 1000, talismanSkill);
+assert.strictEqual(damageArgs[0][2], 0, "真意附加伤害必须按目标防御结算");
+WORLD.ZHENYI.end_pfm(talisman, talismanTarget, talismanPfm, talismanSkill, true);
+assert.strictEqual(WORLD.ZHENYI.values_for(WORLD.ZHENYI.DATA.XIAOYAO, WORLD.ZHENYI.DATA.XIAOYAO.list[3], 1).extra, 1, "正数效果应统一向上取整为整数");
+
+const reflector = player();
+reflector.family = { id: "EMEI" };
+reflector.hp = reflector.max_hp = 10000;
+reflector.gj = 1000;
+reflector.temp.zy_jdfg_2 = 1;
+reflector.temp.zy_level_jdfg_2 = 1;
+reflector.temp.zy_active = "jdfg_2";
+reflector.temp.zy_wrath_ready = 1;
+let reflectIgnore = null;
+WORLD.ZHENYI.modify_damage(reflector, { hp: 10000, damage(sh, from, ignore) { reflectIgnore = ignore; } }, 1000);
+assert.strictEqual(reflectIgnore, 0, "真意反伤必须按对方防御结算");
+
+reflector.temp.zy_twin_last = "old-pfm";
+reflector.temp.zy_vajra_cd = 1;
+WORLD.ZHENYI.on_combat_end(reflector);
+assert.strictEqual(reflector.query_temp("zy_twin_last", ""), "", "绝招连携记录不得跨战斗保留");
+assert.strictEqual(reflector.query_temp("zy_vajra_cd", 0), 1, "有明确秒数的真意冷却不得通过结束战斗重置");
 
 const stale = player();
 stale.temp.zy_trial_active = "jz_1";
@@ -93,6 +153,15 @@ stale.environment = { path: "jz/houshan", owner: "zhenyi_public:jz", parent: { i
 assert.strictEqual(WORLD.ZHENYI.ensure_trial_state(stale, true), false, "NPC 已消失的旧试炼状态必须判为失效");
 assert.strictEqual(stale.query_temp("zy_trial_active", ""), "", "旧试炼残留必须自动清理");
 assert.ok(stale.messages.some(message => message.includes("残留状态已经自动清理")), "应告知玩家可以重新挑战");
+
+const reconnected = player();
+reconnected.temp.zy_trial_active = "jz_1";
+reconnected.temp.zy_trial_owner = "zhenyi_trial:jz:tester";
+reconnected.environment = {
+    owner: "zhenyi_trial:jz:tester", parent: { id: "jz" },
+    items: [{ is_zhenyi_trial: true, trial_owner: { id: "tester" } }]
+};
+assert.strictEqual(WORLD.ZHENYI.ensure_trial_state(reconnected, true), true, "重连后应按角色 ID 重新识别仍存活的试炼化身");
 
 me.level = 4;
 assert.strictEqual(WORLD.ZHENYI.get_active(me), null, "未到武帝时真意不得生效");

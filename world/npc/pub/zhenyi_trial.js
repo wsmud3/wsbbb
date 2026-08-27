@@ -7,6 +7,7 @@ this.set({
 
 this.init_trial = function (player, data, intent) {
     this.trial_owner = player;
+    this.trial_owner_id = player.id;
     this.trial_key = data.key;
     this.trial_id = intent.id;
     this.trial_mode = intent.mode;
@@ -38,7 +39,12 @@ this.init_trial = function (player, data, intent) {
     this.init(); this.recount();
     this.hp = this.max_hp; this.mp = this.max_mp;
 
-    this.trial_timeout_handler = this.call_out(this.trial_timeout, stats.timeout);
+    var deadline = player.query_temp("zy_trial_deadline", 0);
+    if (!deadline) {
+        deadline = Date.now() + stats.timeout;
+        player.set_temp("zy_trial_deadline", deadline);
+    }
+    this.trial_timeout_handler = this.call_out(this.trial_timeout, Math.max(1, deadline - Date.now()));
     this.trial_tick_handler = this.call_out(this.trial_tick, 5000);
 };
 
@@ -91,4 +97,3 @@ this.on_die = function (killer) {
         if (!completed && killer !== owner) WORLD.ZHENYI.complete_trial(killer, this.trial_key, this.trial_id);
     }
 };
-

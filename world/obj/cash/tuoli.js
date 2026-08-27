@@ -11,6 +11,8 @@ this.on_use = function (me) {
     if (me.query_temp('tuolicd')) return me.notify_fail("你刚脱离门派没多久，频繁的背叛师门会被武林中人所不齿的。");
     if (!me.family || me.family == FAMILIES.NONE)
     return me.notify_fail("你还没有门派，不需要叛师。");
+    if (WORLD.ZHENYI && WORLD.ZHENYI.is_in_trial && WORLD.ZHENYI.is_in_trial(me))
+    return me.notify_fail("真意试炼尚未离场，不能在副本中脱离门派。");
     var list = [];
     var up_count = 0;
     for (var key in me.skills) {

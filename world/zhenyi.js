@@ -149,9 +149,11 @@
     }
     function publicOwner(key) { return "zhenyi_public:" + key; }
     function trialOwner(me, key) { return "zhenyi_trial:" + key + ":" + me.id; }
-    function percentValue(value) { return Math.max(1, Math.round(value * 100)); }
-    function percentPointValue(value) { return Math.max(1, Math.round(value)); }
-    function secondValue(value) { return Math.max(1, Math.round(value / 1000)); }
+    // 真意面板只显示整数。正数统一向上取整，既避免小数描述，也符合真意数值偏慷慨的定位。
+    function positiveInteger(value) { return value > 0 ? Math.max(1, Math.ceil(value)) : 0; }
+    function percentValue(value) { return positiveInteger(value * 100); }
+    function percentPointValue(value) { return positiveInteger(value); }
+    function secondValue(value) { return positiveInteger(value / 1000); }
     function percentText(value) { return value + "%"; }
     function secondsText(value) { return value + "秒"; }
     function colorIntentName(intent, grade) {
@@ -252,7 +254,7 @@
             case "sl_arhat": return "同时被2名敌人攻击时减伤" + percentText(v.reduction) + "；每多1名敌人增加" + percentText(v.per_enemy) + "，最终上限" + percentText(v.cap) + "。";
             case "sl_meditate": return "佛光守护与一苇渡江的精力消耗降低" + percentText(v.cost) + "，调息降低" + percentText(v.cooldown) + "，调息最低" + v.minimum + "秒。";
             case "em_mercy": return "鹤翔庄或游龙庄成功生效后，回复最大气血" + percentText(v.heal) + "。";
-            case "em_wrath": return "成功招架后获得6秒反震；下一次受击反弹所受伤害的" + percentText(v.reflect) + "，8秒冷却，反伤不超过自身攻击力" + percentText(v.cap) + "。";
+            case "em_wrath": return "成功招架后获得6秒反震；下一次受击反弹所受伤害的" + percentText(v.reflect) + "，8秒冷却，反伤不超过自身攻击力" + percentText(v.cap) + "，并按对方防御结算。";
             case "em_twin": return "灭剑与绝剑成功交替后，12秒内下一次技能伤害提高" + percentText(v.damage) + "。";
             case "em_yitian": return "倚天剑诀或号令天下命中时，伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
             case "em_nineyin": return "目标当前气血高于80%时，技能伤害提高" + percentText(v.damage) + "。";
@@ -264,7 +266,7 @@
             case "xy_beiming": return "北冥绑定绝招命中后，吸取目标最大内力的" + percentText(v.drain) + "并转为自身内力；单次转化不超过自身最大内力" + percentText(v.cap) + "。";
             case "xy_lingbo": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percentText(v.damage) + "，命中提高" + percentText(v.hit) + "。";
             case "xy_baihong": return "当前内力高于80%时，白虹掌力伤害提高" + percentText(v.damage) + "，并消耗最大内力" + percentText(v.cost) + "。";
-            case "xy_talisman": return "生死符命中后追加自身最大内力的" + percentText(v.extra) + "作为伤害，单次不超过本次已造成伤害" + percentText(v.cap) + "，8秒冷却。";
+            case "xy_talisman": return "生死符命中后追加自身最大内力的" + percentText(v.extra) + "作为伤害，单次不超过本次已造成伤害" + percentText(v.cap) + "，并按目标防御结算，8秒冷却。";
             case "xy_formless": return "无相、无我释放已化用的绝招时，精力消耗降低" + percentText(v.cost) + "，调息降低" + percentText(v.cooldown) + "，调息最低" + v.minimum + "秒。";
             case "ss_shadow": return "无痕成功后，20秒内下一次伤害技能命中会封锁目标绝招" + secondsText(v.seal) + "；20秒冷却。";
             case "ss_step": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percentText(v.damage) + "，命中提高" + percentText(v.hit) + "。";
@@ -274,7 +276,7 @@
             case "sn_thunder": return "绑定雷法命中叠加雷贯，最多5层、持续12秒；每层忽视防御提高" + percentText(v.ignore) + "。";
             case "sn_avatar": return "玄女法相成功后获得15秒护持，期间受到伤害降低" + percentText(v.reduction) + "。";
             case "sn_charm": return "魅魂或极乐六性命中后获得12秒摄心；下一次技能伤害提高" + percentText(v.damage) + "。";
-            case "sn_purple": return "春雷暴殛或天雷系绑定绝招伤害提高" + percentText(v.damage) + "；每9秒追加一次攻击力的" + percentText(v.extra) + "作为雷伤，且不超过本次已造成伤害" + percentText(v.cap) + "。";
+            case "sn_purple": return "春雷暴殛或天雷系绑定绝招伤害提高" + percentText(v.damage) + "；每9秒追加一次攻击力的" + percentText(v.extra) + "作为雷伤，且不超过本次已造成伤害" + percentText(v.cap) + "，雷伤按目标防御结算。";
             case "sn_guard": return "当前内力大于0时，将每次所受伤害的" + percentText(v.convert) + "转为等量内力消耗；最终减伤上限" + percentText(v.cap) + "。";
         }
         return "此真意当前没有可结算的数值效果。";
@@ -284,10 +286,21 @@
         me.remove_temp("zy_trial_active");
         me.remove_temp("zy_trial_npc_dead");
         me.remove_temp("zy_trial_completed");
+        me.remove_temp("zy_trial_failed");
         me.remove_temp("zy_trial_owner");
         me.remove_temp("zy_trial_return");
+        me.remove_temp("zy_trial_deadline");
+        me.remove_temp("zy_trial_exiting");
         me.remove_temp("zy_trial_control_cd");
         if (me.remove_status) me.remove_status("zy_trial_control", true);
+    }
+
+    function sameTrialPlayer(owner, me) {
+        return !!(owner && me && (owner === me || (owner.id && me.id && owner.id === me.id)));
+    }
+    function isTrialOwner(owner, key) {
+        var prefix = "zhenyi_trial:" + (key ? key + ":" : "");
+        return typeof owner === "string" && owner.indexOf(prefix) === 0;
     }
 
     // 热更新或重启会销毁旧试炼 NPC，但角色 temp 会持久化；每次进入系统都主动自愈。
@@ -304,18 +317,19 @@
         var liveNpc = false;
         if (env && env.items) {
             for (var i = 0; i < env.items.length; i++) {
-                if (env.items[i] && env.items[i].is_zhenyi_trial && env.items[i].trial_owner === me) { liveNpc = true; break; }
+                if (env.items[i] && env.items[i].is_zhenyi_trial && sameTrialPlayer(env.items[i].trial_owner, me)) { liveNpc = true; break; }
             }
         }
         var valid = !!(data && owner && owner === trialOwner(me, key) && env && env.owner === owner &&
             env.parent && env.parent.id === key && (liveNpc || completed));
         if (valid) return true;
 
-        var oldOwner = owner, returnPath = me.query_temp("zy_trial_return", "");
-        if (data && typeof ROOM !== "undefined" && env && env.parent && env.parent.id === key && env.owner === oldOwner) {
-            var baseReturn = ROOM.Get(returnPath) || (ROOM.Get(data.trialRoom) && ROOM.Get(data.trialRoom).parent.rooms[0]);
-            var publicRoom = baseReturn && (baseReturn.query_copy(publicOwner(key)) || baseReturn.create_copy(publicOwner(key)));
-            if (publicRoom) me.moveto(publicRoom, me.name + "离开了失效的真意试炼。", me.name + "自黯淡的试炼石门中走出。");
+        var oldOwner = owner;
+        if (data && env && isTrialOwner(env.owner, key)) {
+            me.set_temp("zy_trial_failed", 1);
+            if (notify) me.notify("先前未结束的真意试炼已经失效，正在将你送回禁地。");
+            returnFromTrial(me, key);
+            return false;
         }
         clearTrialTemps(me);
         if (data && oldOwner && typeof ROOM !== "undefined") {
@@ -436,12 +450,19 @@
         return true;
     }
     function clearCombatState(me) {
-        var keys = ["zy_pfm", "zy_pfm_id", "zy_counter", "zy_borrow", "zy_lingbo", "zy_tail", "zy_twin", "zy_charm", "zy_six", "zy_shadow_ready"];
+        var keys = ["zy_pfm", "zy_pfm_id", "zy_counter", "zy_borrow", "zy_lingbo", "zy_tail",
+            "zy_twin", "zy_twin_last", "zy_charm", "zy_six", "zy_shadow_ready"];
         for (var i = 0; i < keys.length; i++) me.remove_temp(keys[i]);
     }
     function forgetFamily(me, oldFamilyId) {
         var data = DATA[oldFamilyId];
         if (!data) return;
+        var trialActive = me.query_temp("zy_trial_active", ""), trialKey = trialActive && trialActive.split("_")[0];
+        if (trialActive) {
+            me.set_temp("zy_trial_failed", 1);
+            if (me.end_fight) me.end_fight();
+            returnFromTrial(me, trialKey);
+        }
         for (var i = 1; i <= 7; i++) {
             me.remove_temp(acquiredKey(data.key, i)); me.remove_temp(levelKey(data.key, i));
             me.remove_temp(clearKey(data.key, i)); me.remove_temp(matKey(data.key, i)); me.remove_temp(dailyKey(data.key, i));
@@ -449,7 +470,8 @@
         }
         var active = me.query_temp("zy_active", "");
         if (active && active.indexOf(data.key + "_") === 0) me.remove_temp("zy_active");
-        me.remove_temp("zy_active_" + data.key); clearTrialTemps(me);
+        me.remove_temp("zy_active_" + data.key);
+        if (!trialActive) clearTrialTemps(me);
         me.remove_temp("zy_migrate_version");
         clearCombatState(me); me.set_bool("fb2", data.jd, false);
     }
@@ -467,6 +489,47 @@
         room.room_exits_json = null;
         if (room.exits_changed) room.exits_changed();
         return room;
+    }
+
+    function isInTrial(me) {
+        if (!me) return false;
+        var env = me.environment, active = me.query_temp("zy_trial_active", "");
+        return !!(active || (env && isTrialOwner(env.owner)));
+    }
+
+    // 房间脚本热更新会重建所有副本房间；真意副本需要恢复隔离标记和动态化身。
+    function rehydrateTrialRoom(room, owner) {
+        if (!room || !isTrialOwner(owner)) return false;
+        configureTrialRoom(room);
+        var parts = owner.split(":"), key = parts[1], data = findDataByKey(key), me = null;
+        for (var i = 0; i < room.items.length; i++) {
+            if (room.items[i] && room.items[i].is_player && trialOwner(room.items[i], key) === owner) {
+                me = room.items[i]; break;
+            }
+        }
+        if (!me || !data) return true;
+        me.set_temp("zy_trial_owner", owner);
+        var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), intent = findIntent(data, bits && bits[1]);
+        if (!active || !intent || bits[0] !== key) {
+            me.set_temp("zy_trial_failed", 1);
+            returnFromTrial(me, key);
+            return true;
+        }
+        if (me.query_temp("zy_trial_completed", "") === token(key, intent.id)) return true;
+        if (!me.query_temp("zy_trial_deadline", 0)) me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
+        if (me.end_fight) me.end_fight();
+        var npc = null;
+        try { npc = NPC.CLONE("pub/zhenyi_trial"); } catch (e) { npc = null; }
+        if (!npc || !npc.init_trial) {
+            me.set_temp("zy_trial_failed", 1);
+            me.notify("<hir>试炼场热更新后化身恢复失败，本次试炼已经结束。</hir>");
+            returnFromTrial(me, key);
+            return true;
+        }
+        npc.init_trial(me, data, intent); room.item_changed(npc, true);
+        me.notify("<hiy>试炼场更新完成，你的真意试炼已经续接。</hiy>");
+        npc.do_kill(me);
+        return true;
     }
 
     function startTrial(me, id) {
@@ -501,37 +564,53 @@
             var old = room.items[i];
             if (!old.is_player && old.is_zhenyi_trial) room.item_changed(old, false);
         }
-        me.set_temp("zy_trial_active", token(data.key, intent.id)); addDaily(me, data.key, intent.id, 1);
+        me.set_temp("zy_trial_active", token(data.key, intent.id));
+        me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
         npc.init_trial(me, data, intent); room.item_changed(npc, true);
-        me.notify("<hiy>你消耗" + ENERGY_COST + "点精力，开始【" + intent.trial + "】。今日次数" + dailyCount(me, data.key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
+        me.notify("<hiy>你消耗" + ENERGY_COST + "点精力，开始【" + intent.trial + "】。今日完成次数" + dailyCount(me, data.key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
         npc.do_kill(me); return true;
     }
 
     function returnFromTrial(me, key) {
         if (!me) return;
-        var owner = me.query_temp("zy_trial_owner", "");
+        var envOwner = me.environment && me.environment.owner;
+        var owner = me.query_temp("zy_trial_owner", "") || (isTrialOwner(envOwner, key) ? envOwner : "");
         var returnPath = me.query_temp("zy_trial_return", "");
-        if (!owner) return;
-        me.call_out(function () {
-            var data = findDataByKey(key), shouldReturn = me.environment && me.environment.parent && me.environment.parent.id === key;
+        if (!key && owner) key = owner.split(":")[1];
+        if (!owner) { clearTrialTemps(me); return true; }
+        var finishReturn = function () {
+            var data = findDataByKey(key), currentRoom = me.environment;
+            var shouldReturn = currentRoom && (currentRoom.zhenyi_trial_room || isTrialOwner(currentRoom.owner, key));
+            var moved = !shouldReturn;
+            me.set_temp("zy_trial_exiting", 1);
             if (shouldReturn && data) {
-                var baseReturn = ROOM.Get(returnPath) || ROOM.Get(data.trialRoom).parent.rooms[0];
+                var trialBaseRoom = ROOM.Get(data.trialRoom);
+                var baseReturn = ROOM.Get(returnPath) || (trialBaseRoom && trialBaseRoom.parent && trialBaseRoom.parent.rooms[0]);
                 var publicRoom = baseReturn && (baseReturn.query_copy(publicOwner(key)) || baseReturn.create_copy(publicOwner(key)));
-                if (!publicRoom || me.moveto(publicRoom, me.name + "离开了真意试炼。", me.name + "自试炼石门中走出。") === false) {
-                    me.notify("试炼出口暂时无法开启，请使用地图传送离开后联系管理员。");
-                    return;
+                moved = !!(publicRoom && me.moveto(publicRoom, me.name + "离开了真意试炼。", me.name + "自试炼石门中走出。") !== false);
+                if (!moved && me.query_home) {
+                    var home = me.query_home();
+                    moved = !!(home && me.moveto(home, me.name + "离开了真意试炼。", me.name + "自试炼石门中走出。") !== false);
                 }
             }
-            me.remove_temp("zy_trial_completed");
-            me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+            me.remove_temp("zy_trial_exiting");
+            if (!moved) {
+                me.notify("试炼出口暂时无法开启，状态已保留；请稍后再次点击动作栏的完成副本。");
+                return false;
+            }
+            clearTrialTemps(me);
             if (data) {
                 var trialBase = ROOM.Get(data.trialRoom), trialRoom = trialBase && trialBase.query_copy(owner);
                 if (trialRoom) trialRoom.clear_by_area(trialBase.parent, owner);
             }
-        }, 0);
+            return true;
+        };
+        if (me.call_out) me.call_out(finishReturn, 0);
+        else finishReturn();
+        return true;
     }
 
-    function addXuanjing(me, count) { var obj = me.add_obj("st/xuanjing", count); return obj ? count : 0; }
+    function addXuanjing(me, count) { return me.add_obj("st/xuanjing", count) || null; }
     function addMaterial(me, key, id, count) {
         if (!me || !(count > 0)) return null;
         var path = matPath(key, id), item = null;
@@ -544,6 +623,13 @@
         return item || null;
     }
     function matCount(me, key, id) { var obj = me.find_obj_bypath(matPath(key, id)); return obj ? (obj.count || 1) : 0; }
+    function rollbackReward(me, granted) {
+        if (!granted || !granted.items || !me.remove_obj) return;
+        for (var i = granted.items.length - 1; i >= 0; i--) {
+            var entry = granted.items[i];
+            if (entry.obj && entry.count > 0) me.remove_obj(entry.obj, entry.count);
+        }
+    }
     function reward(me, data, intent, count, isSweep) {
         var xj = 0, mat = 0, bonus = 0;
         for (var i = 0; i < count; i++) {
@@ -551,19 +637,29 @@
             mat += (isSweep ? 1 : 2) + (me.random(100) < 25 ? 1 : 0);
             if (me.random(100) < 20) bonus++;
         }
-        var material = addMaterial(me, data.key, intent.id, mat), materialCount = material ? mat : 0;
-        var safeBonusName = "";
+        var granted = { xj: xj, mat: mat, bonus: 0, bonusName: "", items: [] };
+        var material = addMaterial(me, data.key, intent.id, mat);
+        if (!material) return null;
+        granted.items.push({ obj: material, count: mat });
         if (bonus > 0) {
             var unlockedSafe = [];
             for (var sj = 0; sj < data.list.length; sj++) if (getLevel(me, data.key, data.list[sj].id)) unlockedSafe.push(data.list[sj]);
             if (unlockedSafe.length) {
                 var safeBonus = unlockedSafe[me.random(unlockedSafe.length)];
-                if (addMaterial(me, data.key, safeBonus.id, bonus)) safeBonusName = "，另得" + safeBonus.name + "悟痕×" + bonus;
+                var bonusMaterial = addMaterial(me, data.key, safeBonus.id, bonus);
+                if (!bonusMaterial) { rollbackReward(me, granted); return null; }
+                granted.items.push({ obj: bonusMaterial, count: bonus });
+                granted.bonus = bonus; granted.bonusName = safeBonus.name;
             }
         }
-        addXuanjing(me, xj);
-        me.notify("<hig>获得玄晶×" + xj + "、" + intent.name + "悟痕×" + materialCount + safeBonusName + "。</hig>");
-        if (materialCount < mat) me.notify("<hir>悟痕道具发放失败，请联系管理员检查背包空间。</hir>");
+        var xuanjing = addXuanjing(me, xj);
+        if (!xuanjing) { rollbackReward(me, granted); return null; }
+        granted.items.push({ obj: xuanjing, count: xj });
+        return granted;
+    }
+    function announceReward(me, intent, granted) {
+        var safeBonusName = granted.bonus > 0 ? "，另得" + granted.bonusName + "悟痕×" + granted.bonus : "";
+        me.notify("<hig>获得玄晶×" + granted.xj + "、" + intent.name + "悟痕×" + granted.mat + safeBonusName + "。</hig>");
     }
     function completeTrial(me, key, id) {
         var data = findDataByKey(key), intent = findIntent(data, id);
@@ -576,12 +672,16 @@
         if (active !== trialToken && me.query_temp("zy_trial_npc_dead", "") !== trialToken && completed !== trialToken) return false;
         if (completed === trialToken) return true;
         me.remove_temp("zy_trial_npc_dead");
+        me.remove_temp("zy_trial_failed");
+        me.remove_temp("zy_trial_deadline");
         // 保留 active 和副本，等待玩家通过动作栏“完成副本”确认离场。
         me.set_temp("zy_trial_completed", trialToken);
+        addDaily(me, key, intent.id, 1);
         if (!getLevel(me, key, intent.id)) {
             me.set_temp(acquiredKey(key, intent.id), 1); me.set_temp(levelKey(key, intent.id), 1); me.set_temp(clearKey(key, intent.id), 1);
             me.notify("<him>试炼石壁上道韵流转，你领悟了【" + intent.name + "】！</him>");
         }
+        me.notify("<hiy>今日完成次数" + dailyCount(me, key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
         me.notify("<hig>试炼目标已完成，请点击动作栏“完成副本”确认离场。</hig>");
         if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
         return true;
@@ -589,9 +689,9 @@
     function failTrial(me, reason) {
         if (!me) return;
         var active = me.query_temp("zy_trial_active", ""), key = active ? active.split("_")[0] : (me.environment && me.environment.parent && me.environment.parent.id);
-        me.remove_temp("zy_trial_active");
         me.remove_temp("zy_trial_npc_dead");
         me.remove_temp("zy_trial_completed");
+        me.set_temp("zy_trial_failed", 1);
         if (reason) me.notify("<hir>真意试炼失败：" + reason + "</hir>");
         if (key) returnFromTrial(me, key);
     }
@@ -607,6 +707,11 @@
             me.send_commands("zhenyi trial_confirm", "确认完成并离开", "zhenyi trial_cancel", "暂不离开");
             return true;
         }
+        if (me.query_temp("zy_trial_failed", 0)) {
+            me.notify("本次真意试炼已经结束，是否确认离开副本？");
+            me.send_commands("zhenyi trial_confirm", "确认离开", "zhenyi trial_cancel", "暂不离开");
+            return true;
+        }
         if (intent && intent.mode === "endure") me.notify("请继续坚持至试炼计时结束；达成目标后会自动结算。");
         else me.notify("请先完成试炼目标；击败武意化身后会自动结算。");
         return false;
@@ -615,19 +720,18 @@
         if (!me) return false;
         var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0], id = bits && parseInt(bits[1]);
         var data = findDataByKey(key), intent = findIntent(data, id);
-        if (!active || !key || !(id >= 0) || !intent || me.query_temp("zy_trial_completed", "") !== token(key, intent.id)) {
+        var completed = intent && me.query_temp("zy_trial_completed", "") === token(key, intent.id);
+        var failed = !!me.query_temp("zy_trial_failed", 0);
+        if (!active || !key || !(id >= 0) || !intent || (!completed && !failed)) {
             return me.notify("请先完成真意试炼目标。"), false;
         }
-        me.remove_temp("zy_trial_active");
-        me.remove_temp("zy_trial_npc_dead");
-        me.remove_temp("zy_trial_completed");
         if (me.end_fight) me.end_fight();
         returnFromTrial(me, key);
         return true;
     }
     function cancelTrial(me) {
         if (!me) return false;
-        if (me.query_temp("zy_trial_completed", "")) {
+        if (me.query_temp("zy_trial_completed", "") || me.query_temp("zy_trial_failed", 0)) {
             me.notify("已取消离场，你仍在真意试炼副本中。");
             return true;
         }
@@ -643,9 +747,17 @@
         var remain = DAILY_LIMIT - dailyCount(me, data.key, intent.id);
         if (remain <= 0) return me.notify("这项试炼今日已达十次。"), false;
         count = Math.max(1, Math.min(parseInt(count) || 1, remain));
-        if (!me.expend_jingli(ENERGY_COST * count)) return me.notify("扫荡" + count + "次需要" + (ENERGY_COST * count) + "点精力。"), false;
+        var energy = ENERGY_COST * count;
+        if (me.query_jingli && me.query_jingli() < energy) return me.notify("扫荡" + count + "次需要" + energy + "点精力。"), false;
+        var granted = reward(me, data, intent, count, true);
+        if (!granted) return me.notify("<hir>奖励道具生成失败，本次未消耗精力和次数，请稍后重试。</hir>"), false;
+        if (!me.expend_jingli(energy)) {
+            rollbackReward(me, granted);
+            return me.notify("精力状态已经变化，本次扫荡未生效。"), false;
+        }
         addDaily(me, data.key, intent.id, count);
-        me.notify("<hiy>你在" + data.area + "中重温【" + intent.trial + "】" + count + "次。</hiy>"); reward(me, data, intent, count, true); return true;
+        me.notify("<hiy>你在" + data.area + "中重温【" + intent.trial + "】" + count + "次。</hiy>");
+        announceReward(me, intent, granted); return true;
     }
 
     function xuanjingCount(me) { var obj = me.find_obj_bypath("st/xuanjing"); return obj ? (obj.count || 1) : 0; }
@@ -716,9 +828,21 @@
         return !!(active && pfmId && allowedSkill(skill) && skill.family &&
             skill.family.id === KEY_TO_FAMILY[active.data.key] && active.intent.pfms.indexOf(pfmId) >= 0);
     }
+    function clearPfmContext(me, pfmId) {
+        if (!me) return;
+        var current = me.query_temp("zy_pfm_id", "");
+        if (pfmId && current && current !== pfmId) return;
+        me.remove_temp("zy_pfm"); me.remove_temp("zy_pfm_id");
+    }
+    function pfmContextMatches(me, active) {
+        var pfmId = me && me.query_temp("zy_pfm_id", "");
+        return !!(me && active && pfmId && me.query_temp("zy_pfm", "") === active.intent.effect &&
+            active.intent.pfms.indexOf(pfmId) >= 0);
+    }
     function beginPfm(me, pfm, skill) {
         var active = getActive(me);
         if (!active || !pfmMatches(active, pfm.id, skill)) return null;
+        clearPfmContext(me);
         me.set_temp("zy_pfm", active.intent.effect, 15000); me.set_temp("zy_pfm_id", pfm.id, 15000); return active;
     }
     function pfmCost(me, pfm, skill, value) {
@@ -736,20 +860,25 @@
     }
     function endPfm(me, target, pfm, skill, success) {
         var active = getActive(me);
-        if (!success || !pfmMatches(active, pfm && pfm.id, skill)) return;
-        var effect = active.intent.effect, v = active.values;
-        if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.set_temp("zy_wood_guard", 1, 8000); }
-        else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * v.heal / 100));
-        else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * v.drain / 100), Math.floor(me.max_mp * v.cap / 100)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
-        else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", v.busy * 1000, 12000);
-        else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, v.seal * 1000);
-        else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", v.busy * 1000, 10000);
-        else if (effect === "gb_tail") me.set_temp("zy_tail", 1, 12000);
-        else if (effect === "gb_six") me.set_temp("zy_six", 1, 12000);
-        else if (effect === "em_twin") { var last = me.query_temp("zy_twin_last", ""); if (last && last !== pfm.id) me.set_temp("zy_twin", 1, 12000); me.set_temp("zy_twin_last", pfm.id, 20000); }
-        else if (effect === "ss_shadow" && !me.query_temp("zy_shadow_cd")) { me.set_temp("zy_shadow_ready", 1, 20000); me.set_temp("zy_shadow_cd", 1, 20000); }
-        else if (effect === "sn_charm") me.set_temp("zy_charm", 1, 12000);
-        else if (effect === "sn_avatar") me.set_temp("zy_avatar", 1, 15000);
+        try {
+            if (!success || !pfmMatches(active, pfm && pfm.id, skill)) return false;
+            var effect = active.intent.effect, v = active.values;
+            if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.set_temp("zy_wood_guard", 1, 8000); }
+            else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * v.heal / 100));
+            else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * v.drain / 100), Math.floor(me.max_mp * v.cap / 100)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
+            else if (effect === "sl_roar" && target) addControl(target, "zy_roar", "狮吼震慑", v.busy * 1000, 12000);
+            else if (effect === "sl_prajna" && target) target.set_temp("sealed_pfm", 1, v.seal * 1000);
+            else if (effect === "zw_stick" && target) addControl(target, "zy_stick", "太极粘劲", v.busy * 1000, 10000);
+            else if (effect === "gb_tail") me.set_temp("zy_tail", 1, 12000);
+            else if (effect === "gb_six") me.set_temp("zy_six", 1, 12000);
+            else if (effect === "em_twin") { var last = me.query_temp("zy_twin_last", ""); if (last && last !== pfm.id) me.set_temp("zy_twin", 1, 12000); me.set_temp("zy_twin_last", pfm.id, 20000); }
+            else if (effect === "ss_shadow" && !me.query_temp("zy_shadow_cd")) { me.set_temp("zy_shadow_ready", 1, 20000); me.set_temp("zy_shadow_cd", 1, 20000); }
+            else if (effect === "sn_charm") me.set_temp("zy_charm", 1, 12000);
+            else if (effect === "sn_avatar") me.set_temp("zy_avatar", 1, 15000);
+            return true;
+        } finally {
+            clearPfmContext(me, pfm && pfm.id);
+        }
     }
     function addControl(target, id, name, duration, cooldown) {
         if (!target || target.query_temp(id + "_cd")) return;
@@ -762,7 +891,7 @@
     function modifyAttack(me, target, par, sh, skill) {
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me)) return sh;
-        var e = active.intent.effect, v = active.values, bonus = 0, inPfm = me.query_temp("zy_pfm", "") === e;
+        var e = active.intent.effect, v = active.values, bonus = 0, inPfm = pfmContextMatches(me, active);
         if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) bonus += v.damage / 100;
         if ((e === "jz_edge" || e === "em_yitian" || e === "gb_kanglong") && inPfm) {
             addIgnore(par, v.ignore);
@@ -772,7 +901,7 @@
         else if (e === "jz_formless" && inPfm && !me.query_temp("zy_formless_cd")) { bonus += v.damage / 100; me.set_temp("zy_formless_cd", 1, 10000); }
         else if (e === "zw_borrow" && me.query_temp("zy_borrow", 0) >= 2) { bonus += v.damage / 100; me.remove_temp("zy_borrow"); }
         else if (e === "gb_field" && me.max_hp && me.hp / me.max_hp < 0.4) bonus += v.damage / 100;
-        else if (e === "gb_flying" && inPfm) { var st = Math.min(5, me.add_temp("zy_flying", 1, 12000)); bonus += st * v.damage / 100; }
+        else if (e === "gb_flying" && inPfm) { var st = Math.min(5, parseInt(me.query_temp("zy_flying", 0)) || 0); bonus += st * v.damage / 100; }
         else if (e === "gb_tail" && me.query_temp("zy_tail")) { bonus += v.damage / 100; me.remove_temp("zy_tail"); }
         else if (e === "gb_six" && me.query_temp("zy_six")) { bonus += v.damage / 100; me.remove_temp("zy_six"); }
         else if (e === "em_twin" && me.query_temp("zy_twin")) { bonus += v.damage / 100; me.remove_temp("zy_twin"); }
@@ -783,21 +912,23 @@
         else if (e === "ss_debt" && me.query_temp("zy_debt")) { bonus += v.damage / 100; me.remove_temp("zy_debt"); }
         else if (e === "ss_asura" && me.max_hp && me.hp / me.max_hp < 0.3) { bonus += v.damage / 100; addIgnore(par, v.ignore); }
         else if (e === "sn_charm" && me.query_temp("zy_charm")) { bonus += v.damage / 100; me.remove_temp("zy_charm"); }
-        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, me.add_temp("zy_thunder", 1, 12000)); addIgnore(par, th * v.ignore); }
+        else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, parseInt(me.query_temp("zy_thunder", 0)) || 0); addIgnore(par, th * v.ignore); }
         else if (e === "sn_purple" && inPfm) bonus += v.damage / 100;
         return sh * (1 + bonus);
     }
     function afterAttack(me, target, par, dealt, skill) {
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me) || !(dealt > 0)) return;
-        var e = active.intent.effect, v = active.values;
+        var e = active.intent.effect, v = active.values, inPfm = pfmContextMatches(me, active);
+        if (e === "gb_flying" && inPfm) me.set_temp("zy_flying", Math.min(5, (parseInt(me.query_temp("zy_flying", 0)) || 0) + 1), 12000);
+        else if (e === "sn_thunder" && inPfm) me.set_temp("zy_thunder", Math.min(5, (parseInt(me.query_temp("zy_thunder", 0)) || 0) + 1), 12000);
         if (e === "ss_shadow" && me.query_temp("zy_shadow_ready")) {
             me.remove_temp("zy_shadow_ready"); target.set_temp("sealed_pfm", 1, v.seal * 1000);
         }
-        if (e === "xy_talisman" && me.query_temp("zy_pfm", "") === e && !target.query_temp("zy_talisman_cd")) {
-            target.set_temp("zy_talisman_cd", 1, 8000); var extra = Math.min(Math.floor(me.max_mp * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (extra > 0) target.damage(extra, me, 100);
-        } else if (e === "sn_purple" && me.query_temp("zy_pfm", "") === e && !target.query_temp("zy_purple_cd")) {
-            target.set_temp("zy_purple_cd", 1, 9000); var burn = Math.min(Math.floor(me.gj * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (burn > 0) target.damage(burn, me, 100);
+        if (e === "xy_talisman" && inPfm && !target.query_temp("zy_talisman_cd")) {
+            target.set_temp("zy_talisman_cd", 1, 8000); var extra = Math.min(Math.floor(me.max_mp * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (extra > 0) target.damage(extra, me, 0);
+        } else if (e === "sn_purple" && inPfm && !target.query_temp("zy_purple_cd")) {
+            target.set_temp("zy_purple_cd", 1, 9000); var burn = Math.min(Math.floor(me.gj * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (burn > 0) target.damage(burn, me, 0);
         }
     }
     function onParry(me) {
@@ -822,7 +953,10 @@
         if (e === "em_wrath" && me.query_temp("zy_wrath_ready") && from && from.hp > 0 && !me._zy_reflecting) {
             me.remove_temp("zy_wrath_ready"); me.set_temp("zy_wrath_cd", 1, 8000);
             var reflect = Math.min(Math.floor(sh * v.reflect / 100), Math.floor(me.gj * v.cap / 100));
-            if (reflect > 0) { me._zy_reflecting = true; from.damage(reflect, me, 100); me._zy_reflecting = false; }
+            if (reflect > 0) {
+                me._zy_reflecting = true;
+                try { from.damage(reflect, me, 0); } finally { me._zy_reflecting = false; }
+            }
         }
         return Math.max(0, sh);
     }
@@ -833,17 +967,16 @@
         DATA: DATA, FAMILY_TO_KEY: FAMILY_TO_KEY, MAX_LEVEL: MAX_LEVEL, DAILY_LIMIT: DAILY_LIMIT, ENERGY_COST: ENERGY_COST,
         family_data: familyData, find_by_key: findDataByKey, find_intent: findIntent, migrate: migrate,
         public_owner: publicOwner, is_public_owner: function (owner) { return typeof owner === "string" && owner.indexOf("zhenyi_public:") === 0; },
-        allow_public_npc: allowPublicNpc, trial_stats: trialStats,
+        allow_public_npc: allowPublicNpc, is_trial_owner: isTrialOwner, is_in_trial: isInTrial, trial_stats: trialStats,
         grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,
         confirm_trial: confirmTrial, cancel_trial: cancelTrial,
-        configure_trial_room: configureTrialRoom, add_material: addMaterial, sweep: sweep,
+        configure_trial_room: configureTrialRoom, rehydrate_trial_room: rehydrateTrialRoom, add_material: addMaterial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
         modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
         modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill
     };
 })();
-

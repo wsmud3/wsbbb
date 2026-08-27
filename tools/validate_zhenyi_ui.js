@@ -15,6 +15,10 @@ const area = fs.readFileSync(path.join(root, "world", "extends", "map", "area.js
 const legacyRewardNpc = fs.readFileSync(path.join(root, "world", "npc", "zw", "zhenwujian_ling.js"), "utf8");
 const room = fs.readFileSync(path.join(root, "os", "room", "room.js"), "utf8");
 const trialNpc = fs.readFileSync(path.join(root, "world", "npc", "pub", "zhenyi_trial.js"), "utf8");
+const zhenyiSource = fs.readFileSync(path.join(root, "world", "zhenyi.js"), "utf8");
+const pfmSource = fs.readFileSync(path.join(root, "world", "cmd", "battle", "pfm.js"), "utf8");
+const tuoliSource = fs.readFileSync(path.join(root, "world", "obj", "cash", "tuoli.js"), "utf8");
+const cleanBuildSource = fs.readFileSync(path.join(root, "tools", "clean_vite_assets.js"), "utf8");
 
 assert.ok(panel.includes("show_zhenyi_detail") && panel.includes("skill-item zy-item grade"), "真意面板必须沿用技能列表的点击展开结构与 grade 颜色");
 assert.ok(panelCss.includes(".zy-item>.zy-name") && panelCss.includes("color: var(--border-color)"), "grade 必须直接改变真意名称颜色，不能只显示颜色文字");
@@ -33,6 +37,10 @@ assert.ok(area.includes("public_owner") && area.includes("zy_trial_owner"), "公
 assert.ok(!legacyRewardNpc.includes('set_temp("zw_zhenwu"'), "旧真武剑灵不得再直接发放草创真意");
 assert.ok(room.includes("allow_public_npc(this.path, obj_path)"), "禁地房间创建 NPC 时必须过滤无关旧 NPC");
 assert.ok(trialNpc.includes("trial_stats(intent)") && !/player\.(max_hp|max_mp|gj|fy|mz|ds|zj)\s*\*/.test(trialNpc), "试炼 NPC 必须采用旧 NPC 固定档位，不得再按玩家属性倍乘");
+assert.ok(pfmSource.includes("try {") && pfmSource.includes("finally {") && pfmSource.includes("end_pfm"), "绝招失败或抛错时必须清理真意释放上下文");
+assert.ok(!zhenyiSource.includes("target.damage(extra, me, 100)") && !zhenyiSource.includes("target.damage(burn, me, 100)") && !zhenyiSource.includes("from.damage(reflect, me, 100)"), "真意附伤与反伤不得绕过防御");
+assert.ok(tuoliSource.includes("is_in_trial(me)"), "真意试炼尚未离场时必须阻止叛师");
+assert.ok(cleanBuildSource.includes("generatedBundle") && cleanBuildSource.includes("unlinkSync"), "前端构建前必须清理旧哈希 bundle");
 
 const pureMechanics = [];
 for (const data of Object.values(WORLD.ZHENYI.DATA)) {
