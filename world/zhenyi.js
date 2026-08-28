@@ -263,7 +263,7 @@
             case "gb_tail": return "绊字诀命中后获得12秒摆尾；下一次技能伤害提高" + percentText(v.damage) + "。";
             case "gb_field": return "自身气血低于40%时，技能伤害提高" + percentText(v.damage) + "。";
             case "gb_six": return "降龙或十八掌成功后获得12秒龙劲；下一次技能伤害提高" + percentText(v.damage) + "。";
-            case "xy_beiming": return "北冥绑定绝招命中后，吸取目标最大内力的" + percentText(v.drain) + "并转为自身内力；单次转化不超过自身最大内力" + percentText(v.cap) + "。";
+            case "xy_beiming": return "北冥绑定绝招成功施展后，吸取目标最大内力的" + percentText(v.drain) + "并转为自身内力；单次转化不超过自身最大内力" + percentText(v.cap) + "。";
             case "xy_lingbo": return "成功闪避后获得10秒残影；下一次技能伤害提高" + percentText(v.damage) + "，命中提高" + percentText(v.hit) + "。";
             case "xy_baihong": return "当前内力高于80%时，白虹掌力伤害提高" + percentText(v.damage) + "，并消耗最大内力" + percentText(v.cost) + "。";
             case "xy_talisman": return "生死符命中后追加自身最大内力的" + percentText(v.extra) + "作为伤害，单次不超过本次已造成伤害" + percentText(v.cap) + "，并按目标防御结算，8秒冷却。";
@@ -491,6 +491,26 @@
         return room;
     }
 
+    // 精力由两个带过期时间的 temp 字段共同组成。试炼建立失败时直接恢复
+    // 原字段（含原过期时间），避免简单 add_temp 造成跨日精力或补充精力错账。
+    function snapshotEnergy(me) {
+        var temp = me && me.temp;
+        return {
+            exExists: !!(temp && Object.prototype.hasOwnProperty.call(temp, "ex_jl")),
+            adExists: !!(temp && Object.prototype.hasOwnProperty.call(temp, "ad_jl")),
+            ex: temp && temp.ex_jl,
+            ad: temp && temp.ad_jl
+        };
+    }
+    function restoreEnergy(me, snapshot) {
+        if (!me || !snapshot) return;
+        if (!me.temp) me.temp = {};
+        if (snapshot.exExists) me.temp.ex_jl = snapshot.ex;
+        else delete me.temp.ex_jl;
+        if (snapshot.adExists) me.temp.ad_jl = snapshot.ad;
+        else delete me.temp.ad_jl;
+    }
+
     function isInTrial(me) {
         if (!me) return false;
         var env = me.environment, active = me.query_temp("zy_trial_active", "");
@@ -521,12 +541,21 @@
         var npc = null;
         try { npc = NPC.CLONE("pub/zhenyi_trial"); } catch (e) { npc = null; }
         if (!npc || !npc.init_trial) {
+            if (npc && npc.destroy) npc.destroy();
             me.set_temp("zy_trial_failed", 1);
             me.notify("<hir>试炼场热更新后化身恢复失败，本次试炼已经结束。</hir>");
             returnFromTrial(me, key);
             return true;
         }
-        npc.init_trial(me, data, intent); room.item_changed(npc, true);
+        try {
+            npc.init_trial(me, data, intent); room.item_changed(npc, true);
+        } catch (e) {
+            if (npc && npc.destroy) npc.destroy();
+            me.set_temp("zy_trial_failed", 1);
+            me.notify("<hir>试炼场热更新后化身恢复失败，本次试炼已经结束。</hir>");
+            returnFromTrial(me, key);
+            return true;
+        }
         me.notify("<hiy>试炼场更新完成，你的真意试炼已经续接。</hiy>");
         npc.do_kill(me);
         return true;
@@ -544,29 +573,43 @@
         if (dailyCount(me, data.key, intent.id) >= DAILY_LIMIT) return me.notify("这项试炼今日已达十次。"), false;
         var baseRoom = ROOM.Get(data.trialRoom);
         if (!baseRoom) return me.notify("试炼场暂不可用，请联系管理员。"), false;
-        var npc = null;
-        try { npc = NPC.CLONE("pub/zhenyi_trial"); } catch (e) { return me.notify("试炼化身凝聚失败，请联系管理员。"), false; }
-        if (!npc || !npc.init_trial) return me.notify("试炼化身凝聚失败。"), false;
-        if (!me.expend_jingli(ENERGY_COST)) { npc.destroy(); return me.notify("参加试炼需要" + ENERGY_COST + "点精力。"), false; }
         var owner = trialOwner(me, data.key);
-        var staleRoom = baseRoom.query_copy(owner);
-        if (staleRoom) staleRoom.clear_by_area(baseRoom.parent, owner);
-        me.set_temp("zy_trial_owner", owner);
-        me.set_temp("zy_trial_return", me.environment.path);
-        var room = baseRoom.create_copy(owner);
-        configureTrialRoom(room);
-        if (!room || me.moveto(room, me.name + "步入试炼石门。", me.name + "踏入了试炼场。") === false) {
-            npc.destroy(); me.remove_temp("zy_trial_owner"); me.remove_temp("zy_trial_return");
+        var npc = null, room = null, oldRoom = me.environment, energyBefore = snapshotEnergy(me), energySpent = false;
+        try {
+            var staleRoom = baseRoom.query_copy(owner);
+            if (staleRoom) staleRoom.clear_by_area(baseRoom.parent, owner);
+            room = baseRoom.create_copy(owner);
+            if (!room) throw new Error("trial room copy failed");
+            configureTrialRoom(room);
+            npc = NPC.CLONE("pub/zhenyi_trial");
+            if (!npc || !npc.init_trial) throw new Error("trial npc clone failed");
+            if (!me.expend_jingli(ENERGY_COST)) {
+                if (npc && npc.destroy) npc.destroy();
+                if (room) room.clear_by_area(baseRoom.parent, owner);
+                return me.notify("参加试炼需要" + ENERGY_COST + "点精力。"), false;
+            }
+            energySpent = true;
+            me.set_temp("zy_trial_owner", owner);
+            me.set_temp("zy_trial_return", oldRoom.path);
+            if (me.moveto(room, me.name + "步入试炼石门。", me.name + "踏入了试炼场。") === false)
+                throw new Error("trial move failed");
+            for (var i = room.items.length - 1; i >= 0; i--) {
+                var old = room.items[i];
+                if (!old.is_player && old.is_zhenyi_trial) room.item_changed(old, false);
+            }
+            me.set_temp("zy_trial_active", token(data.key, intent.id));
+            me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
+            npc.init_trial(me, data, intent);
+            room.item_changed(npc, true);
+        } catch (e) {
+            if (npc && npc.destroy) npc.destroy();
+            if (me.environment === room && oldRoom && me.moveto)
+                me.moveto(oldRoom, me.name + "退出了未能建立的试炼。", me.name + "重新回到禁地。" );
+            clearTrialTemps(me);
             if (room) room.clear_by_area(baseRoom.parent, owner);
-            return me.notify("试炼场暂时无法进入。"), false;
+            if (energySpent) restoreEnergy(me, energyBefore);
+            return me.notify("试炼场暂时无法进入，精力未被消耗。"), false;
         }
-        for (var i = room.items.length - 1; i >= 0; i--) {
-            var old = room.items[i];
-            if (!old.is_player && old.is_zhenyi_trial) room.item_changed(old, false);
-        }
-        me.set_temp("zy_trial_active", token(data.key, intent.id));
-        me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
-        npc.init_trial(me, data, intent); room.item_changed(npc, true);
         me.notify("<hiy>你消耗" + ENERGY_COST + "点精力，开始【" + intent.trial + "】。今日完成次数" + dailyCount(me, data.key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
         npc.do_kill(me); return true;
     }
@@ -613,14 +656,9 @@
     function addXuanjing(me, count) { return me.add_obj("st/xuanjing", count) || null; }
     function addMaterial(me, key, id, count) {
         if (!me || !(count > 0)) return null;
-        var path = matPath(key, id), item = null;
-        // 先创建带参数的对象再交给角色合并，避免奖励链路丢失 zhenyi_hen 的参数。
-        if (typeof OBJ !== "undefined" && OBJ.CREATE) {
-            item = OBJ.CREATE(path, count);
-            if (item) item = me.add_obj(item);
-        }
-        if (!item) item = me.add_obj(path, count);
-        return item || null;
+        // add_obj(path, count) 自身负责参数化克隆和堆叠；不要先创建一个无人持有的
+        // 临时对象再尝试第二次发放，否则第一次合并失败会遗留游离对象。
+        return me.add_obj(matPath(key, id), count) || null;
     }
     function matCount(me, key, id) { var obj = me.find_obj_bypath(matPath(key, id)); return obj ? (obj.count || 1) : 0; }
     function rollbackReward(me, granted) {
@@ -839,10 +877,15 @@
         return !!(me && active && pfmId && me.query_temp("zy_pfm", "") === active.intent.effect &&
             active.intent.pfms.indexOf(pfmId) >= 0);
     }
-    function beginPfm(me, pfm, skill) {
+    function beginPfm(me, target, pfm, skill) {
+        // 兼容热更新期间仍按旧三参数签名调用的绝招链路。
+        if (arguments.length === 3) { skill = pfm; pfm = target; target = null; }
         var active = getActive(me);
         if (!active || !pfmMatches(active, pfm.id, skill)) return null;
         clearPfmContext(me);
+        me._zy_pfm_hit = false;
+        me._zy_pfm_target = target || null;
+        me._zy_pfm_target_hp = target && target.hp;
         me.set_temp("zy_pfm", active.intent.effect, 15000); me.set_temp("zy_pfm_id", pfm.id, 15000); return active;
     }
     function pfmCost(me, pfm, skill, value) {
@@ -863,6 +906,16 @@
         try {
             if (!success || !pfmMatches(active, pfm && pfm.id, skill)) return false;
             var effect = active.intent.effect, v = active.values;
+            var hit = !!me._zy_pfm_hit;
+            if (!hit && target && me._zy_pfm_target === target && typeof me._zy_pfm_target_hp === "number")
+                hit = target.hp < me._zy_pfm_target_hp;
+            // 北冥两式是恢复/增益招式，本身不攻击目标；其真意按成功施展结算。
+            if (effect === "xy_beiming") hit = true;
+            // 魅魂在容貌高于目标时不走攻击公式，但属于原技能明示的条件必然命中。
+            if (effect === "sn_charm" && target && me.per > target.per) hit = true;
+            var needsHit = effect === "zw_stick" || effect === "sl_roar" || effect === "sl_prajna" ||
+                effect === "gb_tail" || effect === "xy_beiming" || effect === "sn_charm";
+            if (needsHit && !hit) return false;
             if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.set_temp("zy_wood_guard", 1, 8000); }
             else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * v.heal / 100));
             else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * v.drain / 100), Math.floor(me.max_mp * v.cap / 100)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
@@ -877,6 +930,9 @@
             else if (effect === "sn_avatar") me.set_temp("zy_avatar", 1, 15000);
             return true;
         } finally {
+            delete me._zy_pfm_hit;
+            delete me._zy_pfm_target;
+            delete me._zy_pfm_target_hp;
             clearPfmContext(me, pfm && pfm.id);
         }
     }
@@ -920,6 +976,7 @@
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me) || !(dealt > 0)) return;
         var e = active.intent.effect, v = active.values, inPfm = pfmContextMatches(me, active);
+        if (inPfm) me._zy_pfm_hit = true;
         if (e === "gb_flying" && inPfm) me.set_temp("zy_flying", Math.min(5, (parseInt(me.query_temp("zy_flying", 0)) || 0) + 1), 12000);
         else if (e === "sn_thunder" && inPfm) me.set_temp("zy_thunder", Math.min(5, (parseInt(me.query_temp("zy_thunder", 0)) || 0) + 1), 12000);
         if (e === "ss_shadow" && me.query_temp("zy_shadow_ready")) {
@@ -949,7 +1006,7 @@
         else if (e === "sn_guard" && me.mp > 0) { var convert = Math.min(sh * v.convert / 100, sh * v.cap / 100, me.mp); me.add_mp(-Math.floor(convert)); sh -= convert; }
         sh *= (1 - reduction);
         if (e === "sl_vajra" && sh >= me.hp && me.hp > 1 && !me.query_temp("zy_vajra_cd")) { sh = me.hp - 1; me.set_temp("zy_vajra_cd", 1, 600000); me.notify("<hiy>金刚不坏真意护住你最后一线生机！</hiy>"); }
-        else if (e === "zw_wuji" && me.max_hp && me.hp / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.clear_downside && me.clear_downside(); }
+        else if (e === "zw_wuji" && me.max_hp && (me.hp - sh) / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.clear_downside && me.clear_downside(); }
         if (e === "em_wrath" && me.query_temp("zy_wrath_ready") && from && from.hp > 0 && !me._zy_reflecting) {
             me.remove_temp("zy_wrath_ready"); me.set_temp("zy_wrath_cd", 1, 8000);
             var reflect = Math.min(Math.floor(sh * v.reflect / 100), Math.floor(me.gj * v.cap / 100));

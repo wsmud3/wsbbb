@@ -54,7 +54,7 @@ function query_obj_desc(player,obj, type) {
     json.from = type;
     json.id = obj.id;
     json.desc = obj.get_desc(player);
-    json.isCustom = obj.is_custom || (obj.words && obj.words.length > 0) ? true : false;
+    json.isCustom = !!(obj.is_custom || (obj.path && (obj.path === "eq/cp" || obj.path.indexOf("eq/cp#") === 0 || obj.path.indexOf("eq/cp/") === 0)));
     if (obj.actions) {
         json.commands = [];
         for (var key in obj.actions) {

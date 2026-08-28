@@ -45,8 +45,9 @@ assert.strictEqual(hotNpc.killed, hotPlayer, "重建化身应继续原试炼战�
 
 const player = {
     items: [],
-    add_obj(item) {
-        assert.strictEqual(typeof item, "object", "悟痕奖励应先创建为物品对象");
+    add_obj(itemPath, count) {
+        assert.strictEqual(typeof itemPath, "string", "悟痕奖励应由背包接口直接按参数化路径创建");
+        const item = { path: itemPath, count: count || 1 };
         this.items.push(item);
         return item;
     }
@@ -148,5 +149,6 @@ assert.ok(zhenyiSource.includes("zy_trial_completed") && zhenyiSource.includes("
 assert.ok(zhenyiSource.includes("rehydrateTrialRoom") && roomSource.includes("rehydrate_trial_room(newRm, key)"), "热更新必须重建真意副本隔离与化身");
 assert.ok(zhenyiSource.includes("zy_trial_deadline") && npcSource.includes('query_temp("zy_trial_deadline"'), "热更新续接不得重置试炼总时限");
 assert.ok(zhenyiSource.includes("rollbackReward") && zhenyiSource.includes("本次未消耗精力和次数"), "奖励失败必须整体回滚且不消耗扫荡资源");
+assert.ok(zhenyiSource.includes("snapshotEnergy") && zhenyiSource.includes("restoreEnergy"), "试炼建立失败必须恢复完整精力字段");
 assert.ok(npcSource.indexOf('this.trial_mode === "endure"') < npcSource.indexOf("clearTimeout(this.trial_timeout_handler)"), "坚持类 NPC 被误击杀时不能清掉存活计时器");
 console.log("真意试炼副本、动作栏、悟痕物品和坚持类 NPC 保护校验通过");

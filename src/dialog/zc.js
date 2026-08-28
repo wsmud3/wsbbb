@@ -99,8 +99,16 @@ export default {
     onData: function (data) {
         this.isShow = true;
         this.init_element();  // ensure events are bound before rendering
+        if (!data || typeof data !== "object" || Array.isArray(data)) data = {};
+        data.positions = Array.isArray(data.positions) ? data.positions : [];
+        data.zc_positions = Array.isArray(data.zc_positions) ? data.zc_positions : [];
+        data.available_words = Array.isArray(data.available_words) ? data.available_words : [];
+        data.available_pfms = Array.isArray(data.available_pfms) ? data.available_pfms : [];
+        data.selected_words = Array.isArray(data.selected_words) ? data.selected_words : [];
+        data.selected_pfms = Array.isArray(data.selected_pfms) ? data.selected_pfms : [];
         this.data = data;
         this.step = data.step || "view";
+        this._maxWords = Math.max(1, Math.min(6, parseInt(data.max_words) || 6));
 
         switch (this.step) {
             case "view":
@@ -110,12 +118,17 @@ export default {
                 this.render_positions(data);
                 break;
             case "select_words":
-                this.selectedWords = data.selected_words ? data.selected_words.slice() : [];
-                this.selectedPfms = data.selected_pfms ? data.selected_pfms.slice() : [];
+                this.selectedWords = data.selected_words.slice();
+                this.selectedPfms = data.selected_pfms.slice();
+                if (data.is_force && this.selectedWords.indexOf(506) < 0) this.selectedWords.unshift(506);
                 this.render_word_selection(data);
                 break;
             case "levelset":
                 this.render_levelset(data);
+                break;
+            default:
+                Dialog.contentElement.html('<p style="color:#ff4040;">自创武学面板数据异常，请关闭后重试。</p><button class="zc-btn danger" cmd="_closed">关闭</button>');
+                Dialog.title("自创武学");
                 break;
         }
     },
@@ -125,11 +138,9 @@ export default {
         var html = [];
         html.push('<h3>' + (data.book_name || '秘籍') + '</h3>');
         html.push('<p>状态: ' + this.stateLabel(data.zc_state) + '</p>');
-        html.push('<p>品质: grade ' + (data.grade || 0) + ' | 词条数: ' + (data.total_words || 0) + ' | PFM数: ' + (data.total_pfms || 0) + '</p>');
+        html.push('<p>词条数: ' + (data.total_words || 0) + ' | PFM数: ' + (data.total_pfms || 0) + '</p>');
 
         if (data.zc_name) html.push('<p>武功名: ' + data.zc_name + '</p>');
-        if (data.zc_skill_id) html.push('<p>技能ID: ' + data.zc_skill_id + '</p>');
-
         // 显示已推演部位
         if (data.zc_positions && data.zc_positions.length > 0) {
             html.push('<p>已推演部位:</p><ul>');
@@ -186,7 +197,7 @@ export default {
         var self = this;
         var html = [];
         html.push('<h3>' + data.position_label + ' - 选择词条与PFM</h3>');
-        html.push('<p>武道书: ' + (data.wudao_count || 0) + '本 | 最多' + (data.max_words || 6) + '个词条 | 最多3个PFM</p>');
+        html.push('<p>武道书: ' + (data.wudao_count || 0) + '本 | 最多' + this._maxWords + '个词条 | 最多3个PFM</p>');
 
         if (data.is_force) {
             html.push('<p style="color:#ff8c00;">内功部位: 第一个词条必须为"内力上限"，可选额外高级词条(冷却/释放时间)</p>');
@@ -228,7 +239,7 @@ export default {
         var pfmCost = self.getPfmCost();
         var totalCost = wordCost + pfmCost;
         html.push('<div class="zc-summary">');
-        html.push('<span>词条: ' + self.selectedWords.length + '/' + (data.max_words || 6) + ' (消耗' + wordCost + '本)</span>');
+        html.push('<span>词条: ' + self.selectedWords.length + '/' + this._maxWords + ' (消耗' + wordCost + '本)</span>');
         html.push('<span>PFM: ' + self.selectedPfms.length + '/3 (消耗' + pfmCost + '本)</span>');
         html.push('<span>总消耗: <b style="color:#ffd700;">' + totalCost + '本武道书</b></span>');
         html.push('</div>');
@@ -244,7 +255,7 @@ export default {
         // 存储当前数据供后续使用
         this._bookId = data.book_id;
         this._position = data.position;
-        this._availablePfms = data.available_pfms;
+        this._availablePfms = data.available_pfms.slice();
     },
 
     // === 渲染: 输入目标等级 ===
@@ -272,7 +283,7 @@ export default {
 
     // === 选择逻辑 ===
     isWordSelected: function (index) {
-        return this.selectedWords.indexOf(index) >= 0;
+        return Array.isArray(this.selectedWords) && this.selectedWords.indexOf(index) >= 0;
     },
 
     isPfmSelected: function (pfmId) {
@@ -285,7 +296,7 @@ export default {
 
     findWordByIndex: function (index) {
         var words = this.data && this.data.available_words;
-        if (!words) return null;
+        if (!Array.isArray(words)) return null;
         for (var i = 0; i < words.length; i++) {
             if (words[i].index === index) return words[i];
         }
@@ -295,10 +306,14 @@ export default {
     toggleWord: function (index) {
         var idx = this.selectedWords.indexOf(index);
         if (idx >= 0) {
+            if (this.data && this.data.is_force && index === 506) {
+                alert("内功部位必须保留'内力上限'词条");
+                return;
+            }
             this.selectedWords.splice(idx, 1);
         } else {
-            if (this.selectedWords.length >= 6) {
-                alert("最多选择6个词条");
+            if (this.selectedWords.length >= this._maxWords) {
+                alert("最多选择" + this._maxWords + "个词条");
                 return;
             }
             // 内功部位: 如果是第一个词条，强制为内力上限(506)
@@ -349,7 +364,7 @@ export default {
         var cost = 0;
         for (var i = 0; i < this.selectedPfms.length; i++) {
             var sel = this.selectedPfms[i];
-            if (this._availablePfms) {
+            if (Array.isArray(this._availablePfms)) {
                 for (var j = 0; j < this._availablePfms.length; j++) {
                     var pfm = this._availablePfms[j];
                     if (pfm.skill_id === sel.skill_id && pfm.pfm_key === sel.pfm_key) {
@@ -365,6 +380,10 @@ export default {
     confirmSelection: function () {
         if (this.selectedWords.length === 0) {
             alert("请至少选择一个词条");
+            return;
+        }
+        if (this.data && this.data.is_force && this.selectedWords[0] !== 506) {
+            alert("内功部位必须以内力上限作为首个词条");
             return;
         }
         if (!this._bookId || !this._position) {

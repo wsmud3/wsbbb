@@ -1,5 +1,5 @@
 /* ========================================
-   game.css - 娓告垙涓荤晫闈㈡牱寮?
+   game.css - 游戏主界面样式
    ======================================== */
 
 .channel {
@@ -539,6 +539,9 @@
 
     overflow-y: hidden;
     height: 6em;
+    height: calc(6em + env(safe-area-inset-bottom));
+    padding-bottom: constant(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
     line-height: 6em;
     display: flex;
     flex-direction: row;
@@ -703,4 +706,3 @@
     border-radius: 0.25em;
     border-radius: 0.25em;
 }
-

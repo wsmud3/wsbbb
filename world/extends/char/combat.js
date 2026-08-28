@@ -8,12 +8,6 @@ CHARACTER.prototype.recount = function () {
     } else {
         this.gjsd = 500;
     }
-    // 武学被动可突破攻速下限（如疾风剑法将 0.5 秒下限提升至 0.25 秒）
-    if (this.attack_skill && this.attack_skill.on_recount_gjsd) {
-        var jf_gjsd = this.attack_skill.on_recount_gjsd(this);
-        if (jf_gjsd > 0) this.gjsd = jf_gjsd;
-    }
-
 
     // NPC战斗属性：如果模板中已显式设定（gj>0），则保留设定值，避免后天属性被公式重复计算
     // 未设定的NPC（如动物/简单怪物）仍由基础属性+后天加成公式计算
@@ -50,6 +44,27 @@ CHARACTER.prototype.crit = function (target, part, bj_per) {
     if (this.random(100) < finalBj) {
         return true;
     }
+}
+
+// 查询“本次攻击所用自创部位”的被动值。角色总属性可能同时包含同一门
+// 自创武学的多个已启用部位，溅射不能因此从刀法串到剑法或拳脚攻击上。
+function query_zc_attack_passive(me, attackskill, baseType, propName) {
+    if (!me || !attackskill || !attackskill.is_custom || !attackskill.zc_words_by_position || !baseType) return 0;
+    var skData = me.skills && me.skills[attackskill.id];
+    if (!skData) return 0;
+    var skillLv = me.query_skill(attackskill.id, 0), value = 0;
+    for (var positionKey in attackskill.zc_words_by_position) {
+        var position = SKILL.ZC_POSITIONS && SKILL.ZC_POSITIONS[positionKey];
+        if (!position || position.base !== baseType) continue;
+        var words = attackskill.zc_words_by_position[positionKey] || [];
+        for (var wordIndex = 0; wordIndex < words.length; wordIndex++) {
+            var slot = words[wordIndex], word = attackskill.query_slot(slot);
+            if (!word || word.prop !== propName) continue;
+            var wordLevel = SKILL.get_wl ? SKILL.get_wl(skData.word_levels, slot, positionKey) : 0;
+            value += word.value(skillLv, attackskill.grade, wordLevel);
+        }
+    }
+    return value;
 }
 CHARACTER.prototype.do_attack = function (par) {
     if (this.is_faint || this.hp <= 0 || !this.fight_type) return;
@@ -285,13 +300,30 @@ CHARACTER.prototype.do_attack = function (par) {
                 }
 
                 // ZC passive: 溅射 - splash damage to nearby enemy
-                var zcSplash = this.query_prop("zc_splash") || 0;
+                var splashBase = (!weapon || weapon_type === WEAPON_TYPE.NONE) ? "unarmed" : weapon_type;
+                var zcSplash = query_zc_attack_passive(this, attackskill, splashBase, "zc_splash");
                 if (zcSplash > 0 && sh > 0) {
-                    var splashDmg = sh * zcSplash;
-                    var splashTarget = target.query_enemy();
-                    if (splashTarget && splashTarget !== this && splashTarget.hp > 0) {
+                    var splashDmg = Math.floor(sh * zcSplash);
+                    var splashTarget = null, livingEnemies = [];
+                    if (this.enemy) {
+                        for (var splashIndex = 0; splashIndex < this.enemy.length; splashIndex++) {
+                            var splashEnemy = this.enemy[splashIndex];
+                            if (splashEnemy && splashEnemy.hp > 0 && splashEnemy.fight_type)
+                                livingEnemies.push(splashEnemy);
+                        }
+                    }
+                    if (livingEnemies.length === 1) {
+                        // 单目标时溅射再次命中当前目标，与六脉神剑一致。
+                        splashTarget = target;
+                    } else if (livingEnemies.length > 1) {
+                        var otherEnemies = [];
+                        for (var splashOther = 0; splashOther < livingEnemies.length; splashOther++)
+                            if (livingEnemies[splashOther] !== target) otherEnemies.push(livingEnemies[splashOther]);
+                        splashTarget = otherEnemies.length > 0 ? otherEnemies[Math.floor(Math.random() * otherEnemies.length)] : target;
+                    }
+                    if (splashTarget && splashTarget.hp > 0 && splashDmg > 0) {
                         splashTarget.damage(splashDmg, this, 0);
-                        this.send_combat("<HIY>溅射对" + splashTarget.name + "造成" + Math.floor(splashDmg) + "点伤害。</HIY>\n");
+                        this.send_combat("<HIY>溅射对" + splashTarget.name + "造成" + splashDmg + "点伤害。</HIY>\n");
                     }
                 }
 
@@ -451,8 +483,8 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy) {
         // ZC passive: 不灭 - trigger at low HP
         var zcUndying = this.query_prop("zc_undying") || 0;
         if (zcUndying > 0 && this.hp > 0 && this.max_hp > 0 && !this._zc_undying_cd) {
-            var hpPct = this.hp / this.max_hp;
-            if (hpPct <= zcUndying) {
+            var projectedHpPct = (this.hp - sh) / this.max_hp;
+            if (projectedHpPct <= 0.10) {
                 var undyingHeal = Math.floor(this.max_hp * zcUndying);
                 this.do_recover(undyingHeal);
                 this._zc_undying_cd = true;
@@ -470,6 +502,9 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy) {
                 this.send_combat("<HIR>混沌不灭！触发不灭恢复" + undyingHeal + "点气血！</HIR>\n");
                 var selfRef = this;
                 setTimeout(function() { selfRef._zc_undying_cd = false; }, 600000);
+                // 新生成的无伤状态只能保护后续伤害，因此当前触发伤害必须在这里
+                // 明确归零，否则会在回复后继续扣除，出现“触发不灭仍被当场击杀”。
+                return 0;
             }
         }
 

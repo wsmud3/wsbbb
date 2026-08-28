@@ -106,6 +106,38 @@ WORLD.ZHENYI.after_attack(flying, { query_temp() {}, set_temp() {}, damage() {} 
 assert.strictEqual(flying.query_temp("zy_flying", 0), 1, "造成实际伤害后才增加连续命中层数");
 WORLD.ZHENYI.end_pfm(flying, null, flyingPfm, flyingSkill, true);
 
+const stick = player();
+stick.family = { id: "WUDANG" };
+stick.temp.zy_zw_3 = 1;
+stick.temp.zy_level_zw_3 = 1;
+stick.temp.zy_active = "zw_3";
+const stickSkill = { grade: 5, family: stick.family };
+const stickPfm = { id: "taijijian/rao" };
+const stickTarget = {
+    hp: 1000, max_hp: 1000, temp: {}, statuses: 0,
+    query_temp(key) { return this.temp[key]; },
+    set_temp(key, value) { this.temp[key] = value; },
+    add_status() { this.statuses++; }
+};
+WORLD.ZHENYI.begin_pfm(stick, stickTarget, stickPfm, stickSkill);
+assert.strictEqual(WORLD.ZHENYI.end_pfm(stick, stickTarget, stickPfm, stickSkill, true), false, "绝招仅成功释放但未命中时不得触发命中型真意");
+assert.strictEqual(stickTarget.statuses, 0, "落空的绕字诀不得额外施加粘劲忙乱");
+WORLD.ZHENYI.begin_pfm(stick, stickTarget, stickPfm, stickSkill);
+WORLD.ZHENYI.after_attack(stick, stickTarget, {}, 100, stickSkill);
+assert.strictEqual(WORLD.ZHENYI.end_pfm(stick, stickTarget, stickPfm, stickSkill, true), true, "造成实际伤害后应触发命中型真意");
+assert.strictEqual(stickTarget.statuses, 1, "命中的绕字诀应正常追加粘劲忙乱");
+
+const wuji = player();
+wuji.family = { id: "WUDANG" };
+wuji.hp = 2000; wuji.max_hp = 10000;
+wuji.temp.zy_zw_5 = 1;
+wuji.temp.zy_level_zw_5 = 1;
+wuji.temp.zy_active = "zw_5";
+wuji.do_recover = function (value) { this.recovered = value; this.hp += value; };
+wuji.clear_downside = function () { this.cleared = true; };
+WORLD.ZHENYI.modify_damage(wuji, null, 300);
+assert.ok(wuji.recovered > 0 && wuji.cleared, "伤害将气血压过18%阈值时无极必须在本次伤害结算中触发");
+
 const talisman = player();
 talisman.family = { id: "XIAOYAO" };
 talisman.max_mp = 10000;

@@ -1,6 +1,7 @@
 
 import * as Util from './utils/util.js';
 import { WS_HOST, WS_PORT } from './server-config.js';
+import JSON5 from 'json5';
 
 let IsConnecting = false;
 let ChangeServer = false;
@@ -8,7 +9,7 @@ let ReconnectTimer = null;
 let ServerListTimer = null;
 let ConnectionGeneration = 0;
 let RECONNECT_TIMEOUT = 15000; // 15 seconds to complete reconnection
-let LastPlayerId = null; // 鏂嚎鍓嶄繚鐣欙紝閲嶈繛鏃惰嚜鍔ㄧ櫥褰曠敤
+let LastPlayerId = null; // 断线前保留，重连时自动登录用
 export let GameClient = null;
 export let SelectedServer = null;
 export let LastCommand = null;
@@ -19,7 +20,7 @@ export function connectServer(server, pid) {
     if (IsConnecting) return;
     if (!server || !server.ip) {
         IsConnecting = false;
-        ReceiveMessage("<red>鐠囧嘲鍘涢柅澶嬪閺堝秴濮熼崳顭掔礉閸愬秷绻樼悰宀€骞囬幋蹇旀惙娴ｆ嚎鈧?/red>");
+        ReceiveMessage("<red>璇峰厛閫夋嫨鏈嶅姟鍣紝鍐嶈繘琛岀幇鎴忔搷浣溿€?/red>");
         return;
     }
 
@@ -29,15 +30,15 @@ export function connectServer(server, pid) {
         clearTimeout(ServerListTimer);
         ServerListTimer = null;
     }
-    console.log("閲嶆柊杩炴帴", GameClient == null ? "鏈繛鎺? : "宸茶繛鎺?);
+    console.log("重新连接", GameClient == null ? "未连接" : "已连接");
     closeServer();
 
-    // 閲嶈繛瓒呮椂淇濇姢锛歂绉掑唴娌℃敹鍒?login 鍝嶅簲鍒欏己鍒跺埛鏂伴〉闈?
+    // 重连超时保护：N秒内没收到 login 响应则强制刷新页面
     if (ReconnectTimer) clearTimeout(ReconnectTimer);
     ReconnectTimer = setTimeout(function() {
         if (generation !== ConnectionGeneration) return;
         ReconnectTimer = null;
-        console.log("閲嶈繛瓒呮椂锛屽埛鏂伴〉闈?);
+        console.log("重连超时，刷新页面");
         location.reload();
     }, RECONNECT_TIMEOUT);
     const client = new WSClient(server.ip, server.port, server.id || server.ID);
@@ -52,8 +53,8 @@ export function connectServer(server, pid) {
             ReconnectTimer = null;
         }
         if (err) {
-            if (err.isTrusted) err = "鏈嶅姟鍣ㄦ病鏈夊搷搴旓紝璇风◢鍚庨噸璇?;
-            showLoader("<strong>杩炴帴澶辫触锛?/strong>" + err + "");
+            if (err.isTrusted) err = "服务器没有响应，请稍后重试";
+            showLoader("<strong>连接失败：</strong>" + err + "");
         }
     }
     client.OnConnect = () => {
@@ -61,11 +62,11 @@ export function connectServer(server, pid) {
         IsConnecting = false;
         console.log("[reconnect] OnConnect pid=", pid, "Process.player=", Process.player, "LastPlayerId=", LastPlayerId);
         if (!pid && !Process.player && !LastPlayerId) {
-            showLoader('姝ｅ湪鑾峰彇瑙掕壊鍒楄〃...');
+            showLoader('正在获取角色列表...');
             SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken));
         } else if (!pid && LastPlayerId) {
-            // 鏂嚎閲嶈繛锛氱敤淇濆瓨鐨処D鑷姩鐧诲綍
-            console.log("[reconnect] 鑷姩鐧诲綍 LastPlayerId=", LastPlayerId);
+            // 断线重连：用保存的ID自动登录
+            console.log("[reconnect] 自动登录 LastPlayerId=", LastPlayerId);
             SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken) + " " + LastPlayerId);
         } else {
             if (pid) {
@@ -91,25 +92,25 @@ export function connectServer(server, pid) {
         }
 
         if (Process.player) {
-            // 淇濆瓨鐜╁ID鐢ㄤ簬鑷姩閲嶈繛锛屼絾瑕佸畬鍏ㄩ噸缃甎I鐘舵€侀伩鍏嶆柊鏃ф暟鎹啿绐?
+            // 保存玩家ID用于自动重连，但要完全重置UI状态避免新旧数据冲突
             LastPlayerId = Process.player;
             Process.player = null;
             Process.cur_room = null;
             Process.room_path = null;
             Process.room_exits = null;
             Process.clear();
-            // 鍏叡澶栧３鍜屽瓙瀵硅瘽妗嗙殑鐘舵€佸繀椤讳竴璧烽噸缃紱鍙竻 DOM
-            // 浼氱暀涓?child.isShow=true 鍜屽凡鑴辩 DOM 鐨?element 寮曠敤銆?
+            // 公共外壳和子对话框的状态必须一起重置；只清 DOM
+            // 会留下 child.isShow=true 和已脱离 DOM 的 element 引用。
             Dialog.reset();
             document.querySelectorAll('.dialog-backdrop, .modal-backdrop, .overlay').forEach(function(el) {
                 el.remove();
             });
-            // 娓呯悊鎴块棿鏄剧ず
+            // 清理房间显示
             $(".room-name").html("");
             $(".room_desc").html("");
             $(".room_items").html("");
             $(".state-bar").empty().css('visibility', 'hidden');
-            ReceiveMessage("<red>浣犵殑杩炴帴涓柇浜嗭紝鐐瑰嚮浠绘剰鎸夐挳閲嶆柊杩炵嚎...</red>");
+            ReceiveMessage("<red>你的连接中断了，点击任意按钮重新连线...</red>");
         } else {
             if (ServerListTimer) clearTimeout(ServerListTimer);
             ServerListTimer = setTimeout(() => {
@@ -132,8 +133,8 @@ export function SendCommand(cmd) {
     if (IsConnecting) return;
     if (!GameClient || !GameClient.Connected()) {
         LastCommand = cmd;
-        if (!SelectedServer) return ReceiveMessage("<red>鐠囧嘲鍘涢柅澶嬪閺堝秴濮熼崳顭掔礉閸愬秷绻樼悰宀€骞囬幋蹇旀惙娴ｆ嚎鈧?/red>");
-        ReceiveMessage("<red>杩炴帴涓柇锛屾鍦ㄩ噸鏂拌繛绾?..</red>");
+        if (!SelectedServer) return ReceiveMessage("<red>璇峰厛閫夋嫨鏈嶅姟鍣紝鍐嶈繘琛岀幇鎴忔搷浣溿€?/red>");
+        ReceiveMessage("<red>连接中断，正在重新连线...</red>");
         return connectServer(SelectedServer);
     }
     Dialog.extend.record(cmd);
@@ -142,7 +143,7 @@ export function SendCommand(cmd) {
 window.SendCommand = SendCommand;
 
 export function onLogin() {
-    // 娓呴櫎閲嶈繛瓒呮椂瀹氭椂鍣?
+    // 清除重连超时定时器
     if (ReconnectTimer) {
         clearTimeout(ReconnectTimer);
         ReconnectTimer = null;
@@ -152,7 +153,7 @@ export function onLogin() {
         ServerListTimer = null;
     }
 
-    // 鐧诲綍鎴愬姛鍚庢竻闄ゆ柇绾垮墠淇濆瓨鐨勭帺瀹禝D鍜屽懡浠?
+    // 登录成功后清除断线前保存的玩家ID和命令
     LastPlayerId = null;
     LastCommand = null;
     // Reset scroll state on reconnect so new messages auto-scroll
@@ -209,8 +210,8 @@ export function ReceiveData(data) {
 
 export function closeServer() {
     if (GameClient) {
-        // 鏃犺鏄惁宸茶繛鎺ラ兘蹇呴』璋?Destroy鈥斺€斿畠浼氳缃?onclose=null
-        // 闃叉鏃х殑 onclose 鍦ㄩ噸杩炶繃绋嬩腑鍐嶆瑙﹀彂锛屽鑷撮噸澶嶆竻鐞嗙晫闈?
+        // 无论是否已连接都必须调 Destroy——它会设置 onclose=null
+        // 防止旧的 onclose 在重连过程中再次触发，导致重复清理界面
         GameClient.Destroy();
     }
     GameClient = null;
@@ -302,9 +303,9 @@ export class WSClient {
         if (text[0] == '{' || text[0] == '[') {
             var packet;
             try {
-                // The server sends JavaScript object literals (unquoted keys),
-                // so JSON.parse is not compatible with all valid packets.
-                packet = new Function("return (" + text + ");")();
+                // 兼容服务端历史的未加引号键/单引号包，同时绝不执行数据包中的代码。
+                try { packet = JSON.parse(text); }
+                catch (jsonError) { packet = JSON5.parse(text); }
             } catch (e) {
                 console.error("[ws] invalid server packet", e);
                 return;
@@ -343,4 +344,3 @@ export class WSClient {
         return this.ws && this.ws.readyState == 1;
     }
 }
-

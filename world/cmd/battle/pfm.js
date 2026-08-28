@@ -150,7 +150,7 @@ this.enter = function (me, sk, pfmid) {
             //me.attack_skill = sp_skill;
             me.remove_status('weapon', true);
         }
-        if (WORLD.ZHENYI) zy_pfm_started = !!WORLD.ZHENYI.begin_pfm(me, pfm, sp_skill);
+        if (WORLD.ZHENYI) zy_pfm_started = !!WORLD.ZHENYI.begin_pfm(me, target, pfm, sp_skill);
         try {
             isrelease = pfm.use(me, target, lv, sk) != false;
             if (isrelease) {

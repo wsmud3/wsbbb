@@ -218,6 +218,84 @@ function get_available_pfms(me, position_key) {
     return pfms;
 }
 
+function pfm_matches_position(skill, pfm, position_key) {
+    var pos = ZC_POSITIONS[position_key];
+    if (!pos || !skill || !pfm) return false;
+    if (pfm.enable_skill) return pfm.enable_skill === pos.base;
+    return !!(skill.can_enables && skill.can_enables[0] === pos.base);
+}
+
+function family_label(family) {
+    if (!family) return "";
+    return family.name || family.id || "门派";
+}
+
+// 对最终将写入某一部位的完整 PFM 列表做统一校验。前端选择、手工命令、
+// 添加和替换都必须经过这里，不能靠 UI 隐藏选项来保护服务器数据。
+function validate_pfm_selections(me, book, position_key, refs) {
+    if (!ZC_POSITIONS[position_key]) return { error: "无效部位。" };
+    if (!Array.isArray(refs)) refs = [];
+    if (refs.length > 3) return { error: "每个部位最多选择3个PFM。" };
+
+    var selections = [], seen = {}, familyCount = 0, familyName = "", totalCost = 0;
+    for (var pk in book.zc_pfms) {
+        if (pk === position_key) continue;
+        var otherPfms = Array.isArray(book.zc_pfms[pk]) ? book.zc_pfms[pk] : [];
+        for (var oi = 0; oi < otherPfms.length; oi++) {
+            var otherSkill = SKILL.get(otherPfms[oi].skill_id);
+            if (otherSkill && otherSkill.family) {
+                familyCount++;
+                familyName = familyName || family_label(otherSkill.family);
+            }
+        }
+    }
+    if (familyCount > 1)
+        return { error: "现有自创技能已包含多个门派PFM，请先移除至只剩1个。" };
+
+    for (var i = 0; i < refs.length; i++) {
+        var raw = typeof refs[i] === "string" ? refs[i].trim() : "";
+        if (!raw) return { error: "PFM引用不能为空。" };
+        var dot = raw.indexOf(".");
+        if (dot <= 0 || dot === raw.length - 1) return { error: "PFM格式错误，应为 技能ID.pfmKey。" };
+        var skillId = raw.substring(0, dot), pfmKey = raw.substring(dot + 1), refKey = skillId + "." + pfmKey;
+        if (seen[refKey]) return { error: "同一部位不能重复选择同一PFM。" };
+        seen[refKey] = true;
+
+        var skill = SKILL.get(skillId), pfm = skill && skill.pfm && skill.pfm[pfmKey];
+        if (!skill || !pfm || !pfm.name) return { error: "PFM不存在或不可融合：" + refKey };
+        if (skill.type !== SKILL_TYPES.SKILL || skill.is_custom)
+            return { error: "只能融合已学会的非自创武学绝招。" };
+        if (me.query_skill(skillId, 0) < 3000)
+            return { error: "你的" + skill.name + "等级不足3000。" };
+        if (!pfm_matches_position(skill, pfm, position_key))
+            return { error: pfm.name + "不属于" + ZC_POSITIONS[position_key].label + "部位。" };
+        if (skill.family) {
+            familyCount++;
+            familyName = familyName || family_label(skill.family);
+            if (familyCount > 1)
+                return { error: "整个自创技能最多融合1个门派PFM，已有" + familyName + "的PFM。" };
+        }
+        var skillGrade = parseInt(skill.grade) || 0;
+        var cost = PFM_COST[skillGrade] || skillGrade + 1;
+        totalCost += cost;
+        selections.push({ skill_id: skillId, pfm_key: pfmKey, skill: skill, pfm: pfm, cost: cost });
+    }
+    return { selections: selections, cost: totalCost };
+}
+
+function clone_pfm_value(value, sources, copies) {
+    if (!value || typeof value !== "object") return value;
+    var found = sources.indexOf(value);
+    if (found >= 0) return copies[found];
+    var copy = Array.isArray(value) ? [] : {};
+    sources.push(value); copies.push(copy);
+    for (var key in value) {
+        if (Object.prototype.hasOwnProperty.call(value, key))
+            copy[key] = clone_pfm_value(value[key], sources, copies);
+    }
+    return copy;
+}
+
 function query_wudao_count(me) {
     var obj = me.find_obj_bypath("book/wudao");
     return obj ? obj.count : 0;
@@ -229,8 +307,7 @@ function sync_skill_grade(book, me) {
     if (!sk_data) return;
     var skill = SKILL.get(book.zc_skill_id);
     if (skill) {
-        var new_grade = book.get_total_words();
-        skill.grade = Math.min(new_grade, 6);
+        skill.grade = book.get_quality_grade ? book.get_quality_grade() : Math.min(book.grade || 0, 6);
         var cc = ZC_COLORS[skill.grade] || "wht";
         skill.color_name = "<" + cc + ">" + skill.name + "</" + cc + ">";
         me.on_skillchanged();
@@ -314,6 +391,10 @@ this.handle_name_input = function (me, input, book_id) {
             me.notify("武功名称必须是2-5个汉字。请重新输入：");
             return false;
         }
+    }
+    if (UTIL.check_word && !UTIL.check_word(name)) {
+        me.notify("武功名称含有不可使用的词语，请重新输入：");
+        return false;
     }
 
     for (var sk_id in WORLD.SKILLS) {
@@ -641,6 +722,8 @@ this.cmd_addword_done = function (me, book_id) {
     var words = book.zc_words[position_key] || [];
     if (words.length === 0)
         return me.notify("请至少选择一个词条。");
+    if (position_key === "内功" && words[0] !== 506)
+        return me.notify("内功部位必须以内力上限作为首个词条。");
 
     var wasCompleted = book._was_completed === true;
     delete book._was_completed;
@@ -651,7 +734,8 @@ this.cmd_addword_done = function (me, book_id) {
     if (wudao.count < words.length)
         return me.notify("<red>武道书不足！需要" + words.length + "本，当前" + wudao.count + "本。</red>");
 
-    me.remove_obj(wudao, words.length);
+    if (!me.remove_obj(wudao, words.length))
+        return me.notify("<red>武道书扣除失败，本次推演未生效。</red>");
 
     // Confirm position (may already be added for 内功 which pre-adds in cmd_select)
     if (book.zc_positions.indexOf(position_key) < 0)
@@ -695,7 +779,7 @@ this.cmd_addword_done = function (me, book_id) {
         }
     }
 
-    me.notify("<hic>" + book.color_name + "</hic> " + ZC_POSITIONS[position_key].label + "部位推演完成！消耗" + words.length + "本武道书。秘籍当前品质：grade " + book.grade);
+    me.notify("<hic>" + book.color_name + "</hic> " + ZC_POSITIONS[position_key].label + "部位推演完成！消耗" + words.length + "本武道书。");
     me.items_changed(book);
     notify_skill_update(me, book.zc_skill_id);
     return self.cmd_deduce(me, book_id);
@@ -745,6 +829,8 @@ this.cmd_confirm = function (me, book_id, arg2) {
 
     if (wordIndices.length === 0 || wordIndices.length > 6)
         return me.notify("词条数需在1-6之间。");
+    if (position_key === "内功" && wordIndices[0] !== 506)
+        return me.notify("内功部位必须以内力上限作为首个词条。");
 
     // Passive limit: one passive per position
     var passiveCount = 0;
@@ -774,18 +860,13 @@ this.cmd_confirm = function (me, book_id, arg2) {
     var totalCost = wordIndices.length;
 
     // PFM消耗
+    var pfmValidation = validate_pfm_selections(me, book, position_key, pfmRefs);
+    if (pfmValidation.error) return me.notify(pfmValidation.error);
     var pfmSelections = [];
-    for (var pi = 0; pi < pfmRefs.length; pi++) {
-        var ref = pfmRefs[pi].trim();
-        if (!ref) continue;
-        var dot = ref.indexOf(".");
-        if (dot < 0) continue;
-        var skid = ref.substring(0, dot);
-        var pfmk = ref.substring(dot + 1);
-        var src = SKILL.get(skid);
-        if (!src || !src.pfm || !src.pfm[pfmk]) continue;
-        totalCost += PFM_COST[src.grade] || src.grade + 1;
-        pfmSelections.push({ skill_id: skid, pfm_key: pfmk });
+    for (var pi = 0; pi < pfmValidation.selections.length; pi++) {
+        var validPfm = pfmValidation.selections[pi];
+        totalCost += validPfm.cost;
+        pfmSelections.push({ skill_id: validPfm.skill_id, pfm_key: validPfm.pfm_key });
     }
 
     if (totalCost > wudaoCount)
@@ -793,7 +874,8 @@ this.cmd_confirm = function (me, book_id, arg2) {
 
     // 扣除武道书
     var wudao = me.find_obj_bypath("book/wudao");
-    if (totalCost > 0 && wudao) me.remove_obj(wudao, totalCost);
+    if (totalCost > 0 && (!wudao || !me.remove_obj(wudao, totalCost)))
+        return me.notify("<red>武道书扣除失败，本次推演未生效。</red>");
 
     // 更新秘籍
     book.zc_words[position_key] = wordIndices;
@@ -902,43 +984,22 @@ this.cmd_addpfm_ok = function (me, book_id, arg2) {
     if (!book.has_position(position_key))
         return me.notify("该部位尚未推演。");
 
-    var src_skill = SKILL.get(skill_id);
-    if (!src_skill || !src_skill.pfm || !src_skill.pfm[pfm_key])
-        return me.notify("PFM不存在。");
-
-    var sk_data = me.query_skill(skill_id, 0);
-    if (sk_data < 3000)
-        return me.notify("你的" + src_skill.name + "等级不足3000。");
-
     var existing = book.zc_pfms[position_key] || [];
     if (existing.length >= 3)
         return me.notify("该部位已有3个PFM。");
 
-    // Check duplicate
-    for (var i = 0; i < existing.length; i++) {
-        if (existing[i].skill_id === skill_id && existing[i].pfm_key === pfm_key)
-            return me.notify("已选择过此PFM。");
-    }
-
-    // 门派PFM限制：整个自创技能最多融合1个门派PFM
-    if (src_skill.family) {
-        for (var bpk in book.zc_pfms) {
-            var bpfms = book.zc_pfms[bpk];
-            for (var bi = 0; bi < bpfms.length; bi++) {
-                var bsrc = SKILL.get(bpfms[bi].skill_id);
-                if (bsrc && bsrc.family) {
-                    return me.notify("整个自创技能最多融合1个门派PFM，已有" + bsrc.family + "的PFM。");
-                }
-            }
-        }
-    }
-
-    var cost = PFM_COST[src_skill.grade] || src_skill.grade + 1;
+    var refs = [];
+    for (var i = 0; i < existing.length; i++) refs.push(existing[i].skill_id + "." + existing[i].pfm_key);
+    refs.push(skill_id + "." + pfm_key);
+    var validation = validate_pfm_selections(me, book, position_key, refs);
+    if (validation.error) return me.notify(validation.error);
+    var selected = validation.selections[validation.selections.length - 1];
+    var src_skill = selected.skill, cost = selected.cost;
     var wudao = me.find_obj_bypath("book/wudao");
     if (!wudao || wudao.count < cost)
         return me.notify("<red>武道书不足！需要" + cost + "本。</red>");
 
-    me.remove_obj(wudao, cost);
+    if (!me.remove_obj(wudao, cost)) return me.notify("武道书扣除失败，PFM未添加。");
 
     if (!book.zc_pfms[position_key]) book.zc_pfms[position_key] = [];
     book.zc_pfms[position_key].push({ skill_id: skill_id, pfm_key: pfm_key });
@@ -987,6 +1048,22 @@ this.cmd_study = function (me, book_id) {
 // ===== 创建/更新技能 =====
 this.create_or_update_skill = function (book, me) {
     var skill_id = book.zc_skill_id || book.generate_skill_id();
+    var registered = WORLD.SKILLS[skill_id];
+    var ownsRegistered = !!(me.custom_skills && me.custom_skills.indexOf(skill_id) >= 0);
+    var registeredOwned = !!(registered && registered.is_custom &&
+        (registered.creator === me.id || (!registered.creator && ownsRegistered)));
+    if (registered && !registeredOwned) {
+        var collidedId = skill_id;
+        skill_id = book.generate_skill_id();
+        if (me.skills && me.skills[collidedId] && !me.skills[skill_id]) {
+            me.skills[skill_id] = me.skills[collidedId];
+            delete me.skills[collidedId];
+        }
+        if (me.custom_skills) {
+            var collidedIndex = me.custom_skills.indexOf(collidedId);
+            if (collidedIndex >= 0) me.custom_skills[collidedIndex] = skill_id;
+        }
+    }
     book.zc_skill_id = skill_id;
 
     var can_enables = [];
@@ -1014,7 +1091,7 @@ this.create_or_update_skill = function (book, me) {
     me.add_custom_skill(skill_id);
 
     custom_skill.name = book.zc_name || book.name.replace("秘籍", "");
-    custom_skill.grade = Math.min(book.get_total_words(), 6);
+    custom_skill.grade = book.get_quality_grade ? book.get_quality_grade() : Math.min(book.grade || 0, 6);
     custom_skill.can_enables = can_enables;
     // 内功始终排在第一位，其余保持原顺序
     var sortedKeys = book.zc_positions.slice();
@@ -1098,10 +1175,9 @@ this.create_or_update_skill = function (book, me) {
             var src = SKILL.get(sel.skill_id);
             if (!src || !src.pfm || !src.pfm[sel.pfm_key]) continue;
             var src_pfm = src.pfm[sel.pfm_key];
-            var copied = {};
-            for (var k in src_pfm) {
-                if (src_pfm.hasOwnProperty(k)) copied[k] = src_pfm[k];
-            }
+            // PFM 的函数保持引用；数组和对象配置做递归副本，避免自创技能运行时
+            // 修改 attack_msgs、状态配置等数据时污染源技能或其他玩家的自创技能。
+            var copied = clone_pfm_value(src_pfm, [], []);
             copied.source_skill = sel.skill_id;
             copied.source_pfm = sel.pfm_key;
             copied.enable_skill = ZC_POSITIONS[pk] ? ZC_POSITIONS[pk].base : null;
@@ -1742,7 +1818,8 @@ this.cmd_wordadd = function (me, book_id, arg2) {
         return me.notify("<red>武道书不足！需要1本。</red>");
 
     // Add word and deduct wudao
-    me.remove_obj(wudao, 1);
+    if (!me.remove_obj(wudao, 1))
+        return me.notify("<red>武道书扣除失败，词条未添加。</red>");
     if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
     book.zc_words[position_key].push(word_index);
     set_wl(book.zc_word_levels, word_index, 0, position_key);
@@ -1907,7 +1984,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
     }
 
     // 内功部位首词条限制
-    if (position_key === "内功" && old_idx_in_pos === 0 && new_word_index !== 506)
+    if (position_key === "内功" && (old_idx_in_pos === 0 || old_word_index === 506) && new_word_index !== 506)
         return me.notify("内功部位第一个词条必须为'内力上限'(index 506)，不可替换。");
 
     // 保留旧词条等级给新词条（同等级转移）
@@ -2115,25 +2192,15 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
     var new_skill_id = new_pfm_ref.substring(0, dot);
     var new_pfm_key = new_pfm_ref.substring(dot + 1);
 
-    var new_src = SKILL.get(new_skill_id);
-    if (!new_src || !new_src.pfm || !new_src.pfm[new_pfm_key])
-        return me.notify("PFM不存在。");
-
-    var new_name = new_src.pfm[new_pfm_key].name;
-
-    // 门派PFM限制检查
-    if (new_src.family) {
-        for (var bpk in book.zc_pfms) {
-            var bpfms = book.zc_pfms[bpk];
-            for (var bi = 0; bi < bpfms.length; bi++) {
-                if (bpk === position_key && bi === pfm_index) continue; // 跳过被替换的
-                var bsrc = SKILL.get(bpfms[bi].skill_id);
-                if (bsrc && bsrc.family) {
-                    return me.notify("整个自创技能最多融合1个门派PFM，已有" + bsrc.family + "的PFM。");
-                }
-            }
-        }
+    var replacementRefs = [];
+    for (var replaceIndex = 0; replaceIndex < pfms.length; replaceIndex++) {
+        replacementRefs.push(replaceIndex === pfm_index ? new_skill_id + "." + new_pfm_key :
+            pfms[replaceIndex].skill_id + "." + pfms[replaceIndex].pfm_key);
     }
+    var replacementValidation = validate_pfm_selections(me, book, position_key, replacementRefs);
+    if (replacementValidation.error) return me.notify(replacementValidation.error);
+    var replacement = replacementValidation.selections[pfm_index];
+    var new_src = replacement.skill, new_name = replacement.pfm.name;
 
     // 确认
     if (!confirmed) {

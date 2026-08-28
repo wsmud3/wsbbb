@@ -5,7 +5,7 @@
 	// 洗练次数 → 各分类词条数量上限 [基础,后天,高级,稀有,特殊]
 	this.get_category_limits = function (refine_count) {
 	    var rc = refine_count || 0;
-	    if (rc >= 60) return [4, 4, 4, 3, 2];
+	    if (rc >= 50) return [4, 4, 4, 3, 2];
 	    if (rc >= 30) return [4, 4, 4, 2, 2];
 	    if (rc >= 10) return [4, 4, 3, 2, 1];
 	    return [4, 3, 2, 1, 1];
@@ -27,6 +27,14 @@
 	this.word_base = function () {
 	    var d = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
 	    return (d && d.WORD_BASE) || {};
+	};
+
+	this.validate_name = function (name) {
+	    if (typeof name !== "string" || !/^[\u4E00-\u9FFF]{2,5}$/.test(name))
+	        return "装备名需为2-5个汉字。";
+	    if (UTIL.check_word && !UTIL.check_word(name))
+	        return "装备名含有不可使用的词语。";
+	    return "";
 	};
 
 	// Send the full recast UI for an item
@@ -160,6 +168,7 @@
 	    // Handle rename: recast <objid> rename [newname]
 	    if (arg2 === "rename") {
 	        var newName = arg3;
+	        var hold = this;
         var grade_color = ["wht", "hig", "hic", "hiy", "HIZ", "hio", "ord"];
 	        if (!newName) {
 	            player.wait_input = function(me, cmd) {
@@ -168,13 +177,15 @@
 	                var parts = cmd.split(' ');
 	                if (parts.length < 2) return me.notify('请输入新名称，如：say 神兵利器');
 	                var nn = parts.slice(1).join(' ');
-	                if (nn.length < 2 || nn.length > 8) return me.notify('装备名需2-8个字符。');
+	                var nameError = hold.validate_name(nn);
+	                if (nameError) return me.notify(nameError);
 	                var cur = me.find_obj(objid);
 	                if (!cur) return me.notify('找不到装备。');
 	                cur.name = nn;
 	                var cc = grade_color[cur.grade] || "hio"; cur.color_name = "<" + cc + ">" + nn + "</" + cc + ">";
 			cur.set_temp("name", nn); cur.pretag = null;
 	                me.notify('装备已改名为：' + nn + '。');
+				me.items_changed(cur);
 			var packCmd = WORLD.COMMANDS && WORLD.COMMANDS.pack;
 			var recastCmd = WORLD.COMMANDS && WORLD.COMMANDS.recast;
 			if (recastCmd) recastCmd.send_ui(me, cur);
@@ -184,10 +195,12 @@
 	            player.send_commands("clearwait", "取消改名");
 	            return;
 	        }
-	        if (newName.length < 2 || newName.length > 8) return player.notify('装备名需2-8个字符。');
+	        var directNameError = this.validate_name(newName);
+	        if (directNameError) return player.notify(directNameError);
 	        obj.name = newName;
 	        var cc = grade_color[obj.grade] || "hio"; obj.color_name = "<" + cc + ">" + newName + "</" + cc + ">";
 	        player.notify('装备已改名为：' + newName + '。');
+	        player.items_changed(obj);
 	        var packCmd = WORLD.COMMANDS && WORLD.COMMANDS.pack;
 	        var recastCmd = WORLD.COMMANDS && WORLD.COMMANDS.recast;
 	        if (recastCmd) recastCmd.send_ui(player, obj);
@@ -250,22 +263,24 @@
 	            if (is_ability && current_lv >= 1) {
 	                player.notify('能力词条不可升级。'); return;
 	            }
+	            var upgradeKey = stone.prop_key;
+	            var consumedUpgradeStone = player.remove_obj(stone, 1);
+	            if (!consumedUpgradeStone) {
+	                player.notify('升级失败，词条石未扣除。');
+	                return;
+	            }
 	            var new_level = current_lv + 1;
-	            var old_val = obj.word_prop_value(stone.prop_key, current_lv);
-	            var new_val = obj.word_prop_value(stone.prop_key, new_level);
-	            if (obj.prop[stone.prop_key] !== undefined) {
-	                obj.prop[stone.prop_key] = (obj.prop[stone.prop_key] || 0) - old_val + new_val;
+	            var old_val = obj.word_prop_value(upgradeKey, current_lv);
+	            var new_val = obj.word_prop_value(upgradeKey, new_level);
+	            if (obj.prop[upgradeKey] !== undefined) {
+	                obj.prop[upgradeKey] = (obj.prop[upgradeKey] || 0) - old_val + new_val;
 	            } else {
-	                obj.prop[stone.prop_key] = new_val;
+	                obj.prop[upgradeKey] = new_val;
 	            }
 	            existing.level = new_level;
-	            stone = player.remove_obj(stone, 1);
-	            if (stone) {
-	                WORLD.STATS.updateWeapon(player, obj);
-	                this.send_ui(player, obj);
-	            } else {
-	                player.notify('升级失败，请重试。');
-	            }
+	            WORLD.STATS.updateWeapon(player, obj);
+	            player.items_changed(obj);
+	            this.send_ui(player, obj);
 	        } else {
 	            var max_words = 4;
 	            if (obj.words.length >= max_words) {
@@ -279,6 +294,7 @@
 	                obj.prop[stone.prop_key] = (obj.prop[stone.prop_key] || 0) + base_val;
 	                obj.words.push({ key: stone.prop_key, level: 1, category: cat, is_ability: is_ability });
 	                WORLD.STATS.updateWeapon(player, obj);
+	                player.items_changed(obj);
 	                this.send_ui(player, obj);
 	            } else {
 	                player.notify('镶嵌失败，请重试。');
@@ -350,6 +366,8 @@
 	    if (!stone.prop_key) { player.notify('无效的词条石。'); return false; }
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
 	    if (!duanzao) { player.notify('锻造系统未初始化。'); return false; }
+	    var new_prop_info = duanzao.PROPS[stone.prop_key];
+	    if (!new_prop_info) { player.notify('词条石属性无效。'); return false; }
 	    if (stone.prop_key === old_key) { player.notify('不能替换为同名词条，请使用升级功能。'); return false; }
 	    if (!duanzao.can_attach_prop(obj.eq_type, stone.prop_key)) {
 	        var pi = duanzao.PROPS[stone.prop_key];
@@ -380,35 +398,30 @@
 	    var old_word = obj.words[old_idx];
 	    var old_level = old_word.level || 1;
 	    var old_prop_info = duanzao.PROPS[old_key];
-	    player.add_obj('st/p#' + old_key, old_level);
-	    player.notify('旧词条 ' + (old_prop_info ? old_prop_info.name : old_key) + ' Lv.' + old_level + ' 已返还。');
+	    var new_key = stone.prop_key;
+	    var is_ability = !!stone.is_ability;
+	    if (is_ability && !this.can_add_ability_word(rc)) {
+	        player.notify('洗练不足25次，无法添加能力词条。'); return false;
+	    }
+	    var consumedStone = player.remove_obj(stone, 1);
+	    if (!consumedStone) { player.notify('替换失败，词条石未扣除。'); return false; }
+	    var returnedOld = player.add_obj('st/p#' + old_key, old_level);
+	    if (!returnedOld) {
+	        player.add_obj(consumedStone);
+	        player.notify('替换失败，旧词条无法返还；新词条石已退回。');
+	        return false;
+	    }
 	    var old_val = obj.word_prop_value(old_key, old_level);
 	    if (obj.prop[old_key] !== undefined) {
 	        obj.prop[old_key] -= old_val;
 	        if (obj.prop[old_key] <= 0) delete obj.prop[old_key];
 	    }
-	    var success = false;
-	    stone = player.remove_obj(stone, 1);
-	    if (stone) {
-	        var new_val = obj.word_prop_value(stone.prop_key, 1);
-	        var new_prop_info = duanzao.PROPS[stone.prop_key];
-	        obj.prop[stone.prop_key] = (obj.prop[stone.prop_key] || 0) + new_val;
-	        obj.words.splice(old_idx, 1);
-	        obj.words.push({ key: stone.prop_key, level: 1, category: new_cat });
-	        player.notify('你为' + obj.color_name + '替换了' + (new_prop_info ? new_prop_info.name : stone.prop_key) + '词条。');
-	        WORLD.STATS.updateWeapon(player, obj);
-	        success = true;
-	    } else {
-	        var returned = null;
-	        if (player.items) {
-	            for (var k = 0; k < player.items.length; k++) {
-	                if (player.items[k] && player.items[k].path === 'st/p#' + old_key) {
-	                    returned = player.items[k]; break;
-	                }
-	            }
-	        }
-	        if (returned) player.remove_obj(returned, 1);
-	        player.notify('替换失败，旧词条已保留。');
-	    }
-	    return success;
+	    var new_val = obj.word_prop_value(new_key, 1);
+	    obj.prop[new_key] = (obj.prop[new_key] || 0) + new_val;
+	    obj.words[old_idx] = { key: new_key, level: 1, category: new_cat, is_ability: is_ability };
+	    player.notify('旧词条 ' + (old_prop_info ? old_prop_info.name : old_key) + ' Lv.' + old_level + ' 已返还。');
+	    player.notify('你为' + obj.color_name + '替换了' + new_prop_info.name + '词条。');
+	    WORLD.STATS.updateWeapon(player, obj);
+	    player.items_changed(obj);
+	    return true;
 	};

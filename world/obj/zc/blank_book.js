@@ -35,6 +35,10 @@ this.on_clone = function() {
 
 // ===== 持久化: 自定义属性存入 temp 以便跨重启保留 =====
 var grade_color = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+function clone_word_levels(levels) {
+    if (!levels || typeof levels !== "object") return {};
+    try { return JSON.parse(JSON.stringify(levels)); } catch (e) { return {}; }
+}
 var _sync_to_temp = function(book) {
     if (!book.temp) book.temp = {};
     book.temp.zc = JSON.stringify({
@@ -183,27 +187,46 @@ this.restore_from_skill = function(me) {
         console.log("[ZC restore] No custom skills found for " + me.name);
         return false;
     }
-    // Match by existing zc_skill_id first, then by name
-    var csid = null;
-    for (var ci = 0; ci < me.custom_skills.length; ci++) {
-        var cid = me.custom_skills[ci];
-        if (this.zc_skill_id && cid === this.zc_skill_id) {
-            csid = cid; break;
-        }
-        var cskill = SKILL.get(cid);
-        if (cskill && this.zc_name && cskill.name === this.zc_name) {
-            csid = cid; break;
+    // 先排除已经由玩家其他秘籍认领的技能，避免“第一本可恢复秘籍”把另一门
+    // 自创武学的数据抢走。ID 精确匹配优先；名称只能在唯一匹配时使用；无匹配
+    // 时也只有唯一未认领候选才允许自动恢复。
+    var claimed = {};
+    if (me.items) {
+        for (var bi = 0; bi < me.items.length; bi++) {
+            var otherBook = me.items[bi];
+            if (otherBook && otherBook !== this && otherBook.zc_skill_id)
+                claimed[otherBook.zc_skill_id] = true;
         }
     }
-    // If no match, try all custom skills to find a restorable one
-    if (!csid) {
-        for (var ci2 = 0; ci2 < me.custom_skills.length; ci2++) {
-            var cid2 = me.custom_skills[ci2];
-            var cskill2 = SKILL.get(cid2);
-            if (cskill2) { csid = cid2; break; }
-            var skd = me.skills[cid2];
-            if (skd && skd.addin && skd.addin.length > 0) { csid = cid2; break; }
+    var candidates = [];
+    for (var ci = 0; ci < me.custom_skills.length; ci++) {
+        var cid = me.custom_skills[ci];
+        if (claimed[cid]) continue;
+        var candidateSkill = SKILL.get(cid), candidateData = me.skills && me.skills[cid];
+        // 旧存档可能因短 ID 碰撞把别人的已注册自创技能挂到本角色列表中；
+        // 有明确作者且不是当前玩家时，绝不能据此恢复或覆盖秘籍。
+        if (candidateSkill && candidateSkill.creator && candidateSkill.creator !== me.id) continue;
+        if ((candidateSkill && candidateSkill.is_custom) || (candidateData && candidateData.addin && candidateData.addin.length > 0))
+            candidates.push(cid);
+    }
+    var csid = null;
+    if (this.zc_skill_id && candidates.indexOf(this.zc_skill_id) >= 0) csid = this.zc_skill_id;
+    if (!csid && this.zc_name) {
+        var nameMatches = [];
+        for (var ni = 0; ni < candidates.length; ni++) {
+            var namedSkill = SKILL.get(candidates[ni]);
+            if (namedSkill && namedSkill.name === this.zc_name) nameMatches.push(candidates[ni]);
         }
+        if (nameMatches.length === 1) csid = nameMatches[0];
+        else if (nameMatches.length > 1) {
+            console.log("[ZC restore] Ambiguous name match for " + me.name + ": " + this.zc_name);
+            return false;
+        }
+    }
+    if (!csid && candidates.length === 1) csid = candidates[0];
+    if (!csid && candidates.length > 1) {
+        console.log("[ZC restore] Multiple unclaimed skills for " + me.name + ", refusing unsafe fallback: " + JSON.stringify(candidates));
+        return false;
     }
     if (!csid) {
         console.log("[ZC restore] No restorable skill found for " + me.name);
@@ -232,32 +255,55 @@ this.restore_from_skill = function(me) {
 
         this.zc_positions = [];
         this.zc_words = {};
-        for (var ai = 0; ai < sk_data.addin.length; ai++) {
-            var widx = sk_data.addin[ai];
-            var wdef = SKILL.ZC_WORDS[widx - 500];
-            if (!wdef) continue;
-            for (var pzi = 0; pzi < wdef.positions.length; pzi++) {
-                var wp = wdef.positions[pzi];
-                for (var zk in ZC_POS_RECONSTRUCT) {
-                    var zp = ZC_POS_RECONSTRUCT[zk];
-                    var keys = POS_KEY_RECONSTRUCT[zp.base] || [zp.base];
-                    if (keys.indexOf(wp) >= 0) {
-                        if (this.zc_positions.indexOf(zk) < 0)
-                        this.zc_positions.push(zk);
-                        if (!this.zc_words[zk])
-                        this.zc_words[zk] = [];
-                        if (this.zc_words[zk].indexOf(widx) < 0)
-                        this.zc_words[zk].push(widx);
-                        break;
-                    }
+        var remaining = {};
+        for (var ac = 0; ac < sk_data.addin.length; ac++)
+            remaining[sk_data.addin[ac]] = (remaining[sk_data.addin[ac]] || 0) + 1;
+        var supports = function (wdef, positionKey) {
+            var zp = ZC_POS_RECONSTRUCT[positionKey];
+            if (!wdef || !zp) return false;
+            var keys = POS_KEY_RECONSTRUCT[zp.base] || [zp.base];
+            for (var si = 0; si < wdef.positions.length; si++)
+                if (keys.indexOf(wdef.positions[si]) >= 0) return true;
+            return false;
+        };
+        var addToPosition = function (book, positionKey, wordIndex) {
+            if (book.zc_positions.indexOf(positionKey) < 0) book.zc_positions.push(positionKey);
+            if (!book.zc_words[positionKey]) book.zc_words[positionKey] = [];
+            if (book.zc_words[positionKey].indexOf(wordIndex) < 0) {
+                book.zc_words[positionKey].push(wordIndex);
+                remaining[wordIndex] = Math.max(0, (remaining[wordIndex] || 0) - 1);
+            }
+        };
+
+        // 新格式的 word_levels 带有真实部位，优先用它完整恢复。
+        if (sk_data.word_levels) {
+            for (var levelPos in sk_data.word_levels) {
+                if (!ZC_POS_RECONSTRUCT[levelPos] || typeof sk_data.word_levels[levelPos] !== "object") continue;
+                for (var levelSlot in sk_data.word_levels[levelPos]) {
+                    var levelIndex = parseInt(levelSlot), levelDef = SKILL.ZC_WORDS[levelIndex - 500];
+                    if (!isNaN(levelIndex) && supports(levelDef, levelPos)) addToPosition(this, levelPos, levelIndex);
                 }
             }
         }
+        // 旧扁平数据没有部位；同一词条的重复出现依次分配到不同兼容部位，
+        // 不再因为去重而吞掉已经付费获得的第二个部位词条。
+        for (var ai = 0; ai < sk_data.addin.length; ai++) {
+            var widx = sk_data.addin[ai];
+            if (!(remaining[widx] > 0)) continue;
+            var wdef = SKILL.ZC_WORDS[widx - 500], chosen = null;
+            for (var zk in ZC_POS_RECONSTRUCT) {
+                if (supports(wdef, zk) && (!this.zc_words[zk] || this.zc_words[zk].indexOf(widx) < 0)) { chosen = zk; break; }
+            }
+            if (!chosen) {
+                for (var zk2 in ZC_POS_RECONSTRUCT) if (supports(wdef, zk2)) { chosen = zk2; break; }
+            }
+            if (chosen) addToPosition(this, chosen, widx);
+        }
         this.zc_name = "自创武学";
         this.zc_skill_id = csid;
-        this.zc_word_levels = sk_data.word_levels || {};
+        this.zc_word_levels = clone_word_levels(sk_data.word_levels);
         this.zc_state = "completed";
-        this.grade = Math.min(this.get_total_words(), 6);
+        this.update_grade();
         this.zc_pfms = {};
         // Register the skill in WORLD.SKILLS
         var zcCmd = WORLD.COMMANDS["zc"];
@@ -325,8 +371,7 @@ this.restore_from_skill = function(me) {
 
     this.zc_word_levels = {};
     if (sk_data && sk_data.word_levels) {
-        for (var wl_key in sk_data.word_levels)
-        this.zc_word_levels[wl_key] = sk_data.word_levels[wl_key];
+        this.zc_word_levels = clone_word_levels(sk_data.word_levels);
     }
 
     this.zc_pfms = {};
@@ -352,7 +397,7 @@ this.restore_from_skill = function(me) {
         }
     }
 
-    this.grade = Math.min(skill.grade || this.get_total_words(), 6);
+    this.update_grade();
     var cc = grade_color[this.grade] || "wht";
     this.color_name = "<" + cc + ">" + this.name + "</" + cc + ">";
     this.zc_creator = skill.creator_name || me.name;
@@ -369,6 +414,18 @@ this.get_total_words = function () {
         total += this.zc_words[pos].length;
     }
     return total;
+};
+
+// 自创武学品质由“单一部位拥有的最多词条数”决定，而不是把全部部位相加。
+// 因此多个部位合计六条不会被误染成最高品质；品质上限固定为 6。
+this.get_quality_grade = function () {
+    var max = 0;
+    if (!this.zc_words) return 0;
+    for (var pos in this.zc_words) {
+        var count = Array.isArray(this.zc_words[pos]) ? this.zc_words[pos].length : 0;
+        if (count > max) max = count;
+    }
+    return Math.min(max, 6);
 };
 
 this.get_total_pfms = function () {
@@ -399,13 +456,22 @@ this.get_current_position = function () {
 };
 
 this.update_grade = function () {
-    this.grade = this.get_total_words();
-    var cc = grade_color[Math.min(this.grade, 6)] || "wht";
+    this.grade = this.get_quality_grade();
+    var cc = grade_color[this.grade] || "wht";
     this.color_name = "<" + cc + ">" + this.name + "</" + cc + ">";
 };
 
 this.generate_skill_id = function () {
-    return "zc_" + this.create_uniq_id();
+    var id = "";
+    for (var i = 0; i < 100; i++) {
+        id = "zc_" + this.create_uniq_id();
+        if (!WORLD.SKILLS || !WORLD.SKILLS[id]) return id;
+    }
+    // 极端随机碰撞时继续以时间片扩展，并仍做注册表校验。
+    do {
+        id = "zc_" + Date.now().toString(36) + this.create_uniq_id().substring(0, 4);
+    } while (WORLD.SKILLS && WORLD.SKILLS[id]);
+    return id;
 };
 
 this.create_uniq_id = function () {

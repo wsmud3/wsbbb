@@ -590,7 +590,7 @@ SKILL.ZC_WORDS = [
         value: function (lv, grade, word_level) {
             return 0.005 + (word_level || 0) * 0.0005;
         },
-        format: function (val) { var dmgPct = (val * 100).toFixed(1); var absorbPct = ((val - 0.005) * 100).toFixed(1); return "战神：每次攻击附加你最大内力" + dmgPct + "%的伤害，当你空手时附加的内力加倍，并吸收" + absorbPct + "%伤害（战神）"; },
+        format: function (val) { var dmgPct = (val * 100).toFixed(1); return "战神：每次攻击附加你最大内力" + dmgPct + "%的伤害，空手攻击时附加伤害加倍"; },
         base_pot_cost: 50000,
         upgrade_cost: function (target_level) { return this.base_pot_cost * target_level; },
     },
