@@ -3,8 +3,8 @@
 	this.regex = /^(\w+)(?:\s(\w+))?(?:\s(\w+))?(?:\s(\w+))?$/;
 
 	// 洗练次数 → 各分类词条数量上限 [基础,后天,高级,稀有,特殊]
-	this.get_category_limits = function (refine_count) {
-	    var rc = refine_count || 0;
+	this.get_category_limits = function (recast_count) {
+	    var rc = recast_count || 0;
 	    if (rc >= 50) return [4, 4, 4, 3, 2];
 	    if (rc >= 30) return [4, 4, 4, 2, 2];
 	    if (rc >= 10) return [4, 4, 3, 2, 1];
@@ -12,16 +12,16 @@
 	};
 
 	// 洗练次数 → 词条等级上限 (每10次+1级, max6)
-	this.get_max_word_level = function (refine_count) {
-	    var rc = refine_count || 0;
+	this.get_max_word_level = function (recast_count) {
+	    var rc = recast_count || 0;
 	    var cap = Math.floor(rc / 10) + 1;
 	    if (cap > 6) cap = 6;
 	    return cap;
 	};
 
 	// 洗练≥25可添加能力词条
-	this.can_add_ability_word = function (refine_count) {
-	    return (refine_count || 0) >= 25;
+	this.can_add_ability_word = function (recast_count) {
+	    return (recast_count || 0) >= 25;
 	};
 
 	this.word_base = function () {
@@ -41,7 +41,7 @@
 	this.send_ui = function (player, obj) {
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
 	    if (!duanzao) return;
-	    var rc = obj.refine_count || 0;
+	    var rc = obj.recast_count || 0;
 	    var limits = this.get_category_limits(rc);
 	    var max_lv = this.get_max_word_level(rc);
 
@@ -74,7 +74,7 @@
 	    for (var j = 0; j < stones.length; j++) {
 	        var stj = stones[j];
 	        var base = this.word_base()[stj.prop_key] || 100;
-	        var is_per = stj.prop_key.endsWith('_per') || stj.prop_key === 'ignore_fy' || stj.prop_key === 'final_damage';
+	        var is_per = stj.prop_key.endsWith('_per');
 	        var val_str = is_per ? ('+' + base + '%') : ('+' + base);
 	        stonesJson.push({
 	            id: stj.id,
@@ -145,7 +145,7 @@
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
 	    if (!duanzao) return player.notify('锻造系统未初始化。');
 
-	    var rc = obj.refine_count || 0;
+	    var rc = obj.recast_count || 0;
 	    var limits = this.get_category_limits(rc);
 	    var max_lv = this.get_max_word_level(rc);
 
@@ -309,7 +309,7 @@
 	this.do_refine = function (player, obj, count) {
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
 	    if (!duanzao) return;
-	    var rc = obj.refine_count || 0;
+	    var rc = obj.recast_count || 0;
 	    if (rc >= 50) {
 	        return player.send('{type:"dialog",dialog:"pack",rcdesc:"已达最大洗练次数(50次)",id:"' + obj.id + '"}');
 	    }
@@ -336,7 +336,7 @@
 	    }
 	    var removed = player.remove_obj(yuanjing, maxTimes);
 	    if (!removed) return player.send('{type:"dialog",dialog:"pack",rcdesc:"洗练失败",id:"' + obj.id + '"}');
-	    obj.refine_count = rc + maxTimes;
+	    obj.recast_count = rc + maxTimes;
 	    if (duanzao && duanzao.DEFAULT_PROPS) {
 	        var defProp = duanzao.DEFAULT_PROPS[obj.eq_type];
 	        if (defProp && obj.prop) {
@@ -379,7 +379,7 @@
 	        }
 	    }
 	    var new_cat = stone.prop_category || (duanzao.PROPS[stone.prop_key] ? duanzao.PROPS[stone.prop_key].category : 0);
-	    var rc = obj.refine_count || 0;
+	    var rc = obj.recast_count || 0;
 	    var limits = this.get_category_limits(rc);
 	    var cat_count = 0;
 	    for (var ci = 0; ci < obj.words.length; ci++) {

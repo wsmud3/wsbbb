@@ -57,6 +57,7 @@
 						this.max_word_count = 5;
 						this.words = [];
 						this.refine_count = 0;
+						this.recast_count = 0;
 		};
 
 		this.on_reload = function (me) {

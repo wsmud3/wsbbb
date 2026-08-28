@@ -105,6 +105,7 @@
 	obj.words = [];
 	obj.is_custom = true;
 	obj.refine_count = 0;
+	obj.recast_count = 0;
 	if (eq_type !== undefined && eq_type !== null) {
 	    obj.eq_type = eq_type;
 	    // Custom equipment starts with all BASE_PROPS for this type
@@ -133,6 +134,8 @@
 		bj_sh: 'add_bjsh_per',
 		limit_hp: 'max_hp',
 		limit_mp: 'max_mp',
+		ignore_fy: 'diff_fy_per',
+		final_damage: 'add_sh_per',
 	};
 
 	this.category_names = ["基础属性", "后天属性", "高级属性", "稀有属性", "特殊属性"];

@@ -10,6 +10,8 @@ const book = read("world/obj/zc/blank_book.js");
 const combat = read("world/extends/char/combat.js");
 const skill = read("os/skill/skill.js");
 const recast = read("world/cmd/obj/recast.js");
+const duanzao = read("world/cmd/obj/duanzao.js");
+const wordStone = read("world/obj/st/p.js");
 const checkobj = read("world/cmd/obj/checkobj.js");
 const client = read("src/client.js");
 const zcUi = read("src/dialog/zc.js");
@@ -35,6 +37,8 @@ assert.ok(!skill.includes("并吸收") && skill.includes("空手攻击时附加�
     "战神描述不得宣称不存在的吸收效果");
 
 assert.ok(recast.includes("if (rc >= 50) return [4, 4, 4, 3, 2]"), "洗练50次必须达到最高分类上限");
+assert.ok(recast.includes("obj.recast_count") && !recast.includes("obj.refine_count"),
+    "重铸系统必须使用独立计数，不能把普通精炼当作重铸");
 assert.ok(recast.includes("^[\\u4E00-\\u9FFF]{2,5}$") && recast.includes("UTIL.check_word"),
     "装备改名必须限制2-5个汉字并过滤禁词");
 assert.ok(recast.indexOf("consumedUpgradeStone = player.remove_obj") < recast.indexOf("existing.level = new_level"),
@@ -43,6 +47,12 @@ assert.ok(recast.indexOf("consumedStone = player.remove_obj") < recast.indexOf("
     "词条替换必须先扣新石头再修改装备");
 assert.ok(checkobj.includes('obj.path === "eq/cp"') && !checkobj.includes("obj.words && obj.words.length > 0"),
     "普通装备不能仅因带词条就获得自制装备重铸入口");
+assert.ok(duanzao.includes("ignore_fy: 'diff_fy_per'") && duanzao.includes("final_damage: 'add_sh_per'") &&
+    duanzao.includes("bj_sh: 'add_bjsh_per'") && duanzao.includes("limit_hp: 'max_hp'") &&
+    duanzao.includes("limit_mp: 'max_mp'"),
+    "五类旧词条必须全部映射到等效的现行词条");
+assert.ok(wordStone.includes("duanzao.KEY_MIGRATION[prop_key]") && wordStone.includes('this.path = path + "#" + prop_key'),
+    "旧词条石必须在加载时归一为现行词条石");
 
 assert.ok(client.includes("JSON5.parse(text)") && !client.includes("new Function"),
     "WebSocket 数据包必须无代码执行地解析");

@@ -288,13 +288,14 @@ EQUIPMENT.prototype.level_up = function (lev) {
     this.level = lev;
     this.levelchange_prop();
     this.apply_words();
-    // 恢复洗练加成：每次洗练给不可替换的基础属性+1（仅自制装备，红装已有完整的levelchange_prop成长体系）
-    if (this.refine_count > 0 && this.eq_type !== undefined && this.is_custom) {
+    // 恢复重铸加成：每次重铸给不可替换的基础属性+1。重铸次数必须与
+    // 装备+1～+12的精炼次数分开，避免普通精炼误解锁重铸门槛。
+    if (this.recast_count > 0 && this.eq_type !== undefined && this.is_custom) {
         var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
         if (duanzao && duanzao.DEFAULT_PROPS) {
             var defProp = duanzao.DEFAULT_PROPS[this.eq_type];
             if (defProp) {
-                this.prop[defProp] = (this.prop[defProp] || 0) + this.refine_count;
+                this.prop[defProp] = (this.prop[defProp] || 0) + this.recast_count;
             }
         }
     }
@@ -435,6 +436,10 @@ EQUIPMENT.prototype.save_db = function (str) {
         str.push(',"custom"');
     if (this.refine_count)
         str.push(',"rc",', this.refine_count);
+    // 自制装备即使尚未重铸也保存零值，作为“已使用独立计数格式”的标记，
+    // 避免后续加载再次按旧版混合字段推算。
+    if (this.is_custom)
+        str.push(',"rrc",', this.recast_count || 0);
     if (this.eq_type !== undefined)
         str.push(',"et",', this.eq_type);
     if (this.weapon_type)
@@ -457,6 +462,7 @@ EQUIPMENT.prototype.load_db = function (data) {
         this.level = data[2];
     }
     var i = 3;
+    var has_recast_count = false;
     while (i < data.length) {
         let value = data[i];
         if (value === 1) {
@@ -467,6 +473,10 @@ EQUIPMENT.prototype.load_db = function (data) {
             i++;
         } else if (value === "rc") {
             this.refine_count = data[i + 1] || 0;
+            i += 2;
+        } else if (value === "rrc") {
+            this.recast_count = Math.max(0, Math.min(50, data[i + 1] || 0));
+            has_recast_count = true;
             i += 2;
         } else if (value === "et") {
             this.eq_type = data[i + 1] || 0;
@@ -501,6 +511,15 @@ EQUIPMENT.prototype.load_db = function (data) {
         } else {
             i++;
         }
+    }
+    // 兼容修复前的自制装备：旧 rc 同时累加普通精炼和重铸。普通精炼
+    // 每提升一级恰好累计一次，因此扣除当前装备等级后就是实际消耗元晶
+    // 的重铸次数。新存档带独立 rrc，之后不再重复迁移。
+    var custom_path = this.path && (this.path === "eq/cp" || this.path.indexOf("eq/cp#") === 0 || this.path.indexOf("eq/cp/") === 0);
+    if (!has_recast_count && (this.is_custom || custom_path)) {
+        var legacy_mixed_count = Math.max(0, this.refine_count || 0);
+        var normal_refine_count = Math.max(0, Math.min(12, this.level || 0));
+        this.recast_count = Math.max(0, Math.min(50, legacy_mixed_count - normal_refine_count));
     }
 }
 EQUIPMENT.prototype.on_load = function (me) {

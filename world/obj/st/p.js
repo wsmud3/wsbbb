@@ -10,8 +10,18 @@ this.combine_count = 10;
 
 this.on_create = function (path, par) {
     if (!par) return;
+    var original_path = this.path;
     var prop_key = par.startsWith('#') ? par.substring(1) : par;
     var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
+    // 旧词条石与现行词条一一等效。加载时改为现行 key/path，使旧背包
+    // 数据在下次保存后自然归一，并按现行石头路径参与后续堆叠。
+    if (duanzao && duanzao.KEY_MIGRATION && duanzao.KEY_MIGRATION[prop_key]) {
+        prop_key = duanzao.KEY_MIGRATION[prop_key];
+        this.path = path + "#" + prop_key;
+        // 同一进程内仍缓存旧路径别名，避免多个旧石头反复创建原型。
+        if (WORLD.OBJ_STROE && original_path && original_path !== this.path)
+            WORLD.OBJ_STROE.set(original_path, this);
+    }
     var prop_info = duanzao ? duanzao.PROPS[prop_key] : null;
     if (!prop_info) {
         this.name = "词条石·" + prop_key;
@@ -22,7 +32,7 @@ this.on_create = function (path, par) {
     this.grade = 5;
     // Add value info to description
     var base_val = duanzao.WORD_BASE ? (duanzao.WORD_BASE[prop_key] || 100) : 100;
-    var is_per = prop_key.endsWith('_per') || prop_key === 'ignore_fy' || prop_key === 'final_damage';
+    var is_per = prop_key.endsWith('_per');
     var is_time = (prop_key === 'gjsd' || prop_key === 'distime' || prop_key === 'releasetime');
     var val_desc;
     if (is_time) {
