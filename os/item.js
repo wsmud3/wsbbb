@@ -217,29 +217,51 @@ ITEM.prototype.format_temp = function (temp, timeout = 120000) {
         if (!v) continue;
         if (v && typeof v == "object" && v.e && Object.prototype.hasOwnProperty.call(v, "v")) {
             if (dt > v.e || !v.v) continue;
+            var svInner;
+            if (typeof v.v == "string") svInner = JSON.stringify(v.v);
+            else if (v.v && typeof v.v == "object") {
+                svInner = safeStringify(v.v);
+                if (svInner === undefined) continue; // 循环引用等不可序列化，跳过
+            } else svInner = v.v;
             if (tmp.length > 1) tmp.push(",");
             tmp.push(JSON.stringify(key));
             tmp.push(":{e:");
             tmp.push(v.e);
             tmp.push(",v:");
-            tmp.push(typeof v.v == "string" || (v.v && typeof v.v == "object") ? JSON.stringify(v.v) : v.v);
+            tmp.push(svInner);
             tmp.push("}");
         } else {
+            // 先算出可序列化的值，不可序列化（循环引用）则整条跳过，避免残留 "key": 残片
+            var vstr;
+            if (typeof v == "string") vstr = JSON.stringify(v);
+            else if (Array.isArray(v)) {
+                vstr = safeStringify(v);
+                if (vstr === undefined) vstr = "[]";
+            } else if (v && typeof v == "object") {
+                // 临时状态可能是对象；必须序列化，否则会写成非法的 [object Object]。
+                // 但 Node 定时器句柄（Timeout）等含循环引用的对象无法序列化，
+                // 会抛 "Converting circular structure to JSON" 导致整个存档崩溃，此类条目直接跳过。
+                vstr = safeStringify(v);
+                if (vstr === undefined) continue;
+            } else {
+                vstr = v;
+            }
             if (tmp.length > 1) tmp.push(",");
             tmp.push(JSON.stringify(key));
             tmp.push(":");
-            if (typeof v == "string") {
-                tmp.push(JSON.stringify(v));
-            } else if (Array.isArray(v)) {
-                tmp.push(JSON.stringify(v));
-            } else if (v && typeof v == "object") {
-                // 临时状态可能是对象；必须序列化，否则会写成非法的 [object Object]。
-                tmp.push(JSON.stringify(v));
-            } else {
-                tmp.push(v);
-            }
+            tmp.push(vstr);
         }
     }
     tmp.push("}");
     return tmp.join("");
+}
+
+// 安全 JSON 序列化：循环引用等不可序列化的对象返回 undefined 而非抛异常
+function safeStringify(v) {
+    try {
+        var s = JSON.stringify(v);
+        return s === undefined ? undefined : s;
+    } catch (e) {
+        return undefined;
+    }
 }

@@ -17,13 +17,18 @@ this.set({
 });
 
 this.on_eq = function (me) {
-				if (me.query_temp("qibao_timer")) return;
+				// 兼容旧版：清理误存进 temp 的定时器句柄（会导致存档 JSON 循环引用崩溃）
+				if (me.query_temp("qibao_timer")) {
+								try { clearInterval(me.query_temp("qibao_timer")); } catch (e) {}
+								me.remove_temp("qibao_timer");
+				}
+				if (me.__qibao_timer) return;
 				var item = this;
 				var handler = setInterval(function () {
 								// 已经卸下装备则停止恢复（修复未装备仍恢复内力的问题）
 								if (!me.equipment || me.equipment[item.eq_type] !== item) {
 												clearInterval(handler);
-												me.remove_temp("qibao_timer");
+												me.__qibao_timer = null;
 												return;
 								}
 								if (!me.environment || me.hp <= 0) return;
@@ -33,13 +38,17 @@ this.on_eq = function (me) {
 												me.notify("<HIC>七宝指环灵光流转，恢复内力" + recover + "点。</HIC>");
 								}
 				}, 5000);
-				me.set_temp("qibao_timer", handler);
+				// 定时器句柄是 Node Timeout 对象，绝不能进 temp（temp 会被序列化存档）
+				me.__qibao_timer = handler;
 };
 
 this.on_uneq = function (me) {
-				var handler = me.query_temp("qibao_timer");
-				if (handler) {
-								clearInterval(handler);
+				if (me.__qibao_timer) {
+								clearInterval(me.__qibao_timer);
+								me.__qibao_timer = null;
+				}
+				if (me.query_temp("qibao_timer")) {
+								try { clearInterval(me.query_temp("qibao_timer")); } catch (e) {}
 								me.remove_temp("qibao_timer");
 				}
 };
@@ -52,9 +61,12 @@ this.on_reload = function (me) {
 								this.change_prop(me, true);
 								me.recount();
 				}
-				var handler = me.query_temp("qibao_timer");
-				if (handler) {
-								clearInterval(handler);
+				if (me.__qibao_timer) {
+								clearInterval(me.__qibao_timer);
+								me.__qibao_timer = null;
+				}
+				if (me.query_temp("qibao_timer")) {
+								try { clearInterval(me.query_temp("qibao_timer")); } catch (e) {}
 								me.remove_temp("qibao_timer");
 				}
 				this.on_eq(me);

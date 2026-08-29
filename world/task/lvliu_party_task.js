@@ -37,13 +37,12 @@ this.start = function (me) {
 
     // 30分钟自动关闭定时器
     var self = this;
-    var timerKey = STATE_PREFIX + "timer";
-    var existingTimer = pt.query_temp(timerKey, 0);
+    // 定时器句柄是 Node Timeout 对象，不能存 temp（帮派存档 JSON.stringify(temp) 会循环引用崩溃），改用非持久化字段
+    var existingTimer = pt._lvliu_timer;
     if (existingTimer) clearTimeout(existingTimer);
-    var timerId = setTimeout(function () {
+    pt._lvliu_timer = setTimeout(function () {
         self.auto_close(pt);
     }, 1800000); // 30分钟 = 1800000ms
-    pt.set_temp(timerKey, timerId);
 
     WORLD.COMMANDS["pty"].send_system(pt, "<mag>【帮派绿柳】" + me.name + "开启了绿柳山庄！请通过帮会管理员进入副本。</mag>");
 
@@ -294,12 +293,10 @@ this.check_bosses = function (pt) {
 
 // 清理副本状态
 this.cleanup = function (pt) {
-    // 清除定时器
-    var timerKey = STATE_PREFIX + "timer";
-    var existingTimer = pt.query_temp(timerKey, 0);
-    if (existingTimer) {
-        clearTimeout(existingTimer);
-        pt.remove_temp(timerKey);
+    // 清除定时器（句柄存于非持久化字段，不再写 temp）
+    if (pt._lvliu_timer) {
+        clearTimeout(pt._lvliu_timer);
+        pt._lvliu_timer = null;
     }
     // 重置状态，清除生成标记
     for (var r = 0; r < ROOM_MONSTERS.length; r++) {

@@ -294,9 +294,10 @@ function handleRequest(req, res) {
                 if (!found) { sendJSON(res, { error: '玩家不在线: ' + pid }, 404); return; }
                 try {
                     var kickName = found.name;
-                    try { if (found.socket) found.notify('<RED>你已被管理员强制下线！</RED>'); } catch (e) {}
-                    found.quit(); // 标准登出流程：离开房间/队伍、清状态、存档、断开socket
-                    sendJSON(res, { success: true, message: '已将 ' + kickName + ' 踢下线' });
+                    // 通知后强制断开连接（forceLogout 每步容错，保证 socket 一定被断开）
+                    try { if (found.socket && !found.socket.destroyed) found.notify('<RED>你已被管理员踢下线，请重新登录！</RED>'); } catch (e) {}
+                    forceLogout(found);
+                    sendJSON(res, { success: true, message: '已将 ' + kickName + ' 踢下线（连接已断开）' });
                 } catch (e) { sendJSON(res, { error: '踢下线失败: ' + e.message }, 500); }
             });
         }
@@ -318,11 +319,8 @@ function handleRequest(req, res) {
                     var wasOnline = false;
                     if (online) {
                         wasOnline = true;
-                        try {
-                            try { if (online.socket) online.notify('<RED>你的角色已被管理员删除，即将断开连接！</RED>'); } catch (e) {}
-                            online.quit();
-                        } catch (e) {}
-                        try { WORLD.USERS.remove(online); } catch (e) {}
+                        try { if (online.socket && !online.socket.destroyed) online.notify('<RED>你的角色已被管理员删除，即将断开连接！</RED>'); } catch (e) {}
+                        forceLogout(online); // 先强制断开，避免存档覆盖已删数据
                     }
                     // 备份到players_bak（or replace: 同ID角色可能删除后重建过）再删除
                     db.db.prepare("insert or replace into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where id=? and userid=?").run(role.id, role.userid);
@@ -2007,6 +2005,48 @@ function handleRequest(req, res) {
     } catch (e) {
         console.error('IPC error:', e);
         sendJSON(res, { error: 'Internal error: ' + e.message }, 500);
+    }
+}
+
+// 强制下线：清理环境→保存→移除出在线列表→断开连接。每步独立容错，
+// 保证玩家连接一定被断开（原 quit() 流程任一步抛异常会导致 login_out 不执行、踢不掉人）。
+function forceLogout(user) {
+    if (!user) return;
+    var env = user.environment;
+    if (env) {
+        try { if (user.team_out) user.team_out("离开了游戏，自动退出队伍"); } catch (e) {}
+        try { if (env.item_changed) env.item_changed(user, false, user.name + "离开了游戏。"); } catch (e) {}
+        try { if (user.clear_follow) user.clear_follow(); } catch (e) {}
+        try { if (env.clear_copy) env.clear_copy(user); } catch (e) {}
+        try { if (env.parent && env.parent.on_leaved) env.parent.on_leaved(user); } catch (e) {}
+    }
+    try { if (WORLD.on_user_quit) WORLD.on_user_quit(user); } catch (e) {}
+    try { if (user.clear_status) user.clear_status(); } catch (e) {}
+    try { if (user.clear_home) user.clear_home(); } catch (e) {}
+    // 尽力保存角色数据（与 WORLD.login_out 保存逻辑一致）
+    try {
+        if (user.serverid === WORLD.SERVERID) WORLD.DB.saveRole(user.getData());
+    } catch (e) { console.log('[Kick] 保存角色数据失败:', user.name, e.message); }
+    // 清环境引用（对齐 quit()）：使对手的 is_here 判定失效，战斗中踢人后战斗关系能自动清理，
+    // 否则对手会继续攻击一个已离线的玩家对象，战斗不结束。
+    user.environment = null;
+    // 从在线列表移除（优先原型 remove，失败则按引用手动移除兜底）
+    try {
+        if (typeof WORLD.USERS.remove === 'function') WORLD.USERS.remove(user);
+        else {
+            var ri = WORLD.USERS.indexOf(user);
+            if (ri >= 0) WORLD.USERS.splice(ri, 1);
+        }
+    } catch (e) {
+        try { var ri2 = WORLD.USERS.indexOf(user); if (ri2 >= 0) WORLD.USERS.splice(ri2, 1); } catch (e2) {}
+    }
+    // 强制断开连接（核心保证，任何异常都不影响此处执行）
+    if (user.socket) {
+        var sock = user.socket;
+        user.socket = null;
+        try { sock.user = null; } catch (e) {}
+        try { sock.end(); } catch (e) {}
+        try { sock.destroy(); } catch (e) {}
     }
 }
 

@@ -18,7 +18,12 @@ this.set({
 });
 
 this.on_eq = function (me) {
-    if (me.query_temp("jinding_timer")) return;
+    // 兼容旧版：清理误存进 temp 的定时器句柄（会导致存档 JSON 循环引用崩溃）
+    if (me.query_temp("jinding_timer")) {
+        try { clearInterval(me.query_temp("jinding_timer")); } catch (e) {}
+        me.remove_temp("jinding_timer");
+    }
+    if (me.__jinding_timer) return;
     var handler = setInterval(function () {
         if (!me.environment || me.hp <= 0) return;
         var heal = Math.floor(me.max_hp * 5 / 100);
@@ -26,15 +31,19 @@ this.on_eq = function (me) {
             me.add_hp(heal);
         }
     }, 5000);
-    me.set_temp("jinding_timer", handler);
+    // 定时器句柄是 Node Timeout 对象，绝不能进 temp（temp 会被序列化存档）
+    me.__jinding_timer = handler;
     // 装备时弹出提醒
     me.notify("<HIZ>金顶佛光绽放——头顶浮现金色佛光，温暖祥和的佛力护持周身！</HIZ>");
 };
 
 this.on_uneq = function (me) {
-    var handler = me.query_temp("jinding_timer");
-    if (handler) {
-        clearInterval(handler);
+    if (me.__jinding_timer) {
+        clearInterval(me.__jinding_timer);
+        me.__jinding_timer = null;
+    }
+    if (me.query_temp("jinding_timer")) {
+        try { clearInterval(me.query_temp("jinding_timer")); } catch (e) {}
         me.remove_temp("jinding_timer");
     }
     me.notify("金顶佛光消散，佛力褪去。");
@@ -47,9 +56,12 @@ this.on_reload = function (me) {
         this.change_prop(me, true);
         me.recount();
     }
-    var handler = me.query_temp("jinding_timer");
-    if (handler) {
-        clearInterval(handler);
+    if (me.__jinding_timer) {
+        clearInterval(me.__jinding_timer);
+        me.__jinding_timer = null;
+    }
+    if (me.query_temp("jinding_timer")) {
+        try { clearInterval(me.query_temp("jinding_timer")); } catch (e) {}
         me.remove_temp("jinding_timer");
     }
     this.on_eq(me);

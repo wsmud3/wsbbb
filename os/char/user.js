@@ -387,7 +387,7 @@ str.push(0);
 	str.push("],quit_room:\"");
     if (this.environment) {
         if (this.environment.is_fb() || this.environment.no_save
-            || this.environment.parent.no_save) {
+            || (this.environment.parent && this.environment.parent.no_save)) {
             str.push(this.query_temp("enter_room"));
         } else {
             str.push(this.environment.path);
