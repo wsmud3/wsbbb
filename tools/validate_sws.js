@@ -40,6 +40,8 @@ const ceng2Src = read('world/map/sws/ceng2.js');
 const npcSrc = read('world/npc/sws/shouhu.js');
 const jhSrc = read('world/cmd/dialog/jh.js');
 const userExtSrc = read('world/extends/char/user.js');
+const userSrc = read('os/char/user.js');
+const itemSrc = read('os/item.js');
 const constSrc = read('os/const.js');
 
 // 2. 区域注册与入口
@@ -50,6 +52,8 @@ check(/is_copy:\s*true/.test(areaSrc) && /not_fb:\s*true/.test(areaSrc), 'area �
 check(/宗师/.test(areaSrc), '入口校验包含宗师境界提示');
 check(/_sws_orig_check_unlock/.test(userExtSrc), 'user.js 挂载宗师自动解锁补丁');
 check(/SWS_JD_INDEX\s*=\s*10/.test(userExtSrc), '解锁补丁使用禁地位 10');
+check(/this\.temp\.sws_base\s*=\s*null/.test(userSrc) && /swsTransient/.test(userSrc), '登录时清理旧版山外山临时状态');
+check(/Object\.prototype\.hasOwnProperty\.call\(v, "v"\)/.test(itemSrc) && /JSON\.stringify\(v\)/.test(itemSrc), '临时对象使用安全 JSON 序列化');
 
 // 3. 房间互相引用与出口目标存在
 check(/"up":\s*"sws\/ceng2"/.test(cengSrc), 'ceng 出口 up → sws/ceng2');
@@ -121,7 +125,7 @@ check(missingObjs.length === 0, '红武/红装路径全部存在' + (missingObjs
 check(/1000 \* layer/.test(areaSrc) && /st\/xuanjing/.test(areaSrc), '每层玄晶 1000×层数');
 check(/book\/wd/.test(areaSrc) && /st\/yuanjing/.test(areaSrc) && /layer % 10 === 0/.test(areaSrc), '每 10 层奖励 20 武道残页 + 1 元晶');
 check(/shenhunsuipian/.test(areaSrc) && /shenqisuipian/.test(areaSrc) && /layer % 100 === 0/.test(areaSrc), '每 100 层奖励 5 神魂碎片 + 5 神器碎片');
-check(!/sws_base/.test(areaSrc), '进本基准快照已随固定成长移除');
+check(!/set_temp\("sws_base"/.test(areaSrc) && /remove_temp\("sws_base"\)/.test(areaSrc), '不再创建基准快照且会清理旧快照');
 
 // 6. 山外之意词条池：属性键必须在 PROPERTIES 中登记，数值符合设计（速5/暴3/其余5）
 const buffBlock = areaSrc.slice(areaSrc.indexOf('var BUFFS'), areaSrc.indexOf('==== 江湖入口'));
