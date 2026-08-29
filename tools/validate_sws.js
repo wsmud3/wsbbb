@@ -125,7 +125,7 @@ check(missingObjs.length === 0, '红武/红装路径全部存在' + (missingObjs
 check(/1000 \* layer/.test(areaSrc) && /st\/xuanjing/.test(areaSrc), '每层玄晶 1000×层数');
 check(/book\/wd/.test(areaSrc) && /st\/yuanjing/.test(areaSrc) && /layer % 10 === 0/.test(areaSrc), '每 10 层奖励 20 武道残页 + 1 元晶');
 check(/shenhunsuipian/.test(areaSrc) && /shenqisuipian/.test(areaSrc) && /layer % 100 === 0/.test(areaSrc), '每 100 层奖励 5 神魂碎片 + 5 神器碎片');
-check(!/set_temp\("sws_base"/.test(areaSrc) && /remove_temp\("sws_base"\)/.test(areaSrc), '不再创建基准快照且会清理旧快照');
+check(!/set_temp\("sws_base"/.test(areaSrc), '不再创建山外山基准快照（登录迁移负责清理旧快照）');
 
 // 6. 山外之意词条池：属性键必须在 PROPERTIES 中登记，数值符合设计（速5/暴3/其余5）
 const buffBlock = areaSrc.slice(areaSrc.indexOf('var BUFFS'), areaSrc.indexOf('==== 江湖入口'));
