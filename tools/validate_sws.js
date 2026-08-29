@@ -53,6 +53,7 @@ check(/宗师/.test(areaSrc), '入口校验包含宗师境界提示');
 check(/_sws_orig_check_unlock/.test(userExtSrc), 'user.js 挂载宗师自动解锁补丁');
 check(/SWS_JD_INDEX\s*=\s*10/.test(userExtSrc), '解锁补丁使用禁地位 10');
 check(/this\.temp\.sws_base\s*=\s*null/.test(userSrc) && /swsTransient/.test(userSrc), '登录时清理旧版山外山临时状态');
+check(/swsSaveRepair/.test(userSrc) && /\[object Object\]/.test(userSrc), '登录时兼容旧版非法对象存档');
 check(/Object\.prototype\.hasOwnProperty\.call\(v, "v"\)/.test(itemSrc) && /JSON\.stringify\(v\)/.test(itemSrc), '临时对象使用安全 JSON 序列化');
 
 // 3. 房间互相引用与出口目标存在
