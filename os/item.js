@@ -215,7 +215,7 @@ ITEM.prototype.format_temp = function (temp, timeout = 120000) {
     for (var key in temp) {
         var v = temp[key];
         if (!v) continue;
-        if (v.e) {
+        if (v && typeof v == "object" && v.e && Object.prototype.hasOwnProperty.call(v, "v")) {
             if (dt > v.e || !v.v) continue;
             if (tmp.length > 1) tmp.push(",");
             tmp.push(JSON.stringify(key));
@@ -231,6 +231,9 @@ ITEM.prototype.format_temp = function (temp, timeout = 120000) {
             if (typeof v == "string") {
                 tmp.push(JSON.stringify(v));
             } else if (Array.isArray(v)) {
+                tmp.push(JSON.stringify(v));
+            } else if (v && typeof v == "object") {
+                // 临时状态可能是对象；必须序列化，否则会写成非法的 [object Object]。
                 tmp.push(JSON.stringify(v));
             } else {
                 tmp.push(v);
