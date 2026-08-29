@@ -215,6 +215,16 @@ this.custom_skills = data.custom_skills ?? [];
 this.eq_groups = data.eq_groups;
 this.sk_groups = data.sk_groups ?? [null, [], []];
 this.temp = data.temp;
+    // 山外山的临时状态不能污染玩家存档：清理旧版本快照，并清除无进行中挑战的残留状态。
+    if (this.temp && typeof this.temp === "object") {
+        this.temp.sws_base = null;
+        if (!this.query_temp("sws_active", 0)) {
+            var swsTransient = ["sws_active", "sws_layer", "sws_cleared", "sws_picked", "sws_picks", "sws_buffs", "sws_applied"];
+            for (var si = 0; si < swsTransient.length; si++) {
+                this.temp[swsTransient[si]] = null;
+            }
+        }
+    }
 this.read_titles(data.titles);
 if (data.follower) {
 this.follower = [];
