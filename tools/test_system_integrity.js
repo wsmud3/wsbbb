@@ -16,6 +16,16 @@ const checkobj = read("world/cmd/obj/checkobj.js");
 const client = read("src/client.js");
 const zcUi = read("src/dialog/zc.js");
 const css = read("src/styles/main.css");
+const frontendIndex = path.join(root, "www", "index.html");
+assert.ok(fs.existsSync(frontendIndex), "生产前端必须包含 www/index.html，避免服务器拉取后白屏");
+const frontendHtml = fs.readFileSync(frontendIndex, "utf8");
+const frontendAssets = [];
+for (const match of frontendHtml.matchAll(/(?:src|href)="(\.\/assets\/[^\"]+)"/g)) {
+    const asset = path.join(root, "www", match[1].replace(/^\.\//, ""));
+    frontendAssets.push(asset);
+    assert.ok(fs.existsSync(asset), "生产入口引用的资源必须存在：" + match[1]);
+}
+assert.ok(frontendAssets.length >= 2, "生产入口必须同时引用 JS 和 CSS bundle");
 
 assert.ok(zc.includes("validate_pfm_selections") && zc.includes("skill.is_custom") && zc.includes("等级不足3000"),
     "PFM 的手工命令入口必须执行来源、等级和自创技能校验");
@@ -61,3 +71,4 @@ assert.ok(zcUi.includes("Array.isArray(data.available_words)") && zcUi.includes(
 assert.ok(css.includes("env(safe-area-inset-bottom)"), "移动端底栏必须避让安全区");
 
 console.log("前端、真意、自创技能和自制装备关键回归校验通过");
+
