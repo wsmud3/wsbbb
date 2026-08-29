@@ -21,6 +21,7 @@ button.sm{padding:3px 8px;font-size:11px}
 button.green{background:#0f9;color:#000}
 button.blue{background:#0f3460}
 button.red{background:#933}
+button.orange{background:#c60}
 button.gray{background:#555}
 .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0}
 table{width:100%;border-collapse:collapse;font-size:11px}
@@ -230,8 +231,10 @@ async function showStatus(m){
 // === PLAYERS ===
 async function showPlayers(m){
   const list=_onlinePlayers;
-  let h='<h2>在线玩家 ('+list.length+')</h2><input id="pl_search" placeholder="搜索名字/ID (支持模糊)" onkeyup="fuzzyFilterTable(\'pl_tb\',this.value)" style="width:100%;margin-bottom:6px"><table id="pl_tb"><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th><th>门派</th><th>操作</th></tr>';
-  list.forEach(function(p){h+='<tr><td>'+(p.name||'')+'</td><td>'+(p.level||0)+'</td><td>'+(p.location||'')+'</td><td>'+(p.hp||0)+'/'+(p.max_hp||0)+'</td><td>'+(p.family||'无')+'</td><td><button class="sm" onclick="viewPlayer(\''+p.id+'\')">详情/编辑</button><button class="sm blue" onclick="gotoGive(\''+p.id+'\')">给物品</button></td></tr>'});
+  let h='<h2>在线玩家 ('+list.length+')</h2>'+
+    '<div class="card" style="padding:8px;margin-bottom:8px"><div class="row"><b>删除角色:</b><input id="del_offline_name" placeholder="输入角色名或ID（支持离线角色）" style="width:220px"><button class="sm red" onclick="deleteOfflinePlayer()">删除角色</button><span style="font-size:11px;color:#888">原数据将备份到 players_bak</span></div></div>'+
+    '<input id="pl_search" placeholder="搜索名字/ID (支持模糊)" onkeyup="fuzzyFilterTable(\'pl_tb\',this.value)" style="width:100%;margin-bottom:6px"><table id="pl_tb"><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th><th>门派</th><th>操作</th></tr>';
+  list.forEach(function(p){h+='<tr><td>'+(p.name||'')+'</td><td>'+(p.level||0)+'</td><td>'+(p.location||'')+'</td><td>'+(p.hp||0)+'/'+(p.max_hp||0)+'</td><td>'+(p.family||'无')+'</td><td><button class="sm" onclick="viewPlayer(\''+p.id+'\')">详情/编辑</button><button class="sm blue" onclick="gotoGive(\''+p.id+'\')">给物品</button><button class="sm orange" onclick="kickPlayer(\''+p.id+'\',\''+(p.name||'')+'\')">踢下线</button><button class="sm red" onclick="deletePlayer(\''+p.id+'\',\''+(p.name||'')+'\')">删除角色</button></td></tr>'});
   h+='</table><div id="pl_detail"></div>';
   m.innerHTML=h;
 }
@@ -246,7 +249,9 @@ async function viewPlayer(id){
   d.innerHTML='<div class="card" id="player_edit_card">'+
     '<div class="row"><h3 style="margin:0">'+p.name+' [Lv'+p.level+'] '+(p.title||'')+'</h3>'+
     '<button class="green" onclick="savePlayerEdit(\''+p.id+'\')">💾 保存修改</button>'+
-    '<button onclick="viewPlayer(\''+p.id+'\')">🔄 刷新</button></div>'+
+    '<button onclick="viewPlayer(\''+p.id+'\')">🔄 刷新</button>'+
+    '<button class="orange" onclick="kickPlayer(\''+p.id+'\',\''+(p.name||'')+'\')">⚡ 踢下线</button>'+
+    '<button class="red" onclick="deletePlayer(\''+p.id+'\',\''+(p.name||'')+'\')">🗑️ 删除角色</button></div>'+
     '<div class="row"><span>HP:</span><input id="pe_hp" value="'+p.hp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_hp" value="'+p.max_hp+'" style="width:70px" type="number"></div>'+
     '<div class="row"><span>MP:</span><input id="pe_mp" value="'+p.mp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_mp" value="'+p.max_mp+'" style="width:70px" type="number"></div>'+
     '<div class="row"><span>攻:</span><input id="pe_gj" value="'+p.gj+'" style="width:70px" type="number"><span>防:</span><input id="pe_fy" value="'+p.fy+'" style="width:70px" type="number"><span>敏:</span><input id="pe_mz" value="'+p.mz+'" style="width:70px" type="number"><span>闪:</span><input id="pe_ds" value="'+p.ds+'" style="width:70px" type="number"><span>招:</span><input id="pe_zj" value="'+p.zj+'" style="width:70px" type="number"></div>'+
@@ -264,6 +269,33 @@ async function savePlayerEdit(id){
   var r=await call('player_update',data);
   document.getElementById('pe_msg').innerHTML=M(r.msg||(r.ok?'已保存':'失败'),r.ok?'ok':'err');
   if(r.ok)setTimeout(function(){viewPlayer(id)},500);
+}
+
+// 踢玩家下线
+async function kickPlayer(id,name){
+  if(!confirm('确定将玩家 '+(name||id)+' 踢下线？'))return;
+  var r=await call('player_kick',{playerId:id});
+  alert(r.msg||(r.ok?'已踢下线':'操作失败'));
+  if(r.ok)loadPanel('players');
+}
+
+// 删除角色（在线/离线均可，数据备份到players_bak）
+async function deletePlayer(id,name){
+  if(!confirm('⚠️ 确定删除角色 '+(name||id)+' ？\n原数据将备份到 players_bak，删除后玩家无法再使用该角色！'))return;
+  var r=await call('player_delete',{playerId:id});
+  alert(r.msg||(r.ok?'已删除':'操作失败'));
+  if(r.ok)loadPanel('players');
+}
+
+// 删除离线角色（按角色名或ID）
+async function deleteOfflinePlayer(){
+  var el=document.getElementById('del_offline_name');
+  var name=el?el.value.trim():'';
+  if(!name){alert('请输入要删除的角色名或ID');return}
+  if(!confirm('⚠️ 确定删除角色 '+name+' ？\n原数据将备份到 players_bak，删除后玩家无法再使用该角色！'))return;
+  var r=await call('player_delete',{playerId:name});
+  alert(r.msg||(r.ok?'已删除':'操作失败'));
+  if(r.ok&&el){el.value='';loadPanel('players')}
 }
 
 function gotoGive(id){document.getElementById('give_player').value=id;loadPanel('items')}

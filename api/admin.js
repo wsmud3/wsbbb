@@ -499,6 +499,27 @@ class AdminAPI extends APIBASE {
         catch (e) { return { ok: false, msg: '更新失败: ' + e.message }; }
     }
 
+    // POST /api/admin/player_kick — 踢玩家下线
+    async player_kick(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var playerId = params.playerId;
+        if (!playerId) return { ok: false, msg: 'playerId必填' };
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/player_kick', { playerId: playerId }, sid); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        catch (e) { return { ok: false, msg: '踢下线失败: ' + e.message }; }
+    }
+
+    // POST /api/admin/player_delete — 删除角色（支持在线/离线角色，先备份到players_bak）
+    async player_delete(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var playerId = params.playerId;
+        if (!playerId) return { ok: false, msg: 'playerId必填' };
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/player_delete', { playerId: playerId }, sid); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
+    }
+
+
     // POST /api/admin/stats — 获取玩家统计
     async stats(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }

@@ -280,6 +280,58 @@ function handleRequest(req, res) {
                 sendJSON(res, { ok: true, msg: '玩家属性已更新' });
             });
         }
+        // POST /api/player_kick — 踢玩家下线
+        else if (url === '/api/player_kick' && method === 'POST') {
+            readBody(req, function (err, body) {
+                if (err) { sendJSON(res, { error: 'Invalid JSON' }, 400); return; }
+                var pid = body.playerId;
+                if (!pid) { sendJSON(res, { error: '缺少玩家ID' }, 400); return; }
+                var found = null;
+                for (var i = 0; i < WORLD.USERS.length; i++) {
+                    var u = WORLD.USERS[i];
+                    if (u && u.is_player && (u.id === pid || u.name === pid)) { found = u; break; }
+                }
+                if (!found) { sendJSON(res, { error: '玩家不在线: ' + pid }, 404); return; }
+                try {
+                    var kickName = found.name;
+                    try { if (found.socket) found.notify('<RED>你已被管理员强制下线！</RED>'); } catch (e) {}
+                    found.quit(); // 标准登出流程：离开房间/队伍、清状态、存档、断开socket
+                    sendJSON(res, { success: true, message: '已将 ' + kickName + ' 踢下线' });
+                } catch (e) { sendJSON(res, { error: '踢下线失败: ' + e.message }, 500); }
+            });
+        }
+        // POST /api/player_delete — 删除角色（先备份到players_bak再删除，在线则先踢下线）
+        else if (url === '/api/player_delete' && method === 'POST') {
+            readBody(req, function (err, body) {
+                if (err) { sendJSON(res, { error: 'Invalid JSON' }, 400); return; }
+                var pid = body.playerId;
+                if (!pid) { sendJSON(res, { error: '缺少角色ID或名称' }, 400); return; }
+                try {
+                    var role = db.db.prepare("select id,name,userid,sid,level from players where id=? or name=?").get(pid, pid);
+                    if (!role) { sendJSON(res, { error: '角色不存在: ' + pid }, 404); return; }
+                    // 在线则先踢下线，避免存档覆盖已删数据
+                    var online = null;
+                    for (var i = 0; i < WORLD.USERS.length; i++) {
+                        var u2 = WORLD.USERS[i];
+                        if (u2 && u2.is_player && (u2.id === role.id || u2.name === role.name)) { online = u2; break; }
+                    }
+                    var wasOnline = false;
+                    if (online) {
+                        wasOnline = true;
+                        try {
+                            try { if (online.socket) online.notify('<RED>你的角色已被管理员删除，即将断开连接！</RED>'); } catch (e) {}
+                            online.quit();
+                        } catch (e) {}
+                        try { WORLD.USERS.remove(online); } catch (e) {}
+                    }
+                    // 备份到players_bak（or replace: 同ID角色可能删除后重建过）再删除
+                    db.db.prepare("insert or replace into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where id=? and userid=?").run(role.id, role.userid);
+                    var del = db.db.prepare("delete from players where id=? and userid=?").run(role.id, role.userid);
+                    if (del.changes != 1) { sendJSON(res, { error: '删除失败（数据库操作未生效）' }, 500); return; }
+                    sendJSON(res, { success: true, message: '角色 ' + role.name + ' (ID:' + role.id + ') 已删除' + (wasOnline ? '，已强制下线' : '') + '，原数据已备份' });
+                } catch (e) { sendJSON(res, { error: '删除失败: ' + e.message }, 500); }
+            });
+        }
         // POST /api/send_mail — 发送系统邮件
         else if (url === '/api/send_mail' && method === 'POST') {
             readBody(req, function (err, body) {
