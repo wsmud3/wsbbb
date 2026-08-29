@@ -47,6 +47,21 @@ build_frontend() {
     return 0
 }
 
+# 构建失败或人工执行清理后，旧版本可能只留下被 Git 跟踪的删除状态。
+# 这些文件属于可再生前端产物，只恢复“被删除”的路径，不覆盖其他本地改动，
+# 让下一轮部署能够继续拉取远端修复。
+restore_missing_frontend() {
+    local missing
+    while IFS= read -r missing; do
+        [ -n "$missing" ] || continue
+        if git restore -- "$missing" 2>/dev/null || git checkout -- "$missing" 2>/dev/null; then
+            log "恢复被删除的前端产物 $missing"
+        fi
+    done < <(git diff --name-only --diff-filter=D -- www/index.html www/assets)
+}
+
+restore_missing_frontend
+
 # ---------- 0. 工作区必须干净，否则不动 ----------
 if ! git diff --quiet || ! git diff --cached --quiet; then
     log "跳过：工作区不干净（存在未提交改动），拒绝自动部署"
