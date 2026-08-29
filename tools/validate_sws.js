@@ -76,7 +76,8 @@ for (const fn of ['sws_start_run', 'sws_setup_room', 'sws_enter_fight', 'sws_roo
     'sws_on_npc_die', 'sws_choose', 'sws_die_hook', 'sws_end_run', 'sws_reapply_buffs', 'sws_show_picks']) {
     check(areaSrc.indexOf(fn) >= 0, 'area 实现函数: ' + fn);
 }
-check(areaSrc.indexOf('sws_pick0') >= 0 && areaSrc.indexOf('sws_pick2') >= 0, '三选一按钮命令注册');
+check(/add_action\("sws_pick",\s*null/.test(cengSrc) && /add_action\("sws_pick",\s*null/.test(ceng2Src), '三选一按钮命令注册（房间无名动作 sws_pick，不进动作栏）');
+check(/send_commands\.apply/.test(areaSrc) && /sws_pick "\s*\+\s*b\.key/.test(areaSrc), '三选一以对话按钮（send_commands）发送');
 check(/NPC\.CLONE\("sws\/shouhu"\)/.test(areaSrc), '守护者克隆自 sws/shouhu');
 check(/sws_picked/.test(areaSrc), '使用 picked 标记区分战斗中/已择意');
 check(/USER\.prototype\.die/.test(areaSrc), '结束时恢复默认死亡钩子');

@@ -66,9 +66,10 @@ class GameClient {
             this.ws.onerror = (e) => reject(new Error('WS连接失败'));
             this.ws.onmessage = (ev) => {
                 const text = String(ev.data);
+                const index = this.buffer.length;
                 this.buffer.push(text);
                 this.waiters = this.waiters.filter(w => {
-                    if (w.pred(text)) { w.resolve(text); return false; }
+                    if (index >= (w.from || 0) && w.pred(text)) { w.resolve(text); return false; }
                     return true;
                 });
             };
@@ -79,9 +80,10 @@ class GameClient {
         });
     }
     send(text) { this.ws.send(text); }
-    // 等待满足条件的消息（先扫缓冲，再挂监听）
-    waitFor(desc, pred, timeout) {
-        for (const t of this.buffer) if (pred(t)) return Promise.resolve(t);
+    // 等待满足条件的消息（先扫缓冲，再挂监听；from 可只看之后的新消息）
+    waitFor(desc, pred, timeout, from) {
+        const start = from || 0;
+        for (let i = start; i < this.buffer.length; i++) if (pred(this.buffer[i])) return Promise.resolve(this.buffer[i]);
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 console.error('  -- 已收到消息(' + this.buffer.length + ') --');
@@ -90,6 +92,7 @@ class GameClient {
             }, timeout || 15000);
             this.waiters.push({
                 pred,
+                from: start,
                 resolve: (t) => { clearTimeout(timer); resolve(t); },
                 reject: (e) => { clearTimeout(timer); reject(e); },
             });
@@ -202,13 +205,16 @@ async function stage2() {
 
     // GM 注入攻击力，秒杀守护者验证击败流程
     const adminCookie = await adminLogin();
+    const mark1 = gc.buffer.length;
     await adminUpdatePlayer(adminCookie, playerId, { gj: 999999999, hp: 999999999 });
     await gc.text('击败守护者', '你战胜了第', 30000);
-    const picksRoom = await gc.waitFor('三选一按钮', t => t.indexOf('sws_pick0') >= 0 && t.indexOf('"type":"room"') >= 0, 8000);
-    ok(picksRoom.indexOf('sws_pick1') >= 0 && picksRoom.indexOf('sws_pick2') >= 0, '击败后动作栏出现三选一按钮');
+    const picksMsg = await gc.waitFor('三选一对话按钮',
+        t => t.indexOf('"type":"cmds"') >= 0 && (t.match(/"cmd":"sws_pick /g) || []).length >= 3, 8000, mark1);
+    ok(true, '击败后对话区出现三选一按钮');
 
-    // 择意后层数+1，按钮收起
-    gc.send('sws_pick0');
+    // 择意后层数+1，按钮失效（命令携带词条 key）
+    const pickKey = /"cmd":"sws_pick ([a-z0-9_]+)"/.exec(picksMsg)[1];
+    gc.send('sws_pick ' + pickKey);
     await gc.text('择意成功', '领悟了山外之意', 8000);
     await gc.text('层数推进提示', '当前已至', 8000).catch(() => {});
     ok(true, '择定山外之意成功');
@@ -217,6 +223,7 @@ async function stage2() {
     gc.send('go u');
     const room2 = await gc.waitFor('第二层房间', t => t.indexOf('"path":"sws/ceng2"') >= 0);
     ok(/第二层/.test(room2), '下一层房间名显示「第二层」');
+    ok(room2.indexOf('sws_pick') < 0, '动作栏不再挂三选一按钮');
     await gc.text('第二层开战', 'combat",start:1', 15000).catch(() => ok(false, '第二层开战'));
     ok(true, '第二层守护者已生成并开战');
 
@@ -227,10 +234,12 @@ async function stage2() {
         .catch(() => ok(false, '「山外之意」状态可查询'));
 
     // 再打一层验证循环
+    const mark2 = gc.buffer.length;
     await adminUpdatePlayer(adminCookie, playerId, { gj: 999999999, hp: 999999999 });
     await gc.text('第二层击败', '你战胜了第', 30000);
-    await gc.waitFor('第二层三选一', t => t.indexOf('sws_pick0') >= 0, 8000);
-    gc.send('sws_pick1');
+    const picks2 = await gc.waitFor('第二层三选一',
+        t => t.indexOf('"type":"cmds"') >= 0 && (t.match(/"cmd":"sws_pick /g) || []).length >= 3, 8000, mark2);
+    gc.send('sws_pick ' + /"cmd":"sws_pick ([a-z0-9_]+)"/.exec(picks2)[1]);
     await gc.text('第二层择意', '领悟了山外之意', 8000);
     gc.send('go u');
     await gc.waitFor('第三层房间', t => t.indexOf('"path":"sws/ceng"') >= 0 && /第三层/.test(t), 15000);
@@ -241,7 +250,7 @@ async function stage2() {
     ok(!!dieMsg, '战败后结束本次挑战并提示通过层数');
     const backRoom = await gc.waitFor('送回扬州', t => t.indexOf('"path":"yz/guangchang"') >= 0, 8000);
     ok(!!backRoom, '战败后送回扬州中央广场');
-    ok(!/sws_pick0/.test(backRoom), '离开秘境后按钮不残留');
+    ok(!/sws_pick/.test(backRoom), '离开秘境后按钮不残留');
 
     gc.close();
 }

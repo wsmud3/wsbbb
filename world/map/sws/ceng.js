@@ -29,6 +29,13 @@ this.add_action("sws_status", "山外之意", function (me) {
     area && area.sws_status && area.sws_status(me);
 });
 
+// 「山外之意」三选一走对话按钮（sws_pick 词条key）：
+// 以无名动作注册（name 为 null 不会渲染进动作栏），只负责接住按钮回发的命令。
+this.add_action("sws_pick", null, function (me, key) {
+    var area = this.parent;
+    area && area.sws_choose && area.sws_choose(me, key);
+});
+
 // 出口按钮用固定文案，避免各玩家层数不同造成串显
 this.exitsto_roomjson = function () {
     return JSON.stringify({ type: "exits", items: { "up": "下一层", "out": "离开秘境" } });

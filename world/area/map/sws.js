@@ -89,7 +89,6 @@ this.sws_setup_room = function (room, me) {
     this.sws_reapply_buffs(me);
     var layer = me.query_temp("sws_layer", 1);
     room.name = "第" + UTIL.to_c(layer) + "层";
-    room.remove_action(["sws_pick0", "sws_pick1", "sws_pick2"]);
     var items = room.items || [];
     for (var i = items.length - 1; i >= 0; i--) {
         if (!items[i].is_player) {
@@ -115,7 +114,7 @@ this.sws_setup_room = function (room, me) {
         npc.environment = room;
         room.items.push(npc);
     } else {
-        this.sws_show_picks(room, me);
+        this.sws_show_picks(me);
     }
     room.refresh();
 };
@@ -184,7 +183,7 @@ this.sws_on_npc_die = function (npc, me) {
         }
     }
 
-    me.notify("<hig>你战胜了第" + UTIL.to_c(layer) + "层守护者！请择一道「山外之意」。</hig>");
+    me.notify("<hig>你战胜了第" + UTIL.to_c(layer) + "层守护者！</hig>");
     var pool = BUFFS.slice();
     var idxs = [];
     while (idxs.length < 3 && pool.length) {
@@ -192,18 +191,26 @@ this.sws_on_npc_die = function (npc, me) {
     }
     me.set_temp("sws_picks", idxs);
     if (room) {
-        this.sws_show_picks(room, me);
+        this.sws_show_picks(me);
         room.refresh(me);
     }
 };
 
 // 择定山外之意：写入累计、挂属性、层数+1
-this.sws_choose = function (me, idx, room) {
+// key 为对话按钮回发的词条 key（如 gjsd/bao），旧层的失效按钮无法误选新层词条。
+this.sws_choose = function (me, key) {
     if (!me.query_temp("sws_active", 0)) return me.notify("你并不在山外山秘境之中。");
     if (!me.query_temp("sws_cleared", 0)) return me.notify("先战胜本层守护者再说吧。");
     var picks = me.query_temp("sws_picks") || [];
-    var b = BUFFS[picks[idx]];
-    if (!b) return me.notify("这道山外之意已经消散了。");
+    var pickIdx = -1;
+    for (var i = 0; i < picks.length; i++) {
+        if (BUFFS[picks[i]] && BUFFS[picks[i]].key === key) {
+            pickIdx = i;
+            break;
+        }
+    }
+    if (pickIdx < 0) return me.notify("这道山外之意已经消散了。");
+    var b = BUFFS[picks[pickIdx]];
 
     var buffs = me.query_temp("sws_buffs") || {};
     buffs[b.key] = (buffs[b.key] || 0) + 1;
@@ -214,10 +221,6 @@ this.sws_choose = function (me, idx, room) {
     this.sws_reapply_buffs(me);
     me.notify_hp();
     var layer = me.add_temp("sws_layer", 1);
-    if (room) {
-        room.remove_action(["sws_pick0", "sws_pick1", "sws_pick2"]);
-        room.refresh(me);
-    }
 
     var parts = [];
     for (var i = 0; i < BUFFS.length; i++) {
@@ -333,20 +336,20 @@ this.sws_reapply_buffs = function (me) {
     me.recount();
 };
 
-// 把待选的三道山外之意挂到房间动作栏（游戏自带按钮）
-this.sws_show_picks = function (room, me) {
+// 把待选的三道山外之意以对话按钮发给玩家（消息区内按钮，不占用动作栏）。
+// 按钮命令携带词条 key，由房间的无名动作 sws_pick 接住后转给 sws_choose。
+this.sws_show_picks = function (me) {
     var picks = me.query_temp("sws_picks");
     if (!picks || !picks.length) return;
+    var args = [];
     for (var i = 0; i < picks.length; i++) {
-        (function (idx) {
-            var b = BUFFS[picks[idx]];
-            if (!b) return;
-            room.add_action("sws_pick" + idx, b.tag + "（" + b.desc + "）", function (me2) {
-                var area = this.parent;
-                area && area.sws_choose(me2, idx, this);
-            });
-        })(i);
+        var b = BUFFS[picks[i]];
+        if (!b) continue;
+        args.push("sws_pick " + b.key, b.tag + "（" + b.desc + "）");
     }
+    if (!args.length) return;
+    me.notify("<hig>请择定一道「山外之意」：</hig>");
+    me.send_commands.apply(me, args);
 };
 
 // 状态查询（房间动作「山外之意」）
