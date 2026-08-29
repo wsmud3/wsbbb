@@ -245,6 +245,24 @@ USER.prototype.query_age = function () {
 
     return 14 + dt / 86400000 / 12 - this.query_prop("age") - this.query_temp("age", 0);
 }
+// ===== 山外山：宗师境界（level>=3）自动解锁禁地 sws =====
+// check_unlock_sect_jds 在登录、重连和升级时都会被调用，这里包一层实现自动解锁。
+var SWS_JD_INDEX = 10;
+function sws_check_unlock(me) {
+    if (!me || !me.is_player) return;
+    if (me.level < 3) return;
+    if (me.query_bool("fb2", SWS_JD_INDEX)) return;
+    me.set_bool("fb2", SWS_JD_INDEX, true);
+    me.send("<hio>你只觉胸中意境大开，天外之山隐隐向你呼唤，秘境【山外山】已解锁，可从江湖-禁地前往。</hio>");
+    me.send(JSON.stringify({ type: "dialog", dialog: "jh", unlock2: me.query_temp("fb2", 0) }));
+}
+if (!USER._sws_orig_check_unlock) {
+    USER._sws_orig_check_unlock = USER.prototype.check_unlock_sect_jds;
+    USER.prototype.check_unlock_sect_jds = function () {
+        try { sws_check_unlock(this); } catch (e) {}
+        return USER._sws_orig_check_unlock.apply(this, arguments);
+    };
+}
 FOLLOWER.prototype.remove_obj = USER.prototype.remove_obj;
 FOLLOWER.prototype.recount = USER.prototype.recount;
 FOLLOWER.prototype.items_changed = USER.prototype.items_changed;

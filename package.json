@@ -16,7 +16,8 @@
     "start": "concurrently \"npm run web\" \"npm run os\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/test_zhenyi_trial.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js",
-    "validate:systems": "npm run validate:zhenyi && node tools/test_system_integrity.js && node tools/test_equipment_recast.js"
+    "validate:sws": "node tools/validate_sws.js",
+    "validate:systems": "npm run validate:zhenyi && node tools/test_system_integrity.js && node tools/test_equipment_recast.js && node tools/validate_sws.js"
   },
   "author": "",
   "license": "ISC",
