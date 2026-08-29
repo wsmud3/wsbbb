@@ -222,7 +222,7 @@ ITEM.prototype.format_temp = function (temp, timeout = 120000) {
             tmp.push(":{e:");
             tmp.push(v.e);
             tmp.push(",v:");
-            tmp.push(typeof v.v == "string" ? JSON.stringify(v.v) : v.v);
+            tmp.push(typeof v.v == "string" || (v.v && typeof v.v == "object") ? JSON.stringify(v.v) : v.v);
             tmp.push("}");
         } else {
             if (tmp.length > 1) tmp.push(",");
