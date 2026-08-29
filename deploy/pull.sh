@@ -23,17 +23,28 @@ log() { echo "[$(date '+%F %T')] $1" >> "$LOG"; }
 build_frontend() {
     local current_ref
     current_ref=$(git rev-parse HEAD)
-    # 前端产物不入库，且旧服务器可能残留错误的 last_built_ref；每轮部署
-    # 都重建一次，确保 www/ 一定对应当前代码，而不是只相信记录文件。
-    find www -user root -delete 2>/dev/null || true
-    if npm run build >> "$LOG" 2>&1; then
-        echo "$current_ref" > log/last_built_ref
-        log "前端构建完成 ${current_ref:0:7}（www/ 已更新）"
-        return 0
-    else
-        log "错误：前端构建失败 ${current_ref:0:7}，前端保持旧版本，下轮自动重试"
+    # 前端生产产物随仓库发布。部署机不再先清理 www/ 再尝试构建：
+    # 一旦 npm/Vite 环境异常，清理会把可用 bundle 删除，只留下 index.html，
+    # 造成入口 200 但 JS/CSS 404 的白屏。构建应在发布前完成并通过回归校验。
+    local refs
+    if [ ! -s www/index.html ]; then
+        log "错误：${current_ref:0:7} 缺少 www/index.html，拒绝部署"
         return 1
     fi
+    refs=$(node -e 'const fs=require("fs");const html=fs.readFileSync("www/index.html","utf8");const refs=[...html.matchAll(/(?:src|href)="(\.\/assets\/[^\"]+)"/g)].map(m=>m[1]);if(refs.length<2)process.exit(1);process.stdout.write(refs.join("\n"));' 2>/dev/null) || {
+        log "错误：${current_ref:0:7} 的 index.html 未引用完整 JS/CSS bundle，拒绝部署"
+        return 1
+    }
+    local ref
+    while IFS= read -r ref; do
+        if [ ! -s "www/${ref#./}" ]; then
+            log "错误：${current_ref:0:7} 缺少前端资源 www/${ref#./}，拒绝部署"
+            return 1
+        fi
+    done <<< "$refs"
+    echo "$current_ref" > log/last_built_ref
+    log "前端产物校验通过 ${current_ref:0:7}（使用仓库内版本，跳过服务器构建）"
+    return 0
 }
 
 # ---------- 0. 工作区必须干净，否则不动 ----------
@@ -53,7 +64,7 @@ REMOTE=$(git rev-parse origin/main)
 
 # 无更新，什么都不做（避免无意义 reload）
 if [ "$LOCAL" = "$REMOTE" ]; then
-    # 即使没有新提交，也要确认前端产物可正常生成。
+    # 即使没有新提交，也要确认仓库内前端产物完整。
     build_frontend || true
     exit 0
 fi
@@ -116,3 +127,4 @@ if [ "$HEALTHY" != "1" ]; then
 fi
 
 log "更新至 ${REMOTE:0:7}（快进合并），健康检查通过，已 pm2 reload"
+
