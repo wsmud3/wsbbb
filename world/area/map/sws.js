@@ -165,8 +165,9 @@ this.sws_on_npc_die = function (npc, me) {
 
     var exp = 1500 + layer * 500;
     me.add_exp(exp, exp);
-    // 奖励：每层玄晶 1000×层数；每 10 层 20 武道残页 + 1 元晶；每 100 层 5 神魂碎片 + 5 神器碎片
-    this.sws_grant(me, "st/xuanjing", 1000 * layer);
+    // 奖励：每层玄晶 1000×层数（周上限：最高层×1000×3，每周一05:00重置）；
+    // 每 10 层 20 武道残页 + 1 元晶；每 100 层 5 神魂碎片 + 5 神器碎片
+    this.sws_grant_xuanjing(me, layer);
     if (layer % 10 === 0) {
         this.sws_grant(me, "book/wd", 20);
         this.sws_grant(me, "st/yuanjing", 1);
@@ -239,6 +240,39 @@ this.sws_grant = function (me, path, count) {
     if (!obj) return;
     var item = me.add_obj(obj);
     if (item) me.send("你获得了" + UTIL.to_c(count) + item.unit + item.color_name + "。");
+};
+
+// 本周起点（周一05:00）的时间戳：周一00:00-04:59 归属上周
+this.sws_week_key = function (now) {
+    var d = new Date(now);
+    var toMonday = (d.getDay() + 6) % 7; // 距本周一的天数（周一=0，周日=6）
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - toMonday, 5, 0, 0, 0).getTime();
+    if (now < monday) monday -= 7 * 24 * 3600 * 1000; // 周一凌晨尚未到05:00，归属上一周
+    return monday;
+};
+
+// 玄晶周收益上限结算：每周上限 = 最高层 × 1000 × 3，周一05:00重置
+this.sws_grant_xuanjing = function (me, layer) {
+    var weekKey = this.sws_week_key(Date.now());
+    if (me.query_temp("sws_xj_week") !== weekKey) {
+        me.set_temp("sws_xj_week", weekKey);
+        me.set_temp("sws_xj_got", 0);
+    }
+    var best = me.query_temp("sws_best", 0);
+    var cap = Math.max(best, layer) * 1000 * 3;
+    var got = me.query_temp("sws_xj_got", 0);
+    var base = 1000 * layer;
+    if (got >= cap) {
+        return me.notify("<hio>你本周的山外山玄晶收益已达上限（" + UTIL.to_c(cap) + "枚），下周一再战吧。</hio>");
+    }
+    var grant = Math.min(base, cap - got);
+    if (grant > 0) {
+        this.sws_grant(me, "st/xuanjing", grant);
+        me.set_temp("sws_xj_got", got + grant);
+        if (grant < base) {
+            me.notify("<hio>本周玄晶收益已接近上限（" + UTIL.to_c(cap) + "枚），本次仅获得" + UTIL.to_c(grant) + "枚玄晶。</hio>");
+        }
+    }
 };
 
 // 玩家死亡钩子：境界守护（on_die）优先，否则结束本次挑战并送下山
@@ -374,5 +408,13 @@ this.sws_status = function (me) {
     }
     str.push("山外之意：" + (parts.length ? parts.join("，") : "尚无"));
     str.push("\n本人最佳：第" + UTIL.to_c(best) + "层　全服纪录：" + (max_user ? max_user + "·第" + UTIL.to_c(max) + "层" : "暂无"));
+    var weekKey = this.sws_week_key(Date.now());
+    if (me.query_temp("sws_xj_week") !== weekKey) {
+        me.set_temp("sws_xj_week", weekKey);
+        me.set_temp("sws_xj_got", 0);
+    }
+    var cap = Math.max(best, layer) * 1000 * 3;
+    var got = me.query_temp("sws_xj_got", 0);
+    str.push("\n本周玄晶收益：" + UTIL.to_c(got) + " / " + UTIL.to_c(cap) + "枚（上限=最高层×3000，每周一05:00重置）");
     me.notify(str.join(""));
 };
