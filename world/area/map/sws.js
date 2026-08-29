@@ -165,14 +165,15 @@ this.sws_on_npc_die = function (npc, me) {
 
     var exp = 1500 + layer * 500;
     me.add_exp(exp, exp);
-    if (layer % 5 === 0) {
-        var items = OBJ.create_by_odds([{ obj: ["st/xuanjing"], count: 2 }]);
-        for (var r = 0; r < items.length; r++) {
-            var item = me.add_obj(items[r]);
-            if (item) {
-                me.send("你获得了" + UTIL.to_c(items[r].count || 1) + item.unit + item.color_name + "。");
-            }
-        }
+    // 奖励：每层玄晶 1000×层数；每 10 层 20 武道残页 + 1 元晶；每 100 层 5 神魂碎片 + 5 神器碎片
+    this.sws_grant(me, "st/xuanjing", 1000 * layer);
+    if (layer % 10 === 0) {
+        this.sws_grant(me, "book/wd", 20);
+        this.sws_grant(me, "st/yuanjing", 1);
+    }
+    if (layer % 100 === 0) {
+        this.sws_grant(me, "eq/lv6/wushen/shenhunsuipian", 5);
+        this.sws_grant(me, "eq/lv6/wushen/shenqisuipian", 5);
     }
     var max = WORLD.DATA.query_temp("sws_max", 0);
     if (layer > max) {
@@ -232,6 +233,14 @@ this.sws_choose = function (me, key) {
         "\n点击「下一层」继续攀登，当前已至<hic>第" + UTIL.to_c(layer) + "层</hic>。");
 };
 
+// 发放固定奖励道具（创建、入包、提示）
+this.sws_grant = function (me, path, count) {
+    var obj = OBJ.CREATE(path, count);
+    if (!obj) return;
+    var item = me.add_obj(obj);
+    if (item) me.send("你获得了" + UTIL.to_c(count) + item.unit + item.color_name + "。");
+};
+
 // 玩家死亡钩子：境界守护（on_die）优先，否则结束本次挑战并送下山
 this.sws_die_hook = function (killer) {
     var me = this;
@@ -271,7 +280,6 @@ this.sws_end_run = function (me, how) {
         me.remove_temp("sws_picked");
         me.remove_temp("sws_picks");
         me.remove_temp("sws_buffs");
-        me.remove_temp("sws_base");
         if (me.die !== USER.prototype.die) me.die = USER.prototype.die;
         var best = me.query_temp("sws_best", 0);
         if (done > best) me.set_temp("sws_best", done);
@@ -290,7 +298,7 @@ this.sws_end_run = function (me, how) {
 
 // ============ 内部工具 ============
 
-// 开始新一轮：重置层数与词条，记录进本基准值，回满状态
+// 开始新一轮：重置层数与词条，回满状态
 this.sws_start_run = function (me) {
     me.set_temp("sws_active", 1);
     me.set_temp("sws_layer", 1);
@@ -299,11 +307,6 @@ this.sws_start_run = function (me) {
     me.remove_temp("sws_picks");
     me.set_temp("sws_buffs", {});
     me.remove_temp("sws_applied");
-    // 以进本时状态为缩放基准，山外之意才是对守护者的纯粹增益
-    me.set_temp("sws_base", {
-        hp: me.max_hp, gj: me.gj, fy: me.fy,
-        mz: me.mz, ds: me.ds, zj: me.zj
-    });
     me.recount();
     me.hp = me.max_hp;
     me.mp = me.max_mp;

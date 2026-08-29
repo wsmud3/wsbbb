@@ -18,18 +18,6 @@ function read(p) {
     return fs.readFileSync(path.join(root, p), 'utf8');
 }
 
-// 收集 world/skill 下所有技能文件名（不含 .js），用于校验 NPC 技能表引用
-function collectSkillIds(dir, out) {
-    out = out || {};
-    for (const name of fs.readdirSync(dir)) {
-        const full = path.join(dir, name);
-        const stat = fs.statSync(full);
-        if (stat.isDirectory()) collectSkillIds(full, out);
-        else if (name.endsWith('.js')) out[name.slice(0, -3)] = true;
-    }
-    return out;
-}
-
 console.log('== 山外山（sws）静态校验 ==');
 
 // 1. 核心文件存在
@@ -82,17 +70,61 @@ check(/NPC\.CLONE\("sws\/shouhu"\)/.test(areaSrc), '守护者克隆自 sws/shouh
 check(/sws_picked/.test(areaSrc), '使用 picked 标记区分战斗中/已择意');
 check(/USER\.prototype\.die/.test(areaSrc), '结束时恢复默认死亡钩子');
 
-// 5. 守护者：按基准缩放、技能表合法
-check(/init_from/.test(npcSrc) && /sws_base/.test(npcSrc), '守护者按玩家进本基准(sws_base)缩放');
-check(/skills_def/.test(npcSrc), '守护者带分级技能表');
-const skillIds = collectSkillIds(path.join(root, 'world', 'skill'));
-const refIds = [...npcSrc.matchAll(/\["([a-z0-9_]+)",\s*\d+/g)].map(m => m[1]);
-const badRefs = refIds.filter(id => !skillIds[id]);
-check(refIds.length >= 30, '技能表引用完整（' + refIds.length + ' 条）');
-check(badRefs.length === 0, '技能表引用全部存在' + (badRefs.length ? '，缺失: ' + badRefs.join(',') : ''));
+// 5. 守护者：固定数值成长、动态技能池可覆盖各档位、红装路径真实存在
+check(/init_from/.test(npcSrc), '守护者带 init_from 初始化');
+check(/BASE_FIVE\s*=\s*10000/.test(npcSrc) && /BASE_HP\s*=\s*100000/.test(npcSrc), '守护者固定成长基准（五维1万/气血10万）');
+check(/diff_fy_per/.test(npcSrc) && /add_sh_per/.test(npcSrc) && /diff_sh_per/.test(npcSrc), '守护者带破防/终伤/伤害减免成长');
+check(/SH_PER_CAP\s*=\s*80/.test(npcSrc), '伤害减免封顶80%（防高层数完全免疫）');
+check(/SKILL_TIERS/.test(npcSrc) && /pick_skill/.test(npcSrc) && /SKILL\[base\]/.test(npcSrc), '技能组按层数换挡（运行时技能池）');
+check(!/sws_base/.test(npcSrc), '守护者不再按玩家基准缩放');
+
+// 5.1 技能池静态扫描：各档位战斗技能与内功池必须非空（grade=品级：1绿2蓝3黄4紫5橙6红）
+function collectSkillPools(dir, out) {
+    out = out || {};
+    for (const name of fs.readdirSync(dir)) {
+        const full = path.join(dir, name);
+        const stat = fs.statSync(full);
+        if (stat.isDirectory()) collectSkillPools(full, out);
+        else if (name.endsWith('.js')) {
+            const src = fs.readFileSync(full, 'utf8');
+            const grade = parseInt((src.match(/this\.grade\s*=\s*(\d+)/) || [])[1]);
+            const en = src.match(/this\.can_enables\s*=\s*\[([^\]]*)\]/);
+            if (!grade || !en) continue;
+            for (const m of en[1].matchAll(/"([a-z]+)"/g)) {
+                const b = m[1];
+                if (!out[b]) out[b] = {};
+                out[b][grade] = (out[b][grade] || 0) + 1;
+            }
+        }
+    }
+    return out;
+}
+const pools = collectSkillPools(path.join(root, 'world', 'skill'));
+const needPools = [
+    ['sword', 1], ['unarmed', 1], ['parry', 1], ['dodge', 1], ['force', 1],
+    ['sword', 2], ['unarmed', 2], ['parry', 2], ['dodge', 2], ['force', 3],
+    ['sword', 3], ['unarmed', 3], ['parry', 3], ['dodge', 3], ['force', 4],
+    ['sword', 4], ['unarmed', 4], ['parry', 4], ['dodge', 4], ['force', 5],
+    ['sword', 5], ['unarmed', 5], ['parry', 5], ['dodge', 5], ['force', 6],
+    ['sword', 6], ['blade', 6],
+];
+const emptyPools = needPools.filter(([b, g]) => !((pools[b] || {})[g]));
+check(emptyPools.length === 0, '各档位技能池全部非空' + (emptyPools.length ? '，空池: ' + emptyPools.map(p => p.join('/')).join(',') : ''));
+
+// 5.2 红武/红装路径必须真实存在（守护者 5000 层起穿戴）
+const objPaths = [...new Set([...npcSrc.matchAll(/"(eq\/lv6\/[a-z0-9_\/]+)"/g)].map(m => m[1]))];
+const missingObjs = objPaths.filter(p => !fs.existsSync(path.join(root, 'world/obj', p + '.js')));
+check(objPaths.length >= 20, '红武/红装池非空（' + objPaths.length + ' 件）');
+check(missingObjs.length === 0, '红武/红装路径全部存在' + (missingObjs.length ? '，缺失: ' + missingObjs.join(',') : ''));
+
+// 5.3 奖励方案：每层玄晶1000×层数；每10层残页+元晶；每100层神魂/神器碎片
+check(/1000 \* layer/.test(areaSrc) && /st\/xuanjing/.test(areaSrc), '每层玄晶 1000×层数');
+check(/book\/wd/.test(areaSrc) && /st\/yuanjing/.test(areaSrc) && /layer % 10 === 0/.test(areaSrc), '每 10 层奖励 20 武道残页 + 1 元晶');
+check(/shenhunsuipian/.test(areaSrc) && /shenqisuipian/.test(areaSrc) && /layer % 100 === 0/.test(areaSrc), '每 100 层奖励 5 神魂碎片 + 5 神器碎片');
+check(!/sws_base/.test(areaSrc), '进本基准快照已随固定成长移除');
 
 // 6. 山外之意词条池：属性键必须在 PROPERTIES 中登记，数值符合设计（速5/暴3/其余5）
-const buffBlock = areaSrc.slice(areaSrc.indexOf('var BUFFS'), areaSrc.indexOf('SWS_COLORS'));
+const buffBlock = areaSrc.slice(areaSrc.indexOf('var BUFFS'), areaSrc.indexOf('==== 江湖入口'));
 const buffProps = [...buffBlock.matchAll(/prop:\s*"([a-z0-9_]+)"/g)].map(m => m[1]);
 check(buffProps.length === 10, '山外之意共 10 项（实际 ' + buffProps.length + '）');
 const missingProps = buffProps.filter(p => !new RegExp('\\b' + p + '\\b').test(constSrc));
