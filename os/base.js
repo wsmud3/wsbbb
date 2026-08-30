@@ -1,4 +1,4 @@
-﻿/*
+/*
 
 定义当对象从文件生成时的基类，
 当文件内部调用this.inherit(父类名)后，将真正继承父类的原型和实例属性。
@@ -124,6 +124,7 @@ BASE.prototype.call_interval = function (func, time, count, end_func) {
 
 const vm = require('vm');
 const fs = require("fs");
+const path = require('path');
 
 // 沙箱脚本（world/** 经 vm.compileFunction 加载）没有 require/module 作用域，
 // 通过 BASE 暴露受限的文件操作接口供其使用（不直接暴露 fs）
@@ -131,6 +132,43 @@ BASE.read_dir = function (dir) { return fs.readdirSync(dir); };
 BASE.unlink_file = function (fp) { fs.unlinkSync(fp); };
 BASE.stat_mtime = function (fp) { return fs.statSync(fp).mtimeMs; };
 BASE.path_exists = function (fp) { return fs.existsSync(fp); };
+BASE.read_file = function (fp) {
+    try {
+        return fs.readFileSync(fp, "utf8");
+    } catch (e) {
+        return null;
+    }
+};
+// 原子写入（先写临时文件再改名），供 world 脚本持久化小体积状态（如山外山纪录）。
+BASE.write_file = function (fp, content) {
+    try {
+        fs.mkdirSync(path.dirname(fp), { recursive: true });
+        var tmp = fp + ".tmp";
+        fs.writeFileSync(tmp, content);
+        fs.renameSync(tmp, fp);
+        return true;
+    } catch (e) {
+        console.error("[BASE.write_file] 写入失败:", fp, e.message);
+        return false;
+    }
+};
+BASE.read_json = function (fp) {
+    var raw = BASE.read_file(fp);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        return null;
+    }
+};
+BASE.write_json = function (fp, obj) {
+    try {
+        return BASE.write_file(fp, JSON.stringify(obj));
+    } catch (e) {
+        console.error("[BASE.write_json] 序列化失败:", fp, e.message);
+        return false;
+    }
+};
 
 // 修复源文件中的两类换行问题：
 // 1. 代码中的字面 \n（反斜杠+n）→ 还原为真正的换行符

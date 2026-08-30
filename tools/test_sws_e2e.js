@@ -189,9 +189,36 @@ async function stage2() {
     const unlock2 = /unlock2:(\d+)/.exec(unlockMsg);
     ok(!!unlock2 && (parseInt(unlock2[1]) & 1024) !== 0, '江湖禁地第11项(位10)已解锁 unlock2=' + (unlock2 ? unlock2[1] : '?'));
 
-    // 进入山外山
+    // 进入山外山 → 初始地图「山门」（不再直接开打）
     gc.send('jh ar 10 start');
-    const room1 = await gc.waitFor('进入秘境房间', t => t.indexOf('"path":"sws/ceng"') >= 0);
+    const startRoom = await gc.waitFor('进入山门', t => t.indexOf('"path":"sws/start"') >= 0);
+    ok(/山门/.test(startRoom), '初始地图显示「山门」');
+    await gc.text('山门文案', '守山人', 8000).catch(() => ok(false, '山门文案包含守山人'));
+
+    // 守山人 NPC 查询：本人最高层与全服最高层（纪录持久化，可能来自历史运行，断言做兼容）
+    const itemsMsg = await gc.waitFor('山门物品', t => t.indexOf('"type":"items"') >= 0 && t.indexOf('守山人') >= 0, 8000);
+    const guard = /"id":"([^"]+)","name":"守山人"/.exec(itemsMsg);
+    ok(!!guard, '山门守山人 NPC 已就位');
+    if (guard) {
+        const markGuard = gc.buffer.length;
+        gc.send('sws_ask_self ' + guard[1]);
+        await gc.waitFor('查询本人最高层',
+            t => t.indexOf('守山人') >= 0 && (t.indexOf('第') >= 0 || t.indexOf('尚未登临') >= 0),
+            8000, markGuard)
+            .then(() => ok(true, '守山人可查询本人最高层'))
+            .catch(() => ok(false, '守山人可查询本人最高层'));
+        const markGuard2 = gc.buffer.length;
+        gc.send('sws_ask_server ' + guard[1]);
+        await gc.waitFor('查询全服最高层',
+            t => t.indexOf('守山人') >= 0 && (t.indexOf('最高') >= 0 || t.indexOf('无人登临') >= 0),
+            8000, markGuard2)
+            .then(() => ok(true, '守山人可查询全服最高层'))
+            .catch(() => ok(false, '守山人可查询全服最高层'));
+    }
+
+    // 登山 → 第一层，自动开战
+    gc.send('go u');
+    const room1 = await gc.waitFor('进入第一层', t => t.indexOf('"path":"sws/ceng"') >= 0);
     ok(/第一层/.test(room1), '首层房间名显示「第一层」');
     await gc.text('守护者出现', '守护者', 8000);
     await gc.text('自动开战', 'combat",start:1', 8000).catch(() => ok(false, '自动开战'));

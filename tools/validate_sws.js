@@ -23,9 +23,11 @@ console.log('== 山外山（sws）静态校验 ==');
 // 1. 核心文件存在
 const files = [
     'world/area/map/sws.js',
+    'world/map/sws/start.js',
     'world/map/sws/ceng.js',
     'world/map/sws/ceng2.js',
     'world/npc/sws/shouhu.js',
+    'world/npc/sws/shou_shan_ren.js',
 ];
 for (const f of files) {
     check(fs.existsSync(path.join(root, f)), '文件存在: ' + f);
@@ -35,14 +37,17 @@ if (failed) {
 }
 
 const areaSrc = read('world/area/map/sws.js');
+const startSrc = read('world/map/sws/start.js');
 const cengSrc = read('world/map/sws/ceng.js');
 const ceng2Src = read('world/map/sws/ceng2.js');
 const npcSrc = read('world/npc/sws/shouhu.js');
+const guardSrc = read('world/npc/sws/shou_shan_ren.js');
 const jhSrc = read('world/cmd/dialog/jh.js');
 const userExtSrc = read('world/extends/char/user.js');
 const userSrc = read('os/char/user.js');
 const itemSrc = read('os/item.js');
 const constSrc = read('os/const.js');
+const baseSrc = read('os/base.js');
 
 // 2. 区域注册与入口
 check(/sws:\s*10/.test(jhSrc), 'jh.js 禁地表注册 sws:10');
@@ -57,12 +62,35 @@ check(/swsSaveRepair/.test(userSrc) && /\[object Object\]/.test(userSrc), '登�
 check(/Object\.prototype\.hasOwnProperty\.call\(v, "v"\)/.test(itemSrc) && /JSON\.stringify\(v\)/.test(itemSrc), '临时对象使用安全 JSON 序列化');
 
 // 3. 房间互相引用与出口目标存在
+check(/first:\s*"sws\/start"/.test(areaSrc), 'area 入口改为山门 sws/start（先到初始地图，不再直接开打）');
+check(/id:\s*"sws\/start"/.test(areaSrc), 'area.map 声明山门房间');
+check(/"up":\s*"sws\/ceng"/.test(startSrc) && /"out":\s*"yz\/guangchang"/.test(startSrc), '山门出口 up → sws/ceng、out → 扬州中央广场');
+check(/set_npc\("sws\/shou_shan_ren"\)/.test(startSrc), '山门放置守山人 NPC');
+check(/sws_setup_start/.test(startSrc) && /sws_setup_start/.test(areaSrc), '山门委托 area 布置（同步持久化纪录，不开战）');
 check(/"up":\s*"sws\/ceng2"/.test(cengSrc), 'ceng 出口 up → sws/ceng2');
 check(/"up":\s*"sws\/ceng"/.test(ceng2Src), 'ceng2 出口 up → sws/ceng');
 check(/"out":\s*"yz\/guangchang"/.test(cengSrc) && /"out":\s*"yz\/guangchang"/.test(ceng2Src), '两间均有离开出口 → 扬州中央广场');
 check(fs.existsSync(path.join(root, 'world/map/yz/guangchang.js')), '出口目标房间 yz/guangchang 存在');
 check(/sws_setup_room/.test(cengSrc) && /sws_setup_room/.test(ceng2Src), '两间房间委托 area 布置');
 check(/sws_room_leave/.test(cengSrc) && /sws_room_leave/.test(ceng2Src), '两间房间挂出口闸门');
+
+// 3.1 守山人 NPC：查询本人/全服最高层
+check(/sws_ask_self/.test(guardSrc) && /sws_ask_server/.test(guardSrc), '守山人注册「我的最高层」与「全服最高层」动作');
+check(/sws_ask_self/.test(areaSrc) && /sws_ask_server/.test(areaSrc), 'area 实现守山人查询逻辑（读持久化纪录）');
+check(/no_fight:\s*true/.test(guardSrc) && /no_refresh:\s*true/.test(guardSrc), '守山人不可攻击且不刷新');
+
+// 3.2 持久化纪录（重启不丢）：本人最佳/全服最高/一次性奖励领取记录
+check(/sws\.json/.test(areaSrc), '纪录写入独立存档文件 data/<sid>/sws.json');
+check(/BASE\.write_json/.test(areaSrc) && /BASE\.read_json/.test(areaSrc), '经 BASE 暴露的文件接口读写（沙箱内无 fs）');
+check(/BASE\.write_json\s*=\s*function/.test(baseSrc) && /BASE\.read_json\s*=\s*function/.test(baseSrc), 'os/base.js 提供 write_json/read_json 文件助手');
+check(/sws_max_set/.test(areaSrc) && /sws_max_get/.test(areaSrc) && /sws_best_set/.test(areaSrc), '本人/全服最高层走持久化读写');
+check(/sws_player_get/.test(areaSrc) && /sws_player_sync/.test(areaSrc), '玩家档案（最佳+领取记录）持久化并回写临时状态');
+check(/var rec = this\.sws_max_get\(\)/.test(areaSrc) && /this\.sws_max_set\(layer, me\.name\)/.test(areaSrc), '击败结算更新全服纪录走持久化读写（file 优先，temp 仅为兼容回退）');
+
+// 3.3 一次性奖励：元晶/武道残页/神魂碎片/神器碎片每层仅首次发放
+check(/m10\.indexOf\(layer\)/.test(areaSrc) && /m100\.indexOf\(layer\)/.test(areaSrc), '10 层/100 层里程碑按领取记录去重');
+check(/不再重复发放/.test(areaSrc), '已领取的里程碑层提示不再重复发放');
+check(/sws_xj_week/.test(areaSrc) && /sws_xj_got/.test(areaSrc), '玄晶仍为周收益（每周一05:00重置，可反复获取）');
 
 // 4. 核心状态机：守护者生成/击败/择意/闸门/结束清理
 for (const fn of ['sws_start_run', 'sws_setup_room', 'sws_enter_fight', 'sws_room_leave',

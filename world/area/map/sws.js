@@ -1,14 +1,18 @@
 // 山外山：宗师境界自动解锁的无限爬层秘境。
-// 结构：sws/ceng（当前层）与 sws/ceng2（下一层）两个战斗房间交替攀登；
-// 每击败一层守护者，从「山外之意」池随机三选一，择定后方可登临下一层。
-// 守护者按玩家进本时的基准属性乘层数系数缩放，层数没有上限。
+// 结构：sws/start（山门，初始地图，有守山人可查纪录）→ sws/ceng（当前层）与
+// sws/ceng2（下一层）两个战斗房间交替攀登；每击败一层守护者，从「山外之意」
+// 池随机三选一，择定后方可登临下一层。
+// 奖励规则：每层玄晶 1000×层数（周上限：最高层×1000×3，每周一05:00重置，可反复获取）；
+// 元晶/武道残页（每 10 层）与神魂碎片/神器碎片（每 100 层）为一次性奖励，
+// 同一层仅首次登临发放，领取记录与本人最佳/全服最高纪录均持久化（重启不丢）。
+// 守护者按层数固定成长（见 sws/shouhu），层数没有上限。
 // 山外之意只在本次挑战内生效，离开/失败/下线时卸下并 recount。
 this.inherits(AREA);
 this.set({
     id: "sws",
     name: "山外山",
     desc: "山外青山楼外楼。传说山外之山上接天穹，下临云海，每一重天上都有一位守护者镇守。境界达至宗师者可入内攀登：击败守护者可择一道「山外之意」加持己身，层层累加，直至力竭。秘境层数无尽，登临越高，名传越远。",
-    first: "sws/ceng",
+    first: "sws/start",
     room_path: "sws/",
     is_copy: true,
     not_fb: true,
@@ -20,6 +24,7 @@ this.set({
 });
 
 this.map = [
+    { n: "山门", id: "sws/start", p: [0, 1], exits: ["up", "out"] },
     { n: "秘境层", id: "sws/ceng", p: [0, 0], exits: ["up"] },
     { n: "云梯", id: "sws/ceng2", p: [0, -1], exits: ["up"] },
 ];
@@ -43,6 +48,95 @@ var BUFFS = [
     { key: "fang", tag: "防", prop: "fy_per", val: 5, desc: "防御+5%" },
 ];
 
+// ============ 持久化纪录（重启不丢） ============
+// 存档文件：data/<服务器ID>/sws.json（经 BASE.read_json/write_json 即时读写），
+// 与 WORLD.DATA.temp 双向同步，保证「本人最佳/全服最高/一次性奖励领取记录」
+// 在服务器重启、甚至非正常 kill 后依然保留。仅每周玄晶收益（sws_xj_week/sws_xj_got）
+// 按周一05:00自然重置，属刻意设计。
+this.sws_store_path = function () {
+    return __PATH.DATA + "sws.json";
+};
+
+// 读取持久化档案（带内存缓存）；兼容旧版只写 WORLD.DATA.temp 的存档。
+this.sws_store_load = function () {
+    if (this.sws_store) return this.sws_store;
+    var store = { max: { layer: 0, user: "" }, players: {} };
+    if (BASE.read_json) {
+        var d = BASE.read_json(this.sws_store_path());
+        if (d && d.max) {
+            store.max = { layer: d.max.layer || 0, user: d.max.user || "" };
+            store.players = d.players || {};
+        }
+    }
+    if (!store.players) store.players = {};
+    // 兼容旧版本：档案缺失时读取 WORLD.DATA.temp 里的全服纪录
+    if (!(store.max.layer > 0)) {
+        var old = WORLD.DATA.query_temp("sws_max", 0);
+        if (old > 0) {
+            store.max = { layer: old, user: WORLD.DATA.query_temp("sws_max_user", "") || "" };
+        }
+    }
+    this.sws_store = store;
+    return store;
+};
+
+// 写回持久化档案（同步写盘，防止重启丢失）
+this.sws_store_save = function () {
+    var store = this.sws_store_load();
+    if (BASE.write_json) BASE.write_json(this.sws_store_path(), store);
+};
+
+// 全服最高纪录读取
+this.sws_max_get = function () {
+    var m = this.sws_store_load().max;
+    return { layer: m.layer || 0, user: m.user || "" };
+};
+
+// 全服最高纪录写入（同时同步 WORLD.DATA.temp 兼容旧查询路径）
+this.sws_max_set = function (layer, user) {
+    var store = this.sws_store_load();
+    store.max = { layer: layer, user: user };
+    WORLD.DATA.set_temp("sws_max", layer);
+    WORLD.DATA.set_temp("sws_max_user", user);
+    this.sws_store_save();
+};
+
+// 玩家档案：{ name, best(本人最高层), m10(已领武道残页/元晶的层), m100(已领神魂/神器碎片的层) }
+this.sws_player_get = function (me) {
+    var store = this.sws_store_load();
+    var p = store.players[me.id];
+    if (!p) {
+        p = store.players[me.id] = { name: me.name, best: 0, m10: [], m100: [] };
+    } else {
+        if (!Array.isArray(p.m10)) p.m10 = [];
+        if (!Array.isArray(p.m100)) p.m100 = [];
+        if (!(p.best > 0)) p.best = 0;
+        p.name = me.name;
+    }
+    return p;
+};
+
+// 把档案中的本人纪录同步回临时状态（进入山门/状态查询时调用，防重启后临时值丢失）
+this.sws_player_sync = function (me) {
+    if (!(me && me.is_player)) return;
+    var p = this.sws_player_get(me);
+    var best = me.query_temp("sws_best", 0);
+    if (p.best > best) me.set_temp("sws_best", p.best);
+    return p;
+};
+
+// 更新本人最高层（同时写临时状态与持久化档案）
+this.sws_best_set = function (me, done) {
+    if (!(done > 0)) return;
+    var best = me.query_temp("sws_best", 0);
+    if (done > best) me.set_temp("sws_best", done);
+    var p = this.sws_player_get(me);
+    if (done > (p.best || 0)) {
+        p.best = done;
+        this.sws_store_save();
+    }
+};
+
 // ============ 江湖入口（jh ar 10） ============
 this.on_enter = function (me) {
     // 宗师自动解锁：进入时自愈一次解锁位（正常路径由 check_unlock_sect_jds 解锁）
@@ -59,7 +153,7 @@ this.on_enter = function (me) {
         return false;
     }
     if (!me.environment) return me.notify("你不知道在哪。");
-    var next_room = ROOM.Get("sws/ceng");
+    var next_room = ROOM.Get("sws/start");
     if (!next_room) return me.notify("山外山尚未开辟。");
     var copy_room = next_room.query_copy2(me);
     if (!copy_room) {
@@ -78,7 +172,40 @@ this.on_leaved = function (me) {
     this.sws_end_run(me, "leave");
 };
 
-// ============ 房间回调实现（由 sws/ceng、sws/ceng2 委托） ============
+// ============ 房间回调实现（由 sws/start、sws/ceng、sws/ceng2 委托） ============
+
+// 进入山门：同步持久化的本人纪录，欢迎提示（不布置守护者、不开战）
+this.sws_setup_start = function (room, me) {
+    if (!(me && me.is_player)) return;
+    this.sws_player_sync(me);
+    var best = me.query_temp("sws_best", 0);
+    me.notify("<hio>山外青山楼外楼，你来到了山外山山门。可向守山人询问纪录，或沿「登山」进入秘境。</hio>" +
+        (best > 0 ? "\n你目前最高登临第<hic>" + UTIL.to_c(best) + "</hic>层。" : ""));
+};
+
+// 守山人：查询本人最高层数
+this.sws_ask_self = function (me) {
+    if (!(me && me.is_player)) return;
+    this.sws_player_sync(me);
+    var best = me.query_temp("sws_best", 0);
+    if (best > 0) {
+        me.notify("守山人捋须笑道：小友已登临山外山第<hic>" + UTIL.to_c(best) + "</hic>层，山风可曾记得你的足迹？");
+    } else {
+        me.notify("守山人打量了你一番：你尚未登临过山外山，从身后石阶「登山」便是。");
+    }
+};
+
+// 守山人：查询全服最高层数
+this.sws_ask_server = function (me) {
+    if (!(me && me.is_player)) return;
+    var rec = this.sws_max_get();
+    if (rec.layer > 0) {
+        me.notify("守山人望向云海深处，叹道：山外青山楼外楼，如今全服最高纪录，是<hic>" + rec.user +
+            "</hic>的第<hic>" + UTIL.to_c(rec.layer) + "</hic>层，望君再接再厉。");
+    } else {
+        me.notify("守山人摇了摇头：山外山至今无人登临，你是第一个来客，去吧，留下你的足迹。");
+    }
+};
 
 // 进入房间：布置当前层的房间名、守护者或三选一按钮
 this.sws_setup_room = function (room, me) {
@@ -165,21 +292,42 @@ this.sws_on_npc_die = function (npc, me) {
 
     var exp = 1500 + layer * 500;
     me.add_exp(exp, exp);
-    // 奖励：每层玄晶 1000×层数（周上限：最高层×1000×3，每周一05:00重置）；
-    // 每 10 层 20 武道残页 + 1 元晶；每 100 层 5 神魂碎片 + 5 神器碎片
+    // 奖励：每层玄晶 1000×层数（周上限：最高层×1000×3，每周一05:00重置，可反复获取）；
+    // 每 10 层 20 武道残页 + 1 元晶、每 100 层 5 神魂碎片 + 5 神器碎片——
+    // 这两组为一次性奖励：同一层仅首次登临发放，领取记录持久化，重启不重复。
     this.sws_grant_xuanjing(me, layer);
+    var pd = this.sws_player_get(me);
+    var changed = false;
     if (layer % 10 === 0) {
-        this.sws_grant(me, "book/wd", 20);
-        this.sws_grant(me, "st/yuanjing", 1);
+        if (pd.m10.indexOf(layer) < 0) {
+            this.sws_grant(me, "book/wd", 20);
+            this.sws_grant(me, "st/yuanjing", 1);
+            pd.m10.push(layer);
+            changed = true;
+            me.notify("<hio>第" + UTIL.to_c(layer) + "层的武道残页与元晶奖励已发放（每层仅此一次）。</hio>");
+        } else {
+            me.notify("<hio>第" + UTIL.to_c(layer) + "层的武道残页与元晶奖励你已领取过，不再重复发放。</hio>");
+        }
     }
     if (layer % 100 === 0) {
-        this.sws_grant(me, "eq/lv6/wushen/shenhunsuipian", 5);
-        this.sws_grant(me, "eq/lv6/wushen/shenqisuipian", 5);
+        if (pd.m100.indexOf(layer) < 0) {
+            this.sws_grant(me, "eq/lv6/wushen/shenhunsuipian", 5);
+            this.sws_grant(me, "eq/lv6/wushen/shenqisuipian", 5);
+            pd.m100.push(layer);
+            changed = true;
+            me.notify("<hio>第" + UTIL.to_c(layer) + "层的神魂碎片与神器碎片奖励已发放（每层仅此一次）。</hio>");
+        } else {
+            me.notify("<hio>第" + UTIL.to_c(layer) + "层的神魂碎片与神器碎片奖励你已领取过，不再重复发放。</hio>");
+        }
     }
-    var max = WORLD.DATA.query_temp("sws_max", 0);
-    if (layer > max) {
-        WORLD.DATA.set_temp("sws_max", layer);
-        WORLD.DATA.set_temp("sws_max_user", me.name);
+    if (changed) this.sws_store_save();
+
+    // 本人最高层（即时更新，重启不丢）
+    this.sws_best_set(me, layer);
+    // 全服最高纪录（即时写盘，重启不丢）
+    var rec = this.sws_max_get();
+    if (layer > rec.layer) {
+        this.sws_max_set(layer, me.name);
         if (layer >= 10) {
             COMMAND.DO("rumor", "听说" + me.name + "已登临山外山第" + UTIL.to_c(layer) + "层！");
         }
@@ -315,15 +463,15 @@ this.sws_end_run = function (me, how) {
         me.remove_temp("sws_picks");
         me.remove_temp("sws_buffs");
         if (me.die !== USER.prototype.die) me.die = USER.prototype.die;
-        var best = me.query_temp("sws_best", 0);
-        if (done > best) me.set_temp("sws_best", done);
+        // 本人最高层持久化（存档文件 + 临时状态双写，重启不丢）
+        this.sws_best_set(me, done);
         if (how === "die") {
             me.notify("<hir>你倒在了山外山第" + UTIL.to_c(layer) + "层，本次共通过" + UTIL.to_c(done) + "层，山外之意尽数消散。</hir>");
         } else {
             me.notify("<hic>你离开了山外山，本次共通过" + UTIL.to_c(done) + "层。</hic>");
         }
     }
-    var first = ROOM.Get("sws/ceng");
+    var first = ROOM.Get("sws/start");
     if (first) {
         var copy = first.query_copy2(me);
         if (copy) copy.clear_copy(me);
@@ -396,9 +544,9 @@ this.sws_status = function (me) {
     }
     var layer = me.query_temp("sws_layer", 1);
     var cleared = me.query_temp("sws_cleared", 0);
+    this.sws_player_sync(me);
     var best = me.query_temp("sws_best", 0);
-    var max = WORLD.DATA.query_temp("sws_max", 0);
-    var max_user = WORLD.DATA.query_temp("sws_max_user", "");
+    var rec = this.sws_max_get();
     var buffs = me.query_temp("sws_buffs") || {};
     var str = ["<hic>【山外山】第" + UTIL.to_c(layer) + "层</hic>" + (cleared ? "（已通关，待择意）" : "（战斗中）") + "\n"];
     var parts = [];
@@ -407,7 +555,7 @@ this.sws_status = function (me) {
         if (n > 0) parts.push(BUFFS[i].tag + "×" + n);
     }
     str.push("山外之意：" + (parts.length ? parts.join("，") : "尚无"));
-    str.push("\n本人最佳：第" + UTIL.to_c(best) + "层　全服纪录：" + (max_user ? max_user + "·第" + UTIL.to_c(max) + "层" : "暂无"));
+    str.push("\n本人最佳：第" + UTIL.to_c(best) + "层　全服纪录：" + (rec.user ? rec.user + "·第" + UTIL.to_c(rec.layer) + "层" : "暂无"));
     var weekKey = this.sws_week_key(Date.now());
     if (me.query_temp("sws_xj_week") !== weekKey) {
         me.set_temp("sws_xj_week", weekKey);
