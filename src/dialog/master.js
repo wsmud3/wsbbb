@@ -32,7 +32,7 @@ export default {
             return this.showdesc(data);
         }
         if (data.id) {
-            //鏇存柊鎶€鑳界姸鎬?
+            //更新技能状态
             return this.updateSkill(data);
         }
         if (data.books) {
@@ -76,13 +76,13 @@ export default {
         this.createSkillItems(data.items, skills);
         if (data.limit) {
             if (this.is_follower) {
-                let str = ['<div class="footer-item select" for="0">', '鎶€鑳?/div>'];
-                str.push('<div class="footer-item" for="1">涔︽灦</div>');
-                str.push("<span class='obj-money'>", data.target, "鐩墠鐨勬妧鑳戒笂闄愪负<HIC>", data.limit, "</HIC>绾?/span>");
+                let str = ['<div class="footer-item select" for="0">', '技能</div>'];
+                str.push('<div class="footer-item" for="1">书架</div>');
+                str.push("<span class='obj-money'>", data.target, "目前的技能上限为<HIC>", data.limit, "</HIC>级</span>");
                 Dialog.footer(str.join(""));
             }
             else
-                Dialog.footer("<span class='obj-money'>浣犵洰鍓嶇殑鎶€鑳戒笂闄愪负<HIC>" + data.limit + "</HIC>绾?/span>");
+                Dialog.footer("<span class='obj-money'>你目前的技能上限为<HIC>" + data.limit + "</HIC>级</span>");
         }
     },
     create_footer: function () {
@@ -109,9 +109,9 @@ export default {
             html.push('<div class="book-item ');
             html.push('grade', item.grade, '" >');
             html.push('<div class="book-name">', item.name, '</div>');
-            html.push('<div class="book-action border-right" cmd="sbook ', item.id, '">鏌ョ湅</div>');
+            html.push('<div class="book-action border-right" cmd="sbook ', item.id, '">查看</div>');
             html.push('<div class="book-action" cmd="dc ',
-                Dialog.master.master, ' study ', item.id, '">瀛︿範</div>');
+                Dialog.master.master, ' study ', item.id, '">学习</div>');
             html.push('</div>');
         }
         this.element.html(html.join(""));
@@ -131,28 +131,28 @@ export default {
         var item = Dialog.master.skills[elem.attr("skid")];
         if (!item) return;
         var html = ["<div class='item-commands'>"];
-        html.push('<span cmd="checkskill ' + item.id + ' ' + Dialog.master.master + '">鏌ョ湅璇︾粏</span>');
-        html.push('<span cmd="xue ' + elem.attr("skid") + ' from ' + Dialog.master.master + '">瀛︿範</span>');
+        html.push('<span cmd="checkskill ' + item.id + ' ' + Dialog.master.master + '">查看详细</span>');
+        html.push('<span cmd="xue ' + elem.attr("skid") + ' from ' + Dialog.master.master + '">学习</span>');
 
         item.master = 1;
         if (Dialog.master.is_follower) {
             var bf = 'dc ' + Dialog.master.master;
-            html.push('<span cmd="_confirm ' + bf + ' fangqi ' + elem.attr("skid") + '">閬楀繕</span>');
-            html.push('<span cmd="' + bf + ' lianxi ' + elem.attr("skid") + '">缁冧範</span>');
+            html.push('<span cmd="_confirm ' + bf + ' fangqi ' + elem.attr("skid") + '">遗忘</span>');
+            html.push('<span cmd="' + bf + ' lianxi ' + elem.attr("skid") + '">练习</span>');
             if (item.can_enables) {
                 for (var i = 0; i < item.can_enables.length; i++) {
                     var baseSkill = Dialog.master.skills[item.can_enables[i]];
                     if (!baseSkill) continue;
                     if (baseSkill.enable_skill != item.id)
-                        html.push('<span cmd="' + bf + ' enable ' + baseSkill.id + ' ' + item.id + '">瑁呭' + baseSkill.name + '</span>');
+                        html.push('<span cmd="' + bf + ' enable ' + baseSkill.id + ' ' + item.id + '">装备' + baseSkill.name + '</span>');
                     else {
-                        html.push('<span cmd="' + bf + ' enable ' + baseSkill.id + ' none">鍙栨秷瑁呭' + baseSkill.name + '</span>');
+                        html.push('<span cmd="' + bf + ' enable ' + baseSkill.id + ' none">取消装备' + baseSkill.name + '</span>');
                     }
                 }
             }
             if (item.enable_skill) {
                 var sp_skill = Dialog.master.skills[item.enable_skill];
-                if (sp_skill) html.push('<span cmd="' + bf + ' enable ' + item.id + ' none">鍙栨秷瑁呭' + sp_skill.name + '</span>');
+                if (sp_skill) html.push('<span cmd="' + bf + ' enable ' + item.id + ' none">取消装备' + sp_skill.name + '</span>');
                 else item.enable_skill = null;
             }
             item.master = 0;
@@ -162,7 +162,7 @@ export default {
         for (let item of commands) {
             html.push('<span cmd="', item.cmd, '">', item.name, '</span>');
         }
-        html.push('<span class="sub-close" style="float:right;color:#888;cursor:pointer">鉁?/span>');
+        html.push('<span class="sub-close" style="float:right;color:#888;cursor:pointer">✕</span>');
         html.push("</div>");
         Dialog.master.element.find(".item-commands").remove();
         $(html.join("")).insertAfter(elem).on("click", ".sub-close", function () {

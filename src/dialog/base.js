@@ -86,7 +86,7 @@ const Dialog = {
     getDialog: function (name) {
         if (!name) return null;
         const dialog = this[name];
-        if (!dialog) throw new Error('娌℃湁' + name);
+        if (!dialog) throw new Error('没有' + name);
         if (!dialog.created) {
             dialog.init();
             dialog.created = true;
@@ -190,10 +190,10 @@ const Dialog = {
         this.isShow = true;
     },
     hide: function () {
-        // 娉ㄦ剰锛氭湰鍑芥暟浼氳 .on("click", function(){ Dialog.hide(); }) 闂存帴缁戝畾锛?
-        // 姝ゆ椂 this 鏄?Dialog 瀵硅薄锛堟柟娉曡皟鐢ㄦ牱寮忥級锛屼絾涓轰簡瀹夊叏浠嶆樉寮忕敤 Dialog.curItem
+        // 注意：本函数会被 .on("click", function(){ Dialog.hide(); }) 间接绑定，
+        // 此时 this 是 Dialog 对象（方法调用样式），但为了安全仍显式用 Dialog.curItem
         var cur = Dialog.curItem;
-        // 娑堟伅璇︽儏椤碉細X 杩斿洖鍒楄〃鑰岄潪鍏抽棴瀵硅瘽妗?
+        // 消息详情页：X 返回列表而非关闭对话框
         if (cur === "message" && Dialog.message && Dialog.message._inDetail) {
             Dialog.message.hide_detail();
             return;
@@ -221,7 +221,7 @@ const Dialog = {
         html ? this.footerElement.html(html) : this.footerElement.empty();
     },
     close: function () {
-        // 鍚?hide()锛氫笉渚濊禆 this锛堝彲鑳借 DOM 浜嬩欢璋冪敤锛夛紝鏄惧紡鐢?Dialog.curItem
+        // 同 hide()：不依赖 this（可能被 DOM 事件调用），显式用 Dialog.curItem
         var cur = Dialog.curItem;
         if (cur) {
             Dialog[cur].close && Dialog[cur].close();

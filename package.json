@@ -14,10 +14,11 @@
     "build": "node tools/clean_vite_assets.js && vite build",
     "preview": "vite preview",
     "start": "concurrently \"npm run web\" \"npm run os\"",
+    "check:encoding": "node tools/check_source_encoding.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/test_zhenyi_trial.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js",
     "validate:sws": "node tools/validate_sws.js && node tools/sim_sws_store.js",
-    "validate:systems": "npm run validate:zhenyi && node tools/test_system_integrity.js && node tools/test_equipment_recast.js && node tools/validate_sws.js"
+    "validate:systems": "npm run check:encoding && npm run validate:zhenyi && node tools/test_system_integrity.js && node tools/test_equipment_recast.js && node tools/validate_sws.js"
   },
   "author": "",
   "license": "ISC",

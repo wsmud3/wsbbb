@@ -49,8 +49,8 @@ const Combat = {
         // if (!Combat.IsShow) return;
         // this.append_items(cmds, panel);
     },
-    def_actions: [{ cmd: "dazuo", name: "鎵撳潗" },
-    { cmd: "liaoshang", name: "鐤椾激" }],
+    def_actions: [{ cmd: "dazuo", name: "打坐" },
+    { cmd: "liaoshang", name: "疗伤" }],
 
     refActions: function () {
         let actions = [...this.def_actions];
