@@ -40,36 +40,36 @@ class GameMainPage extends Page {
         <div class="tool-bar bottom-bar">
             <span class="state-bar" command="stateinfo" style="visibility:hidden"><span class="title"></span></span>
             <span command="stopstate" class="tool-item state-tool" style="display:none;"><span
-                    class="glyphicon glyphicon-off tool-icon"></span><span class="tool-text">鍋滄</span></span>
+                    class="glyphicon glyphicon-off tool-icon"></span><span class="tool-text">停止</span></span>
             <span command="showchat" class="tool-item"><span
-                    class="glyphicon glyphicon-volume-down tool-icon"></span><span class="tool-text">鑱婂ぉ</span></span>
+                    class="glyphicon glyphicon-volume-down tool-icon"></span><span class="tool-text">聊天</span></span>
             <span command="events" class="tool-item"><span class="glyphicon glyphicon-dashboard tool-icon"></span><span
-                    class="tool-text">娲诲姩</span><span class="tag hide"></span></span>
+                    class="tool-text">活动</span><span class="tag hide"></span></span>
             <span command="showcombat" class="tool-item"><span class="glyphicon glyphicon-flash tool-icon"></span><span
-                    class="tool-text">鍔ㄤ綔</span></span>
+                    class="tool-text">动作</span></span>
             <span command="showtool" class="tool-item br-tool hide-tool"></span>
             <div class="tool-bar right-bar">
                 <span command="setting" class="tool-item" style="display:none"><span
-                        class="glyphicon glyphicon-cog tool-icon"></span><span class="tool-text">璁剧疆</span></span>
+                        class="glyphicon glyphicon-cog tool-icon"></span><span class="tool-text">设置</span></span>
                 <span class="tool-item" command="jh" style="display:none"><span
-                        class="glyphicon glyphicon-home tool-icon"></span><span class="tool-text">姹熸箹</span></span>
+                        class="glyphicon glyphicon-home tool-icon"></span><span class="tool-text">江湖</span></span>
                 <span command="stats" class="tool-item" style="display:none"><span
-                        class="glyphicon glyphicon-stats tool-icon"></span><span class="tool-text">鎺掕</span></span>
+                        class="glyphicon glyphicon-stats tool-icon"></span><span class="tool-text">排行</span></span>
                 <span command="message" class="tool-item" style="display:none"><span
-                        class="glyphicon glyphicon-envelope tool-icon"></span><span class="tool-text">绀句氦</span><span
+                        class="glyphicon glyphicon-envelope tool-icon"></span><span class="tool-text">社交</span><span
                         class="tag hide"></span></span>
                 <span command="shop" class="tool-item" style="display:none"><span
                         class="glyphicon glyphicon-shopping-cart tool-icon"></span><span
-                        class="tool-text">鍟嗗煄</span></span>
+                        class="tool-text">商城</span></span>
                 <span command="tasks" class="tool-item" style="display:none"><span
                         class="glyphicon glyphicon-exclamation-sign tool-icon"></span><span
-                        class="tool-text">浠诲姟</span><span class="tag hide"></span></span>
+                        class="tool-text">任务</span><span class="tag hide"></span></span>
                 <span command="skills" class="tool-item" style="display:none"><span
-                        class="glyphicon glyphicon-book tool-icon"></span><span class="tool-text">鎶€鑳?/span></span>
+                        class="glyphicon glyphicon-book tool-icon"></span><span class="tool-text">技能</span></span>
                 <span command="pack" class="tool-item" style="display:none"><span
-                        class="glyphicon glyphicon-briefcase tool-icon"></span><span class="tool-text">鑳屽寘</span></span>
+                        class="glyphicon glyphicon-briefcase tool-icon"></span><span class="tool-text">背包</span></span>
                 <span class="tool-item" command="score" style="display:none"><span
-                        class="glyphicon glyphicon-user tool-icon"></span><span class="tool-text">灞炴€?/span></span>
+                        class="glyphicon glyphicon-user tool-icon"></span><span class="tool-text">属性</span></span>
             </div>
         </div>
         <div class="custom-panel"></div>
@@ -81,13 +81,13 @@ class GameMainPage extends Page {
         </div>
         <div class="chat-panel hide">
             <div class="channel-box" channel="chat">
-                <span class="selected" channel="chat">涓栫晫</span>
-                <span channel="tm">缁勯槦</span>
-                <span channel="fam">闂ㄦ淳</span>
-                <span channel="say">鎴块棿</span>
-                <span channel="es">鍏ㄥ尯</span>
-                <span channel="pty">甯淳</span>
-                <span channel="emote">琛ㄦ儏</span>
+                <span class="selected" channel="chat">世界</span>
+                <span channel="tm">组队</span>
+                <span channel="fam">门派</span>
+                <span channel="say">房间</span>
+                <span channel="es">全区</span>
+                <span channel="pty">帮派</span>
+                <span channel="emote">表情</span>
             </div>
             <div class="chat-input">
                 <input class="sender-box" />
@@ -127,7 +127,8 @@ class GameMainPage extends Page {
 let last_click = 0;
 function open_map() {
     const now = Date.now();
-    // 闃茶繛鐐癸細鍚炴帀 500ms 鍐呯殑閲嶅鐐瑰嚮锛屽悓鏃惰褰曟瘡娆℃湁鏁堢偣鍑绘椂闂淬€?    if (now - last_click < 500) {
+    // 防连点：吞掉 500ms 内的重复点击，同时记录每次有效点击时间。
+    if (now - last_click < 500) {
         return;
     }
     last_click = now;
@@ -194,7 +195,7 @@ function OnSendBoxKeyDown(e) {
 function SendChatMessage() {
     var value = $(".sender-box").val();
     if (!value) return;
-    if (value.length > 100) return ReceiveMessage("<hir>浣犺緭鍏ョ殑鍐呭澶浜嗐€?/hir>");
+    if (value.length > 100) return ReceiveMessage("<hir>你输入的内容太多了。</hir>");
     var channel = $(".channel-box").attr("channel");
     $(".sender-box").val("").focus();
     SendCommand(channel + " " + value + "");

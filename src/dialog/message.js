@@ -11,7 +11,7 @@ export default {
         this.element.remove();
         this.isShow = false;
     }, hide: function () {
-        // 鍦ㄨ鎯呴〉鏃惰繑鍥炲垪琛紝涓嶅叧闂璇濇
+        // 在详情页时返回列表，不关闭对话框
         if (this._inDetail) {
             this.hide_detail();
             return false;
@@ -21,7 +21,7 @@ export default {
         this.detailID = null;
         this._inDetail = false;
         Dialog.footerElement.find('.item-commands').empty();
-        // 鎭㈠搴曢儴 tab 鏍?
+        // 恢复底部 tab 栏
         this.create_footer();
         this.footerChanged(this.selected_item);
     },
@@ -77,7 +77,7 @@ export default {
         }
         this.messages.push(msg);
     }, clear_message: function (type) {
-        // 鏈墦寮€杩囨秷鎭璇濇鏃?element 涓嶅瓨鍦紝鐩存帴蹇界暐锛坰howMessages 闇€瑕?element锛?
+        // 未打开过消息对话框时 element 不存在，直接忽略（showMessages 需要 element）
         if (!this.element) return;
         for (let i = 0; i < this.messages.length; i++) {
             let from = this.messages[i].id;
@@ -98,7 +98,7 @@ export default {
         this.showUnread();
         if (this.isShow) return;
         this.isShow = true;
-        Dialog.title("娑堟伅");
+        Dialog.title("消息");
         Dialog.icon("envelope");
         this.create_footer();
         this.footerChanged(this.selected_item);
@@ -110,10 +110,10 @@ export default {
     },
     inner_show: function () {
 
-        Dialog.title("娑堟伅");
+        Dialog.title("消息");
         Dialog.icon("envelope");
-        // 鍏堣В缁戝啀缁戝畾锛岄伩鍏嶆瘡娆″垏鎹㈠簳閮?tab / 浠庤鎯呰繑鍥炲垪琛ㄦ椂
-        // 閲嶅缁戝畾锛屽鑷寸偣鍑讳竴鏉℃秷鎭Е鍙戝娆?showMessageDetail
+        // 先解绑再绑定，避免每次切换底部 tab / 从详情返回列表时
+        // 重复绑定，导致点击一条消息触发多次 showMessageDetail
         this.element.off("click", ".message-item")
             .on("click", ".message-item", this.showMessageDetail);
     },
@@ -121,7 +121,7 @@ export default {
         this.element.remove();
         this.isShow = false;
     },
-    footers: ["娑堟伅", "闃熶紞", "鍏崇郴", "甯淳"],
+    footers: ["消息", "队伍", "关系", "帮派"],
     footerElements: ["message", "team", "relation", "party"],
     create_footer: function () {
         var html = [];
@@ -148,18 +148,18 @@ export default {
 
         this.selectedChild = child;
     }, showNotice: function (nt) {
-        var str = ["\n<hiy>绯荤粺鍏憡</hiy>\n"];
+        var str = ["\n<hiy>系统公告</hiy>\n"];
         var dt = new Date(nt.time);
         str.push(dt.getFullYear());
-        str.push("骞?);
+        str.push("年");
         str.push(dt.getMonth() + 1);
-        str.push("鏈?);
+        str.push("月");
         str.push(dt.getDate());
-        str.push("鏃?");
+        str.push("日 ");
         str.push(dt.getHours());
-        str.push("鏃?);
+        str.push("时");
         str.push(dt.getMinutes());
-        str.push("鍒哱n<hic>");
+        str.push("分\n<hic>");
         str.push(nt.content);
         str.push("\n</hic>");
         ReceiveMessage(str.join(""));
@@ -181,10 +181,10 @@ export default {
             str.push("</div>");
             str.push("</div>");
         }
-        if (!str.length) str.push('<div class="empty">鏆傛棤鏂版秷鎭?/div>');
+        if (!str.length) str.push('<div class="empty">暂无新消息</div>');
         if (!this.listElement) this.listElement = this.element.find(".message-list");
-        // 璁板綍婊氬姩瀹瑰櫒褰撳墠浣嶇疆锛岄伩鍏嶉噸寤哄垪琛ㄦ椂璺冲洖椤堕儴锛?
-        // 鍘熸湰鍦ㄥ簳閮ㄥ垯璺熼殢鏂版秷鎭粴鍔ㄥ埌搴曪紝鍚﹀垯淇濇寔鍘熶綅缃笉鍔?
+        // 记录滚动容器当前位置，避免重建列表时跳回顶部：
+        // 原本在底部则跟随新消息滚动到底，否则保持原位置不动
         var scrollElem = (Dialog.contentElement && Dialog.contentElement[0]) || null;
         var scrollTop = scrollElem ? scrollElem.scrollTop : 0;
         var atBottom = !scrollElem || (scrollTop + scrollElem.clientHeight >= scrollElem.scrollHeight - 50);
@@ -198,19 +198,19 @@ export default {
         var now = new Date();
         var time = new Date(long);
         var dt = (now - time) / 1000;
-        if (dt < 60) return "鍒氬垰";
-        else if (dt < 3600) return parseInt(dt / 60) + "鍒嗛挓鍓?;
+        if (dt < 60) return "刚刚";
+        else if (dt < 3600) return parseInt(dt / 60) + "分钟前";
         else if (time.getFullYear() == now.getFullYear() && time.getMonth() == now.getMonth()) {
             var diff_day = time.getDate() - now.getDate();
-            var msg = "浠婂ぉ " + this.add_zero(time.getHours()) + ":" + this.add_zero(time.getMinutes());
+            var msg = "今天 " + this.add_zero(time.getHours()) + ":" + this.add_zero(time.getMinutes());
             if (diff_day == 0) return msg;
-            else if (diff_day == 1) return "鏄ㄥぉ " + msg;
-            else if (diff_day == 2) return "鍓嶅ぉ " + msg;
+            else if (diff_day == 1) return "昨天 " + msg;
+            else if (diff_day == 2) return "前天 " + msg;
 
         }
-        var str = (time.getMonth() + 1) + "鏈? + time.getDate() + "鏃?" + this.add_zero(time.getHours()) + "锛? + this.add_zero(time.getMinutes());
+        var str = (time.getMonth() + 1) + "月" + time.getDate() + "日 " + this.add_zero(time.getHours()) + "：" + this.add_zero(time.getMinutes());
         if (now - time > 2332800000) {
-            str += "<mem>鍗冲皢杩囨湡</mem>";
+            str += "<mem>即将过期</mem>";
         }
         return str;
 
@@ -220,9 +220,9 @@ export default {
     }, showMessageDetail: function () {
         var id = $(this).attr("fromid");
         if (!id) return;
-        // 娉ㄦ剰锛氭澶勭殑 this 鏄偣鍑荤殑娑堟伅鑺傜偣锛坖Query 浜嬩欢鍥炶皟锛夛紝
-        // 蹇呴』鏄惧紡鎶?detailID/_inDetail 鍐欏埌瀵硅瘽妗嗗璞′笂锛屽惁鍒?hide() 妫€鏌?
-        // 鍒ゆ柇"鏄惁鍦ㄨ鎯呴〉"浼氬け鏁堬紝鐐瑰叧闂細鐩存帴鍏虫帀鏁翠釜瀵硅瘽妗嗚€屾棤娉曡繑鍥炲垪琛?
+        // 注意：此处的 this 是点击的消息节点（jQuery 事件回调），
+        // 必须显式把 detailID/_inDetail 写到对话框对象上，否则 hide() 检查
+        // 判断"是否在详情页"会失效，点关闭会直接关掉整个对话框而无法返回列表
         Dialog.message.detailID = id;
         Dialog.message._inDetail = true;
         SendCommand("message " + id);
@@ -236,7 +236,7 @@ export default {
         if (!this.detailElement) {
             this.detailElement = this.element.find(".detail-list");
         }
-        // 鍏堣褰曞綋鍓嶈鎯?id锛屼繚璇佸嵆浣挎秷鎭笉鍦ㄥ垪琛ㄤ腑涔熻兘姝ｅ父"杩斿洖涓婁竴绾?
+        // 先记录当前详情 id，保证即使消息不在列表中也能正常"返回上一级"
         this.detailID = id;
         this._inDetail = true;
         var msg = this.getMessageitem(id);
@@ -251,9 +251,9 @@ export default {
             }
         }
         this.detailElement.html(str.join(""));
-        let cmds = `<span cmd="_closed">杩斿洖</span>`;
+        let cmds = `<span cmd="_closed">返回</span>`;
         if (id !== 'notice') {
-            cmds += `<span cmd="message delete ${id}">鍒犻櫎</span><span cmd="receive ${id}">棰嗗彇鍏ㄩ儴</span>`;
+            cmds += `<span cmd="message delete ${id}">删除</span><span cmd="receive ${id}">领取全部</span>`;
         }
         Dialog.footerElement.find('.item-commands').html(cmds);
 
@@ -278,10 +278,10 @@ export default {
                 str.push("</div>");
             }
             if (item.rec) {
-                str.push("<div class='detail-rec'>宸查鍙?/div>");
+                str.push("<div class='detail-rec'>已领取</div>");
             } else {
                 str.push("<div  class='detail-rec' cmd='receive " + id
-                    + " " + item.index + "'><hig>棰嗗彇</hig></div>");
+                    + " " + item.index + "'><hig>领取</hig></div>");
             }
         }
         str.push("</div>");
@@ -289,8 +289,8 @@ export default {
     },
     createElement: function () {
         var el = $('<div class="dialog-message"><div class="message-list"></div><div class="detail-list"></div></div>');
-        // 璇︽儏鐣岄潰锛氱偣鍑讳换鎰忓尯鍩熻繑鍥炰笂涓€绾э紙娑堟伅鍒楄〃锛夛紝
-        // 涓庤儗鍖呯墿鍝佽鎯呫€佹妧鑳借鎯呬繚鎸佷竴鑷达紱甯?cmd 鐨勫懡浠ゆ寜閽紙濡傞鍙栵級闄ゅ
+        // 详情界面：点击任意区域返回上一级（消息列表），
+        // 与背包物品详情、技能详情保持一致；带 cmd 的命令按钮（如领取）除外
         el.find(".detail-list").on("click", function (e) {
             if (!Dialog.message._inDetail) return;
             if ($(e.target).closest('[cmd]').length > 0) return;
@@ -300,7 +300,7 @@ export default {
     }, updateMessageState: function (rec, index) {
         if (this.detailID != rec) return;
         const elem = this.detailElement.find(".detail-item[index='" + index + "']>.detail-rec");
-        elem.html("宸查鍙?).removeAttr('cmd');
+        elem.html("已领取").removeAttr('cmd');
     }
 };
 const message_css = `

@@ -20,7 +20,7 @@ export function connectServer(server, pid) {
     if (IsConnecting) return;
     if (!server || !server.ip) {
         IsConnecting = false;
-        ReceiveMessage("<red>璇峰厛閫夋嫨鏈嶅姟鍣紝鍐嶈繘琛岀幇鎴忔搷浣溿€?/red>");
+        ReceiveMessage("<red>请先选择服务器，再进行游戏操作。</red>");
         return;
     }
 
@@ -133,7 +133,7 @@ export function SendCommand(cmd) {
     if (IsConnecting) return;
     if (!GameClient || !GameClient.Connected()) {
         LastCommand = cmd;
-        if (!SelectedServer) return ReceiveMessage("<red>璇峰厛閫夋嫨鏈嶅姟鍣紝鍐嶈繘琛岀幇鎴忔搷浣溿€?/red>");
+        if (!SelectedServer) return ReceiveMessage("<red>请先选择服务器，再进行游戏操作。</red>");
         ReceiveMessage("<red>连接中断，正在重新连线...</red>");
         return connectServer(SelectedServer);
     }

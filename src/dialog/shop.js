@@ -33,9 +33,9 @@ export default {
             this.money = ms[0];
             this.cash_money = ms[1];
             if (ms.length > 2) {
-                this.footers = ["榛勯噾", "鍏冨疂", '娲诲姩'];
+                this.footers = ["黄金", "元宝", '活动'];
                 this.act_money = ms[2];
-                this.act_name = data.mtype ?? "<hic>绉垎</hic>";
+                this.act_name = data.mtype ?? "<hic>积分</hic>";
             }
             this.create_footer();
         }
@@ -70,7 +70,7 @@ export default {
         this.selected_item = parseInt(index);
         this.show_items();
         this.create_footer();
-    }, footers: ["榛勯噾", "鍏冨疂"],
+    }, footers: ["黄金", "元宝"],
     create_footer: function () {
         if (!this.isShow) return;
         var html = [];
@@ -81,16 +81,16 @@ export default {
         }
         if (this.selected_item === 0) {
             html.push('<div class="obj-money">',
-                this.money > 0 ? "浣犺韩涓婃湁" + Util.moneyToStr(this.money) : "浣犺韩涓婃病鏈夐摱涓?
+                this.money > 0 ? "你身上有" + Util.moneyToStr(this.money) : "你身上没有银两"
                 , '</div>');
         } else if (this.selected_item === 1) {
             html.push('<div class="obj-money">',
-                this.cash_money > 0 ? "浣犺韩涓婃湁" + this.cash_money
-                    + "<hij>鍏冨疂</hij>" : "浣犺韩涓婃病鏈夊厓瀹?
-                , '<span cmd="transmoney">璐﹀彿杞叆</span></div>');
+                this.cash_money > 0 ? "你身上有" + this.cash_money
+                    + "<hij>元宝</hij>" : "你身上没有元宝"
+                , '<span cmd="transmoney">账号转入</span></div>');
         } else if (this.selected_item === 2) {
             html.push('<div class="obj-money">',
-                "浣犺韩涓婃湁", this.act_money > 0 ? this.act_money : 0
+                "你身上有", this.act_money > 0 ? this.act_money : 0
                 , this.act_name);
         }
         Dialog.footer(html.join(""));
@@ -111,20 +111,20 @@ export default {
             }
             if (item.discount < 1) {
                 if (mtype === 0)
-                    item.price0 = "<del>" + item.value + "涓ら粍閲?/del>";
+                    item.price0 = "<del>" + item.value + "两黄金</del>";
                 else if (mtype === 1)
-                    item.price0 = "<del>" + item.value + "鍏冨疂</del>";
+                    item.price0 = "<del>" + item.value + "元宝</del>";
                 else if (mtype === 2)
                     item.price0 = "<del>" + item.value + this.act_name + "</del>";
                 item.value = item.value * item.discount;
             }
             if (mtype === 0) {
                 if (item.value >= 1)
-                    item.price = "<hiy>" + item.value + "涓ら粍閲?/hiy>";
+                    item.price = "<hiy>" + item.value + "两黄金</hiy>";
                 else
-                    item.price = "<wht>" + (item.value * 100) + "涓ょ櫧閾?/wht>";
+                    item.price = "<wht>" + (item.value * 100) + "两白银</wht>";
             } else if (mtype === 1) {
-                item.price = "<hij>" + item.value + "鍏冨疂</hij>";
+                item.price = "<hij>" + item.value + "元宝</hij>";
             } else if (mtype === 2) {
                 item.price = item.value + this.act_name;
 
@@ -147,7 +147,7 @@ export default {
         if (!this.element) {
             this.element = $("<div class='dialog-shop-content'><div class='dialog-shop'></div></div>");
         }
-        Dialog.title("鍟嗗搧鍒楄〃");
+        Dialog.title("商品列表");
         Dialog.icon("shopping-cart");
         this.isShow = true;
         this.element.appendTo(Dialog.contentElement);
