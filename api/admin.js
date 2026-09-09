@@ -520,12 +520,63 @@ class AdminAPI extends APIBASE {
     }
 
 
-    // POST /api/admin/stats — 获取玩家统计
+    // POST /api/admin/stats — 玩家统计（注册角色/活跃/在线，数据来自数据库，游戏服离线也可用）
     async stats(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         var sid = this._sid(params);
-        try { var r = await ipcCall('POST', '/api/stats', {}, sid); return { ok: r.ok || false, data: r.data }; }
-        catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: { totalPlayers: 0, activePlayers: 0 } }; }
+        try {
+            var s = (await DB.getPlayerStats(sid)) || {};
+            // 在线人数需要游戏进程，取不到就返回 0，不影响注册/活跃统计
+            var online = 0, connectCount = 0, gameOnline = false;
+            try {
+                var r = await ipcCall('GET', '/api/status', null, sid);
+                if (r && !r.error) { online = r.playerCount || 0; connectCount = r.connectCount || 0; gameOnline = true; }
+            } catch (e) { /* 游戏服离线 */ }
+            return {
+                ok: true,
+                data: {
+                    totalPlayers: s.totalPlayers || 0,   // 注册角色数
+                    totalUsers: s.totalUsers || 0,       // 注册账号数
+                    active7: s.active7 || 0,             // 近7日活跃
+                    active30: s.active30 || 0,           // 近30日活跃
+                    todayNew: s.todayNew || 0,           // 今日新增角色
+                    online: online,                      // 当前在线
+                    connectCount: connectCount,
+                    gameOnline: gameOnline
+                }
+            };
+        } catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
+    }
+
+    // POST /api/admin/players_all — 全部角色列表（含离线），支持关键词与分页
+    async players_all(params) {
+        try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
+        var sid = this._sid(params);
+        var keyword = String(params.keyword === undefined || params.keyword === null ? '' : params.keyword).trim();
+        var page = Math.max(1, parseInt(params.page) || 1);
+        var size = Math.min(200, Math.max(1, parseInt(params.size) || 50));
+        try {
+            var total = await DB.countPlayers(sid, keyword);
+            var rows = await DB.listPlayers(sid, keyword, size, (page - 1) * size);
+            // 标注在线状态（游戏服离线时全部按离线显示）
+            var onlineIds = {};
+            try {
+                var on = await ipcCall('GET', '/api/online', null, sid);
+                if (Array.isArray(on)) {
+                    for (var i = 0; i < on.length; i++) onlineIds[on[i].id] = true;
+                }
+            } catch (e) { /* 游戏服离线 */ }
+            var list = (rows || []).map(function (r) {
+                return {
+                    id: r.id, name: r.name, userid: r.userid, level: r.level || 0,
+                    title: r.title || '', create_time: r.create_time, update_time: r.update_time,
+                    online: !!onlineIds[r.id]
+                };
+            });
+            return { ok: true, data: { total: total || 0, page: page, size: size, list: list } };
+        } catch (e) {
+            return { ok: false, msg: '查询失败: ' + e.message, data: { total: 0, page: page, size: size, list: [] } };
+        }
     }
 
     // POST /api/admin/hot_reload — 便捷热更新

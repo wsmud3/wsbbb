@@ -186,9 +186,14 @@ const DEFAULT_TABLE_SCRIPTS = [
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name ON users (name)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_id ON players (id)`,
 	`CREATE INDEX IF NOT EXISTS idx_players_userid ON players (userid)`,
+	`CREATE INDEX IF NOT EXISTS idx_players_sid ON players (sid)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_name ON players (name)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_bak_id ON players_bak (id)`,
-	`INSERT OR IGNORE INTO users(id,name,pwd,level) VALUES(1,'administrator','${MD5("123456")}',6); INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(100,'本地测试','127.0.0.1','31300',1,0); INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(200,'正式服','127.0.0.1','31301',0,1)`,
+	// 每条脚本单独执行：better-sqlite3 的 prepare() 只接受单条语句，
+	// 多语句合并会导致整条 INSERT 静默失败（新建库时默认超管账号就会丢失）。
+	`INSERT OR IGNORE INTO users(id,name,pwd,level) VALUES(1,'administrator','${MD5("123456")}',6)`,
+	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(100,'本地测试','127.0.0.1','31300',1,0)`,
+	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(200,'正式服','127.0.0.1','31301',0,1)`,
 ];
 
 function MD5(str) {
@@ -200,4 +205,6 @@ function MD5(str) {
 const ALTER_SCRIPTS = [
 	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(100,'本地测试','127.0.0.1','31300',1,0)`,
 	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(200,'正式服','127.0.0.1','31301',0,1)`,
+	// 后台"全部玩家/统计"按服务器查询，补一个 sid 索引（IF NOT EXISTS 幂等，可重复执行）
+	`CREATE INDEX IF NOT EXISTS idx_players_sid ON players (sid)`,
 ];

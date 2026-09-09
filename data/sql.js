@@ -1,5 +1,13 @@
 const db = require('./db');
 
+// 把毫秒时间戳格式化成与 SQLite CURRENT_TIMESTAMP 一致的 UTC 字符串，
+// 便于和 players.create_time / update_time 做字符串比较。
+function sqlTime(ms) {
+    const d = new Date(ms);
+    const p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) +
+        ' ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ':' + p(d.getUTCSeconds());
+}
 
 module.exports = {
 
@@ -105,8 +113,51 @@ module.exports = {
 
     },
     saveRole: function (role) {
-        return db.query("update players set name=?,title=?,level=?,data=? where userid=? and id=?",
+        // update_time 同时作为"最后活跃时间"（登录/存档都会刷新），后台活跃统计依赖它。
+        return db.query("update players set name=?,title=?,level=?,data=?,update_time=CURRENT_TIMESTAMP where userid=? and id=?",
             [role.name, role.title, role.level, role.data, role.userid, role.id]);
+    },
+    // 登录时刷新最后活跃时间（即使角色随后崩溃、未触发存档，也能记录活跃）
+    touchRole: function (id) {
+        return db.query("update players set update_time=CURRENT_TIMESTAMP where id=?", [id]);
+    },
+    // 后台统计：注册角色数 / 7日、30日活跃 / 今日新增 / 注册账号数
+    getPlayerStats: function (sid) {
+        const now = Date.now();
+        const d7 = sqlTime(now - 7 * 86400000);
+        const d30 = sqlTime(now - 30 * 86400000);
+        const t0 = new Date();
+        t0.setHours(0, 0, 0, 0);
+        const dayStart = sqlTime(t0.getTime());
+        return db.get(
+            "select " +
+            "(select count(*) from players where sid=?) as totalPlayers, " +
+            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active7, " +
+            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active30, " +
+            "(select count(*) from players where sid=? and create_time>=?) as todayNew, " +
+            "(select count(*) from users) as totalUsers",
+            [sid, sid, d7, sid, d30, sid, dayStart]);
+    },
+    // 后台"全部玩家"列表（含离线），keyword 支持角色名/角色ID/账号ID
+    listPlayers: function (sid, keyword, limit, offset) {
+        let sql = "select id,name,userid,sid,level,title,create_time,update_time from players where sid=?";
+        const params = [sid];
+        if (keyword) {
+            sql += " and (name like ? or id like ? or cast(userid as text)=?)";
+            params.push('%' + keyword + '%', '%' + keyword + '%', keyword);
+        }
+        sql += " order by coalesce(update_time,create_time) desc limit ? offset ?";
+        params.push(limit, offset);
+        return db.all(sql, params);
+    },
+    countPlayers: function (sid, keyword) {
+        let sql = "select count(*) as total from players where sid=?";
+        const params = [sid];
+        if (keyword) {
+            sql += " and (name like ? or id like ? or cast(userid as text)=?)";
+            params.push('%' + keyword + '%', '%' + keyword + '%', keyword);
+        }
+        return db.get(sql, params).then(function (row) { return (row && row.total) || 0; });
     },
     exitsRoleName: function (name) {
         let sql = "select name from players where name=?";// or phone=?

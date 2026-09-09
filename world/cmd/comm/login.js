@@ -93,6 +93,8 @@ this.loginIn = async function (user, id) {
         WORLD.USERS.push(user);
 
         user.loadData(data);
+        // 记录最后活跃时间（后台"活跃玩家"统计依据），失败不影响登录
+        try { WORLD.DB.touchRole(user.id); } catch (e) { WORLD.log(user, "更新活跃时间失败", e.message); }
         user.do_login();
         user.wait_input = null;
         if (user.socket)

@@ -1,4 +1,4 @@
-﻿
+
 const fs_sync = require("fs");
 const fs = fs_sync.promises;
 
@@ -19,6 +19,10 @@ module.exports = {
     },
     saveRole: function (role) {
         return DB.saveRole(role);
+    },
+    // 登录时刷新最后活跃时间，供后台"活跃玩家"统计使用
+    touchRole: function (id) {
+        return DB.touchRole(id);
     },
     saveRoles: async function (roles) {
         const dt = new Date();

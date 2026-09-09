@@ -145,6 +145,7 @@ function handleRequest(req, res) {
     try {
         // GET /api/status
         if (url === '/api/status' && method === 'GET') {
+            var mem = process.memoryUsage();
             sendJSON(res, {
                 uptime: Math.floor((Date.now() - startTime) / 1000),
                 playerCount: WORLD.USERS.length,
@@ -152,20 +153,45 @@ function handleRequest(req, res) {
                 heartbeatCount: WORLD.HEARTBEATCOUNT || 0,
                 serverId: WORLD.SERVERID,
                 serverName: WORLD.SERVER ? WORLD.SERVER.name : 'unknown',
+                memory: { heapMB: Math.round(mem.heapUsed / 1048576), rssMB: Math.round(mem.rss / 1048576) },
                 status: 'running'
             });
         }
-        // POST /api/stats — 获取玩家统计
+        // POST /api/stats — 获取玩家统计（注册/活跃来自数据库，在线来自内存）
         else if (url === '/api/stats' && method === 'POST') {
             readBody(req, function (err, body) {
-                var totalPlayers = 0, activePlayers = 0;
+                var online = 0;
                 for (var i = 0; i < WORLD.USERS.length; i++) {
                     var u = WORLD.USERS[i];
-                    if (!u || !u.is_player) continue;
-                    totalPlayers++;
-                    if (u.is_active) activePlayers++;
+                    if (u && u.is_player) online++;
                 }
-                sendJSON(res, { ok: true, data: { totalPlayers: totalPlayers, activePlayers: activePlayers } });
+                var fallback = function () {
+                    sendJSON(res, { ok: true, data: { totalPlayers: 0, totalUsers: 0, active7: 0, active30: 0, todayNew: 0, online: online } });
+                };
+                try {
+                    // 复用 data/sql.js 的统计查询（与 web 后台完全一致）
+                    var SQL = require('../data/sql');
+                    SQL.getPlayerStats(WORLD.SERVERID).then(function (s) {
+                        s = s || {};
+                        sendJSON(res, {
+                            ok: true,
+                            data: {
+                                totalPlayers: s.totalPlayers || 0,
+                                totalUsers: s.totalUsers || 0,
+                                active7: s.active7 || 0,
+                                active30: s.active30 || 0,
+                                todayNew: s.todayNew || 0,
+                                online: online
+                            }
+                        });
+                    }).catch(function (e) {
+                        console.error('[Admin IPC] stats query failed:', e.message);
+                        fallback();
+                    });
+                } catch (e) {
+                    console.error('[Admin IPC] stats query failed:', e.message);
+                    fallback();
+                }
             });
         }
         // GET /api/online
