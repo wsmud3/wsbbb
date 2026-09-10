@@ -43,6 +43,7 @@ USER.prototype.recount = function () {
 
 
     this.diff_fy_per = this.query_prop('diff_fy_per');
+    if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 }
 
 USER.prototype.level_up = function () {

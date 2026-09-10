@@ -11,6 +11,13 @@ function sqlTime(ms) {
 
 module.exports = {
 
+    // These helpers are used by both public account APIs and the synchronous
+    // admin-session check.  Keep the column selector allowlisted; concatenating
+    // an arbitrary caller string into SQL would turn a lookup into injection.
+    _userField: function (type) {
+        return ['id', 'name', 'phone', 'state', 'level'].indexOf(type) >= 0 ? type : null;
+    },
+
     connect: async function (path) {
         await db.init(path);
     },
@@ -18,7 +25,12 @@ module.exports = {
         return db.close();
     },
     getUserBy: function (type, value) {
-        return this.getUser(type + "=?", [value]);
+        var field = this._userField(type);
+        return field ? this.getUser(field + "=?", [value]) : Promise.resolve(null);
+    },
+    getUserBySync: function (type, value) {
+        var field = this._userField(type);
+        return field ? db.getSync("select id,name,pwd,phone,state,level from users where " + field + "=?", [value]) : null;
     },
     getUserByID: function (id) {
         return this.getUser("id=?", [id]);
@@ -112,6 +124,10 @@ module.exports = {
         return true;
 
     },
+    saveRoleSync: function (role) {
+        return db.runSync("update players set name=?,title=?,level=?,data=?,update_time=CURRENT_TIMESTAMP where userid=? and id=?",
+            [role.name, role.title, role.level, role.data, role.userid, role.id]);
+    },
     saveRole: function (role) {
         // update_time 同时作为"最后活跃时间"（登录/存档都会刷新），后台活跃统计依赖它。
         return db.query("update players set name=?,title=?,level=?,data=?,update_time=CURRENT_TIMESTAMP where userid=? and id=?",
@@ -160,6 +176,7 @@ module.exports = {
         return db.get(sql, params).then(function (row) { return (row && row.total) || 0; });
     },
     exitsRoleName: function (name) {
+        // Global name uniqueness remains a gameplay policy, not changed here.
         let sql = "select name from players where name=?";// or phone=?
         return db.get(sql, [name]);
     },
@@ -170,6 +187,11 @@ module.exports = {
     },
     updateUserLevel: function (uid, level) {
         return db.query("update users set level=? where id=?", [level, uid]);
+    },
+    query_role: function (type, value, userid) {
+        const field = type === 'uname' ? 'a.name' : type === 'name' ? 'b.name' : null;
+        if (!field) return Promise.resolve([]);
+        return db.all('select b.id,b.name,b.title,b.level,b.sid from players b join users a on a.id=b.userid where b.userid=? and ' + field + '=? limit 50', [userid, value]);
     },
     getAdminUsers: function (keyword) {
         if (keyword) {
@@ -188,4 +210,3 @@ module.exports = {
     }
 
 };
-

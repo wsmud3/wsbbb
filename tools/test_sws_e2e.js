@@ -4,10 +4,43 @@
 //   node tools/test_sws_e2e.js stage1  # 建测试账号/角色，写库把角色境界提到宗师，然后需重启 main.js
 //   node tools/test_sws_e2e.js stage2  # 重启后运行完整山外山流程断言
 'use strict';
+// SAFETY: this script writes a database and is disabled unless an isolated
+// database path, player-id path, and WS_E2E_ALLOW=1 are explicitly supplied.
+// Example (PowerShell):
+//   $env:WS_E2E_ALLOW='1'; $env:WS_E2E_DB_PATH='C:\\tmp\\wsbbb-e2e\\database.db';
+//   $env:WS_E2E_PLAYER_ID_FILE='C:\\tmp\\wsbbb-e2e\\player_id.txt';
+//   node tools/test_sws_e2e.js stage1
+const path = require('path');
+const fs = require('fs');
+
+const REPO_ROOT = path.resolve(__dirname, '..');
+function requiredIsolatedPath(name) {
+    const value = process.env[name];
+    if (!value || !path.isAbsolute(value)) {
+        throw new Error(`${name} must be an absolute path for an isolated test environment`);
+    }
+    return path.resolve(value);
+}
+
+if (process.env.WS_E2E_ALLOW !== '1') {
+    throw new Error('山外山 E2E 默认关闭。请在隔离测试环境设置 WS_E2E_ALLOW=1 后再运行');
+}
+const DB_PATH = requiredIsolatedPath('WS_E2E_DB_PATH');
+const PLAYER_ID_FILE = requiredIsolatedPath('WS_E2E_PLAYER_ID_FILE');
+const PRODUCTION_DB = path.resolve(REPO_ROOT, 'data', 'database.db');
+if (DB_PATH.toLowerCase() === PRODUCTION_DB.toLowerCase() || DB_PATH.toLowerCase().startsWith(PRODUCTION_DB.toLowerCase() + path.sep)) {
+    throw new Error(`拒绝使用正式数据库：${DB_PATH}`);
+}
+if (DB_PATH === PLAYER_ID_FILE) {
+    throw new Error('WS_E2E_DB_PATH 与 WS_E2E_PLAYER_ID_FILE 不得指向同一文件');
+}
+if (!fs.existsSync(DB_PATH)) {
+    throw new Error(`隔离数据库不存在：${DB_PATH}。请先复制测试数据库或指定隔离快照`);
+}
+
 require('dotenv').config();
 const http = require('http');
 const crypto = require('crypto');
-const path = require('path');
 const Database = require('better-sqlite3');
 
 const WEB_HOST = '127.0.0.1';
@@ -16,8 +49,25 @@ const WS_PORT = process.env.WS_PORT || 31300;
 const ACCOUNT = 'swstest';
 const PASSWORD = 'swstest123';
 const ROLE_NAME = '山外试炼';
-const PLAYER_ID_FILE = path.join(__dirname, '..', 'log', 'sws_test_player_id.txt');
-const DB_PATH = path.join(__dirname, '..', 'data', 'database.db');
+async function verifyIsolatedTarget() {
+    const nonce = process.env.WS_E2E_BOOT_ID;
+    if (!/^[a-f0-9]{32}$/.test(nonce || '')) throw new Error('Missing isolated process boot ID');
+    for (const port of [Number(WEB_PORT), Number(process.env.ADMIN_IPC_PORT)]) {
+        if (!Number.isInteger(port) || port < 1024) throw new Error('Explicit isolated web/IPC ports required');
+        const body = await new Promise((resolve, reject) => {
+            const req = http.get({ host: '127.0.0.1', port, path: '/health', timeout: 2000 }, res => {
+                let data = '';
+                res.on('data', chunk => { data += chunk; if (data.length > 8192) req.destroy(); });
+                res.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
+                res.on('error', reject);
+            });
+            req.on('error', reject); req.on('timeout', () => req.destroy(new Error('Test health timeout')));
+        });
+        const scope = body.testScope;
+        if (!scope || scope.nonce !== nonce || fs.realpathSync(scope.db).toLowerCase() !== fs.realpathSync(DB_PATH).toLowerCase() || Number(scope.wsPort) !== Number(WS_PORT)) throw new Error('Target is not the expected isolated test process');
+        if (body.status !== 'ok') throw new Error('Isolated process is not ready');
+    }
+}
 
 let passed = 0, failed = 0;
 function ok(cond, desc) {
@@ -113,8 +163,9 @@ async function webLogin() {
 async function adminLogin() {
     const res = await httpRequest('POST', '/api/admin/login', { code: 'administrator', pwd: '123456' });
     if (!res.json || !res.json.ok) throw new Error('管理员登录失败: ' + res.raw);
-    const cookies = res.setCookie.filter(c => c.startsWith('u=') || c.startsWith('p='));
-    return cookies.join('; ');
+    // Admin authentication is session-based; the old test looked for the
+    // gameplay u/p cookies and consequently sent no credentials at all.
+    return res.setCookie.filter(c => c.startsWith('connect.sid=')).join('; ');
 }
 
 async function adminUpdatePlayer(cookie, playerId, fields) {
@@ -285,6 +336,7 @@ async function stage2() {
 (async () => {
     const stage = process.argv[2] || 'stage2';
     try {
+        await verifyIsolatedTarget();
         if (stage === 'stage1') await stage1();
         else await stage2();
     } catch (e) {

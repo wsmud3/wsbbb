@@ -11,11 +11,11 @@
     "os": "node main.js",
     "os-debug": "node  --inspect-brk main.js",
     "dev": "vite",
-    "build": "node tools/clean_vite_assets.js && vite build",
+    "build": "node tools/build_frontend.js",
     "preview": "vite preview",
     "start": "concurrently \"npm run web\" \"npm run os\"",
     "check:encoding": "node tools/check_source_encoding.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node tools/check_source_encoding.js && node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/test_zhenyi_trial.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js && node tools/test_system_integrity.js && node tools/test_equipment_recast.js && node tools/validate_sws.js && node tools/sim_sws_store.js && node tools/test_acceptance.cjs --strict && node tools/test_release_safety.cjs && node tools/test_external_fixes.cjs && node tools/test_admin_stats.cjs",
     "validate:zhenyi": "node tools/validate_zhenyi.js && node tools/test_zhenyi_logic.js && node tools/test_zhenyi_trial.js && node tools/validate_zhenyi_ui.js && node tools/validate_rooms.js",
     "validate:sws": "node tools/validate_sws.js && node tools/sim_sws_store.js",
     "validate:systems": "npm run check:encoding && npm run validate:zhenyi && node tools/test_system_integrity.js && node tools/test_equipment_recast.js && node tools/validate_sws.js"

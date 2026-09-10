@@ -1,3 +1,4 @@
+const authToken = require('../os/auth-token');
 const APIBASE = require('./base');
 const { DB } = __CONFIG;
 const http = require('http');
@@ -6,8 +7,14 @@ const path = require('path');
 
 const IPC_PORT = 31301;
 const IPC_HOST = '127.0.0.1';
-const IPC_SECRET = process.env.ADMIN_IPC_SECRET || 'mud-admin-secret-change-me';
-const ADMIN_LEVEL = __CONFIG.def_server?.istest ? 0 : 5;
+// Never fall back to a published/default IPC credential.  If deployment did
+// not configure one, management calls fail closed instead of authenticating
+// every local process with the same guessable value.
+const IPC_SECRET = process.env.ADMIN_IPC_SECRET || '';
+// Test-server selection must never lower the privilege required by the
+// management API.  The same web process can address the formal server via
+// sid, so a test default is not an authorization boundary.
+const ADMIN_LEVEL = 5;
 const SKILL_DIR = path.join(__dirname, '..', 'world', 'skill');
 
 // IPC port mapping: server ID -> IPC port
@@ -23,6 +30,7 @@ function getIpcPort(serverId) {
 }
 
 function ipcCall(method, url, body, serverId) {
+    if (IPC_SECRET.length < 16) return Promise.reject(new Error('ADMIN_IPC_SECRET 未配置或过短'));
     var port = getIpcPort(serverId);
     return new Promise((resolve, reject) => {
         var parsed = new URL('http://' + IPC_HOST + ':' + port + url);
@@ -64,35 +72,35 @@ var SKILL_TYPE_NAMES = {
 class AdminAPI extends APIBASE {
 
     _sid(params) {
-        var sid = (params && params.sid) ? parseInt(params.sid) : 0;
-        return sid || 100; // default to test server
+        var rawSid = params && params.sid;
+        var sid = rawSid === undefined || rawSid === null || rawSid === "" ? 100 : Number(rawSid);
+        if (!Number.isSafeInteger(sid) || !IPC_PORT_MAP[sid]) throw new Error('无效服务器');
+        return sid;
     }
 
     _requireAdmin() {
-        var user = this.getUser();
-        if (!user) throw new Error('未登录');
-        if ((user.level || 0) < ADMIN_LEVEL) throw new Error('权限不足');
-        return user;
+        const auth = this.req && this.req.session && this.req.session.admin_auth;
+        const expiresAt = auth && Number(auth.expiresAt);
+        if (!auth || !auth.id || !Number.isSafeInteger(expiresAt) || expiresAt <= Date.now()) throw new Error('admin session expired');
+        const current = DB.getUserBySync ? DB.getUserBySync('id', auth.id) : null;
+        if (!current || Number(current.state) === 0 || Number(current.level) < ADMIN_LEVEL || auth.proof !== authToken.adminProof(current))
+            throw new Error('权限不足');
+        return current;
     }
 
     // POST /api/admin/login
     async login(params) {
         var { code, pwd } = params;
-        if (!code || !pwd) return { ok: false, msg: '用户名或密码不能为空' };
+        if (typeof code !== 'string' || typeof pwd !== 'string' || !code || !pwd) return { ok: false, msg: '用户名或密码不能为空' };
         code = code.toLowerCase();
         if (!/^[A-Za-z0-9_]{3,20}$/.test(code)) return { ok: false, msg: '用户名格式错误' };
         var user = await DB.getUserBy('name', code);
         if (!user) return { ok: false, msg: '用户不存在' };
-        if (user.pwd !== this.MD5(pwd)) return { ok: false, msg: '密码错误' };
+        if (Number(user.state) === 0 || user.pwd !== this.MD5(pwd)) return { ok: false, msg: '密码错误' };
         if ((user.level || 0) < ADMIN_LEVEL) return { ok: false, msg: '非管理员账户，无权登录后台' };
-        var cert = this.signIn(user.id, user.name, user.pwd, user.level);
-        if (cert) {
-            // 管理员cookie仅1小时有效，过期需重新登录
-            this.res.cookie('u', this.req.cookies['u'], { maxAge: 3600000 });
-            this.res.cookie('p', cert, { maxAge: 3600000 });
-            return { ok: true, p: cert, u: this.sessionKey(), name: user.name, level: user.level };
-        }
-        return { ok: false, msg: '登录失败' };
+        if (!this.req.session) return { ok: false, msg: '会话服务未就绪' };
+        this.req.session.admin_auth = { id: user.id, expiresAt: Date.now() + 3600000, proof: authToken.adminProof(user) };
+        return { ok: true, name: user.name, level: user.level };
     }
 
     // GET /api/admin/check

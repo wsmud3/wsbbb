@@ -1,4 +1,4 @@
-﻿this.inherits(COMMAND);
+this.inherits(COMMAND);
 this.command = "team";
 this.allow_busy = true;
 this.allow_state = true;
@@ -110,7 +110,7 @@ this.team_reply = function (me, act) {
     var p = me.query_temp("team");
     if (!p) return me.send("没有人邀请你组队，或邀请已过期。");
     var player = WORLD.getUser(p);
-    if (!player) me.send("没有人邀请你组队，或邀请已过期。");
+    if (!player) return me.send("没有人邀请你组队，或邀请已过期。");
     if (act == "ok") {
         if (me.team) return me.send("你已经有队伍了。");
         if (me.environment && me.environment.parent.is_copy && !me.environment.parent.not_fb) {
@@ -230,5 +230,4 @@ function checkTeamfb(me) {
         me.notify("<hic>你退出了队伍，自动离开副本。</hic>");
     }
 }
-
 

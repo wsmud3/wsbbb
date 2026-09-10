@@ -1,4 +1,4 @@
-﻿require("./character.js");
+require("./character.js");
 DEFAULT_ROOM = "home/liangong";
 USER = function () {
     this.socket = null;
@@ -185,20 +185,41 @@ socket.end();
 }
 }
 
+function repairLegacySwsTemp(raw) {
+    return require('../util/legacy-sws')(raw);
+}
+
 USER.prototype.loadData = function (role) {
 this.id = role.id;
 this.name = role.name;
 this.level = role.level;
 //this.title = role.title;de\n//role.data = role.data.toString();
 var rawRoleData = role.data;
-var swsSaveRepair = typeof rawRoleData === "string" &&
-    rawRoleData.indexOf("[object Object]") >= 0 &&
-    rawRoleData.indexOf("sws_") >= 0;
-if (swsSaveRepair) {
-    // 旧版山外山对象被拼成 [object Object]，临时状态不可恢复，先还原为空对象以保证角色可登录。
-    rawRoleData = rawRoleData.replace(/\[object Object\]/g, "{}");
+var swsSaveRepair = false;
+var data;
+try {
+    data = JSON.toObject(rawRoleData);
+} catch (parseError) {
+    // Only repair the known legacy shape: an unquoted [object Object] used as
+    // the value of an sws_* temp field.  A global replacement would corrupt a
+    // perfectly valid player note/script containing that literal text.
+    if (typeof rawRoleData === "string" && rawRoleData.indexOf("[object Object]") >= 0 &&
+        rawRoleData.indexOf("sws_") >= 0) {
+        var repairedRaw = repairLegacySwsTemp(rawRoleData);
+        if (repairedRaw && repairedRaw !== rawRoleData) {
+            try {
+                data = JSON.toObject(repairedRaw);
+                swsSaveRepair = true;
+                rawRoleData = repairedRaw;
+            } catch (repairError) {
+                console.error("角色存档无法解析，拒绝自动修复", this.id, repairError);
+                throw parseError;
+            }
+        }
+    }
+    if (!data) throw parseError;
 }
-var data = JSON.toObject(rawRoleData);
+if (!data || typeof data !== "object") throw new Error("角色存档格式无效");
 for (var i = 0; i < SAVE_NUMPROP.length; i++) {
 this[SAVE_NUMPROP[i]] = data.prop[i] || 0;
 }
@@ -220,7 +241,7 @@ this.equipment = this.read_equipment(data.eq);
 this.settings = data.settings;
 this.skills = data.skills ?? {};
 this.custom_skills = data.custom_skills ?? [];
-this.eq_groups = data.eq_groups;
+this.eq_groups = Array.isArray(data.eq_groups) ? data.eq_groups.map(group => Array.isArray(group) ? group : []) : [];
 this.sk_groups = data.sk_groups ?? [null, [], []];
 this.temp = data.temp;
     // 山外山的临时状态不能污染玩家存档：清理旧版本快照，并清除无进行中挑战的残留状态。
@@ -480,9 +501,16 @@ str.push(0);
     return role;
 }
 
+USER.prototype.saveSync = function () {
+    const result = WORLD.DB.saveRoleSync(this.getData());
+    if (!result || result.changes !== 1) throw new Error('角色存档未写入');
+    return true;
+};
 USER.prototype.save = function () {
-
-    WORLD.DB.saveRole(this.getData());
+    // Callers (logout, shutdown and autosave) must be able to await the
+    // durable write and observe a failure instead of assuming fire-and-forget
+    // persistence succeeded.
+    return WORLD.DB.saveRole(this.getData());
 }
 USER.prototype.die = function (killer) {
     if (this.on_die && this.on_die(killer) === false) {

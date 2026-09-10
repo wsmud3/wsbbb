@@ -1,4 +1,4 @@
-﻿this.inherits(COMMAND);
+this.inherits(COMMAND);
 this.command = "pty";
 this.allow_busy = true;
 this.allow_state = true;
@@ -25,7 +25,7 @@ this.enter = function (me, str) {
     if (!me.query_temp("pt")) return me.notify("你还没加入过帮派。");
 
     var pt = WORLD.DATA.parties.get(me.query_temp("pt"));
-    if (!pt) me.notify("没有这个帮派。");
+    if (!pt) return me.notify("没有这个帮派。");
 
     var msg = "", name = me.name;
     if (str[0] == "*") {
@@ -33,7 +33,7 @@ this.enter = function (me, str) {
         msg = WORLD.COMMANDS["emote"].enter(me, str);
         if (!msg) {
             msg = UTIL.htmlEncode(str);
-            msg = UTIL.replace_word(str);
+            msg = UTIL.replace_word(msg);
         }
         else name = "";
 

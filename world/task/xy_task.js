@@ -1,4 +1,4 @@
-﻿
+
 this.inherits(TASK);
 this.id = "xiangyang";
 this.is_start = false;
@@ -46,14 +46,12 @@ this.clear_player = function () {
     }
     let area = this.xy_area;
     for (let room of area.rooms) {
-        for (let i = 0; i < room.items.length; i++) {
-            let item = room.items[i];
+        for (const item of room.items.slice()) {
             if (!item.is_player) continue;
             if (item.query_temp('xy_bm'))
                 continue;
-            if (item.moveto('yz/beimen') !== 'false') {
+            if (item.moveto('yz/beimen') !== false && !room.items.includes(item)) {
                 item.send('<yel>你离开襄阳一路赶到扬州。</yel>');
-                i--;
             }
         }
     }
@@ -672,5 +670,4 @@ function clear_items(corpse, me) {
         }
     }
 }
-
 

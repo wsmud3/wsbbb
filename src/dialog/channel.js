@@ -95,12 +95,12 @@ export default {
         html.push("】");
         if (data.name) {
             html.push("<span");
-            if (data.uid) html.push(" cmd='look3 " + data.uid + "'");
+            if (data.uid) html.push(" cmd='look3 " + escapeText(data.uid) + "'");
             html.push(">");
-            html.push(data.name);
+            html.push(escapeText(data.name));
             html.push("</span>：");
         }
-        html.push(data.content);
+        html.push(data.uid && data.uid !== 'system' ? chatText(data.content) : data.content);
         // if (isTop) {
         //     html.push("\n");
         // }
@@ -122,3 +122,4 @@ export default {
 
 };
 
+import { chatText, escapeText } from '../utils/chat-text.js';

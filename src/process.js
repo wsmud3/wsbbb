@@ -126,6 +126,7 @@ const Process = {
     }
     ,
     roles: function (x) {
+        if (!x || !Array.isArray(x.roles)) return;
         var result = x.roles;
         if (!result.length) {
             roles.addRole();
@@ -577,4 +578,3 @@ function ReceiveMessage(x) {
 
 
 export default Process;
-

@@ -1,4 +1,4 @@
-﻿
+
 require("./util/util");
 const db = require("./util/data");
 WORLD = {
@@ -73,7 +73,7 @@ WORLD = {
             socket.oserver = null;
         }
     }, request: function (request, socket) {
-        if (!request) return;
+        if (!request || WORLD.status < 0) return;
         var user = socket.user;
         if (!user) {
             return;
@@ -83,23 +83,29 @@ WORLD = {
         }
         user.request_count = user.request_count + 1;
         var time = Date.now();
+        var auditCommand = user.userid ? request : '[authentication]';
         try {
             user.command(request);
         } catch (e) {
-            console.log(user.name, "命令错误：", request, e.message, e.stack);
-            WORLD.log(user, request, e.message + e.stack);
+            console.log(user.name, "命令错误：", auditCommand, e.message);
+            WORLD.log(user, auditCommand, user.userid ? e.message : "认证失败");
         }
         WORLD.RECEIVED.push({
             time: time,
-            cmd: request + " " + (Date.now() - time).toString(),
+            cmd: auditCommand + " " + (Date.now() - time).toString(),
             user: user.id
         });
         if (WORLD.RECEIVED.length > 1000) {
             WORLD.saveRequest();
         }
     }, saveRequest: function () {
-        db.saveRequest(WORLD.RECEIVED);
-        WORLD.RECEIVED.length = 0;
+        if (!WORLD.RECEIVED.length) return Promise.resolve(true);
+        const batch = WORLD.RECEIVED.splice(0, WORLD.RECEIVED.length);
+        return db.saveRequest(batch).then(() => true).catch(error => {
+            WORLD.RECEIVED.unshift(...batch);
+            console.error('请求日志保存失败:', error);
+            return false;
+        });
     },
     startup: async function (sid) {
         if (sid) {
@@ -172,36 +178,54 @@ WORLD = {
 
     },
     heart_beat: function () {
-        var avtived_obj = null;
-        try {
-            const dt = Date.now();
-            WORLD.CONNECT_COUNT = 0;
-            for (let i = 0; i < WORLD.USERS.length; i++) {
-                avtived_obj = WORLD.USERS[i];
-                if (avtived_obj.socket) WORLD.CONNECT_COUNT++;
-                avtived_obj.heart_beat(dt);
+        const dt = Date.now();
+        const users = WORLD.USERS.slice();
+        WORLD.CONNECT_COUNT = 0;
+        for (const obj of users) {
+            if (!obj || WORLD.USERS.indexOf(obj) < 0) continue;
+            try {
+                if (obj.socket) WORLD.CONNECT_COUNT++;
+                obj.heart_beat(dt);
+            } catch (e) {
+                const label = obj.path ?? obj.name ?? obj.id ?? "";
+                console.error(label, "心跳错误:", e, e.stack);
+                WORLD.log(null, e.message, e.stack);
             }
-            WORLD.on_heart_beat(dt);
-            for (let i = 0; i < WORLD.RUN_ROOMS.length; i++) {
-                avtived_obj = WORLD.RUN_ROOMS[i];
-                avtived_obj.heart_beat(dt);
-            }
-            WORLD.HEARTBEATCOUNT++;
-            if (WORLD.HEARTBEATCOUNT > 720) {
-                WORLD.HEARTBEATCOUNT = 0;
-                WORLD.save();
-                console.log("数据已备份%d", Date.now() - dt);
-            }
-        } catch (e) {
-            console.log(avtived_obj ? (avtived_obj.path ?? avtived_obj.name) : "", "心跳错误:", e, e.stack);
-            WORLD.log(null, e.message, e.stack);
+        }
+        try { WORLD.on_heart_beat(dt); }
+        catch (e) { console.error("全局心跳错误:", e, e.stack); WORLD.log(null, e.message, e.stack); }
+        const rooms = WORLD.RUN_ROOMS.slice();
+        for (const room of rooms) {
+            if (!room || WORLD.RUN_ROOMS.indexOf(room) < 0) continue;
+            try { room.heart_beat(dt); }
+            catch (e) { console.error(room.path ?? room.name ?? "", "房间心跳错误:", e, e.stack); WORLD.log(null, e.message, e.stack); }
+        }
+        WORLD.HEARTBEATCOUNT++;
+        if (WORLD.HEARTBEATCOUNT > 720) {
+            WORLD.HEARTBEATCOUNT = 0;
+            Promise.resolve(WORLD.save()).then(ok => {
+                if (!ok) console.error("定期存档失败");
+            }).catch(e => console.error("定期存档失败:", e));
         }
 
     },
     login_out: function (user) {
         this.on_user_quit(user);
         if (user.serverid === WORLD.SERVERID) {
-            user.save();
+            // quit() is called from synchronous command/heartbeat paths, so
+            // attach an error observer even though the caller cannot await it.
+            // This prevents an unhandled rejection and makes failed logout
+            // saves visible in the server log.
+            try {
+                var savePromise = user.save();
+                if (savePromise && typeof savePromise.catch === 'function') {
+                    savePromise.catch(function (error) {
+                        console.error('下线保存角色失败：', user && user.id, error);
+                    });
+                }
+            } catch (error) {
+                console.error('下线保存角色失败：', user && user.id, error);
+            }
         }
         WORLD.USERS.remove(user);
 
@@ -225,39 +249,61 @@ WORLD = {
             msg: msg
         });
         if (WORLD.LOGS.length > 500) {
-            db.saveLogs(WORLD.LOGS);
-            WORLD.LOGS.length = 0;
+            this.saveLog();
         }
     }, saveLog: function () {
-        db.saveLogs(WORLD.LOGS);
-        WORLD.LOGS.length = 0;
+        if (!WORLD.LOGS.length) return Promise.resolve(true);
+        const batch = WORLD.LOGS.splice(0, WORLD.LOGS.length);
+        return db.saveLogs(batch).then(() => true).catch(error => {
+            WORLD.LOGS.unshift(...batch);
+            console.error('系统日志保存失败:', error);
+            return false;
+        });
     }
     ,
     is_server: function (user) {
         return user.serverid == WORLD.SERVERID;
     },
-    save: async function () {
+    save: function () {
+        if (this._savePromise) { this._saveAgain = true; return this._savePromise; }
+        this._savePromise = (async () => {
+            let ok = true;
+            do {
+                this._saveAgain = false;
+                if (!await this._saveOnce()) ok = false;
+            } while (this._saveAgain);
+            return ok;
+        })().finally(() => { this._savePromise = null; });
+        return this._savePromise;
+    },
+    _saveOnce: async function () {
 
         var roles = [];
+        var roleErrors = [];
         for (var i = 0; i < WORLD.USERS.length; i++) {
             if (WORLD.USERS[i].serverid != WORLD.SERVERID) continue;
-            roles.push(WORLD.USERS[i].getData());
+            try {
+                roles.push(WORLD.USERS[i].getData());
+            } catch (error) {
+                roleErrors.push({ id: WORLD.USERS[i].id, error: error });
+                console.error('玩家数据序列化失败', WORLD.USERS[i].id, error);
+            }
         }
-        try {
-            console.time('saved');
-            await db.saveRoles(roles);
-            console.log('玩家数据已保存');
-            await this.DATA.save();
-            console.log('全局数据已经保存');
-            await this.saveLog();
-            await this.saveRequest();
-            console.log('日志数据已经保存');
-            console.timeEnd('saved');
-            return true;
-        } catch (error) {
-            console.error('玩家数据保存失败', error.message);
-            return false;
+        console.time('saved');
+        var ok = true;
+        try { await db.saveRoles(roles); console.log('玩家数据已保存'); }
+        catch (error) { ok = false; console.error('玩家数据保存失败', error.message); }
+        if (roleErrors.length) {
+            ok = false;
+            console.error('部分玩家数据序列化失败', roleErrors);
         }
+        try { await this.DATA.save(); console.log('全局数据已经保存'); }
+        catch (error) { ok = false; console.error('全局数据保存失败', error.message); }
+        if (!await this.saveLog()) ok = false;
+        if (!await this.saveRequest()) ok = false;
+        console.log('日志数据已经保存');
+        console.timeEnd('saved');
+        return ok;
     },
     writeHeapSnapshot: function () {
         let v8 = UTIL.require('v8');

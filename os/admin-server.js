@@ -3,11 +3,15 @@
 // Used by web.js to query game state and trigger actions
 
 const http = require('http');
+const bootRelease = require('./release');
+const adminPaths = require('./admin-paths');
 const fs = require('fs');
 const path = require('path');
 const db = require('../data/db');
 const IPC_PORT = parseInt(process.env.ADMIN_IPC_PORT) || 31301;
-const IPC_SECRET = process.env.ADMIN_IPC_SECRET || 'mud-admin-secret-change-me';
+// Fail closed when the deployment secret is absent; do not expose an
+// easily-guessable built-in credential to other local processes.
+const IPC_SECRET = process.env.ADMIN_IPC_SECRET || '';
 const SKILL_DIR = path.join(__dirname, '..', 'world', 'skill');
 const OBJ_DIR = path.join(__dirname, '..', 'world', 'obj');
 const NPC_DIR = path.join(__dirname, '..', 'world', 'npc');
@@ -94,7 +98,7 @@ function getNpcList() {
 
 function verifySecret(req, res) {
     var secret = req.headers['x-ipc-secret'];
-    if (secret !== IPC_SECRET) {
+    if (IPC_SECRET.length < 16 || secret !== IPC_SECRET) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Forbidden: invalid IPC secret' }));
         return false;
@@ -104,10 +108,20 @@ function verifySecret(req, res) {
 
 function readBody(req, callback) {
     var body = '';
-    req.on('data', function (chunk) { body += chunk; });
+    var rejected = false;
+    req.on('data', function (chunk) {
+        if (rejected) return;
+        body += chunk;
+        if (body.length > 1024 * 1024) { rejected = true; body = ''; req.destroy(); }
+    });
     req.on('end', function () {
-        try { callback(null, body ? JSON.parse(body) : {}); }
-        catch (e) { callback(e, null); }
+        if (rejected) return;
+        var data;
+        try { data = body ? JSON.parse(body) : {}; }
+        catch (e) { callback(e, null); return; }
+        // A handler failure must not run the same mutating callback twice.
+        try { callback(null, data); }
+        catch (e) { console.error('[IPC handler failed]', e); req.destroy(); }
     });
 }
 
@@ -137,6 +151,10 @@ function handleRequest(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
 
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+    // This listener is bound to loopback; expose no player data in health.
+    if (req.method === 'GET' && req.url === '/health') {
+        return sendJSON(res, { status: WORLD.status >= 0 ? 'ok' : 'stopping', release: bootRelease, service: 'game', sid: WORLD.SERVERID, testScope: require('./test-scope') || undefined });
+    }
     if (!verifySecret(req, res)) return;
 
     var url = req.url.split('?')[0];
@@ -629,7 +647,7 @@ function handleRequest(req, res) {
         // POST /api/create_dungeon
         else if (url === '/api/create_dungeon' && method === 'POST') {
             readBody(req, function (err, body) {
-                if (err) { sendJSON(res, { error: 'Invalid JSON' }, 400); return; }
+                if (err || !adminPaths.validateMap(body)) { sendJSON(res, { error: 'Invalid map fields, rooms or exits' }, 400); return; }
                 var id = body.id, name = body.name, desc = body.desc, score = parseInt(body.score) || 100;
                 var is_multi = !!body.is_multi, expend = parseInt(body.expend) || 10;
                 var exp = parseInt(body.exp) || 10000, pot = parseInt(body.pot) || 8000;
@@ -643,6 +661,7 @@ function handleRequest(req, res) {
                 var mapDir = path.join(baseDir, 'world', 'map', id);
                 var npcDir = path.join(baseDir, 'world', 'npc', id);
                 var jhFile = path.join(baseDir, 'world', 'cmd', 'dialog', 'jh.js');
+                if (![mapDir, npcDir, jhFile].every(p => adminPaths.allowed(baseDir,p)) || fs.existsSync(mapDir) || fs.existsSync(npcDir)) { sendJSON(res, { error: 'Map already exists or unsafe path' }, 409); return; }
 
                 try {
                     // Read jh.js to get next fb_index
@@ -662,8 +681,8 @@ function handleRequest(req, res) {
                         'this.inherits(AREA);',
                         'this.set({',
                         '    id: "' + id + '",',
-                        '    name: "' + name + '",',
-                        '    desc: "' + (desc || name + '副本') + '",',
+                        '    name: "' + adminPaths.sourceText(name) + '",',
+                        '    desc: "' + adminPaths.sourceText(desc || name + '副本') + '",',
                         '    score: ' + score + ',',
                         '    is_show: true,',
                         '    first: "' + id + '/r0",',
@@ -673,7 +692,7 @@ function handleRequest(req, res) {
                         '    exp: ' + exp + ',',
                         '    pot: ' + pot + ',',
                         '    room_path: "' + id + '/",',
-                        '    ss_title: "' + name + '首杀"',
+                        '    ss_title: "' + adminPaths.sourceText(name) + '首杀"',
                         '});',
                     ].join('\n');
 
@@ -681,7 +700,7 @@ function handleRequest(req, res) {
                     var mapEntries = [];
                     for (var ri = 0; ri < rooms.length; ri++) {
                         var rm = rooms[ri];
-                        mapEntries.push('    { n: "' + rm.name + '", id: "' + id + '/' + rm.rid + '", p: [' + (rm.x || ri) + ', ' + (rm.y || ri) + '], exits: [' + (rm.exits ? rm.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
+                        mapEntries.push('    { n: "' + adminPaths.sourceText(rm.name) + '", id: "' + id + '/' + rm.rid + '", p: [' + (rm.x || ri) + ', ' + (rm.y || ri) + '], exits: [' + (rm.exits ? rm.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
                     }
                     if (rooms.length === 0) {
                         mapEntries.push('    { n: "入口", id: "' + id + '/r0", p: [0, 0], exits: [] }');
@@ -708,9 +727,9 @@ function handleRequest(req, res) {
                         var rm = rooms[ri];
                         var roomContent = [
                             'this.inherits(ROOM);',
-                            'this.name = "' + rm.name + '";',
-                            'this.desc = "' + (rm.desc || rm.name) + '";',
-                            'this.exits = {' + (rm.exits ? rm.exits.map(function(e){return e + ': "' + id + '/' + rm.exitsTo[e] + '"'}).join(',') : '') + '};',
+                            'this.name = "' + adminPaths.sourceText(rm.name) + '";',
+                            'this.desc = "' + adminPaths.sourceText(rm.desc || rm.name) + '";',
+                            'this.exits = {' + (rm.exits ? rm.exits.map(function(e){return JSON.stringify(e) + ': "' + id + '/' + rm.exitsTo[e] + '"'}).join(',') : '') + '};',
                             'this.set_npc([]);',
                         ].join('\n');
                         if (rm.npc) {
@@ -722,7 +741,7 @@ function handleRequest(req, res) {
                         fs.writeFileSync(path.join(mapDir, 'r0.js'), [
                             'this.inherits(ROOM);',
                             'this.name = "入口";',
-                            'this.desc = "' + name + '的入口区域。";',
+                            'this.desc = "' + adminPaths.sourceText(name) + '的入口区域。";',
                             'this.exits = {};',
                             'this.set_npc([]);',
                         ].join('\n'), 'utf8');
@@ -732,9 +751,9 @@ function handleRequest(req, res) {
                     var npcContent = [
                         'this.inherits(NPC);',
                         'this.set({',
-                        '    name: "' + name + '守卫",',
-                        '    desc: "' + name + '的守卫。",',
-                        '    title: "<hiy>' + name + '守卫</hiy>",',
+                        '    name: "' + adminPaths.sourceText(name) + '守卫",',
+                        '    desc: "' + adminPaths.sourceText(name) + '的守卫。",',
+                        '    title: "<hiy>' + adminPaths.sourceText(name) + '守卫</hiy>",',
                         '    gender: 1,',
                         '    age: 40,',
                         '    per: 15,',
@@ -781,7 +800,7 @@ function handleRequest(req, res) {
         // POST /api/create_map — unified map/dungeon creation
         else if (url === '/api/create_map' && method === 'POST') {
             readBody(req, function (err, body) {
-                if (err) { sendJSON(res, { error: 'Invalid JSON' }, 400); return; }
+                if (err || !adminPaths.validateMap(body)) { sendJSON(res, { error: 'Invalid map fields, rooms or exits' }, 400); return; }
                 var id = body.id, name = body.name, desc = body.desc;
                 var mapType = body.map_type || 'public';
                 if (!id || !name) { sendJSON(res, { error: 'id and name required' }, 400); return; }
@@ -791,6 +810,7 @@ function handleRequest(req, res) {
                 var mapDir = path.join(baseDir, 'world', 'map', id);
                 var npcDir = path.join(baseDir, 'world', 'npc', id);
                 var jhFile = path.join(baseDir, 'world', 'cmd', 'dialog', 'jh.js');
+                if (![mapDir, npcDir, jhFile].every(p => adminPaths.allowed(baseDir,p)) || fs.existsSync(mapDir) || fs.existsSync(npcDir)) { sendJSON(res, { error: 'Map already exists or unsafe path' }, 409); return; }
 
                 try {
                     // Read jh.js
@@ -819,8 +839,8 @@ function handleRequest(req, res) {
                             'this.inherits(AREA);',
                             'this.set({',
                             '    id: "' + id + '",',
-                            '    name: "' + name + '",',
-                            '    desc: "' + desc + '",',
+                            '    name: "' + adminPaths.sourceText(name) + '",',
+                            '    desc: "' + adminPaths.sourceText(desc || name) + '",',
                             '    score: ' + score + ',',
                             '    is_show: true,',
                             '    first: "' + id + '/r0",',
@@ -830,14 +850,14 @@ function handleRequest(req, res) {
                             '    exp: ' + exp + ',',
                             '    pot: ' + pot + ',',
                             '    room_path: "' + id + '/",',
-                            '    ss_title: "' + name + '首杀"',
+                            '    ss_title: "' + adminPaths.sourceText(name) + '首杀"',
                             '});',
                         ].join('\n');
                         // Map entries for dungeon
                         var mapEntries = [];
                         for (var ri = 0; ri < rooms.length; ri++) {
                             var rm = rooms[ri];
-                            mapEntries.push('    { n: "' + rm.name + '", id: "' + id + '/' + rm.rid + '", p: [' + (rm.x || ri) + ', ' + (rm.y || ri) + '], exits: [' + (rm.exits ? rm.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
+                            mapEntries.push('    { n: "' + adminPaths.sourceText(rm.name) + '", id: "' + id + '/' + rm.rid + '", p: [' + (rm.x || ri) + ', ' + (rm.y || ri) + '], exits: [' + (rm.exits ? rm.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
                         }
                         if (rooms.length === 0) mapEntries.push('    { n: "入口", id: "' + id + '/r0", p: [0, 0], exits: [] }');
                         areaContent += '\nthis.map = [\n' + mapEntries.join(',\n') + '\n];';
@@ -854,7 +874,7 @@ function handleRequest(req, res) {
                         fs.writeFileSync(jhFile, jhContent, 'utf8');
                         fs.writeFileSync(areaPath, areaContent, 'utf8');
 
-                        sendJSON(res, { success: true, message: '副本 ' + name + ' 创建成功！fb_index=' + nextIdx, fb_index: nextIdx, areaFile: 'world/area/fb1/fb' + (nextIdx + 1) + '.js' });
+                        var creationResult = { success: true, message: '副本 ' + name + ' 创建成功！fb_index=' + nextIdx, fb_index: nextIdx, areaFile: 'world/area/fb1/fb' + (nextIdx + 1) + '.js' };
                     } else {
                         // === Public Map (公共地图) ===
                         var areaDir = path.join(baseDir, 'world', 'area', 'map');
@@ -862,8 +882,8 @@ function handleRequest(req, res) {
                             'this.inherits(AREA);',
                             'this.set({',
                             '    id: "' + id + '",',
-                            '    name: "' + name + '",',
-                            '    desc: "' + (desc || name) + '",',
+                            '    name: "' + adminPaths.sourceText(name) + '",',
+                            '    desc: "' + adminPaths.sourceText(desc || name) + '",',
                             '    is_area: true,',
                             '    is_show: true,',
                             '    first: "' + id + '/r0",',
@@ -874,20 +894,20 @@ function handleRequest(req, res) {
                         var mapEntries = [];
                         for (var ri2 = 0; ri2 < rooms.length; ri2++) {
                             var rm2 = rooms[ri2];
-                            mapEntries.push('    { n: "' + rm2.name + '", id: "' + id + '/' + rm2.rid + '", p: [' + (rm2.x || ri2) + ', ' + (rm2.y || ri2) + '], exits: [' + (rm2.exits ? rm2.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
+                            mapEntries.push('    { n: "' + adminPaths.sourceText(rm2.name) + '", id: "' + id + '/' + rm2.rid + '", p: [' + (rm2.x || ri2) + ', ' + (rm2.y || ri2) + '], exits: [' + (rm2.exits ? rm2.exits.map(function(e){return '"'+e+'"'}).join(',') : '') + '] }');
                         }
                         if (rooms.length === 0) mapEntries.push('    { n: "入口", id: "' + id + '/r0", p: [0, 0], exits: [] }');
                         areaContent += '\nthis.map = [\n' + mapEntries.join(',\n') + '\n];\n';
                         var areaPath = path.join(areaDir, id + '.js');
                         // Update jh.js AREAS
-                        var areaEntry = ',\n    ' + id + ': ' + 99;
+                        var areaEntry = ',\n    ' + JSON.stringify(id) + ': ' + 99;
                         jhContent = jhContent.replace(/(const AREAS = \{[\s\S]*?\})/, function (match) {
                             return match.replace(/\}/, areaEntry + '\n}');
                         });
                         fs.writeFileSync(jhFile, jhContent, 'utf8');
                         fs.writeFileSync(areaPath, areaContent, 'utf8');
 
-                        sendJSON(res, { success: true, message: '公共地图 ' + name + ' 创建成功！', areaFile: 'world/area/map/' + id + '.js' });
+                        creationResult = { success: true, message: '公共地图 ' + name + ' 创建成功！', areaFile: 'world/area/map/' + id + '.js' };
                     }
 
                     // === Common: create room files with auto-exits ===
@@ -923,8 +943,8 @@ function handleRequest(req, res) {
                         }
                         var roomContent = [
                             'this.inherits(ROOM);',
-                            'this.name = "' + rmd2.name + '";',
-                            'this.desc = "' + (rmd2.desc || rmd2.name) + '";',
+                            'this.name = "' + adminPaths.sourceText(rmd2.name) + '";',
+                            'this.desc = "' + adminPaths.sourceText(rmd2.desc || rmd2.name) + '";',
                             'this.exits = ' + JSON.stringify(roomExits).replace(/"/g, '"') + ';',
                             'this.set_npc([]);',
                         ].join('\n');
@@ -936,15 +956,15 @@ function handleRequest(req, res) {
                     if (rooms.length === 0) {
                         fs.writeFileSync(path.join(mapDir, 'r0.js'), [
                             'this.inherits(ROOM);', 'this.name = "入口";',
-                            'this.desc = "' + name + '的入口区域。";', 'this.exits = {};', 'this.set_npc([]);',
+                            'this.desc = "' + adminPaths.sourceText(name) + '的入口区域。";', 'this.exits = {};', 'this.set_npc([]);',
                         ].join('\n'), 'utf8');
                     }
                     // Create NPC dir
                     if (!fs.existsSync(npcDir)) fs.mkdirSync(npcDir, { recursive: true });
                     fs.writeFileSync(path.join(npcDir, 'guard.js'), [
                         'this.inherits(NPC);',
-                        'this.set({', '    name: "' + name + '守卫",', '    desc: "' + name + '的守卫。",',
-                        '    title: "<hiy>' + name + '守卫</hiy>",', '    gender: 1, age: 40, per: 15,',
+                        'this.set({', '    name: "' + adminPaths.sourceText(name) + '守卫",', '    desc: "' + adminPaths.sourceText(name) + '的守卫。",',
+                        '    title: "<hiy>' + adminPaths.sourceText(name) + '守卫</hiy>",', '    gender: 1, age: 40, per: 15,',
                         '    no_refresh: true,', '    hp: 1000000, max_hp: 1000000,', '    mp: 500000, max_mp: 500000,',
                         '    score: 50,', '    gj: 50000, fy: 50000, mz: 60000, ds: 45000, zj: 50000,',
                         '    str: 10000, con: 10000, dex: 8000, int: 8000,', '});',
@@ -953,6 +973,7 @@ function handleRequest(req, res) {
                         'this.on_enter = function (me) { this.do_kill(me); };',
                     ].join('\n'), 'utf8');
 
+                    sendJSON(res, creationResult);
                 } catch (e) { sendJSON(res, { error: '创建失败: ' + e.message }, 500); }
             });
         }
@@ -1128,7 +1149,7 @@ function handleRequest(req, res) {
                 var parts = p.split('='); if (parts.length === 2) acc[parts[0]] = decodeURIComponent(parts[1]); return acc;
             }, {});
             var mType = params.type || 'public', mId = params.id || '';
-            if (!mId) { sendJSON(res, { error: 'id required' }, 400); return; }
+            if (!adminPaths.slug(mId)) { sendJSON(res, { error: 'Invalid map id' }, 400); return; }
             var baseDir = path.join(__dirname, '..');
             var areaPath;
             if (mType === 'dungeon') {
@@ -1187,10 +1208,11 @@ function handleRequest(req, res) {
             readBody(req, function (err, body) {
                 if (err) { sendJSON(res, { error: 'Invalid JSON' }, 400); return; }
                 var mType = body.type || 'public', mId = body.id || '';
-                if (!mId) { sendJSON(res, { error: 'id required' }, 400); return; }
+                if (!adminPaths.slug(mId)) { sendJSON(res, { error: 'Invalid map id' }, 400); return; }
                 var baseDir = path.join(__dirname, '..');
                 try {
                     var areaPath, mapDir = path.join(baseDir, 'world', 'map', mId);
+                    if (!adminPaths.allowed(baseDir, mapDir)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
                     if (mType === 'dungeon') {
                         var jhFile = path.join(baseDir, 'world', 'cmd', 'dialog', 'jh.js');
                         var jh = fs.readFileSync(jhFile, 'utf8');
@@ -1934,7 +1956,7 @@ function handleRequest(req, res) {
             // Security: ensure path is within allowed bases
             var allowed = false;
             for (var bi = 0; bi < allowedBases.length; bi++) {
-                if (fullDir.startsWith(allowedBases[bi])) { allowed = true; break; }
+                if (adminPaths.allowed(path.resolve(__dirname, '..'), fullDir, true)) { allowed = true; break; }
             }
             if (!allowed) { sendJSON(res, { error: 'Access denied' }, 403); return; }
             try {
@@ -1945,7 +1967,7 @@ function handleRequest(req, res) {
                 var list = [];
                 for (var ei = 0; ei < entries.length; ei++) {
                     var e = entries[ei];
-                    if (e.name.startsWith('.')) continue;
+                    if (e.name.startsWith('.') || !adminPaths.allowed(path.resolve(__dirname, '..'), path.join(fullDir, e.name))) continue;
                     var item = { name: e.name, is_dir: e.isDirectory() };
                     if (!e.isDirectory()) {
                         try {
@@ -1970,7 +1992,7 @@ function handleRequest(req, res) {
             }, {}).path || '';
             var fullPath = path.resolve(path.join(__dirname, '..', filePath));
             var rootDir = path.resolve(path.join(__dirname, '..'));
-            if (!fullPath.startsWith(rootDir)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
+            if (!adminPaths.allowed(rootDir, fullPath)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
             try {
                 if (!fs.existsSync(fullPath) || fs.statSync(fullPath).isDirectory()) {
                     sendJSON(res, { error: 'Not a file' }, 400); return;
@@ -1988,7 +2010,7 @@ function handleRequest(req, res) {
                 if (!filePath || fileContent === undefined) { sendJSON(res, { error: 'path and content required' }, 400); return; }
                 var fullPath = path.resolve(path.join(__dirname, '..', filePath));
                 var rootDir = path.resolve(path.join(__dirname, '..'));
-                if (!fullPath.startsWith(rootDir)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
+                if (!adminPaths.allowed(rootDir, fullPath)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
                 // Prevent overwriting critical system files
                 var fileName = path.basename(fullPath);
                 if (fileName === 'main.js' || fileName === 'web.js') {
@@ -2010,7 +2032,7 @@ function handleRequest(req, res) {
                 if (!filePath) { sendJSON(res, { error: 'path required' }, 400); return; }
                 var fullPath = path.resolve(path.join(__dirname, '..', filePath));
                 var rootDir = path.resolve(path.join(__dirname, '..'));
-                if (!fullPath.startsWith(rootDir)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
+                if (!adminPaths.allowed(rootDir, fullPath)) { sendJSON(res, { error: 'Access denied' }, 403); return; }
                 var fileName = path.basename(fullPath);
                 if (fileName === 'main.js' || fileName === 'web.js') {
                     sendJSON(res, { error: 'Cannot delete core system file: ' + fileName }, 403); return;
@@ -2051,7 +2073,12 @@ function forceLogout(user) {
     try { if (user.clear_home) user.clear_home(); } catch (e) {}
     // 尽力保存角色数据（与 WORLD.login_out 保存逻辑一致）
     try {
-        if (user.serverid === WORLD.SERVERID) WORLD.DB.saveRole(user.getData());
+        if (user.serverid === WORLD.SERVERID) {
+            var saveResult = WORLD.DB.saveRole(user.getData());
+            if (saveResult && typeof saveResult.catch === 'function') {
+                saveResult.catch(function (e) { console.log('[Kick] 保存角色数据失败:', user.name, e.message); });
+            }
+        }
     } catch (e) { console.log('[Kick] 保存角色数据失败:', user.name, e.message); }
     // 清环境引用（对齐 quit()）：使对手的 is_here 判定失效，战斗中踢人后战斗关系能自动清理，
     // 否则对手会继续攻击一个已离线的玩家对象，战斗不结束。
@@ -2185,6 +2212,7 @@ function removeNpcFromRoom(roomPath, npcPath) {
 var ipcServer;
 exports.start = function () {
     if (ipcServer) return;
+    if (IPC_SECRET.length < 16) throw new Error('ADMIN_IPC_SECRET must contain at least 16 random characters');
     ipcServer = http.createServer(handleRequest);
     ipcServer.on('error', function (err) {
         if (err.code === 'EADDRINUSE') {

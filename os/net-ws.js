@@ -1,6 +1,7 @@
 "use strict";
 var crypto = require('crypto');
 var fs = require("fs");
+var TextDecoder = require('util').TextDecoder;
 function wsServer(options) {
     var evt = ["Close", "Error", "SocketIn", "Connect", "Receive",
         "ClientError", "ClientClose", "ClientTimeout"];
@@ -46,6 +47,9 @@ function onClientConnect(socket) {
     socket.on('close', this.onClientClose.bind(this, socket));
     socket.on('error', this.onClientError.bind(this, socket));
     var $this = this;
+    // TCP does not preserve WebSocket frame or HTTP header boundaries.  Keep
+    // the handshake bytes on the socket until the complete header arrives.
+    socket._handshakeBuffer = Buffer.alloc(0);
     socket.setTimeout(30000);
     socket.on('timeout', this.onClientTimeout.bind(this, socket));
     $this.onSocketIn(socket);
@@ -53,19 +57,45 @@ function onClientConnect(socket) {
         if (socket.protocol) {
             socket.protocol.readData(data, socket, $this);
         } else {
-            var header = readHeader(data);
+            socket._handshakeBuffer = Buffer.concat([socket._handshakeBuffer, data]);
+            if (socket._handshakeBuffer.length > 64 * 1024) {
+                socket.destroy();
+                return;
+            }
+            // Existing automation/cross-server clients use a length-prefixed
+            // TCP protocol and do not send an HTTP upgrade.  Classify those
+            // bytes as soon as the prefix cannot be an HTTP GET, while still
+            // waiting for fragmented WebSocket headers.
+            if (socket._handshakeBuffer.length >= 4 &&
+                socket._handshakeBuffer.toString('ascii', 0, 4) !== 'GET ') {
+                socket.protocol = protocols.tcp;
+                var tcpData = socket._handshakeBuffer;
+                socket._handshakeBuffer = null;
+                socket.protocol.readData(tcpData, socket, $this);
+                return;
+            }
+            var headerEnd = socket._handshakeBuffer.indexOf(Buffer.from("\r\n\r\n"));
+            if (headerEnd < 0) return;
+            var handshake = socket._handshakeBuffer;
+            var requestLine = handshake.slice(0, handshake.indexOf(Buffer.from("\r\n"))).toString('ascii');
+            if (!/^GET\s+\S+\s+HTTP\/1\.[01]$/i.test(requestLine)) {
+                socket.destroy();
+                return;
+            }
+            var frameData = handshake.slice(headerEnd + 4);
+            var header = readHeader(handshake.slice(0, headerEnd + 4));
+            socket._handshakeBuffer = null;
             socket.requestHeader = header;
             if (header["Sec-WebSocket-Key"]) {
                 socket.protocol = protocols.var1;
             } else if (header["Sec-WebSocket-Key1"]) {
                 socket.protocol = protocols.var2;
-            } else {
-                socket.protocol = protocols.tcp;
-                socket.protocol.readData(data, socket, $this);
-                return;
-            }
-            socket.protocol.handShake(header, socket, data);
+            } else { socket.destroy(); return; }
+            socket.protocol.handShake(header, socket, handshake);
             $this.onConnect(socket);
+            // A client is allowed to send the first frame in the same TCP
+            // packet as the HTTP upgrade.  Do not discard it.
+            if (frameData.length) socket.protocol.readData(frameData, socket, $this);
         }
     });
 }
@@ -89,37 +119,76 @@ var protocols = {
             socket.write(respon.join("\r\n"));
         },
         readData: function (data, socket, server) {
+            // Buffer complete frames; a TCP data event may contain half a
+            // header, a header plus part of a payload, or several frames.
+            var buffer = socket._wsReadBuffer;
+            socket._wsReadBuffer = buffer ? Buffer.concat([buffer, data]) : Buffer.from(data);
+            buffer = socket._wsReadBuffer;
             var start = 0;
-            while (start < data.length) {
-                var iseof = (data[start] >> 7) > 0;
-                var frameType = data[start++] & 0xF;
-                var hasMask = (data[start] >> 7) > 0;
-                var length = (data[start++] & 0x7F);
-                if (length == 126) {
-                    length = data.readUInt16BE(start);
-                    start = start + 2;
+            var maxPayload = 2 * 1024 * 1024;
+            while (start + 2 <= buffer.length) {
+                var first = buffer[start];
+                var second = buffer[start + 1];
+                var iseof = (first & 0x80) !== 0;
+                var frameType = first & 0x0F;
+                if (first & 0x70) { socket.destroy(); return; }
+                var hasMask = (second & 0x80) !== 0;
+                var length = second & 0x7F;
+                var headerLength = 2;
+                if (length === 126) {
+                    if (buffer.length < start + 4) break;
+                    length = buffer.readUInt16BE(start + 2);
+                    headerLength += 2;
+                } else if (length === 127) {
+                    // This server only supports lengths representable safely
+                    // in JavaScript; reject high 32 bits instead of wrapping.
+                    if (buffer.length < start + 10) break;
+                    if (buffer.readUInt32BE(start + 2) !== 0) {
+                        socket.destroy();
+                        return;
+                    }
+                    length = buffer.readUInt32BE(start + 6);
+                    headerLength += 8;
                 }
-                else if (length == 127) {
-                    length = data.readUInt32BE(start);
-                    start = start + 4;
+                if (length > maxPayload || !hasMask) {
+                    socket.destroy();
                     return;
                 }
-                var markIndex = start;
-                start = start + 4;
-                for (let i = 0; i < length; i++) {
-                    data[start] = data[start] ^ data[markIndex + (i % 4)];
-                    start++;
+                var maskLength = 4;
+                var frameLength = headerLength + maskLength + length;
+                if (buffer.length < start + frameLength) break;
+                // Control frames must not be fragmented or oversized.
+                if (frameType >= 8 && (!iseof || length > 125)) {
+                    socket.destroy();
+                    return;
                 }
+                // While a text message is fragmented, only continuation and
+                // control frames are legal.  Silently accepting a binary or
+                // a second data frame desynchronizes the parser and can make
+                // the next player's command be delivered as part of it.
+                if (socket._wsMessageBuffer && frameType !== FrameTypes.Continuation &&
+                    frameType !== FrameTypes.Close && frameType !== FrameTypes.Ping && frameType !== FrameTypes.Pong) {
+                    socket.destroy();
+                    return;
+                }
+                var markIndex = start + headerLength;
+                var payloadIndex = markIndex + 4;
+                var payload = Buffer.alloc(length);
+                for (var i = 0; i < length; i++)
+                    payload[i] = buffer[payloadIndex + i] ^ buffer[markIndex + (i % 4)];
+                start += frameLength;
                 switch (frameType) {
                     case FrameTypes.Close:
+                        socket._wsClosing = true;
+                        socket._wsMessageBuffer = null;
                         socket.end();
-                        break;
+                        return;
                     case FrameTypes.Binary:
                         break;
                     case FrameTypes.Ping:
                         // Respond with Pong per RFC 6455
                         (function () {
-                            var pongPayload = data.slice(markIndex + 4, markIndex + 4 + length);
+                            var pongPayload = payload;
                             var pongFrame;
                             if (length < 126) {
                                 pongFrame = Buffer.alloc(2 + length);
@@ -146,13 +215,42 @@ var protocols = {
                     case FrameTypes.Pong:
                         break;
                     case FrameTypes.Text:
-                        var msg = data.toString("utf8", markIndex + 4, markIndex + 4 + length);
-                        server.onReceive(msg, socket);
+                        if (socket._wsMessageBuffer) { socket.destroy(); return; }
+                        if (iseof) {
+                            var msg;
+                            try { msg = new TextDecoder('utf-8', { fatal: true }).decode(payload); }
+                            catch (_) { socket.destroy(); return; }
+                            server.onReceive(msg, socket);
+                        } else {
+                            socket._wsMessageBuffer = socket._wsMessageBuffer ?
+                                Buffer.concat([socket._wsMessageBuffer, payload]) : payload;
+                            if (socket._wsMessageBuffer.length > 8 * 1024 * 1024) {
+                                socket.destroy();
+                                return;
+                            }
+                        }
+                        break;
+                    case FrameTypes.Continuation:
+                        if (!socket._wsMessageBuffer) { socket.destroy(); return; }
+                        socket._wsMessageBuffer = Buffer.concat([socket._wsMessageBuffer, payload]);
+                        if (socket._wsMessageBuffer.length > 8 * 1024 * 1024) {
+                            socket.destroy();
+                            return;
+                        }
+                        if (iseof) {
+                            var complete;
+                            try { complete = new TextDecoder('utf-8', { fatal: true }).decode(socket._wsMessageBuffer); }
+                            catch (_) { socket.destroy(); return; }
+                            server.onReceive(complete, socket);
+                            socket._wsMessageBuffer = null;
+                        }
                         break;
                     default:
-                        break;
+                        socket.destroy();
+                        return;
                 }
             }
+            socket._wsReadBuffer = start < buffer.length ? buffer.slice(start) : Buffer.alloc(0);
         },
         sendData: function (text, socket) {
             var textBuffer = Buffer.from(text);

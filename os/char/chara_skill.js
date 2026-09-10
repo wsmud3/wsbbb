@@ -1,4 +1,4 @@
-﻿
+
 require("./character.js");
 CHARACTER.prototype.query_skill = function (name, def) {
     if (!this.skills || !this.skills[name]) return def || 0;
@@ -26,6 +26,7 @@ CHARACTER.prototype.skill_map = function () {
             for (var j = 0; j < enables.length; j++) {
 
                 skill[enables[j]] = true;
+                if (!this.skills[enables[j]]) this.skills[enables[j]] = { level: skill.level, exp: 0 };
                 this.skills[enables[j]].enable_skill = item[0];
             }
         }
@@ -656,4 +657,3 @@ CHARACTER.prototype._splice_status = function (index, item) {
         }
     }
 }
-

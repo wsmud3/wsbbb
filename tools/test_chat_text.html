@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>chat text unit test</title>
+<body>RUNNING<script type="module">
+import { chatText, escapeText } from '../src/utils/chat-text.js';
+try {
+    const samples = ['<img src=x onerror=alert(1)>', '<svg onload=alert(1)><foreignObject><span onclick=x>test</span></foreignObject></svg>', '<span onclick=x style="color:red">text</span>', '<script>alert(1)<\/script>'];
+    for (const sample of samples) {
+        const result = chatText(sample);
+        const root = document.createElement('div'); root.innerHTML = result;
+        if (root.querySelector('script,img,svg,[onclick],[onerror],[onload],[style]')) throw new Error('unsafe result');
+    }
+    if (chatText('<hiy>中文</hiy>') !== '<hiy>中文</hiy>') throw new Error('color lost');
+    if (!chatText('&lt;img&gt;').includes('&lt;img&gt;')) throw new Error('escaped text changed');
+    if (escapeText("'<test>&").includes('<test>')) throw new Error('name not escaped');
+    document.body.textContent = 'CHAT_SANITIZER_PASS';
+} catch (error) { document.body.textContent = 'CHAT_SANITIZER_FAIL: ' + error.message; }
+</script></body>

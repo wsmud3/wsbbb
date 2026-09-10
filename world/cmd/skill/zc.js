@@ -37,6 +37,55 @@ function potStr(val) {
     return val.toString();
 }
 
+// Sum a word's upgrade costs without iterating over attacker-controlled level
+// ranges.  Current word definitions use linear costs; retain a bounded
+// fallback for a future non-linear definition and ask the player to upgrade
+// in smaller steps rather than blocking the event loop.
+function sum_word_cost(wdef, firstLevel, lastLevel) {
+    firstLevel = Number(firstLevel); lastLevel = Number(lastLevel);
+    if (!wdef || !Number.isSafeInteger(firstLevel) || !Number.isSafeInteger(lastLevel) ||
+        firstLevel < 1 || lastLevel < firstLevel) return null;
+    var count = lastLevel - firstLevel + 1;
+    var c1 = Number(wdef.upgrade_cost(firstLevel));
+    if (!Number.isFinite(c1) || c1 < 0) return null;
+    if (count === 1) return c1;
+    var c2 = Number(wdef.upgrade_cost(firstLevel + 1));
+    if (!Number.isFinite(c2) || c2 < 0) return null;
+    var delta = c2 - c1;
+    var linear = true;
+    if (count > 2) {
+        var c3 = Number(wdef.upgrade_cost(firstLevel + 2));
+        linear = Number.isFinite(c3) && c3 >= 0 && (c3 - c2 === delta);
+    }
+    if (linear) {
+        var last = c1 + delta * (count - 1);
+        var total = count * (c1 + last) / 2;
+        return Number.isSafeInteger(total) ? total : null;
+    }
+    if (count > 100000) return null;
+    var sum = 0;
+    for (var i = firstLevel; i <= lastLevel; i++) {
+        var cost = Number(wdef.upgrade_cost(i));
+        if (!Number.isFinite(cost) || cost < 0 || !Number.isSafeInteger(sum + cost)) return null;
+        sum += cost;
+    }
+    return sum;
+}
+
+function book_contains_word(book, positionKey, wordIndex) {
+    if (!book || !book.zc_words || !positionKey) return false;
+    var words = book.zc_words[positionKey];
+    return Array.isArray(words) && words.some(function (value) { return Number(value) === Number(wordIndex); });
+}
+
+function validate_word_binding(me, book, skillId, positionKey, wordIndex) {
+    if (!book || book.path.indexOf("zc/blank_book") < 0) return "找不到对应的自创秘籍。";
+    if (!book.zc_skill_id || String(book.zc_skill_id) !== String(skillId)) return "该秘籍与技能配置不匹配。";
+    if (!me.skills || !me.skills[skillId]) return "你尚未掌握该自创技能。";
+    if (!positionKey || !book_contains_word(book, positionKey, wordIndex)) return "该秘籍此部位不包含此词条。";
+    return null;
+}
+
 // Use same color array as os/skill/skill.js level_color for consistency
 var ZC_COLORS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
 
@@ -1505,7 +1554,6 @@ this.cmd_levelset = function (me, skill_id, arg2) {
 	    var skill = SKILL.get(skill_id);
 	    if (!skill || !skill.is_custom)
 	        return me.notify("这不是一个自创技能。");
-	
 	    var wdef = SKILL.ZC_WORDS[word_index - 500];
 	    if (!wdef) return me.notify("词条" + word_index + "不存在。");
 	
@@ -1518,6 +1566,8 @@ this.cmd_levelset = function (me, skill_id, arg2) {
 	        if (has_word && position_key) break;
 	    }
 	    if (!has_word) return me.notify("该秘籍不包含此词条。");
+	    var bindingError = validate_word_binding(me, book, skill_id, position_key, word_index);
+	    if (bindingError) return me.notify(bindingError);
 	
 	    if (!book.zc_word_levels) book.zc_word_levels = {};
 	    var cur_level = get_wl(book.zc_word_levels, word_index, position_key);
@@ -1535,8 +1585,8 @@ this.cmd_levelset = function (me, skill_id, arg2) {
 
 // ===== lvlask: 计算词条升级消耗并弹出二次确认(主界面内联按钮) =====
 this.cmd_lvlask = function (me, target_str, rest) {
-    var target = parseInt(target_str);
-    if (isNaN(target) || target < 0)
+    var target = Number(target_str);
+    if (!Number.isSafeInteger(target) || target < 0)
         return me.notify("请输入有效的目标等级。");
 
     var restParts = (rest || "").split(" ");
@@ -1551,13 +1601,14 @@ this.cmd_lvlask = function (me, target_str, rest) {
         word_index = restParts[2] ? parseInt(restParts[2]) : null;
         position_key = me.query_temp("zc_lvl_position");
     }
-    if (!word_index || isNaN(word_index))
+    if (!word_index || !Number.isSafeInteger(Number(word_index)))
         word_index = me.query_temp("zc_lvl_word");
+    word_index = Number(word_index);
     if (!position_key)
         position_key = me.query_temp("zc_lvl_position");
     if (position_key && !ZC_POSITIONS[position_key])
         position_key = null;
-    if (!skill_id || !book_id || isNaN(word_index) || !word_index)
+    if (!skill_id || !book_id || !Number.isSafeInteger(word_index) || word_index < 500)
         return me.notify("请先在词条管理中点击\"升级\"按钮。");
 
     var book = find_book(me, book_id);
@@ -1573,6 +1624,9 @@ this.cmd_lvlask = function (me, target_str, rest) {
     var skill = SKILL.get(skill_id);
     if (!skill || !skill.is_custom)
         return me.notify("这不是一个自创技能。");
+
+    var bindingError = validate_word_binding(me, book, skill_id, position_key, word_index);
+    if (bindingError) return me.notify(bindingError);
 
     var wdef = SKILL.ZC_WORDS[word_index - 500];
     if (!wdef) return me.notify("词条" + word_index + "不存在。");
@@ -1596,9 +1650,8 @@ this.cmd_lvlask = function (me, target_str, rest) {
 
     if (target > cur_level) {
         var levels = target - cur_level;
-        var total_cost = 0;
-        for (var lv = 1; lv <= levels; lv++)
-            total_cost += wdef.upgrade_cost(cur_level + lv);
+        var total_cost = sum_word_cost(wdef, cur_level + 1, target);
+        if (total_cost === null) return me.notify("目标等级或升级费用过大，请分段调整。");
 
         if (me.pot < total_cost) {
             me.notify("潜能不足！升级到(Lv." + target + ")需要" + potStr(total_cost) + "潜能，当前" + potStr(me.pot) + "点潜能。");
@@ -1616,9 +1669,8 @@ this.cmd_lvlask = function (me, target_str, rest) {
         // 降级
         if (target < 0) return me.notify("词条最低为0级。");
         var levels = cur_level - target;
-        var refund = 0;
-        for (var lv = 0; lv < levels; lv++)
-            refund += wdef.upgrade_cost(cur_level - lv);
+        var refund = sum_word_cost(wdef, target + 1, cur_level);
+        if (refund === null) return me.notify("目标等级或返还费用过大，请分段调整。");
 
         me.set_temp("zc_lvl_skill", skill_id);
         me.set_temp("zc_lvl_book", book_id);
@@ -1640,8 +1692,8 @@ this.cmd_lvl = function (me, target_str, rest) {
     // target_str: 目标等级数字
     // rest: "skill_id book_id word_index" (来自客户端 _confirm popup)
     // 兼容手动输入: zc lvl <target> (fallback to temp)
-    var target = parseInt(target_str);
-    if (isNaN(target) || target < 0)
+    var target = Number(target_str);
+    if (!Number.isSafeInteger(target) || target < 0)
         return me.notify("请输入有效的目标等级: zc lvl <等级>");
 
 	    var restParts = (rest || "").split(" ");
@@ -1651,21 +1703,24 @@ this.cmd_lvl = function (me, target_str, rest) {
 	    // Old format (manual/fallback): ... book_id word_index
 	    var position_key;
 	    var word_index;
+	    var explicitPosition = false;
 	    if (restParts[2] && isNaN(parseInt(restParts[2]))) {
 	        position_key = restParts[2];
+	        explicitPosition = true;
 	        word_index = restParts[3] ? parseInt(restParts[3]) : null;
 	    } else {
 	        word_index = restParts[2] ? parseInt(restParts[2]) : null;
 	        position_key = me.query_temp("zc_lvl_position");
 	    }
-	    if (!word_index || isNaN(word_index))
-	        word_index = me.query_temp("zc_lvl_word");
+    if (!word_index || !Number.isSafeInteger(Number(word_index)))
+        word_index = me.query_temp("zc_lvl_word");
+    word_index = Number(word_index);
 	    if (!position_key)
 	        position_key = me.query_temp("zc_lvl_position");
 	    // Validate position_key: if it's not a real ZC position, discard it
-	    if (position_key && !ZC_POSITIONS[position_key])
-	        position_key = null;
-	    if (!skill_id || !book_id || isNaN(word_index) || !word_index)
+    if (explicitPosition && !ZC_POSITIONS[position_key])
+        return me.notify("该部位不存在，请从秘籍已有部位中选择。");
+    if (!skill_id || !book_id || !Number.isSafeInteger(word_index) || word_index < 500)
 	        return me.notify("请先在词条管理中点击\"升级\"按钮。");
 
     var book = find_book(me, book_id);
@@ -1682,6 +1737,9 @@ this.cmd_lvl = function (me, target_str, rest) {
     var skill = SKILL.get(skill_id);
     if (!skill || !skill.is_custom)
         return me.notify("这不是一个自创技能。");
+
+    var bindingError = validate_word_binding(me, book, skill_id, position_key, word_index);
+    if (bindingError) return me.notify(bindingError);
 
     var wdef = SKILL.ZC_WORDS[word_index - 500];
     if (!wdef) return me.notify("词条" + word_index + "不存在。");
@@ -1701,28 +1759,41 @@ this.cmd_lvl = function (me, target_str, rest) {
 
         // 升级
         var levels = target - cur_level;
-        var total_cost = 0;
-        for (var lv = 1; lv <= levels; lv++)
-            total_cost += wdef.upgrade_cost(cur_level + lv);
+        var total_cost = sum_word_cost(wdef, cur_level + 1, target);
+        if (total_cost === null)
+            return me.notify("目标等级或升级费用过大，请分段调整。");
 
         if (me.pot < total_cost)
             return me.notify("潜能不足！升级到(Lv." + target + ")需要" + potStr(total_cost) + "潜能，当前" + potStr(me.pot) + "点潜能。");
 
-        me.pot -= total_cost;
-        set_wl(book.zc_word_levels, word_index, target, position_key);
-
-        if (skill.mp_to_hp && word_index === 506) {
-            skill.force_rad = 0.1 + (29 + target) / 100;
-        }
-
         var sk_data = me.skills[skill_id];
-        if (sk_data) {
-            if (!sk_data.word_levels) sk_data.word_levels = {};
-            var old_lv = sk_data.level;
-            skill.release_prop(me, old_lv);
-            set_wl(sk_data.word_levels, word_index, target, position_key);
-            skill.attach_prop(me, old_lv);
-            if (skill.mp_to_hp && word_index === 506) me.recount();
+        var oldPot = me.pot, oldBookLevels = JSON.stringify(book.zc_word_levels || {}),
+            oldSkillLevels = sk_data && JSON.stringify(sk_data.word_levels || {}), oldForceRad = skill.force_rad;
+        try {
+            if (sk_data) {
+                if (!sk_data.word_levels) sk_data.word_levels = {};
+                var old_lv = sk_data.level;
+                skill.release_prop(me, old_lv);
+                set_wl(sk_data.word_levels, word_index, target, position_key);
+                skill.attach_prop(me, old_lv);
+            }
+            me.pot -= total_cost;
+            set_wl(book.zc_word_levels, word_index, target, position_key);
+            if (skill.mp_to_hp && word_index === 506) {
+                skill.force_rad = 0.1 + (29 + target) / 100;
+                me.recount();
+            }
+        } catch (error) {
+            me.pot = oldPot;
+            book.zc_word_levels = JSON.parse(oldBookLevels);
+            skill.force_rad = oldForceRad;
+            if (sk_data) {
+                try { skill.release_prop(me, sk_data.level); } catch (_) {}
+                sk_data.word_levels = JSON.parse(oldSkillLevels || "{}");
+                try { skill.attach_prop(me, sk_data.level); } catch (_) {}
+            }
+            me.notify("词条升级失败，未扣除潜能，请稍后重试。");
+            return;
         }
 
         me.items_changed(book);
@@ -1731,25 +1802,38 @@ this.cmd_lvl = function (me, target_str, rest) {
         // 降级
         if (target < 0) return me.notify("词条最低为0级。");
         var levels = cur_level - target;
-        var refund = 0;
-        for (var lv = 0; lv < levels; lv++)
-            refund += wdef.upgrade_cost(cur_level - lv);
-
-        set_wl(book.zc_word_levels, word_index, target, position_key);
-        me.pot += refund;
-
-        if (skill.mp_to_hp && word_index === 506) {
-            skill.force_rad = 0.1 + (29 + target) / 100;
-        }
+        var refund = sum_word_cost(wdef, target + 1, cur_level);
+        if (refund === null)
+            return me.notify("目标等级或返还费用过大，请分段调整。");
 
         var sk_data = me.skills[skill_id];
-        if (sk_data) {
-            if (!sk_data.word_levels) sk_data.word_levels = {};
-            var old_lv = sk_data.level;
-            skill.release_prop(me, old_lv);
-            set_wl(sk_data.word_levels, word_index, target, position_key);
-            skill.attach_prop(me, old_lv);
-            if (skill.mp_to_hp && word_index === 506) me.recount();
+        var oldPot = me.pot, oldBookLevels = JSON.stringify(book.zc_word_levels || {}),
+            oldSkillLevels = sk_data && JSON.stringify(sk_data.word_levels || {}), oldForceRad = skill.force_rad;
+        try {
+            if (sk_data) {
+                if (!sk_data.word_levels) sk_data.word_levels = {};
+                var old_lv = sk_data.level;
+                skill.release_prop(me, old_lv);
+                set_wl(sk_data.word_levels, word_index, target, position_key);
+                skill.attach_prop(me, old_lv);
+            }
+            me.pot += refund;
+            set_wl(book.zc_word_levels, word_index, target, position_key);
+            if (skill.mp_to_hp && word_index === 506) {
+                skill.force_rad = 0.1 + (29 + target) / 100;
+                me.recount();
+            }
+        } catch (error) {
+            me.pot = oldPot;
+            book.zc_word_levels = JSON.parse(oldBookLevels);
+            skill.force_rad = oldForceRad;
+            if (sk_data) {
+                try { skill.release_prop(me, sk_data.level); } catch (_) {}
+                sk_data.word_levels = JSON.parse(oldSkillLevels || "{}");
+                try { skill.attach_prop(me, sk_data.level); } catch (_) {}
+            }
+            me.notify("词条调整失败，未改变潜能与配置，请稍后重试。");
+            return;
         }
 
         me.items_changed(book);

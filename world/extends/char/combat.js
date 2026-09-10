@@ -33,6 +33,7 @@ CHARACTER.prototype.recount = function () {
 
     this.diff_sh_per = this.query_prop('diff_sh_per');
     this.diff_fy_per = this.query_prop('diff_fy_per');
+    if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 
 
 }
@@ -98,6 +99,12 @@ CHARACTER.prototype.do_attack = function (par) {
 
 
     var sh = par.gj ?? this.gj, mz = par.mz ?? this.mz;
+    // True hit modifiers must be prepared before dodge/parry resolution.  The
+    // later modify_attack hook remains responsible for damage-only effects.
+    if (WORLD.ZHENYI && WORLD.ZHENYI.prepare_attack) {
+        WORLD.ZHENYI.prepare_attack(this, target, par, attackskill);
+        mz = par.mz ?? mz;
+    }
     par.is_dodge = false; par.is_parry = false;
     if (target.is_faint || this.is_shadow) {
         par.is_dodge = false;
@@ -423,7 +430,7 @@ CHARACTER.prototype.do_recover = function (hp) {
     return this.add_hp(parseInt(hp));
 }
 
-CHARACTER.prototype.damage = function (sh, from, diff_fy) {
+CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
     if (!(sh > 0)) return 0;
     if (this._wushen_taiji_invincible) return 0;
     let diff_sh_per = this.diff_sh_per;
@@ -474,9 +481,13 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy) {
         sh = parseInt(sh);
         // ZC passive: 反震 - reflect damage to attacker based on max MP
         var zcRebound = this.query_prop("zc_rebound") || 0;
-        if (zcRebound > 0 && from && from.hp > 0 && this.max_mp > 0) {
+        if (zcRebound > 0 && from && from.hp > 0 && this.max_mp > 0 &&
+            !(damageContext && damageContext.kind === "reflect")) {
             var reboundDmg = this.max_mp * zcRebound;
-            from.damage(reboundDmg, this, 0);
+            // Reflection is a terminal edge in the damage graph.  A reflected
+            // hit must not reflect again, otherwise two rebound passives recurse
+            // synchronously until the process throws RangeError.
+            from.damage(reboundDmg, this, 0, { kind: "reflect" });
             this.send_combat("<HIY>$N以内力反震，将伤害回敬$n！</HIY>\n", from);
         }
 

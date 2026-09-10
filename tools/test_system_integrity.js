@@ -13,6 +13,17 @@ const recast = read("world/cmd/obj/recast.js");
 const duanzao = read("world/cmd/obj/duanzao.js");
 const wordStone = read("world/obj/st/p.js");
 const checkobj = read("world/cmd/obj/checkobj.js");
+const saveData = read("os/util/data.js");
+const swsE2E = read("tools/test_sws_e2e.js");
+const envExample = read(".env.example");
+assert.ok(saveData.includes("String(role.id)") && saveData.includes("Number(role.userid)"),
+    "character IDs may be short strings and must remain saveable");
+assert.ok(swsE2E.includes("WS_E2E_ALLOW") && swsE2E.includes("WS_E2E_DB_PATH") &&
+    swsE2E.includes("PRODUCTION_DB"),
+    "SWS E2E must require an isolated database and never default to production data");
+assert.ok(envExample.includes("WEB_PORT=8088") && envExample.includes("API_RELOAD_TOKEN=") &&
+    envExample.includes("TRANSROLE_SERVICE_TOKEN=") && !/^[^#\r\n]+=.*#/m.test(envExample),
+    "dotenv template must keep assignments active and comments on separate lines");
 const client = read("src/client.js");
 const zcUi = read("src/dialog/zc.js");
 const css = read("src/styles/main.css");

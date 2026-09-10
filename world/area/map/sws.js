@@ -83,7 +83,10 @@ this.sws_store_load = function () {
 // 写回持久化档案（同步写盘，防止重启丢失）
 this.sws_store_save = function () {
     var store = this.sws_store_load();
-    if (BASE.write_json) BASE.write_json(this.sws_store_path(), store);
+    if (!BASE.write_json) return false;
+    var ok = BASE.write_json(this.sws_store_path(), store);
+    if (!ok) console.error("[sws] 持久化山外山纪录失败");
+    return ok;
 };
 
 // 全服最高纪录读取
@@ -106,10 +109,11 @@ this.sws_player_get = function (me) {
     var store = this.sws_store_load();
     var p = store.players[me.id];
     if (!p) {
-        p = store.players[me.id] = { name: me.name, best: 0, m10: [], m100: [] };
+        p = store.players[me.id] = { name: me.name, best: 0, m10: [], m100: [], pending: [] };
     } else {
         if (!Array.isArray(p.m10)) p.m10 = [];
         if (!Array.isArray(p.m100)) p.m100 = [];
+        if (!Array.isArray(p.pending)) p.pending = [];
         if (!(p.best > 0)) p.best = 0;
         p.name = me.name;
     }
@@ -122,6 +126,7 @@ this.sws_player_sync = function (me) {
     var p = this.sws_player_get(me);
     var best = me.query_temp("sws_best", 0);
     if (p.best > best) me.set_temp("sws_best", p.best);
+    if (this.sws_retry_pending) this.sws_retry_pending(me);
     return p;
 };
 
@@ -283,7 +288,8 @@ this.sws_room_leave = function (room, me, dir) {
 
 // 守护者被击败：结算奖励、掷三选一、亮出按钮
 this.sws_on_npc_die = function (npc, me) {
-    if (!(me && me.is_player)) return;
+    if (!(me && me.is_player) || !npc || npc._sws_settled) return;
+    npc._sws_settled = true;
     var room = me.environment;
     var layer = me.query_temp("sws_layer", 1);
     me.set_temp("sws_cleared", 1);
@@ -296,32 +302,20 @@ this.sws_on_npc_die = function (npc, me) {
     // 每 10 层 20 武道残页 + 1 元晶、每 100 层 5 神魂碎片 + 5 神器碎片——
     // 这两组为一次性奖励：同一层仅首次登临发放，领取记录持久化，重启不重复。
     this.sws_grant_xuanjing(me, layer);
+    // One-time milestone rewards use a two-phase commit.  A durable pending
+    // record is written before touching the bag; the player save carries a
+    // commit marker, and only then is the milestone claim recorded.
+    if (this.sws_commit_milestone) {
+        if (layer % 10 === 0) this.sws_commit_milestone(me, "m10:" + layer, layer, "m10", [
+            { path: "book/wd", count: 20 }, { path: "st/yuanjing", count: 1 }
+        ]);
+        if (layer % 100 === 0) this.sws_commit_milestone(me, "m100:" + layer, layer, "m100", [
+            { path: "eq/lv6/wushen/shenhunsuipian", count: 5 },
+            { path: "eq/lv6/wushen/shenqisuipian", count: 5 }
+        ]);
+    }
     var pd = this.sws_player_get(me);
     var changed = false;
-    if (layer % 10 === 0) {
-        if (pd.m10.indexOf(layer) < 0) {
-            this.sws_grant(me, "book/wd", 20);
-            this.sws_grant(me, "st/yuanjing", 1);
-            pd.m10.push(layer);
-            changed = true;
-            me.notify("<hio>第" + UTIL.to_c(layer) + "层的武道残页与元晶奖励已发放（每层仅此一次）。</hio>");
-        } else {
-            me.notify("<hio>第" + UTIL.to_c(layer) + "层的武道残页与元晶奖励你已领取过，不再重复发放。</hio>");
-        }
-    }
-    if (layer % 100 === 0) {
-        if (pd.m100.indexOf(layer) < 0) {
-            this.sws_grant(me, "eq/lv6/wushen/shenhunsuipian", 5);
-            this.sws_grant(me, "eq/lv6/wushen/shenqisuipian", 5);
-            pd.m100.push(layer);
-            changed = true;
-            me.notify("<hio>第" + UTIL.to_c(layer) + "层的神魂碎片与神器碎片奖励已发放（每层仅此一次）。</hio>");
-        } else {
-            me.notify("<hio>第" + UTIL.to_c(layer) + "层的神魂碎片与神器碎片奖励你已领取过，不再重复发放。</hio>");
-        }
-    }
-    if (changed) this.sws_store_save();
-
     // 本人最高层（即时更新，重启不丢）
     this.sws_best_set(me, layer);
     // 全服最高纪录（即时写盘，重启不丢）
@@ -385,12 +379,126 @@ this.sws_choose = function (me, key) {
 // 发放固定奖励道具（创建、入包、提示）
 this.sws_grant = function (me, path, count) {
     var obj = OBJ.CREATE(path, count);
-    if (!obj) return;
+    if (!obj) return false;
     var item = me.add_obj(obj);
-    if (item) me.send("你获得了" + UTIL.to_c(count) + item.unit + item.color_name + "。");
+    if (!item) return false;
+    me.send("你获得了" + UTIL.to_c(count) + item.unit + item.color_name + "。");
+    return true;
 };
 
-// 本周起点（周一05:00）的时间戳：周一00:00-04:59 归属上周
+// Add a group of rewards as one logical operation.  If an item template is
+// missing or the inventory rejects an item, roll back only the counts/items
+// introduced by this operation so the caller can safely retry without marking
+// a one-time reward as claimed.
+this.sws_grant_bundle = function (me, rewards, silent) {
+    var beforeItems = (me.items || []).slice();
+    var beforeCounts = [];
+    for (var bi = 0; bi < beforeItems.length; bi++) beforeCounts.push(beforeItems[bi].count);
+    var created = [];
+    for (var ri = 0; ri < rewards.length; ri++) {
+        var obj = OBJ.CREATE(rewards[ri].path, rewards[ri].count);
+        if (!obj) return false;
+        created.push({ obj: obj, count: rewards[ri].count });
+    }
+    var added = [];
+    try {
+        for (var ai = 0; ai < created.length; ai++) {
+            var item = me.add_obj(created[ai].obj);
+            if (!item) throw new Error("inventory rejected reward");
+            added.push({ item: item, count: created[ai].count });
+        }
+    } catch (e) {
+        // Undo stack merges and newly appended objects.  remove_obj is the
+        // existing inventory API and keeps client state in sync.
+        for (var ci = 0; ci < beforeItems.length; ci++) {
+            var delta = (beforeItems[ci].count || 0) - (beforeCounts[ci] || 0);
+            if (delta > 0) me.remove_obj(beforeItems[ci], delta);
+        }
+        while ((me.items || []).length > beforeItems.length) {
+            var extra = me.items[me.items.length - 1];
+            me.remove_obj(extra, extra.count || 1);
+        }
+        return false;
+    }
+    for (var si = 0; !silent && si < added.length; si++) {
+        var display = added[si].item;
+        me.send("你获得了" + UTIL.to_c(added[si].count) + display.unit + display.color_name + "。");
+    }
+    return true;
+};
+
+// The role row is the authoritative receipt: its bag and marker are saved in
+// one synchronous SQLite statement, before another command or save can run.
+// The shared file remains a legacy receipt and retry queue, not the commit.
+this.sws_commit_milestone = function (me, key, layer, listKey, rewards) {
+    if (!(me && me.is_player)) return false;
+    var pd = this.sws_player_get(me);
+    var marker = "sws_reward_commit_" + key;
+    var pending = pd.pending.find(function (p) { return p && p.key === key; });
+    var claims = pd[listKey];
+    if (claims.indexOf(layer) >= 0 || me.query_temp(marker, 0)) {
+        if (claims.indexOf(layer) < 0) claims.push(layer);
+        if (pending) pd.pending.splice(pd.pending.indexOf(pending), 1);
+        this.sws_store_save();
+        return true;
+    }
+    if (!pending) {
+        pending = { key: key, layer: layer, rewards: rewards };
+        pd.pending.push(pending);
+    }
+    // Old persisted inFlight flags have no meaning after restart.
+    delete pending.inFlight;
+    delete pending._grantedRuntime;
+    if (!this.sws_store_save()) return false;
+    if (typeof me.saveSync !== "function") {
+        me.notify("<hir>奖励保存暂不可用，已保留待领取记录。</hir>");
+        return false;
+    }
+    var before = (me.items || []).map(function (item) { return { item: item, count: item.count }; });
+    if (!this.sws_grant_bundle(me, rewards, true)) return false;
+    me.set_temp(marker, 1);
+    try {
+        if (me.saveSync() !== true) throw new Error("角色奖励保存失败");
+    } catch (error) {
+        me.remove_temp(marker);
+        // No event-loop yield occurred: only this grant changed the bag.
+        var originals = before.map(function (entry) { return entry.item; });
+        (me.items || []).slice().forEach(function (item) {
+            if (originals.indexOf(item) < 0) me.remove_obj(item, item.count || 1);
+        });
+        before.forEach(function (entry) {
+            var delta = (entry.item.count || 0) - (entry.count || 0);
+            if (delta > 0) me.remove_obj(entry.item, delta);
+        });
+        me.notify("<hir>奖励保存失败，已保留待领取记录，请稍后重试。</hir>");
+        return false;
+    }
+    // Keep the role marker permanently; a failed shared-file write must not
+    // erase the durable receipt or cause the next login to grant twice.
+    claims.push(layer);
+    pd.pending.splice(pd.pending.indexOf(pending), 1);
+    this.sws_store_save();
+    me.notify("<hio>第" + UTIL.to_c(layer) + "层的一次性奖励已存入背包。</hio>");
+    return true;
+};
+
+this.sws_retry_pending = function (me) {
+    if (!(me && me.is_player)) return;
+    var pd = this.sws_player_get(me);
+    pd.pending.slice().forEach(function (pending) {
+        if (!pending || !/^(m10|m100):[1-9][0-9]*$/.test(pending.key)) return;
+        var group = pending.key.split(":")[0], layer = Number(pending.key.split(":")[1]);
+        if (!Number.isSafeInteger(layer) || layer % (group === "m10" ? 10 : 100)) return;
+        var rewards = group === "m10" ? [
+            { path: "book/wd", count: 20 }, { path: "st/yuanjing", count: 1 }
+        ] : [
+            { path: "eq/lv6/wushen/shenhunsuipian", count: 5 },
+            { path: "eq/lv6/wushen/shenqisuipian", count: 5 }
+        ];
+        this.sws_commit_milestone(me, pending.key, layer, group, rewards);
+    }.bind(this));
+};
+
 this.sws_week_key = function (now) {
     var d = new Date(now);
     var toMonday = (d.getDay() + 6) % 7; // 距本周一的天数（周一=0，周日=6）
@@ -415,12 +523,16 @@ this.sws_grant_xuanjing = function (me, layer) {
     }
     var grant = Math.min(base, cap - got);
     if (grant > 0) {
-        this.sws_grant(me, "st/xuanjing", grant);
+        if (!this.sws_grant(me, "st/xuanjing", grant)) {
+            me.notify("<hir>玄晶暂未成功入包，本次收益未计入周上限。</hir>");
+            return false;
+        }
         me.set_temp("sws_xj_got", got + grant);
         if (grant < base) {
             me.notify("<hio>本周玄晶收益已接近上限（" + UTIL.to_c(cap) + "枚），本次仅获得" + UTIL.to_c(grant) + "枚玄晶。</hio>");
         }
     }
+    return true;
 };
 
 // 玩家死亡钩子：境界守护（on_die）优先，否则结束本次挑战并送下山
@@ -449,11 +561,14 @@ this.sws_end_run = function (me, how) {
     if (me.query_temp("sws_active", 0)) {
         var layer = me.query_temp("sws_layer", 1);
         var done = layer - (me.query_temp("sws_cleared", 0) ? 0 : 1);
-        var applied = me.query_temp("sws_applied");
+        var applied = me._sws_applied_runtime;
         if (applied) {
             for (var k in applied) me.add_prop(k, -applied[k]);
-            me.remove_temp("sws_applied");
+            me._sws_applied_runtime = null;
         }
+        // Older saves may contain this runtime snapshot.  It must never be
+        // subtracted from freshly reconstructed character properties.
+        me.remove_temp("sws_applied");
         me.recount();
         me.notify_hp();
         me.remove_temp("sws_active");
@@ -488,6 +603,7 @@ this.sws_start_run = function (me) {
     me.set_temp("sws_picked", 0);
     me.remove_temp("sws_picks");
     me.set_temp("sws_buffs", {});
+    me._sws_applied_runtime = null;
     me.remove_temp("sws_applied");
     me.recount();
     me.hp = me.max_hp;
@@ -498,10 +614,10 @@ this.sws_start_run = function (me) {
 
 // 按 sws_buffs 累计重新挂载词条属性（先卸后挂，可重复调用）
 this.sws_reapply_buffs = function (me) {
-    var applied = me.query_temp("sws_applied");
+    var applied = me._sws_applied_runtime;
     if (applied) {
         for (var k in applied) me.add_prop(k, -applied[k]);
-        me.remove_temp("sws_applied");
+        me._sws_applied_runtime = null;
     }
     var buffs = me.query_temp("sws_buffs");
     if (!buffs) {
@@ -517,7 +633,10 @@ this.sws_reapply_buffs = function (me) {
             me.add_prop(b.prop, b.val * n);
         }
     }
-    me.set_temp("sws_applied", total);
+    me._sws_applied_runtime = total;
+    // Do not persist the reverse delta; it is valid only for this in-memory
+    // character instance and can become wrong after loadData/recount.
+    me.remove_temp("sws_applied");
     me.recount();
 };
 

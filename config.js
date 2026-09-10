@@ -5,8 +5,9 @@ module.exports = {
         if (!(this.def_server.port > 1000)) throw new Error('缺少环境配置WS_PORT');
         if (!this.MD5) throw new Error('缺少环境配置md5');
         if (!this.DESIV) throw new Error('缺少环境配置DESIV');
-        if (!this.SESSION_SECRET) throw new Error('缺少环境配置SESSION_SECRET');
-        await this.DB.connect('database.db');
+        if (typeof this.SESSION_SECRET !== 'string' || this.SESSION_SECRET.length < 16) throw new Error('SESSION_SECRET 至少需要16位随机字符');
+        const scope = require('./os/test-scope');
+        await this.DB.connect(scope ? scope.db : 'database.db');
     },
     WEB_PORT: parseInt(process.env.WEB_PORT),
     CONNECT_LEVEL: 0,

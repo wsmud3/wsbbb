@@ -42,17 +42,32 @@ const db = new Database(dbPath);
 const repairs = [];
 const failures = [];
 
+function repairLegacySwsTemp(raw) {
+    return require('../os/util/legacy-sws')(raw);
+}
+
 function inspectTable(table) {
     const rows = db.prepare(
         "SELECT id, name, data FROM " + table + " WHERE data LIKE '%[object Object]%'"
     ).all();
     for (const row of rows) {
         const raw = row.data;
-        const repairedRaw = raw.replace(/\[object Object\]/g, "{}");
+        // Valid JSON/JSON5 rows are not repairs, even when a player's note or
+        // script literally contains the marker text.  Only replace an
+        // unquoted value assigned to a known sws_* key in an invalid row.
         let parsed;
         try {
-            parsed = JSON5.parse(repairedRaw);
-        } catch (err) {
+            parsed = JSON5.parse(raw);
+            continue;
+        } catch (originalError) {
+            const repairedRaw = repairLegacySwsTemp(raw);
+            if (!repairedRaw) {
+                failures.push({ table, id: row.id, name: row.name, error: originalError.message });
+                continue;
+            }
+            try {
+                parsed = JSON5.parse(repairedRaw);
+            } catch (err) {
             failures.push({
                 table,
                 id: row.id,
@@ -60,6 +75,7 @@ function inspectTable(table) {
                 error: err.message,
             });
             continue;
+            }
         }
         let removed = [];
         if (parsed && parsed.temp && typeof parsed.temp === "object") {
@@ -74,6 +90,7 @@ function inspectTable(table) {
             table,
             id: row.id,
             name: row.name,
+            original: raw,
             data: JSON.stringify(parsed),
             removed,
         });
@@ -112,20 +129,23 @@ if (!apply) {
 
 const backupPath = dbPath + ".before-sws-repair-" +
     new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14) + ".bak";
+// VACUUM INTO creates one consistent SQLite backup, including WAL content.
+// No checkpoint/copy fallback is permitted. Failure aborts before any update.
+db.prepare("VACUUM INTO ?").run(backupPath);
 db.close();
-fs.copyFileSync(dbPath, backupPath);
 const writable = new Database(dbPath);
 const statements = new Map();
 for (const item of repairs) {
     if (!statements.has(item.table)) {
         statements.set(item.table, writable.prepare(
-            "UPDATE " + item.table + " SET data=?, update_time=CURRENT_TIMESTAMP WHERE id=?"
+            "UPDATE " + item.table + " SET data=?, update_time=CURRENT_TIMESTAMP WHERE id=? AND data=?"
         ));
     }
 }
 const transaction = writable.transaction(() => {
     for (const item of repairs) {
-        statements.get(item.table).run(item.data, item.id);
+        const result = statements.get(item.table).run(item.data, item.id, item.original);
+        if (result.changes !== 1) throw new Error("存档已在扫描后变化，停止写回");
     }
 });
 transaction();

@@ -282,6 +282,22 @@ export async function Request(options) {
         callBack,
         dataType = 'json'
     } = options;
+    let callbackCalled = false;
+    const finish = (result) => {
+        if (callbackCalled || options.signal?.aborted) return result;
+        callbackCalled = true;
+        if (typeof callBack === 'function') {
+            try { callBack(result); }
+            catch (callbackError) { console.error('请求回调执行失败:', callbackError); }
+        }
+        return result;
+    };
+    const timeoutMs = Number(options.timeout) > 0 ? Number(options.timeout) : 15000;
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const cancel = () => controller?.abort();
+    if (options.signal?.aborted) return { code: 0, cancelled: true };
+    options.signal?.addEventListener('abort', cancel, { once: true });
+    let timeoutId;
     try {
         const requestConfig = {
             method: type.toUpperCase(),
@@ -290,20 +306,31 @@ export async function Request(options) {
                 'Content-Type': 'application/json; charset=UTF-8'
             }
         };
+        if (controller) requestConfig.signal = controller.signal;
         if (data) requestConfig.body = data;
+        if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         const response = await fetch(url, requestConfig);
 
         if (response.status === 404) {
-            callBack({ code: 0, result: '服务器接口不存在' });
-            return;
+            return finish({ code: 0, result: '服务器接口不存在' });
         }
-        const result = dataType === 'json'
-            ? await response.json()
-            : await response.text();
-        callBack(result);
+        let result;
+        try {
+            result = dataType === 'json' ? await response.json() : await response.text();
+        } catch (parseError) {
+            result = { code: 0, result: '服务器返回数据格式错误' };
+        }
+        if (!response.ok && (!result || result.code === undefined)) {
+            result = { code: 0, result: '服务器请求失败（' + response.status + '）' };
+        }
+        return finish(result);
     } catch (e) {
         console.error('网络请求失败:', e);
-        callBack({ code: 0, result: '无法连接服务器，请检查网络' });
+        return finish({ code: 0, result: e && e.name === 'AbortError' ?
+            '请求超时，请检查网络后重试' : '无法连接服务器，请检查网络' });
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+        options.signal?.removeEventListener('abort', cancel);
     }
 }
 

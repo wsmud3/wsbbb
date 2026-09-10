@@ -18,6 +18,8 @@ globalThis['__PATH'] = {
 
 
 require('dotenv').config();
+const testScope = require('./os/test-scope');
+if (testScope) __PATH.DATA = testScope.data;
 
 
 const fs = require("fs");
@@ -39,7 +41,7 @@ async function require_os() {
 
     const path = require('path');
     for (var item in __PATH) {
-        __PATH[item] = path.join(__dirname, __PATH[item]);
+        __PATH[item] = path.isAbsolute(__PATH[item]) ? __PATH[item] : path.join(__dirname, __PATH[item]);
     }
     readdir(__PATH.BASE);
     await __CONFIG.init();
@@ -56,15 +58,27 @@ require_os().then(async () => {
 
 
 // 优雅关闭：保存所有玩家数据后再退出
+let shutdownPromise = null;
 async function gracefulShutdown(signal) {
-    console.log('收到%s信号，正在保存数据...', signal);
-    try {
-        await WORLD.save();
-        console.log('数据保存完成，服务器关闭');
-    } catch (e) {
-        console.error('保存数据失败:', e.message);
-    }
-    process.exit(0);
+    if (shutdownPromise) return shutdownPromise;
+    shutdownPromise = (async function () {
+        console.log('收到%s信号，正在保存数据...', signal);
+        if (typeof WORLD !== 'undefined') {
+            WORLD.status = -1;
+            if (WORLD.heart_beat_service) clearInterval(WORLD.heart_beat_service);
+        }
+        let ok = false;
+        try {
+            ok = !!(typeof WORLD !== 'undefined' && await WORLD.save());
+            if (typeof WORLD !== 'undefined' && WORLD.DB && WORLD.DB.drainRoleSaves && !await WORLD.DB.drainRoleSaves()) ok = false;
+            if (ok) console.log('数据保存完成，服务器关闭');
+            else console.error('数据保存失败，服务器以错误状态退出');
+        } catch (e) {
+            console.error('保存数据失败:', e.message);
+        }
+        process.exit(ok ? 0 : 1);
+    })();
+    return shutdownPromise;
 }
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

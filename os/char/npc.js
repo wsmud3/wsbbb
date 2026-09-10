@@ -1,4 +1,4 @@
-﻿
+
 NPC = function () {
     this.hp = this.max_hp = 100;
     this.mp = this.max_mp = 100;
@@ -14,7 +14,7 @@ NPC.prototype.set_chat_msg = function (items, chance) {
     }
 }
 NPC.prototype.do_chat_msg = function () {
-    if (!this.is_fighting() && this.is_living && this.chat_msg) {
+    if (!this.is_fighting() && this.is_living() && this.chat_msg) {
         this.do_say(this.chat_msg.random());
     }
 }
@@ -213,6 +213,7 @@ NPC.CREATE = function (path, env, oncreate, count) {
     let obj = null;
     for (let i = 0; i < count; i++) {
         obj = NPC.CLONE(path);
+        if (!obj) continue;
         env.item_changed(obj, true);
         if (oncreate) oncreate(obj);
     }
@@ -220,6 +221,7 @@ NPC.CREATE = function (path, env, oncreate, count) {
 }
 NPC.CLONE = function (path) {
     let base = NPC.GET(path);
+    if (!base) return null;
     let item = Object.create(base);
     item.clone();
     return item;

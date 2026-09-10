@@ -119,8 +119,15 @@ export function connectServer(server, pid) {
             }, 3000);
         }
     }
-    client.OnData = ReceiveData;
-    client.OnMessage = ReceiveMessage;
+    // Data handlers need the same generation guard as open/error/close.  A
+    // packet already queued by an old socket must not mutate the new player's
+    // room, inventory or combat log after a quick reconnect.
+    client.OnData = (...args) => {
+        if (isCurrent()) ReceiveData(...args);
+    };
+    client.OnMessage = (...args) => {
+        if (isCurrent()) ReceiveMessage(...args);
+    };
     client.Connect();
 }
 
@@ -333,9 +340,17 @@ export class WSClient {
     }
     Destroy() {
         if (this.ws) {
+            this.ws.onopen = null;
             this.ws.onclose = null;
+            this.ws.onerror = null;
+            this.ws.onmessage = null;
             this.ws.close();
         }
+        this.OnConnect = null;
+        this.OnClose = null;
+        this.OnError = null;
+        this.OnData = null;
+        this.OnMessage = null;
     }
     Close() {
         if (this.ws) this.ws.close();

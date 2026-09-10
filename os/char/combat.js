@@ -97,10 +97,6 @@ CHARACTER.prototype.add_hp = function (v) {
 
     this.hp += v;
     this.notify_hp("hp", this.hp);
-    if (v > 0 && this.is_player) {
-        var stack = new Error().stack;
-        require('fs').appendFileSync('/tmp/debug_heal.log', "[add_hp] player=" + this.name + " hp_add=" + v + " hp=" + this.hp + " max_hp=" + this.max_hp + " time=" + Date.now() + " stack=" + (stack ? stack.split("\n").slice(1, 6).join(" <- ") : "none") + "\n");
-    }
     return v;
 }
 CHARACTER.prototype.set_hp = function (v) {
@@ -265,6 +261,9 @@ CHARACTER.prototype.do_attacks = function (par) {
         delete par.bj;
         delete par.is_dodge;
         delete par.is_parry;
+        delete par._zy_lingbo_ready;
+        delete par._zy_hit_prepared;
+        if (par._zy_base_mz !== undefined) { par.mz = par._zy_base_mz; delete par._zy_base_mz; }
         this.do_attack(par);
         this.end_attack(targets[i]);
     }

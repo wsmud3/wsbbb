@@ -140,6 +140,10 @@ CHARACTER.prototype.add_combat_prop = function (name, val) {
 // ZC stacking passive: directly modify cached combat stats with stack cap
 CHARACTER.prototype._apply_zc_stack = function (key, stat, pctChange, maxStacks) {
     if (!this._zc_stacks) this._zc_stacks = {};
+    if (!this._zc_stack_order) this._zc_stack_order = [];
+    if (!this._zc_base_stats) this._zc_base_stats = {};
+    if (!Object.prototype.hasOwnProperty.call(this._zc_base_stats, stat))
+        this._zc_base_stats[stat] = this[stat];
     if (!this._zc_stacks[key]) this._zc_stacks[key] = { count: 0, deltas: [] };
     var tracker = this._zc_stacks[key];
     if (tracker.count >= maxStacks) return false;
@@ -154,20 +158,36 @@ CHARACTER.prototype._apply_zc_stack = function (key, stat, pctChange, maxStacks)
     }
     this[stat] += delta;
     tracker.count += 1;
-    tracker.deltas.push([stat, delta]);
+    tracker.deltas.push([stat, delta, this[stat]]);
+    tracker.stat = stat;
+    tracker.pctChange = pctChange;
+    this._zc_stack_order.push({ key: key, stat: stat, pctChange: pctChange });
     return true;
+};
+
+CHARACTER.prototype._reapply_zc_stacks = function () {
+    var order = this._zc_stack_order || [];
+    for (var i = 0; i < order.length; i++) {
+        var entry = order[i], tracker = this._zc_stacks && this._zc_stacks[entry.key];
+        if (!tracker || tracker.count <= 0) continue;
+        var delta;
+        if (entry.stat === "diff_sh_per") delta = entry.pctChange;
+        else if (entry.stat === "gjsd") delta = -this[entry.stat] * entry.pctChange;
+        else delta = this[entry.stat] * entry.pctChange;
+        this[entry.stat] += delta;
+    }
 };
 
 CHARACTER.prototype._clear_zc_stacks = function () {
     if (!this._zc_stacks) return;
-    for (var key in this._zc_stacks) {
-        var tracker = this._zc_stacks[key];
-        for (var i = tracker.deltas.length - 1; i >= 0; i--) {
-            var d = tracker.deltas[i];
-            this[d[0]] -= d[1];
-        }
-    }
+    var baseStats = this._zc_base_stats || {};
     this._zc_stacks = {};
+    this._zc_stack_order = [];
+    // Rebuild all derived combat fields from source properties.  Reversing
+    // cached deltas is not reliable when several effects share a stat.
+    if (this.recount) this.recount();
+    else for (var stat in baseStats) this[stat] = baseStats[stat];
+    this._zc_base_stats = {};
 };
 
 CHARACTER.prototype.clear_combat_prop = function (name, val) {

@@ -88,9 +88,11 @@ check(/sws_player_get/.test(areaSrc) && /sws_player_sync/.test(areaSrc), '玩家
 check(/var rec = this\.sws_max_get\(\)/.test(areaSrc) && /this\.sws_max_set\(layer, me\.name\)/.test(areaSrc), '击败结算更新全服纪录走持久化读写（file 优先，temp 仅为兼容回退）');
 
 // 3.3 一次性奖励：元晶/武道残页/神魂碎片/神器碎片每层仅首次发放
-check(/m10\.indexOf\(layer\)/.test(areaSrc) && /m100\.indexOf\(layer\)/.test(areaSrc), '10 层/100 层里程碑按领取记录去重');
-check(/不再重复发放/.test(areaSrc), '已领取的里程碑层提示不再重复发放');
+check(/claims\.indexOf\(layer\)/.test(areaSrc) && /sws_reward_commit_/.test(areaSrc), '里程碑按旧领取记录和角色持久凭据去重');
+check(/me\.saveSync\(\)/.test(areaSrc), '奖励与角色领取凭据同步保存');
 check(/sws_xj_week/.test(areaSrc) && /sws_xj_got/.test(areaSrc), '玄晶仍为周收益（每周一05:00重置，可反复获取）');
+check(/sws_grant_bundle/.test(areaSrc) && /pending/.test(areaSrc), '组合奖励入包失败可回滚并保留待领取记录');
+check(/_sws_applied_runtime/.test(areaSrc) && /remove_temp\("sws_applied"\)/.test(areaSrc), '山外山已挂载属性仅保留运行态，旧快照不再参与扣除');
 
 // 4. 核心状态机：守护者生成/击败/择意/闸门/结束清理
 for (const fn of ['sws_start_run', 'sws_setup_room', 'sws_enter_fight', 'sws_room_leave',

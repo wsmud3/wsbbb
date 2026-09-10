@@ -10,7 +10,7 @@ class UserAPI extends APIBASE {
     async login(user) {
         let { code, pwd } = user;
 
-        if (!code || !pwd) {
+        if (typeof code !== 'string' || typeof pwd !== 'string' || !code || !pwd) {
             return { code: 0, result: "用户名或密码错误" };
         }
         code = code.toLowerCase();
@@ -20,7 +20,7 @@ class UserAPI extends APIBASE {
         let result = await DB.getUserBy("name", code);
         if (!result)
             return { code: 0, result: "用户不存在" };
-        if (result.pwd !== pwd)
+        if (Number(result.state) === 0 || result.pwd !== pwd)
             return { code: 0, result: "用户密码错误" };
         let cert = this.signIn(result.id, result.name, pwd, result.level);
         if (cert)
@@ -28,8 +28,9 @@ class UserAPI extends APIBASE {
         return { code: 0, result: "登陆失败" };
     }
     checkValCode(code) {
-        if (!code) return false;
+        if (typeof code !== 'string' || !code) return false;
         let num = this.getSession("valno");
+        this.deleteSession("valno");
         if (!num) return false;
 
         return code.toLowerCase() == num.toLowerCase();
@@ -38,11 +39,11 @@ class UserAPI extends APIBASE {
         if (!user.name || !user.pwd) {
             return { code: 0, result: "注册失败，缺少数据" };
         }
-        if (user.name.length > 15 || user.name.length < 3) {
-            return { code: 0, result: "注册失败，缺少数据" };
+        if (typeof user.name !== 'string' || !/^[A-Za-z0-9_]{3,15}$/.test(user.name)) {
+            return { code: 0, result: "账号须为3–15位字母、数字或下划线" };
         }
-        if (user.pwd.length < 5) {
-            return { code: 0, result: "注册失败，缺少数据" };
+        if (typeof user.pwd !== 'string' || user.pwd.length < 5 || user.pwd.length > 128) {
+            return { code: 0, result: "密码须为5–128位字符" };
         }
         if (!this.checkValCode(user.valno)) {
             return { code: 0, result: "验证码输入错误" };
@@ -107,24 +108,9 @@ class UserAPI extends APIBASE {
     }
 
     async resetpwd(paras) {
-        let {
-            name, phone, vcode, pwd
-        } = paras;
-        if (!name || !phone || !pwd)
-            return { code: 0 };
-        const result = await DB.getUserBy("name", name);
-        if (!result)
-            return { code: 0, result: "账号不存在" };
-        if (!result.phone || result.phone !== phone) {
-            return { code: 0, result: "手机号验证失败" };
-        }
-        pwd = this.MD5(pwd);
-        result.pwd = pwd;
-        if (!await DB.updateUser(result)) {
-            return { code: 0, result: "密码重置失败。" };
-        }
-        return { code: 1 };
+        return { code: 0, result: "密码找回暂未开放，请联系管理员处理。" };
     }
+
     async changepassword(data) {
         let { oldpwd, pwd, no } = data;
         if (!oldpwd || !pwd)
@@ -161,8 +147,13 @@ class UserAPI extends APIBASE {
     }
 
     async GetPhone2(paras) {
-        let { uid, cert } = paras; debugger
-        if (!uid || cert !== 'transrole_service') return;
+        let { uid, cert } = paras;
+        // This is an internal transfer helper, not a public phone lookup.
+        // The previous hard-coded marker was present in source and could be
+        // replayed by anyone who knew the endpoint.  Require an out-of-band
+        // deployment secret; leave the endpoint disabled when it is unset.
+        const expected = process.env.TRANSROLE_SERVICE_TOKEN;
+        if (!uid || !expected || !cert || cert !== expected) return;
         let user = await DB.getUserByID(uid);
         if (!user) return "";
         return user.phone;

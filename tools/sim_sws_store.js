@@ -73,13 +73,15 @@ function loadArea() {
 
 function makePlayer(id, name) {
     return {
-        id, name, temp: {}, grants: [], is_player: true,
+        id, name, temp: {}, grants: [], items: [], is_player: true,
+        saveSync: function () { this.saved = JSON.parse(JSON.stringify({ temp: this.temp, items: this.items })); return true; },
         query_temp: function (k, d) { return (k in this.temp) ? this.temp[k] : d; },
         set_temp: function (k, v) { this.temp[k] = v; },
         add_temp: function (k, v) { this.temp[k] = (this.temp[k] || 0) + v; return this.temp[k]; },
         remove_temp: function (k) { delete this.temp[k]; },
         add_exp: function () {}, notify: function () {}, send: function () {},
-        add_obj: function (o) { this.grants.push(o.path); return o; },
+        add_obj: function (o) { this.grants.push(o.path); this.items.push(o); return o; },
+        remove_obj: function (o, count) { o.count -= count; if (o.count <= 0) this.items.splice(this.items.indexOf(o), 1); },
         recount: function () {}, notify_hp: function () {},
     };
 }

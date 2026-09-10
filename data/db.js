@@ -3,20 +3,19 @@ const path = require("path");
 const fs = require("fs").promises;
 const crypto = require("crypto");
 
-const stmtCaches = new Map();
-
 class SqliteDatabase {
 	db_path = null;
 	constructor() {
 		this.db = null;
+		this.stmtCaches = new Map();
 	}
 
 	// 获取预编译语句（带缓存）
 	getStmt(sql) {
-		let stmt = stmtCaches.get(sql);
+		let stmt = this.stmtCaches.get(sql);
 		if (!stmt) {
 			stmt = this.db.prepare(sql);
-			stmtCaches.set(sql, stmt);
+			this.stmtCaches.set(sql, stmt);
 		}
 		return stmt;
 	}
@@ -24,7 +23,9 @@ class SqliteDatabase {
 	// 初始化数据库
 	async init(db_name) {
 		try {
-			this.db_path = path.join(__dirname, db_name);
+			if (this.db) this.db.close();
+			this.stmtCaches.clear();
+			this.db_path = path.isAbsolute(db_name) ? db_name : path.join(__dirname, db_name);
 			const fileExists = await this.checkDbFileExists();
 
 			if (!fileExists) {
@@ -67,13 +68,9 @@ class SqliteDatabase {
 
 	// 执行默认建表脚本（数据库新建时）
 	async executeDefaultScripts() {
-		for (let sql of DEFAULT_TABLE_SCRIPTS) {
-			try {
-				await this.query(sql);
-			} catch (error) {
-				console.error(sql, "查询失败", error);
-			}
-		}
+		this.db.transaction(() => {
+			for (const sql of DEFAULT_TABLE_SCRIPTS) this.db.exec(sql);
+		})();
 	}
 
 	// 执行 INSERT/UPDATE/DELETE 等操作
@@ -90,6 +87,11 @@ class SqliteDatabase {
 		});
 	}
 
+	runSync(sql, params = []) {
+		const info = this.getStmt(sql).run(...params);
+		return { lastID: info.lastInsertRowid, changes: info.changes };
+	}
+
 	// 查询单行数据
 	get(sql, params = []) {
 		return new Promise((resolve, reject) => {
@@ -102,6 +104,11 @@ class SqliteDatabase {
 				reject(err);
 			}
 		});
+	}
+
+	getSync(sql, params = []) {
+		if (!this.db) throw new Error("数据库未连接");
+		return this.getStmt(sql).get(...params);
 	}
 
 	// 查询多行数据
@@ -126,6 +133,7 @@ class SqliteDatabase {
 					this.db.close();
 					this.db = null;
 				}
+				this.stmtCaches.clear();
 				resolve();
 			} catch (err) {
 				console.error("关闭数据库连接失败:", err);
@@ -189,9 +197,8 @@ const DEFAULT_TABLE_SCRIPTS = [
 	`CREATE INDEX IF NOT EXISTS idx_players_sid ON players (sid)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_name ON players (name)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_bak_id ON players_bak (id)`,
-	// 每条脚本单独执行：better-sqlite3 的 prepare() 只接受单条语句，
-	// 多语句合并会导致整条 INSERT 静默失败（新建库时默认超管账号就会丢失）。
-	`INSERT OR IGNORE INTO users(id,name,pwd,level) VALUES(1,'administrator','${MD5("123456")}',6)`,
+	// 单条初始化语句；新库不得启用已知弱密码管理员，现有账户保持不变。
+	`INSERT OR IGNORE INTO users(id,name,pwd,level,state) VALUES(1,'administrator','${MD5(process.env.INITIAL_ADMIN_PASSWORD || crypto.randomBytes(32).toString('hex'))}',6,${(process.env.INITIAL_ADMIN_PASSWORD || '').length >= 16 ? 1 : 0})`,
 	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(100,'本地测试','127.0.0.1','31300',1,0)`,
 	`INSERT OR IGNORE INTO servers(id,name,ip,port,istest,isdef) VALUES(200,'正式服','127.0.0.1','31301',0,1)`,
 ];

@@ -7,23 +7,29 @@ const pinoHttp = require('pino-http');
 require('dotenv').config();
 globalThis['__CONFIG'] = require('./config');
 
-__CONFIG.init();
-
 const app = express();
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
+app.use(require('./api/rate-limit'));
 const PORT = __CONFIG.WEB_PORT;
 
 // CORS - 允许 APK WebView 跨域请求
 app.use((req, res, next) => {
   const origin = req.get('origin');
-  if (origin) {
+  const configuredOrigins = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const sameOrigin = origin && origin === (req.protocol + '://' + req.get('host'));
+  const localApp = origin && /^(capacitor|ionic|http):\/\/localhost(?::\d+)?$/i.test(origin);
+  const allowed = origin && (sameOrigin || localApp || configuredOrigins.indexOf(origin) >= 0);
+  if (allowed) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
   }
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
+  if (origin && !allowed && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return res.sendStatus(403);
   next();
 });
 
@@ -53,12 +59,16 @@ app.use(bodyParser.json());
 app.use(session({
     secret: __CONFIG.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-        secure: false,
-        httpOnly: false,
+        secure: process.env.COOKIE_SECURE === 'true',
+        // The session contains administrator authentication state.  It is
+        // only sent automatically by the browser and must not be readable by
+        // page scripts (the admin UI uses fetch credentials, not the cookie
+        // value itself).
+        httpOnly: true,
         maxAge: 1000 * 60 * 30,
-        // sameSite: 'none'
+        sameSite: 'lax'
     }
 }));
 
@@ -66,6 +76,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(pinoHttp({
     level: 'info',
+    redact: ['req.headers.cookie', 'req.headers.authorization', 'req.headers["x-api-reload-token"]', 'req.headers["x-health-token"]'],
+    serializers: { req(req) { return { method: req.method, url: String(req.url || '').split('?')[0] }; } },
     transport: {
         target: 'pino-roll',
         options: {
@@ -77,14 +89,22 @@ app.use(pinoHttp({
     },
 }));
 
+const apiRoutes = require('./api/routes');
+const SAFE_GET_METHODS = apiRoutes.READ;
+const acceptsApiMethod = apiRoutes.allowed;
+
 app.all('/api/:className/:methodName', async (req, res) => {
     const { className, methodName } = req.params;
     try {
         const ClassModule = APIS[className];
-        if (!ClassModule)
+        if (!ClassModule || !apiRoutes.exposed(className, methodName))
             return res.status(404).json({ error: 'Method not found' });
+        if (!acceptsApiMethod(className, methodName, req.method)) {
+            res.setHeader('Allow', SAFE_GET_METHODS.has(className + '.' + methodName) ? 'GET, POST' : 'POST');
+            return res.status(405).json({ error: 'Method not allowed' });
+        }
         const instance = new ClassModule(req, res);
-        if (typeof instance[methodName] !== 'function') {
+        if (!apiRoutes.exposed(className, methodName) || typeof instance[methodName] !== 'function') {
             return res.status(404).json({ error: 'Method not found' });
         }
         const params = { ...req.query, ...req.body };
@@ -97,41 +117,25 @@ app.all('/api/:className/:methodName', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.all('/sse/:className/:methodName', async (req, res) => {
-    const { className, methodName } = req.params;
-    try {
-        const ClassModule = APIS[className];
-        if (!ClassModule)
-            return res.status(404).json({ error: 'Method not found' });
-        const instance = new ClassModule(req, res);
-        if (typeof instance[methodName] !== 'function') {
-            return res.status(404).json({ error: 'Method not found' });
-        }
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-        const handler = await instance[methodName]({ ...req.query, ...req.body });
-        if (!res.writableEnded) {
-            if (handler && handler.end) {
-                const closeHandler = () => {
-                    handler.end();
-                };
-                res.on('close', closeHandler);
-            } else {
-                res.end();
-            }
-        }
-    } catch (error) {
-        console.error('API Error:', error);
-        if (!res.headersSent) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-});
-
+// No API currently defines a streaming endpoint. Never dispatch writes through GET SSE.
+app.all('/sse/:className/:methodName', (req, res) => res.status(404).json({ error: 'Method not found' }));
 
 function reload_api(req, res) {
+    // Keep reload useful for an explicitly authenticated administrator while
+    // preventing an unauthenticated public endpoint.  A deployment token can
+    // be used by local tooling without exposing a user session.
+    var token = process.env.API_RELOAD_TOKEN;
+    var supplied = req.get('x-api-reload-token');
+    var authorized = !!token && supplied && supplied === token;
+    if (!authorized) {
+        try {
+            var admin = new APIS.admin(req, res);
+            admin._requireAdmin();
+            authorized = true;
+        } catch (e) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+    }
     try {
         for (let modulePath of API_PATHS) {
             const resolvedPath = require.resolve(modulePath);
@@ -146,7 +150,7 @@ function reload_api(req, res) {
         res.status(500).json({ error: 'Internal server error' });
     }
 }
-app.use("/reload", reload_api);
+app.post("/reload", reload_api);
 app.use("/admin", express.static(path.join(__dirname, 'www', 'admin')));
 
 const http = require('http');
@@ -191,63 +195,74 @@ server.on('upgrade', (req, clientSocket, head) => {
     upgradeReq.push('\r\n');
     upgradeReq = upgradeReq.join('\r\n');
 
+    clientSocket.pause();
     const targetSocket = net.connect(wsPort, '127.0.0.1', () => {
         targetSocket.write(upgradeReq);
-
-        var handshakeBuf = Buffer.alloc(0);
-        var handshakeDone = false;
-
-        targetSocket.on('data', function onData(data) {
-            if (!handshakeDone) {
-                handshakeBuf = Buffer.concat([handshakeBuf, data]);
-                var str = handshakeBuf.toString();
-                var idx = str.indexOf('\r\n\r\n');
-                if (idx >= 0) {
-                    handshakeDone = true;
-                    targetSocket.removeListener('data', onData);
-
-                    // 回复客户端101握手
-                    const acceptKey = crypto.createHash('sha1')
-                        .update(req.headers['sec-websocket-key'] + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
-                        .digest('base64');
-                    clientSocket.write(
-                        'HTTP/1.1 101 Switching Protocols\r\n' +
-                        'Upgrade: websocket\r\n' +
-                        'Connection: Upgrade\r\n' +
-                        'Sec-WebSocket-Accept: ' + acceptKey + '\r\n\r\n'
-                    );
-
-                    // 转发游戏服务器101响应后的剩余数据给客户端
-                    var remaining = handshakeBuf.slice(idx + 4);
-                    if (remaining.length > 0) clientSocket.write(remaining);
-
-                    // 转发客户端WebSocket帧给游戏服务器
-                    if (head && head.length > 0) targetSocket.write(head);
-
-                    // 建立双向管道
-                    targetSocket.pipe(clientSocket);
-                    clientSocket.pipe(targetSocket);
-                }
-            }
-        });
     });
-    targetSocket.on('error', () => clientSocket.destroy());
-    clientSocket.on('error', () => targetSocket.destroy());
+    const cleanup = () => { targetSocket.destroy(); clientSocket.destroy(); };
+    const timer = setTimeout(cleanup, 10000);
+    let handshakeBuf = Buffer.alloc(0);
+    const onData = data => {
+        handshakeBuf = Buffer.concat([handshakeBuf, data]);
+        const idx = handshakeBuf.indexOf('\r\n\r\n');
+        if (idx < 0) { if (handshakeBuf.length > 16384) cleanup(); return; }
+        if (idx > 16384 || !/^HTTP\/1\.[01] 101(?: |\r)/.test(handshakeBuf.toString('ascii', 0, idx))) { cleanup(); return; }
+        clearTimeout(timer);
+        targetSocket.removeListener('data', onData);
+        // Forward the validated backend response; never invent a successful upgrade.
+        clientSocket.write(handshakeBuf);
+        if (head && head.length) targetSocket.write(head);
+        targetSocket.pipe(clientSocket);
+        clientSocket.pipe(targetSocket);
+        clientSocket.resume();
+    };
+    targetSocket.on('data', onData);
+    targetSocket.on('error', cleanup);
+    clientSocket.on('error', cleanup);
+    targetSocket.on('close', () => { clearTimeout(timer); clientSocket.destroy(); });
+    clientSocket.on('close', () => { clearTimeout(timer); targetSocket.destroy(); });
 });
 
 // 健康检查端点
+const bootRelease = require('./os/release');
 app.get('/health', function (req, res) {
-    var players = (global.WORLD && WORLD.USERS) ? WORLD.USERS.length : 0;
-    var mem = process.memoryUsage();
-    var uptime = Math.floor(process.uptime());
-    res.json({ status: 'ok', uptime: uptime, uptimeStr: Math.floor(uptime/86400)+'d '+Math.floor(uptime%86400/3600)+'h '+Math.floor(uptime%3600/60)+'m', players: players, memory: { heapMB: Math.round(mem.heapUsed/1048576), rssMB: Math.round(mem.rss/1048576) }, pid: process.pid });
+    // Keep the liveness probe public, but do not leak player counts, memory
+    // usage, or the process ID.  Detailed diagnostics require an explicit
+    // deployment-only token and are not needed by the normal health check.
+    var body = { status: 'ok', release: bootRelease, service: 'web' };
+    if (require('./os/test-scope')) body.testScope = require('./os/test-scope');
+    var healthToken = process.env.HEALTH_TOKEN || '';
+    if (healthToken.length >= 16 && req.get('x-health-token') === healthToken) {
+        var players = (global.WORLD && WORLD.USERS) ? WORLD.USERS.length : 0;
+        var mem = process.memoryUsage();
+        var uptime = Math.floor(process.uptime());
+        body.uptime = uptime;
+        body.uptimeStr = Math.floor(uptime / 86400) + 'd ' + Math.floor(uptime % 86400 / 3600) + 'h ' + Math.floor(uptime % 3600 / 60) + 'm';
+        body.players = players;
+        body.memory = { heapMB: Math.round(mem.heapUsed / 1048576), rssMB: Math.round(mem.rss / 1048576) };
+        body.pid = process.pid;
+    }
+    res.json(body);
 });
 
 // 启动服务器
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Static files served from ${path.join(__dirname, 'www')}`);
-});
+// Start listening only after configuration validation and the database
+// connection have completed.  Previously init() was fire-and-forget, so a
+// fast first request could reach APIs with an unopened DB (or the process
+// could expose a white page after a configuration failure).
+async function startWeb() {
+    try {
+        await __CONFIG.init();
+        server.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            console.log(`Static files served from ${path.join(__dirname, 'www')}`);
+        });
+    } catch (error) {
+        console.error('Web service startup failed:', error && error.message ? error.message : error);
+        process.exitCode = 1;
+    }
+}
+startWeb();
 
 process.on('uncaughtException', (error) => {
     console.error('未捕获的异常:', error);

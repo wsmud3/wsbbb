@@ -1,10 +1,11 @@
-﻿
+
 
 const crypto = require('crypto');
 const desvi = __CONFIG.DESIV;
 const md5add = __CONFIG.MD5;
 const SessionKey = 'u';
 const SessionToken = 'p';
+const authToken = require('../os/auth-token');
 
 class Apibase {
     constructor(req, res) {
@@ -51,19 +52,7 @@ class Apibase {
         return this.loginUser;
     }
     deEncryptUser(key, cert) {
-        let txt = this.deEncrypt(key, cert);
-        let str = txt.split("%");
-        if (str.length !== 5) return null;
-        let id = parseInt(str[0]);
-        if (id > 0)
-            return {
-                id: id,
-                name: str[1],
-                pwd: str[2],
-                time: parseInt(str[3]),
-                level: str[4],
-            };
-        return null;
+        return authToken.verify(cert);
     }
     deEncrypt(key, str) {
 
@@ -99,8 +88,7 @@ class Apibase {
         return txt;
     }
     encryptUser(id, uname, pwd, key, level) {
-        return this.encrypt([id, uname, pwd,
-            Date.now(), level].join('%'), key);
+        return authToken.issue({ id: id, pwd: pwd });
     }
 
     setSession(key, value) {

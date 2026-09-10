@@ -1,9 +1,10 @@
-﻿
+
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const BACKUP_DIR = path.join(__dirname, '..', 'data', 'backup');
-if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+function backupDir() {
+    return path.join(__PATH.DATA || path.join(__dirname, '..', 'data'), 'backup');
+}
 
 module.exports = {
     parties: new Map(),
@@ -30,21 +31,26 @@ module.exports = {
     backup: function () {
         var srcPath = __PATH.DATA + 'data.js';
         if (!fs.existsSync(srcPath)) return;
+        var dir = backupDir();
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         var now = new Date();
         var ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + '-' + String(now.getMinutes()).padStart(2,'0');
-        var dstPath = path.join(BACKUP_DIR, 'data_' + ts + '.js');
+        var dstPath = path.join(dir, 'data_' + (WORLD.SERVERID || 'unknown') + '_' + ts + '_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex') + '.js');
         try {
             fs.copyFileSync(srcPath, dstPath);
-            var files = fs.readdirSync(BACKUP_DIR).filter(function(f){return f.endsWith('.js');}).sort();
-            while (files.length > 48) { fs.unlinkSync(path.join(BACKUP_DIR, files.shift())); }
+            var files = fs.readdirSync(dir).filter(function(f){return f.startsWith('data_' + WORLD.SERVERID + '_') && f.endsWith('.js');}).sort();
+            while (files.length > 48) { fs.unlinkSync(path.join(dir, files.shift())); }
         } catch(e) { console.error('backup fail:', e.message); }
     },
     listBackups: function () {
-        try { return fs.readdirSync(BACKUP_DIR).filter(function(f){return f.endsWith('.js');}).sort().reverse(); }
+        try { return fs.readdirSync(backupDir()).filter(function(f){return f.startsWith('data_' + WORLD.SERVERID + '_') && f.endsWith('.js');}).sort().reverse(); }
         catch(e) { return []; }
     },
     rollback: function (filename) {
-        var src = path.join(BACKUP_DIR, filename);
+        // Online rollback would be overwritten by the next in-memory save.
+        if (WORLD.status >= 0 || typeof filename !== 'string' ||
+            path.basename(filename) !== filename || !filename.startsWith('data_' + WORLD.SERVERID + '_')) return false;
+        var src = path.join(backupDir(), filename);
         var dst = __PATH.DATA + 'data.js';
         if (!fs.existsSync(src)) return false;
         try {
@@ -52,7 +58,7 @@ module.exports = {
             var ts = 'rollback_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
             // 回滚前先备份当前数据
             if (fs.existsSync(dst)) {
-                fs.copyFileSync(dst, path.join(BACKUP_DIR, ts + '.js'));
+                fs.copyFileSync(dst, path.join(backupDir(), ts + '.js'));
             }
             fs.copyFileSync(src, dst);
             return true;
@@ -71,7 +77,7 @@ module.exports = {
     },
     load: async function () {
         const data = await WORLD.DB.readData(__PATH.DATA + "data.js");
-        if (!data) { console.error('[存档] 数据为空，使用默认存档'); this.temp = {}; return; }
+        if (!data || typeof data !== 'object') throw new Error('世界存档无效，拒绝启动');
         this.temp = data.temp ?? {};
         this.on_load(data);
     },
@@ -169,4 +175,3 @@ module.exports = {
         return userData;
     }
 };
-

@@ -13,7 +13,9 @@ this.enter = function (user, id) {
         var ul = user.user_level;
         var uid = user.userid;
         // 完整退出旧角色
-        user.quit();
+        user.socket = null;
+        try { user.quit(); }
+        catch (error) { user.socket = sock; throw error; }
         // 创建新user对象复用socket
         sock.user = new USER();
         sock.user.socket = sock;
@@ -48,7 +50,7 @@ this.check_user = function (loginuser, id) {
 }
 this.relogin = function (oldUser, user) {
     if (oldUser.userid === user.userid) {
-        if (!this.on_user_relogin(oldUser, user) !== false) return;
+        if (this.on_user_relogin(oldUser, user) === false) return;
         if (oldUser.password !== user.password && oldUser.loginTime > user.loginTime) {
             return user.send("{type:'loginerror',msg:'密码失效，请<CMD onclick=\\'HideAndShow(\"#login_panel\")\\'>重新登录</CMD>'}");
         }
@@ -81,29 +83,45 @@ this.on_user_relogin = function (user, me) {
 }
 
 this.loginIn = async function (user, id) {
+    if (user._loadingRole) return;
+    user._loadingRole = true;
     try {
         const data = await WORLD.DB.getRoleData(user.userid, id);
         if (!data) return user.send("{type:'loginerror',msg:'角色读取失败，请重新登陆 '}");
 
-        oldUser = WORLD.getUser(id);
+        if (!user.socket || user.socket.destroyed) return;
+        const oldUser = WORLD.getUser(id);
         if (oldUser) return user.send("{type:'loginerror',msg:'重复登录'}");
         if (data.pwd !== user.password)
             return user.send("{type:'loginerror',msg:'密码失效，请<CMD onclick=\\'Process.relogin()\\'>重新登录</CMD>'}");
 
-        WORLD.USERS.push(user);
-
         user.loadData(data);
         // 记录最后活跃时间（后台"活跃玩家"统计依据），失败不影响登录
-        try { WORLD.DB.touchRole(user.id); } catch (e) { WORLD.log(user, "更新活跃时间失败", e.message); }
+        try { Promise.resolve(WORLD.DB.touchRole(user.id)).catch(e => WORLD.log(user, "更新活跃时间失败", e.message)); }
+        catch (e) { WORLD.log(user, "更新活跃时间失败", e.message); }
+        // Publish only after parsing and initialization; a corrupt save must
+        // not leave a half-initialized role in the heartbeat/save registry.
+        WORLD.USERS.push(user);
         user.do_login();
         user.wait_input = null;
         if (user.socket)
             user.socket.setTimeout(0);
         this.on_user_login(user);
     } catch (e) {
+        var userIndex = WORLD.USERS.indexOf(user);
+        if (userIndex >= 0) WORLD.USERS.splice(userIndex, 1);
+        try {
+            if (user.environment && user.environment.item_changed)
+                user.environment.item_changed(user, false);
+        } catch (_) {}
+        user.environment = null;
         console.error('登陆失败', e);
         WORLD.log(user, "登陆失败", e.message);
         user.send("{type:'loginerror',msg:'数据加载失败'}");
+        user.id = null;
+        user.wait_input = WORLD.USERLOGIN.wait_login;
+    } finally {
+        user._loadingRole = false;
     }
 }
 

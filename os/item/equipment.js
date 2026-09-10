@@ -1,4 +1,4 @@
-﻿
+
 require("../util/util.js");
 EQUIPMENT = function () {
     this.eq_type = EQUIP_TYPE.WEAPON;
@@ -170,7 +170,7 @@ EQUIPMENT.prototype.condition_tostring = function (str) {
                 }
                 break;
             case "desc":
-                str.push(desc);
+                str.push(val);
                 break;
             case "gender":
                 str.push("性别要求：" + (val == 1 ? "男" : "女"));
@@ -414,7 +414,7 @@ EQUIPMENT.prototype.clone = function (me) {
     }
     obj.on_reload && obj.on_reload(me);
     obj.level_up(this.level);
-    obj.st_prop = this.st_prop;
+    obj.st_prop = require('../util/clone-data')(this.st_prop);
     return obj;
 }
 

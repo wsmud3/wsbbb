@@ -1,0 +1,26 @@
+name: wsbbb checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: bash -n deploy/pull.sh
+      - run: node tools/check_release_assets.js "$GITHUB_SHA"
+      - run: npm test
+      - run: npm run build

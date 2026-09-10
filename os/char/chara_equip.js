@@ -1,4 +1,4 @@
-﻿
+
 require("./character.js");
 CHARACTER.prototype.set_objects = function () {
     if (!arguments.length) return;
@@ -57,8 +57,9 @@ CHARACTER.prototype.equip = function (obj) {
     if (equiped == obj) {
         return;
     }
+    if (obj.check && obj.check(this) === false) return false;
     if (equiped) {
-        equiped.uneq(this);
+        if (equiped.uneq(this) === false) return false;
         this.equipment[equiped.eq_type] = null;
         this.items.push(equiped);
         if (equiped.eq_type == EQUIP_TYPE.WEAPON) {
@@ -73,8 +74,12 @@ CHARACTER.prototype.equip = function (obj) {
     }
     if (obj.eq(this) == false) {
         if (equiped) {
+            if (equiped.eq(this) !== false) {
+                this.items.remove(equiped);
+                this.equipment[equiped.eq_type] = equiped;
+            }
             if (obj.eq_type === EQUIP_TYPE.WEAPON)
-                this.weapon_changed(false);
+                this.weapon_changed(!!this.equipment[obj.eq_type]);
             this.recount();
         }
         return false;

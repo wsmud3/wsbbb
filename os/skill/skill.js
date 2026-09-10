@@ -1,4 +1,4 @@
-﻿/*global SKILL_TYPES SKILL BASE PROPERTIES WORLD FAMILIES*/
+/*global SKILL_TYPES SKILL BASE PROPERTIES WORLD FAMILIES*/
 
 require("../util/util.js");
 SKILL = function () {
@@ -1669,7 +1669,7 @@ PERFORM.prototype.change_distime = function (me, id, add_time) {
             if (add_time)
                 dis_time.e += add_time;
             else {
-                add_time = -dis_time.time;
+                add_time = -Math.max(0, (Number(dis_time.e) || 0) - Date.now());
                 dis_time.e = 1;
             }
             me.notify('{type:"changepfm",id:"' + id + '",time:' + add_time + '}');

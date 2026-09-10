@@ -182,6 +182,12 @@ DESIV=替换为16字节随机字符串
 
 # Admin IPC 密钥（务必修改！）
 ADMIN_IPC_SECRET=替换为随机字符串至少32位
+
+# 可选：仅用于带 x-health-token 的本地诊断；公开 /health 只返回存活状态
+HEALTH_TOKEN=替换为随机字符串至少16位
+
+# 密码找回在接入一次性站外凭据服务前保持关闭
+ACCOUNT_RECOVERY_ENABLED=false
 ```
 
 > ⚠️ **安全警告**：生产环境**必须**修改 `MD5_PREFIX`、`SESSION_SECRET`、`DESIV`、`ADMIN_IPC_SECRET`，否则密码加密和会话安全形同虚设。
@@ -571,9 +577,9 @@ NODE_OPTIONS="--max-old-space-size=1024" node main.js
 ### 7.5 默认管理员账号
 
 - 用户名：`administrator`
-- 密码：`123456`
+- 密码：仅在全新数据库初始化前通过 `INITIAL_ADMIN_PASSWORD` 指定至少16字符密码；未配置则新建管理员处于禁用状态，不提供默认弱密码。
 
-> ⚠️ 部署后**请立即修改**默认管理员密码！
+> 已有数据库不会自动重设密码。请核查历史管理员是否仍使用弱密码，并参考 `docs/release-2026-09-09.md` 配置凭据与部署门禁。
 
 ---
 

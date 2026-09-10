@@ -67,8 +67,8 @@ const Combat = {
             this.ShowPFM(data);
     },
     ShowPFM: function (data) {
-        this.Skills = data.skills || [];
-        this.create_skillItems(data.skills);
+        this.Skills = Array.isArray(data.skills) ? data.skills : [];
+        this.create_skillItems(this.Skills);
     },
     append_items: function (items, parent) {
         if (!items) return;
@@ -139,7 +139,7 @@ const Combat = {
     }
     , create_skillItems: function (items) {
         var elem = $(".combat-commands").empty();
-        if (!items.length) return;
+        if (!Array.isArray(items) || !items.length) return;
         for (var i = 0; i < items.length; i++) {
             var html = [];
             html.push("<span class='pfm-item' pid='" + items[i].id + "'>");
@@ -150,6 +150,7 @@ const Combat = {
             items[i].elem = $(html.join("")).appendTo(elem);
         }
     }, ChangeDistime: function (data) {
+        if (!data || typeof data.id !== 'string' || !Number.isFinite(data.time) || !Array.isArray(Combat.dis_pfms)) return;
         var pfmid = data.id.replace("/", ".");
         for (var j = 0; j < Combat.dis_pfms.length; j++) {
             if (Combat.dis_pfms[j].id == pfmid) {
@@ -407,4 +408,3 @@ const Combat = {
 
 };
 export default Combat;
-

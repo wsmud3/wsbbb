@@ -15,10 +15,10 @@ class ResetPwdPage extends Page {
                     <input type="text" id="reset_name" value="" placeholder="请输入用户名，如果账号未绑定手机无法重置" class="textbox" />
                     <h3>你绑定的手机</h3>
                     <input type="text" id="reset_phone" placeholder="请输入你的手机号码" class="textbox" />
-                    <h3 class="hide">接收到的验证码</h3>
-                    <div class="validnum-box hide">
-                        <input type="text" id="reset_no" placeholder="请输入六位验证码" class="textbox" />
-                        <button class="validnum-btn ">发送验证码</button>
+                    <h3>请输入图片验证码</h3>
+                    <div class="validnum-box">
+                        <input type="text" id="reset_no" placeholder="请输入四位验证码" class="textbox" />
+                        <img src="" class="validnum-img" alt="点击刷新验证码" />
                     </div>
                     <h3>你新的密码</h3>
                     <input type="password" id="reset_pwd1" value="" placeholder="你新的密码" class="textbox" />
@@ -36,6 +36,8 @@ class ResetPwdPage extends Page {
   }
 
   on_mount() {
+    this.GetValidationImage();
+    $("#reset_panel .validnum-img").on("click", () => this.GetValidationImage());
   }
 
   reset() {
@@ -45,12 +47,14 @@ class ResetPwdPage extends Page {
     var phone = $("#reset_phone").val();
     if (!phone) return Client.showInputError("#reset_phone", "请输入你的帐号绑定的手机号码");
     if (!/^1\d{10}$/.test(phone)) return Client.showInputError("#reset_phone", "手机号码格式错误");
-    var valid_no = "";
+    var valid_no = $("#reset_no").val();
+    if (!valid_no) return Client.showInputError("#reset_no", "请输入图片中的验证码");
+    if (valid_no.length !== 4) return Client.showInputError("#reset_no", "请输入四位验证码");
     var pwd1 = $("#reset_pwd1").val();
     if (!pwd1) return Client.showInputError("#reset_pwd1", "请输入你的新密码");
     var pwd2 = $("#reset_pwd2").val();
     if (!pwd2) return Client.showInputError("#reset_pwd2", "请重复输入你的新密码");
-    if (pwd2.length < 6 || pwd2.length > 20) return Client.showInputError("#update_pwd2", "密码长度在6到20之间");
+    if (pwd2.length < 6 || pwd2.length > 20) return Client.showInputError("#reset_pwd2", "密码长度在6到20之间");
     if (pwd2 != pwd1) return Client.showInputError("#reset_pwd2", "两次密码输入不一致");
     Client.showLoader("正在修改密码", "#reset_panel");
     API.ResetPasswordByPhone(name, phone, valid_no, pwd1, function (x) {
@@ -60,6 +64,12 @@ class ResetPwdPage extends Page {
         Client.showInputError("#reset_pwd2", x.result ?? "重置失败");
         Client.hide2show("#reset_panel");
       }
+    });
+  }
+
+  GetValidationImage() {
+    API.ValidationImage(function (x) {
+      $("#reset_panel .validnum-img").attr('src', "data:image/svg+xml;base64," + x);
     });
   }
 }

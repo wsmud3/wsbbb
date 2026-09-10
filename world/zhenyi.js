@@ -938,7 +938,12 @@
     }
     function addControl(target, id, name, duration, cooldown) {
         if (!target || target.query_temp(id + "_cd")) return;
-        target.set_temp(id + "_cd", 1, cooldown); target.add_status({ id: id, name: name, duration: duration, downside: true, prop: { is_busy: 1 } });
+        // is_busy is a runtime status flag, not a combat property.  The
+        // status engine reads it from the top-level buff object; putting it in
+        // prop only changes a queryable number and never blocks actions.
+        target.set_temp(id + "_cd", 1, cooldown);
+        var applied = target.add_status({ id: id, name: name, duration: duration, downside: true, is_busy: duration });
+        if (applied === false) target.remove_temp(id + "_cd");
     }
 
     function addIgnore(par, value) {
@@ -962,7 +967,16 @@
         else if (e === "gb_six" && me.query_temp("zy_six")) { bonus += v.damage / 100; me.remove_temp("zy_six"); }
         else if (e === "em_twin" && me.query_temp("zy_twin")) { bonus += v.damage / 100; me.remove_temp("zy_twin"); }
         else if (e === "em_nineyin" && target.max_hp && target.hp / target.max_hp > 0.8) bonus += v.damage / 100;
-        else if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) { bonus += v.damage / 100; par.mz = (par.mz || me.mz) * (1 + v.hit / 100); me.remove_temp("zy_lingbo"); }
+        else if ((e === "xy_lingbo" || e === "ss_step") && (par._zy_lingbo_ready || me.query_temp("zy_lingbo"))) {
+            bonus += v.damage / 100;
+            if (!par._zy_hit_prepared) {
+                par.mz = (par.mz || me.mz) * (1 + v.hit / 100);
+                me.remove_temp("zy_lingbo");
+            }
+            delete par._zy_lingbo_ready;
+            delete par._zy_hit_prepared;
+            if (par._zy_base_mz !== undefined) { par.mz = par._zy_base_mz; delete par._zy_base_mz; }
+        }
         else if (e === "xy_baihong" && inPfm && me.max_mp && me.mp / me.max_mp > 0.8) { bonus += v.damage / 100; me.add_mp(-Math.floor(me.max_mp * v.cost / 100)); }
         else if (e === "ss_puncture" && target.max_hp && target.hp / target.max_hp > 0.8) { bonus += v.damage / 100; addIgnore(par, v.ignore); }
         else if (e === "ss_debt" && me.query_temp("zy_debt")) { bonus += v.damage / 100; me.remove_temp("zy_debt"); }
@@ -971,6 +985,27 @@
         else if (e === "sn_thunder" && inPfm) { var th = Math.min(5, parseInt(me.query_temp("zy_thunder", 0)) || 0); addIgnore(par, th * v.ignore); }
         else if (e === "sn_purple" && inPfm) bonus += v.damage / 100;
         return sh * (1 + bonus);
+    }
+    function prepareAttack(me, target, par, skill) {
+        if (par._zy_base_mz !== undefined) {
+            par.mz = par._zy_base_mz;
+            delete par._zy_base_mz;
+            delete par._zy_lingbo_ready;
+            delete par._zy_hit_prepared;
+        }
+        var active = getActive(me);
+        if (!active || !allowedSkill(skill, me)) return;
+        var e = active.intent.effect, v = active.values;
+        if ((e === "xy_lingbo" || e === "ss_step") && me.query_temp("zy_lingbo")) {
+            // Hit/evasion is decided before damage hooks.  Consume the
+            // one-shot marker at attempt time and leave a per-attack marker so
+            // the damage hook can add its separate damage component.
+            par._zy_base_mz = par.mz;
+            par.mz = (par.mz || me.mz) * (1 + v.hit / 100);
+            par._zy_lingbo_ready = true;
+            par._zy_hit_prepared = true;
+            me.remove_temp("zy_lingbo");
+        }
     }
     function afterAttack(me, target, par, dealt, skill) {
         var active = getActive(me);
@@ -1033,7 +1068,7 @@
         configure_trial_room: configureTrialRoom, rehydrate_trial_room: rehydrateTrialRoom, add_material: addMaterial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
-        modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
+        prepare_attack: prepareAttack, modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
         modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill
     };
 })();

@@ -88,7 +88,7 @@ CHARACTER.prototype.query_desc = function (me, eqcmd) {
     var call3 = this == me ? "你" : this.call3();
     str.push(call3, "看起来约", get_agestr(this.query_age()), "岁。\n");
     str.push(call3, "长得", get_perdesc(this), "。\n");
-    str.push(call3, get_skill_desc(this.query_skill(this.attack_skill.id)), "。\n");
+    str.push(call3, get_skill_desc(this.attack_skill ? this.query_skill(this.attack_skill.id) : 0), "。\n");
     str.push(call3, get_status(this), "\n");
     this.format_equipments(call3, str, eqcmd);
     return str.join("");

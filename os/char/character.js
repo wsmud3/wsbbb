@@ -1,4 +1,4 @@
-﻿require("../item");
+require("../item");
 /*global CHARACTER ROOM ITEM*/
 CHARACTER = function () {
     this.name = "生物";
@@ -244,6 +244,10 @@ CHARACTER.prototype.update = function (path, par) {
 
 //真正被复制到房间
 CHARACTER.prototype.clone = function () {
+    const cloneData = require('../util/clone-data');
+    this.skills = cloneData(this.skills);
+    this.drop_list = cloneData(this.drop_list);
+    this.status = cloneData(this.status);
     if (this.temp) this.temp = Object.create(this.temp);
     if (this.prop) this.prop = Object.create(this.prop);
     if (this.equipment) {

@@ -17,7 +17,7 @@ this.enter = function (me, str) {
         msg = WORLD.COMMANDS["emote"].enter(me, str);
         if (!msg) {
             msg = UTIL.htmlEncode(str);
-            msg = UTIL.replace_word(str);
+            msg = UTIL.replace_word(msg);
         }
         else name = "";
     } else {

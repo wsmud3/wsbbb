@@ -69,7 +69,7 @@ class ServerPage extends Page {
     }
     var item = SERVERS[index];
     if (!item) {
-      Confirm.Show({ content: "你没有选择要连接的服务器。" });
+      return Confirm.Show({ content: "你没有选择要连接的服务器。" });
     }
     Client.showLoader("正在连接服务器");
     Client.connectServer(item);

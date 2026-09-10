@@ -12,29 +12,27 @@ class GameAPI extends APIBASE {
         }
         return SERVERS;
     }
-    async reload() {
+    // Internal cache invalidation is intentionally not exposed as a public
+    // API method.  Use the authenticated /reload route when an administrator
+    // actually needs to refresh server metadata.
+    async _reload() {
         SERVERS = null;
     }
     async search_role(paras) {
+        const user = this.getUser();
+        if (!user) return { code: 0, result: '未登录' };
         const { type, value } = paras;
         if (!type || !value) return { code: 0, result: "错误参数" };
         if (!ALLOW_TYPES[type]) return { code: 0, result: "错误参数" };
-        let cond = "";
-        paras = [value]
-        if (type === "uname") {
-            cond = "where a.name=?";
-        } else if (type === 'name') cond = 'where b.name=? or b.name is null'
-        else if (type === 'phone') cond = 'where a.phone=?';
-
-        let result = await DB.query_role(cond, paras);
+        if (typeof value !== 'string' || value.length > 64) return { code: 0, result: "错误参数" };
+        let result = await DB.query_role(type, value, user.id);
         return { code: 1, result: result };
     }
 }
 
 const ALLOW_TYPES = {
     uname: true,
-    name: true,
-    phone: true
+    name: true
 };
 module.exports = GameAPI;
 

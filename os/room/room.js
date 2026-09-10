@@ -30,6 +30,16 @@ ROOM.prototype.item_changed = function (obj, isin, changed_msg, dir) {
     if (!obj) return;
     var msg;
     var obj_index = -1, isshow = !obj.query_temp('hidden');
+    // Leave guards must run before any observer receives itemremove.  An NPC
+    // later in the list may veto departure; broadcasting first creates a
+    // client-only departure while the player is still in this room.
+    if (!isin && obj.hp) {
+        for (var li = 0; li < this.items.length; li++) {
+            var leaveItem = this.items[li];
+            if (leaveItem !== obj && !leaveItem.is_player && leaveItem.on_leave &&
+                leaveItem.on_leave(obj, dir) === false) return false;
+        }
+    }
     for (var i = 0; i < this.items.length; i++) {
         var item = this.items[i];
         if (item == obj) {
@@ -49,7 +59,7 @@ ROOM.prototype.item_changed = function (obj, isin, changed_msg, dir) {
                 if (isin && item.on_enter) {
                     item.on_enter(obj);
                 } else if (!isin && item.on_leave) {
-                    if (item.on_leave(obj, dir) == false) return false;
+                    // Already checked in the preflight pass above.
                 }
             }
         }
@@ -489,11 +499,14 @@ ROOM.prototype.destroy = function () {
     this.owner = null;
 }
 ROOM.prototype.heart_beat = function (dt) {
-    for (var i = 0; i < this.items.length; i++) {
-        if (!this.items[i].is_player)
-            this.items[i].heart_beat(dt);
+    // Snapshot iteration: callbacks may remove/move NPCs during this tick.
+    for (const item of this.items.slice()) {
+        if (!item || item.is_player || this.items.indexOf(item) < 0) continue;
+        try { item.heart_beat(dt); }
+        catch (error) { console.error('[room heartbeat]', this.id, item.id, error); }
     }
-    this.on_heart_beat && this.on_heart_beat(dt);
+    try { this.on_heart_beat && this.on_heart_beat(dt); }
+    catch (error) { console.error('[room callback]', this.id, error); }
 }
 ROOM.prototype.is_copy = function () {
     if (!this.parent) return false;
@@ -756,4 +769,3 @@ ROOM.prototype.query = function (id) {
     }
     return room;
 }
-
