@@ -1,5 +1,12 @@
 # MUD 游戏 - 更新日志
 
+## 2026-09-12 · 与云端仓库比对并发布本地最新版本
+
+- **差异比对** — 本地 `main` 与云端 `wsmud3/wsbbb` 的 `origin/main`（`a20e152`）逐文件比对：本地领先 **1 个提交**（`83d8a65`，即下一条 grade7~9 功能），共 **14 个文件 +2770/−15**；本地无未提交的已跟踪改动，无相对云端被删除的文件，云端文件本地均有对应版本（跟踪文件 2566 → 2568，新增两个前端产物）。唯二未跟踪文件 `syntax_fail.txt` 是历史遗留临时清单（仓库内无脚本引用），**不随本次上传**
+- **上传内容** — 已把本地最新版本推送到 `https://github.com/wsmud3/wsbbb` 的 `main`，包含上一条的全部改动（服务端/前端配色表补齐 0~9、`SKILL.MAX_GRADE = 9`、`www/` 产物重建、文档注释同步）
+- **发布前校验** — `npm run validate:systems` 全部通过（退出码 0：编码检查、真意/房间/系统完整性/装备重铸、山外山、后台面板与后台接口回归）；核对 `www/index.html` 指向的新哈希产物确实内含本次改动（`levels` 表新增 `hiw:7/ hib:8/ him:9`、`level_color`/`wrap_name` 色阶扩到 10 项、`.grade7/.grade8/.grade9` 边框样式）
+- **校验边界** — 本机未安装 `node_modules`，`npm test` 中依赖数据库/HTTP 的用例（`test_release_safety.cjs` 等）与 `npm run build` **未能在本机执行**；未重启服务器、未做线上验收。完整比对清单与边界见 [docs/release-2026-09-12.md](docs/release-2026-09-12.md)
+
 ## 2026-09-12 · 武学等级上限扩展到 grade9（亮白/亮蓝/亮粉）
 
 - **等级上限 6 → 9** — `os/skill/skill.js` 新增 `SKILL.MAX_GRADE = 9`，`SKILL.prototype.query_grade` 的封顶由 `Math.min(lv, 6)` 改为 `Math.min(lv, MAX_GRADE)`；技能注册表 `SKILL[基础技能][grade]` 由 `new Array(7)` 扩为 `new Array(MAX_GRADE + 1)`
