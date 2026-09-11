@@ -18,7 +18,7 @@ const LT_MAP = {
     "qixiaoyao": { slot: 6, name: "齐逍遥残页", desc: "记载了齐逍遥进阶之法的残页，双修之术更上一层楼" },
 };
 
-const GRADE_COLOR = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+const GRADE_COLOR = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord", "hiw", "hib", "him"];
 
 this.on_create = function (path, par) {
     if (!par) return;

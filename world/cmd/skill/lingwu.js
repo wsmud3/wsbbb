@@ -861,4 +861,4 @@ function get_need_path(slot, grd) {
     return needs && needs.length ? needs[0].path : "";
 }
 
-var GRADE_COLORS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+var GRADE_COLORS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord", "hiw", "hib", "him"];

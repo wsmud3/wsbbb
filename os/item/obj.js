@@ -192,7 +192,9 @@ OBJ.CREATE = function (otype, count) {
         item.count = count;
     return item;
 }
-var grade_color = ["wht", "hig", "hic", "hiy", "HIZ", "hio", "ord"];
+// 物品品阶配色：与武学等级配色保持一致（秘籍的 grade 直接取自技能 grade）
+// 0白 1绿 2青 3黄 4紫 5橙 6红 7亮白 8亮蓝 9亮粉
+var grade_color = ["wht", "hig", "hic", "hiy", "HIZ", "hio", "ord", "hiw", "hib", "him"];
 
 OBJ.prototype.create = function (path, par) {
     if (par) this.path = path + par;

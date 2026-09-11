@@ -478,7 +478,8 @@ export default {
             }
         }
     }, levels: {
-        "wht": 0, "hig": 1, "hic": 2, "hiy": 3, "hiz": 4, "hio": 5, "ord": 6
+        "wht": 0, "hig": 1, "hic": 2, "hiy": 3, "hiz": 4, "hio": 5, "ord": 6,
+        "hiw": 7, "hib": 8, "him": 9
     },
     sort_items: function (items) {
         if (!items || !Setting.auto_sortitem) return items;

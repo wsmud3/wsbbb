@@ -87,7 +87,7 @@ function validate_word_binding(me, book, skillId, positionKey, wordIndex) {
 }
 
 // Use same color array as os/skill/skill.js level_color for consistency
-var ZC_COLORS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+var ZC_COLORS = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord", "hiw", "hib", "him"];
 
 // === Per-position word_levels helpers ===
 // Build slot-to-position map on skill for fast word_level lookups.

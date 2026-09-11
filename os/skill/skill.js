@@ -10,6 +10,11 @@ SKILL = function () {
 }
 SKILL.inherits(BASE);
 
+// 武学等级上限：0~9
+// 0白 1绿 2青 3黄 4紫 5橙 6红 7亮白 8亮蓝 9亮粉
+var MAX_GRADE = 9;
+SKILL.MAX_GRADE = MAX_GRADE;
+
 // Global advancement slot pool for combat skill position-based advancement (indices < 500)
 SKILL.PROPERTIES = [
     // === Position-specific slots ===
@@ -915,7 +920,7 @@ SKILL.prototype.query_grade = function (me) {
         if (sk.ref)
             lv += 1;
     }
-    return Math.min(lv, 6);
+    return Math.min(lv, MAX_GRADE);
 }
 SKILL.prototype.query_color_name = function (me) {
 
@@ -1400,8 +1405,9 @@ SKILL.prototype.set_pfm = function (name, obj) {
     }
     this.pfm[name] = obj;
 }
-var level_color = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
-var level_desc = ["基本技能", "普通技能", "高级技能", "稀有武技", "绝世武功", "绝世神功", "无上神武"];
+var level_color = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord", "hiw", "hib", "him"];
+var level_desc = ["基本技能", "普通技能", "高级技能", "稀有武技", "绝世武功", "绝世神功", "无上神武",
+    "造化仙法", "鸿蒙仙法", "混沌仙法"];
 
 SKILL.prototype.create = function (fname) {
     if (WORLD.SKILLS[this.id]) {
@@ -1414,7 +1420,7 @@ SKILL.prototype.store = function () {
         || this.type === SKILL_TYPES.BASE
     ) return;
     for (var i = 0; i < this.can_enables.length; i++) {
-        if (!SKILL[this.can_enables[i]]) SKILL[this.can_enables[i]] = new Array(7);
+        if (!SKILL[this.can_enables[i]]) SKILL[this.can_enables[i]] = new Array(MAX_GRADE + 1);
         if (!SKILL[this.can_enables[i]][this.grade]) SKILL[this.can_enables[i]][this.grade] = [];
         SKILL[this.can_enables[i]][this.grade].push(this);
     }

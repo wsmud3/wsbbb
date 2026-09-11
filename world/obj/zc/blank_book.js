@@ -34,7 +34,7 @@ this.on_clone = function() {
 };
 
 // ===== 持久化: 自定义属性存入 temp 以便跨重启保留 =====
-var grade_color = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord"];
+var grade_color = ["wht", "hig", "hic", "hiy", "hiz", "hio", "ord", "hiw", "hib", "him"];
 function clone_word_levels(levels) {
     if (!levels || typeof levels !== "object") return {};
     try { return JSON.parse(JSON.stringify(levels)); } catch (e) { return {}; }

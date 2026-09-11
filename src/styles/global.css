@@ -209,6 +209,21 @@ mem {
     border-color: var(--border-color);
 }
 
+.grade7 {
+    --border-color: #FFFFFF;
+    border-color: var(--border-color);
+}
+
+.grade8 {
+    --border-color: #0000FF;
+    border-color: var(--border-color);
+}
+
+.grade9 {
+    --border-color: #FF00FF;
+    border-color: var(--border-color);
+}
+
 CMD {
     font-weight: bold;
 }

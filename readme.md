@@ -1,5 +1,13 @@
 # MUD 游戏 - 更新日志
 
+## 2026-09-12 · 武学等级上限扩展到 grade9（亮白/亮蓝/亮粉）
+
+- **等级上限 6 → 9** — `os/skill/skill.js` 新增 `SKILL.MAX_GRADE = 9`，`SKILL.prototype.query_grade` 的封顶由 `Math.min(lv, 6)` 改为 `Math.min(lv, MAX_GRADE)`；技能注册表 `SKILL[基础技能][grade]` 由 `new Array(7)` 扩为 `new Array(MAX_GRADE + 1)`
+- **新增三档配色** — grade7 **亮白**（`hiw` #FFFFFF）、grade8 **亮蓝**（`hib` #0000FF）、grade9 **亮粉**（`him` #FF00FF）；等级名称依次为 **造化仙法 / 鸿蒙仙法 / 混沌仙法**（显示在技能详情的等级说明处）
+- **配色表同步** — 服务端 `os/skill/skill.js`（`level_color` / `level_desc`）、`world/cmd/skill/lingwu.js`（`GRADE_COLORS`）、`world/cmd/skill/zc.js`（`ZC_COLORS`）、`world/obj/book/lt.js`（`GRADE_COLOR`）、`world/obj/zc/blank_book.js`、`os/item/obj.js`（物品/秘籍品阶色，秘籍 grade 直接取自技能）；前端 `src/dialog/skills.js`（技能列表、`wrap_name`）、`src/dialog/packet.js`（背包色阶表）、`src/styles/global.css`（`.grade7`/`.grade8`/`.grade9` 边框色），前端产物重新构建
+- **本次未改动** — `lingwu` 进阶仍按原规则封顶 grade5；自创武学品质仍按「单部位最多词条数」封顶 grade6；真意仍排除 grade ≥ 6 的技能。grade7～9 目前通过技能文件里的 `this.grade` 定义生效
+- **待补项（如要用 grade7～9 技能产出秘籍）** — `world/extends/data.js` 的 `DATA.book_values`（7 项）与 `world/obj/book/bc.js` 的 `COMBINED`（7 项）仍按 grade0～6 编制，grade7 以上取值为 `undefined`，需要一并补齐
+
 ## 2026-09-11 · 后台「注册」改为全部注册玩家 + 玩家栏「全部玩家」跨服显示
 
 - **状态栏「注册」不再受在线影响** — 状态页的注册/活跃一律来自数据库统计：注册玩家 = **全部服务器**的注册角色总数（含离线角色），与「在线人数」彻底分开显示。以前按所选服务器统计，换服后数字会变小、角色 sid 对不上时甚至显示 0，容易被误认为「注册跟着在线变」；现在注册、7日/30日活跃、今日新增都按全部服口径，另外附带一行本服（当前所选服务器）分服数值
