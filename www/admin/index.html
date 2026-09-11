@@ -206,7 +206,8 @@ async function loadPanel(p){
     } catch(e) { showLogin(); return; }
   }
   m.innerHTML='加载中...';
-  if(p==='items'||p==='players'||p==='reclaim'){try{const r=await call('online');if(r.ok)_onlinePlayers=r.data||[];}catch(e){}}
+  // 状态页也要在线名单（在线玩家列表），以前只有物品/玩家/回收会刷新，状态页显示的是空列表
+  if(p==='status'||p==='items'||p==='players'||p==='reclaim'){try{const r=await call('online');if(r.ok)_onlinePlayers=r.data||[];}catch(e){}}
   try{
     switch(p){
       case 'status':await showStatus(m);break;
@@ -226,47 +227,58 @@ async function loadPanel(p){
 }
 
 // === STATUS ===
+// 数字占位：取不到时显示 —，绝不把「注册」退化成在线人数
+function num(v){return (v===0||v)?String(v):'—'}
+// 服务器ID -> 显示名（后台服务器下拉框固定为 100/200）
+function sidName(sid){return ({100:'🧪 测试服',200:'🎮 正式服'})[parseInt(sid)]||('服务器'+sid)}
+
 async function showStatus(m){
   const r=await call('status');
-  var st={},stErr='';
+  var st=null,stErr='';
   try{var stR=await call('stats');if(stR.ok)st=stR.data||{};else stErr=stR.msg||'统计查询失败'}catch(e){stErr=e.message}
   const d=(r&&r.ok)?(r.data||{}):{};
-  const online=st.online||d.playerCount||0;
+  const s=st||{};
+  // 在线人数只用于「在线」一项；注册/活跃一律取数据库统计（全部服务器、含离线角色），不随在线变化
+  const online=st?(s.online||0):(d.playerCount||0);
   var onlinePlayers=_onlinePlayers||[];
   var warn='';
-  if(!r.ok)warn+=M('游戏服务器离线，以下仅显示数据库统计（注册/活跃）','err');
+  if(!r.ok)warn+=M('游戏服务器离线，以下注册/活跃为数据库统计，仍然可用','err');
   if(stErr)warn+=M('统计数据获取失败: '+esc(stErr),'err');
   const u=Math.floor((d.uptime||0)/86400),h=Math.floor((d.uptime||0)%86400/3600);
   m.innerHTML='<h2>服务器状态</h2><div class="card">'+warn+
     '<p><b>'+(d.serverName||'?')+'</b> (ID:'+(d.serverId||'?')+') <span class="status '+(d.status==='running'?'on':'off')+'"></span>'+(d.status||'离线')+'</p>'+
     '<div class="row" style="gap:14px">'+
       '<span>在线: <b style="color:#0f9">'+(online||0)+'</b></span>'+
-      '<span>注册角色: <b style="color:#e94560">'+(st.totalPlayers||0)+'</b></span>'+
-      '<span>注册账号: <b style="color:#e94560">'+(st.totalUsers||0)+'</b></span>'+
+      '<span>注册玩家: <b style="color:#e94560;font-size:15px">'+num(s.totalPlayers)+'</b> <span style="font-size:11px;color:#888">全部服·含离线</span></span>'+
+      '<span>注册账号: <b style="color:#e94560">'+num(s.totalUsers)+'</b></span>'+
     '</div>'+
     '<div class="row" style="gap:14px">'+
-      '<span>7日活跃: <b style="color:#fc6">'+(st.active7||0)+'</b></span>'+
-      '<span>30日活跃: <b style="color:#fc6">'+(st.active30||0)+'</b></span>'+
-      '<span>今日新增: <b style="color:#0f9">'+(st.todayNew||0)+'</b></span>'+
+      '<span>7日活跃: <b style="color:#fc6">'+num(s.active7)+'</b></span>'+
+      '<span>30日活跃: <b style="color:#fc6">'+num(s.active30)+'</b></span>'+
+      '<span>今日新增: <b style="color:#0f9">'+num(s.todayNew)+'</b></span>'+
     '</div>'+
     '<div class="row" style="gap:14px"><span>连接: '+(d.connectCount||0)+'</span><span>心跳: '+(d.heartbeatCount||0)+'</span><span>运行: '+u+'天'+h+'时</span><span>内存: '+((d.memory&&d.memory.heapMB)||'?')+'MB</span></div>'+
-    '<div style="font-size:11px;color:#888;margin-top:4px">活跃口径：最近一次登录或存档时间（角色数据在玩家退出及每小时自动存档时刷新）</div></div>'+
-    '<div class="card"><h3>在线玩家列表</h3><table><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th></tr>'+
+    '<div style="font-size:11px;color:#888;margin-top:4px">注册/活跃口径：数据库里的全部角色（含离线，跨全部服务器），<b>与当前在线人数无关</b>；活跃=最近一次登录或存档时间。<br>本服（'+esc(sidName(s.sid||_currentSid))+'）：角色 '+num(s.totalPlayersSid)+' · 7日活跃 '+num(s.active7Sid)+' · 30日活跃 '+num(s.active30Sid)+' · 今日新增 '+num(s.todayNewSid)+' · <a style="color:#6cf;cursor:pointer" onclick="switchPlayerTab(\'all\')">查看全部玩家 »</a></div></div>'+
+    '<div class="card"><h3>在线玩家列表 ('+onlinePlayers.length+')</h3><table><tr><th>名字</th><th>等级</th><th>位置</th><th>HP</th></tr>'+
     onlinePlayers.slice(0,20).map(function(p){return '<tr><td>'+esc(p.name)+'</td><td>'+(p.level||0)+'</td><td>'+esc(p.location||'')+'</td><td>'+(p.hp||0)+'/'+(p.max_hp||0)+'</td></tr>'}).join('')+
-    '</table>'+(onlinePlayers.length>20?'<div style="color:#888;font-size:11px;padding:4px">仅显示前20名，完整列表请查看"玩家"面板</div>':'')+'</div>';
+    '</table>'+(onlinePlayers.length?'':'<div style="color:#888;font-size:11px;padding:8px">当前没有在线玩家，可在「玩家」面板查看全部玩家（含离线）</div>')+(onlinePlayers.length>20?'<div style="color:#888;font-size:11px;padding:4px">仅显示前20名，完整列表请查看"玩家"面板</div>':'')+'</div>';
 }
 
 // === PLAYERS ===
-var _plTab='online';   // online | all
+var _plTab='';         // '' = 尚未选择（按在线人数自动决定）| online | all
 var _plPage=1;
 var _plSize=50;
+var _plTotal=0;        // 「全部玩家」总数（页签角标与分页用）
+var _plScope='all';    // all = 全部服务器（含离线）| server = 当前所选服务器
 
 async function showPlayers(m){
   var onlineCount=(_onlinePlayers||[]).length;
+  if(_plTab!=='online'&&_plTab!=='all')_plTab=onlineCount>0?'online':'all';
   m.innerHTML='<h2>👥 玩家管理</h2>'+
     '<div class="row" style="margin-bottom:8px">'+
       '<button class="'+(_plTab==='online'?'':'blue')+'" onclick="switchPlayerTab(\'online\')">🟢 在线玩家 ('+onlineCount+')</button>'+
-      '<button class="'+(_plTab==='all'?'':'blue')+'" onclick="switchPlayerTab(\'all\')">📋 全部玩家</button>'+
+      '<button class="'+(_plTab==='all'?'':'blue')+'" id="pl_tab_all" onclick="switchPlayerTab(\'all\')">📋 全部玩家'+(_plTotal?' ('+_plTotal+')':'')+'</button>'+
+      '<span style="font-size:11px;color:#888">「全部玩家」直接读数据库：含离线角色与全部服务器，不受在线人数影响</span>'+
     '</div><div id="pl_body"></div>';
   if(_plTab==='all') await renderAllPlayers();
   else renderOnlinePlayers();
@@ -290,19 +302,21 @@ function renderOnlinePlayers(){
   box.innerHTML=h;
 }
 
-// --- 子页面二：全部玩家（含离线，来自数据库） ---
+// --- 子页面二：全部玩家（含离线；默认跨全部服务器，直接来自数据库） ---
 async function renderAllPlayers(){
   const box=document.getElementById('pl_body');
   if(!box)return;
-  if(!document.getElementById('all_pl_search')){
-    box.innerHTML='<div class="card" style="padding:8px;margin-bottom:8px"><div class="row">'+
+  box.innerHTML='<div class="card" style="padding:8px;margin-bottom:8px"><div class="row">'+
       '<input id="all_pl_search" placeholder="搜索角色名 / 角色ID / 账号ID" style="width:260px" onkeyup="if(event.key===\'Enter\'){_plPage=1;loadAllPlayers()}">'+
       '<button class="blue sm" onclick="_plPage=1;loadAllPlayers()">🔍 搜索</button>'+
       '<button class="sm" onclick="var e=document.getElementById(\'all_pl_search\');if(e)e.value=\'\';_plPage=1;loadAllPlayers()">重置</button>'+
       '<button class="sm" onclick="loadAllPlayers()">🔄 刷新</button>'+
-      '<span style="color:#888;font-size:11px">包含离线角色，按最后活跃时间排序</span></div></div>'+
+      '<select id="all_pl_scope" onchange="_plScope=this.value;_plPage=1;loadAllPlayers()">'+
+        '<option value="all"'+(_plScope==='all'?' selected':'')+'>全部服务器</option>'+
+        '<option value="server"'+(_plScope==='server'?' selected':'')+'>当前所选服务器</option>'+
+      '</select>'+
+      '<span style="color:#888;font-size:11px">数据库里的全部角色（含离线），按最后活跃时间排序</span></div></div>'+
       '<div id="all_pl_list"></div>';
-  }
   await loadAllPlayers();
 }
 
@@ -311,20 +325,27 @@ async function loadAllPlayers(){
   if(!list)return;
   list.innerHTML='<div style="color:#888;padding:8px">加载中...</div>';
   var kw=document.getElementById('all_pl_search')?.value.trim()||'';
-  var r=await call('players_all',{keyword:kw,page:_plPage,size:_plSize});
+  var r=await call('players_all',{keyword:kw,page:_plPage,size:_plSize,scope:_plScope});
   if(!r.ok){list.innerHTML=M(esc(r.msg||'加载失败'),'err');return}
   const d=r.data||{},rows=d.list||[],total=d.total||0,size=d.size||_plSize,page=d.page||_plPage;
+  const scope=d.scope||_plScope;
+  _plTotal=total;
+  var tabBtn=document.getElementById('pl_tab_all');
+  if(tabBtn)tabBtn.innerHTML='📋 全部玩家 ('+total+')';
   const pages=Math.max(1,Math.ceil(total/size));
-  var h='<table id="all_pl_tb"><tr><th>名字</th><th>等级</th><th>角色ID</th><th>账号ID</th><th>称号</th><th>最后活跃</th><th>注册时间</th><th>状态</th><th>操作</th></tr>';
+  var h='<table id="all_pl_tb"><tr><th>名字</th><th>等级</th><th>服务器</th><th>角色ID</th><th>账号ID</th><th>称号</th><th>最后活跃</th><th>注册时间</th><th>状态</th><th>操作</th></tr>';
   rows.forEach(function(p){
     var st=p.online?'<span class="tag learn">在线</span>':'<span class="tag kill">离线</span>';
+    var sid=parseInt(p.sid)||0;
     var ops='';
+    ops+='<button class="sm" onclick="viewPlayer(\''+jss(p.id)+'\','+sid+')">详情</button>';
     if(p.online){
-      ops+='<button class="sm blue" onclick="gotoGive(\''+jss(p.id)+'\')">给物品</button>';
-      ops+='<button class="sm orange" onclick="kickPlayer(\''+jss(p.id)+'\',\''+jss(p.name)+'\')">踢下线</button>';
+      ops+='<button class="sm blue" onclick="gotoGive(\''+jss(p.id)+'\','+sid+')">给物品</button>';
+      ops+='<button class="sm orange" onclick="kickPlayer(\''+jss(p.id)+'\',\''+jss(p.name)+'\','+sid+')">踢下线</button>';
     }
-    ops+='<button class="sm red" onclick="deletePlayer(\''+jss(p.id)+'\',\''+jss(p.name)+'\')">删除角色</button>';
+    ops+='<button class="sm red" onclick="deletePlayer(\''+jss(p.id)+'\',\''+jss(p.name)+'\','+sid+')">删除角色</button>';
     h+='<tr><td>'+esc(p.name)+'</td><td>'+(p.level||0)+'</td>'+
+      '<td style="font-size:11px">'+esc(sidName(sid))+'</td>'+
       '<td style="font-size:10px;color:#888">'+esc(p.id)+'</td>'+
       '<td>'+(p.userid||'')+'</td>'+
       '<td>'+esc(p.title||'')+'</td>'+
@@ -333,10 +354,10 @@ async function loadAllPlayers(){
       '<td>'+st+'</td><td>'+ops+'</td></tr>';
   });
   h+='</table>';
-  if(!rows.length)h='<div style="color:#888;font-size:11px;padding:8px">'+(kw?'没有匹配的玩家':'该服务器暂无角色')+'</div>';
+  if(!rows.length)h='<div style="color:#888;font-size:11px;padding:8px">'+(kw?'没有匹配的玩家':'数据库里还没有角色')+'</div>';
   h+='<div class="row" style="margin-top:6px">'+
     '<button class="sm blue" '+(page<=1?'disabled':'')+' onclick="plGoto('+(page-1)+')">上一页</button>'+
-    '<span style="font-size:11px;color:#888">第 '+page+'/'+pages+' 页，共 '+total+' 个角色'+(kw?'（筛选: '+esc(kw)+'）':'')+'</span>'+
+    '<span style="font-size:11px;color:#888">第 '+page+'/'+pages+' 页，共 '+total+' 个角色（'+(scope==='all'?'全部服务器':'当前所选服务器')+'，含离线）'+(kw?'（筛选: '+esc(kw)+'）':'')+'</span>'+
     '<button class="sm blue" '+(page>=pages?'disabled':'')+' onclick="plGoto('+(page+1)+')">下一页</button></div>';
   list.innerHTML=h;
 }
@@ -347,19 +368,21 @@ function plGoto(p){
   loadAllPlayers();
 }
 
-async function viewPlayer(id){
-  const r=await call('player',{id});
+// sid 可选：从「全部玩家」（跨服列表）点进来时指向该角色所属服务器
+async function viewPlayer(id,sid){
+  const r=await call('player',sid?{id:id,sid:parseInt(sid)}:{id:id});
   const d=document.getElementById('pl_detail');
   if(!r.ok){d.innerHTML=M(r.msg,'err');return}
   const p=r.data||{};
+  var psid=parseInt(sid)||_currentSid;
   const eq=p.equipment?p.equipment.filter(Boolean).map(function(e){return e.name}).join(', '):'无';
   const inv=(p.inventory||[]).slice(0,10).map(function(i){return i.name+'x'+(i.count||1)}).join(', ');
   d.innerHTML='<div class="card" id="player_edit_card">'+
     '<div class="row"><h3 style="margin:0">'+p.name+' [Lv'+p.level+'] '+(p.title||'')+'</h3>'+
-    '<button class="green" onclick="savePlayerEdit(\''+p.id+'\')">💾 保存修改</button>'+
-    '<button onclick="viewPlayer(\''+p.id+'\')">🔄 刷新</button>'+
-    '<button class="orange" onclick="kickPlayer(\''+p.id+'\',\''+(p.name||'')+'\')">⚡ 踢下线</button>'+
-    '<button class="red" onclick="deletePlayer(\''+p.id+'\',\''+(p.name||'')+'\')">🗑️ 删除角色</button></div>'+
+    '<button class="green" onclick="savePlayerEdit(\''+p.id+'\','+psid+')">💾 保存修改</button>'+
+    '<button onclick="viewPlayer(\''+p.id+'\','+psid+')">🔄 刷新</button>'+
+    '<button class="orange" onclick="kickPlayer(\''+p.id+'\',\''+(p.name||'')+'\','+psid+')">⚡ 踢下线</button>'+
+    '<button class="red" onclick="deletePlayer(\''+p.id+'\',\''+(p.name||'')+'\','+psid+')">🗑️ 删除角色</button></div>'+
     '<div class="row"><span>HP:</span><input id="pe_hp" value="'+p.hp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_hp" value="'+p.max_hp+'" style="width:70px" type="number"></div>'+
     '<div class="row"><span>MP:</span><input id="pe_mp" value="'+p.mp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_mp" value="'+p.max_mp+'" style="width:70px" type="number"></div>'+
     '<div class="row"><span>攻:</span><input id="pe_gj" value="'+p.gj+'" style="width:70px" type="number"><span>防:</span><input id="pe_fy" value="'+p.fy+'" style="width:70px" type="number"><span>敏:</span><input id="pe_mz" value="'+p.mz+'" style="width:70px" type="number"><span>闪:</span><input id="pe_ds" value="'+p.ds+'" style="width:70px" type="number"><span>招:</span><input id="pe_zj" value="'+p.zj+'" style="width:70px" type="number"></div>'+
@@ -370,27 +393,28 @@ async function viewPlayer(id){
     '<div id="pe_msg"></div></div>';
 }
 
-async function savePlayerEdit(id){
+async function savePlayerEdit(id,sid){
   var data={id:id};
   var fields=['hp','max_hp','mp','max_mp','gj','fy','mz','ds','zj','exp','pot','money'];
   fields.forEach(function(f){var el=document.getElementById('pe_'+f);if(el)data[f]=parseInt(el.value)||0});
+  if(sid)data.sid=parseInt(sid);
   var r=await call('player_update',data);
   document.getElementById('pe_msg').innerHTML=M(r.msg||(r.ok?'已保存':'失败'),r.ok?'ok':'err');
-  if(r.ok)setTimeout(function(){viewPlayer(id)},500);
+  if(r.ok)setTimeout(function(){viewPlayer(id,sid)},500);
 }
 
-// 踢玩家下线
-async function kickPlayer(id,name){
+// 踢玩家下线（sid 可选：跨服「全部玩家」列表里点进来的角色要发给它自己那台游戏服）
+async function kickPlayer(id,name,sid){
   if(!confirm('确定将玩家 '+(name||id)+' 踢下线？'))return;
-  var r=await call('player_kick',{playerId:id});
+  var r=await call('player_kick',sid?{playerId:id,sid:parseInt(sid)}:{playerId:id});
   alert(r.msg||(r.ok?'已踢下线':'操作失败'));
   if(r.ok)loadPanel('players');
 }
 
-// 删除角色（在线/离线均可，数据备份到players_bak）
-async function deletePlayer(id,name){
+// 删除角色（在线/离线均可，数据备份到players_bak；sid 可选，同上）
+async function deletePlayer(id,name,sid){
   if(!confirm('⚠️ 确定删除角色 '+(name||id)+' ？\n原数据将备份到 players_bak，删除后玩家无法再使用该角色！'))return;
-  var r=await call('player_delete',{playerId:id});
+  var r=await call('player_delete',sid?{playerId:id,sid:parseInt(sid)}:{playerId:id});
   alert(r.msg||(r.ok?'已删除':'操作失败'));
   if(r.ok)loadPanel('players');
 }
@@ -406,7 +430,17 @@ async function deleteOfflinePlayer(){
   if(r.ok&&el){el.value='';loadPanel('players')}
 }
 
-function gotoGive(id){document.getElementById('give_player').value=id;loadPanel('items')}
+// 跳到发放面板并预填玩家；sid 可选：从跨服「全部玩家」列表点进来时先把后台切到该角色所属服务器，
+// 后续的发放/回收才会发给正确的游戏服。
+function gotoGive(id,sid){
+  if(sid){
+    _currentSid=parseInt(sid)||_currentSid;
+    var sel=document.getElementById('server_sel');
+    if(sel)sel.value=_currentSid;
+  }
+  document.getElementById('give_player').value=id;
+  loadPanel('items');
+}
 
 // Load full NPC data for editing — with fallback
 async function editNpc(path){

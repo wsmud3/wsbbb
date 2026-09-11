@@ -184,7 +184,7 @@ function handleRequest(req, res) {
                     if (u && u.is_player) online++;
                 }
                 var fallback = function () {
-                    sendJSON(res, { ok: true, data: { totalPlayers: 0, totalUsers: 0, active7: 0, active30: 0, todayNew: 0, online: online } });
+                    sendJSON(res, { ok: true, data: { totalPlayers: 0, totalUsers: 0, active7: 0, active30: 0, todayNew: 0, totalPlayersSid: 0, active7Sid: 0, active30Sid: 0, todayNewSid: 0, sid: WORLD.SERVERID, online: online } });
                 };
                 try {
                     // 复用 data/sql.js 的统计查询（与 web 后台完全一致）
@@ -194,11 +194,18 @@ function handleRequest(req, res) {
                         sendJSON(res, {
                             ok: true,
                             data: {
+                                // totalPlayers/active7/active30/todayNew：全部服务器（含离线角色）的注册与活跃，与在线无关
                                 totalPlayers: s.totalPlayers || 0,
                                 totalUsers: s.totalUsers || 0,
                                 active7: s.active7 || 0,
                                 active30: s.active30 || 0,
                                 todayNew: s.todayNew || 0,
+                                // *Sid：当前这个服务器的分服数值
+                                totalPlayersSid: s.totalPlayersSid || 0,
+                                active7Sid: s.active7Sid || 0,
+                                active30Sid: s.active30Sid || 0,
+                                todayNewSid: s.todayNewSid || 0,
+                                sid: WORLD.SERVERID,
                                 online: online
                             }
                         });

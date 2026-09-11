@@ -151,7 +151,15 @@ function reload_api(req, res) {
     }
 }
 app.post("/reload", reload_api);
-app.use("/admin", express.static(path.join(__dirname, 'www', 'admin')));
+app.use("/admin", express.static(path.join(__dirname, 'www', 'admin'), {
+    // 后台页面是手写的单文件 HTML：入口禁止缓存，避免浏览器/APK WebView 一直用旧页面
+    // （旧页面会把「注册」显示成在线人数、也没有「全部玩家」列表）。
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        }
+    }
+}));
 
 const http = require('http');
 const net = require('net');

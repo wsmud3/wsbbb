@@ -15,7 +15,10 @@ async function main() {
         assert.equal((await sql.getPlayerStats(200)).active7, 0);
         sql.saveRoleSync({id:'fixture',userid:1,name:'合并测试',title:'',level:1,data:'{}'});
         assert.equal((await sql.getPlayerStats(200)).active7, 1, 'synchronous saves must refresh activity too');
-        assert.equal((await sql.getPlayerStats(100)).totalPlayers, 0);
+        // 后台状态栏的「注册玩家」按全部服务器统计（含离线角色），分服数值看 *Sid 字段
+        assert.equal((await sql.getPlayerStats(100)).totalPlayersSid, 0, 'per-server registration count stays isolated');
+        assert.equal((await sql.getPlayerStats(100)).totalPlayers, 1, 'registration total spans every server');
+        assert.equal((await sql.getPlayerStats(200)).totalPlayersSid, 1);
         assert.equal(await sql.countPlayers(200, '合并'), 1);
         assert.equal(await sql.countPlayers(200, "' OR 1=1 --"), 0);
         assert.equal((await sql.listPlayers(200, '', 50, 0))[0].id, 'fixture');

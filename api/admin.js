@@ -529,6 +529,8 @@ class AdminAPI extends APIBASE {
 
 
     // POST /api/admin/stats — 玩家统计（注册角色/活跃/在线，数据来自数据库，游戏服离线也可用）
+    // 口径说明：totalPlayers / active7 / active30 / todayNew / totalUsers 为【全部服务器】的数据库统计，
+    // 与游戏进程是否在线、当前选了哪个服都无关（含离线角色）；*Sid 结尾的是当前所选服务器的分服数值。
     async stats(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         var sid = this._sid(params);
@@ -543,47 +545,69 @@ class AdminAPI extends APIBASE {
             return {
                 ok: true,
                 data: {
-                    totalPlayers: s.totalPlayers || 0,   // 注册角色数
-                    totalUsers: s.totalUsers || 0,       // 注册账号数
-                    active7: s.active7 || 0,             // 近7日活跃
-                    active30: s.active30 || 0,           // 近30日活跃
-                    todayNew: s.todayNew || 0,           // 今日新增角色
-                    online: online,                      // 当前在线
+                    totalPlayers: s.totalPlayers || 0,       // 注册玩家数（全部服务器，含离线）
+                    totalUsers: s.totalUsers || 0,           // 注册账号数
+                    active7: s.active7 || 0,                 // 近7日活跃（全部服务器）
+                    active30: s.active30 || 0,               // 近30日活跃（全部服务器）
+                    todayNew: s.todayNew || 0,               // 今日新增角色（全部服务器）
+                    totalPlayersSid: s.totalPlayersSid || 0, // 当前服注册角色数
+                    active7Sid: s.active7Sid || 0,           // 当前服近7日活跃
+                    active30Sid: s.active30Sid || 0,         // 当前服近30日活跃
+                    todayNewSid: s.todayNewSid || 0,         // 当前服今日新增
+                    sid: sid,
+                    online: online,                          // 当前在线（仅当前服，需要游戏进程）
                     connectCount: connectCount,
                     gameOnline: gameOnline
                 }
             };
-        } catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
+        } catch (e) {
+            // 本地库查询失败（如两进程同时写库）：退回游戏进程统计，它查的是同一个库，
+            // 这样注册/活跃也不会因为一次查询失败就掉成 0。
+            try {
+                var r2 = await ipcCall('POST', '/api/stats', {}, sid);
+                if (r2 && r2.ok && r2.data) return { ok: true, data: r2.data, fallback: true };
+            } catch (e2) { /* 游戏服也离线 */ }
+            return { ok: false, msg: '查询失败: ' + e.message };
+        }
     }
 
     // POST /api/admin/players_all — 全部角色列表（含离线），支持关键词与分页
+    // 默认 scope=all：跨全部服务器的注册角色（后台「全部玩家」面板用）；scope=server 时只看当前所选服务器。
     async players_all(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         var sid = this._sid(params);
+        var scope = String(params.scope || 'all').toLowerCase() === 'server' ? 'server' : 'all';
+        var allServers = scope === 'all';
         var keyword = String(params.keyword === undefined || params.keyword === null ? '' : params.keyword).trim();
         var page = Math.max(1, parseInt(params.page) || 1);
         var size = Math.min(200, Math.max(1, parseInt(params.size) || 50));
+        var offset = (page - 1) * size;
         try {
-            var total = await DB.countPlayers(sid, keyword);
-            var rows = await DB.listPlayers(sid, keyword, size, (page - 1) * size);
-            // 标注在线状态（游戏服离线时全部按离线显示）
-            var onlineIds = {};
-            try {
-                var on = await ipcCall('GET', '/api/online', null, sid);
-                if (Array.isArray(on)) {
-                    for (var i = 0; i < on.length; i++) onlineIds[on[i].id] = true;
-                }
-            } catch (e) { /* 游戏服离线 */ }
+            var total = allServers ? await DB.countPlayersAll(keyword) : await DB.countPlayers(sid, keyword);
+            var rows = allServers ? await DB.listPlayersAll(keyword, size, offset)
+                : await DB.listPlayers(sid, keyword, size, offset);
+            // 逐服取在线名单（游戏服离线时该服角色全部按离线显示）；同一页的行可能来自不同服务器
+            var sids = [];
+            (rows || []).forEach(function (r) { if (sids.indexOf(r.sid) < 0) sids.push(r.sid); });
+            var onlineBySid = {};
+            await Promise.all(sids.map(function (s) {
+                return ipcCall('GET', '/api/online', null, s).then(function (on) {
+                    var ids = {};
+                    if (Array.isArray(on)) for (var i = 0; i < on.length; i++) ids[on[i].id] = true;
+                    onlineBySid[s] = ids;
+                }).catch(function () { onlineBySid[s] = {}; });
+            }));
             var list = (rows || []).map(function (r) {
+                var ids = onlineBySid[r.sid] || {};
                 return {
                     id: r.id, name: r.name, userid: r.userid, level: r.level || 0,
                     title: r.title || '', create_time: r.create_time, update_time: r.update_time,
-                    online: !!onlineIds[r.id]
+                    sid: r.sid, online: !!ids[r.id]
                 };
             });
-            return { ok: true, data: { total: total || 0, page: page, size: size, list: list } };
+            return { ok: true, data: { total: total || 0, page: page, size: size, scope: scope, sid: sid, list: list } };
         } catch (e) {
-            return { ok: false, msg: '查询失败: ' + e.message, data: { total: 0, page: page, size: size, list: [] } };
+            return { ok: false, msg: '查询失败: ' + e.message, data: { total: 0, page: page, size: size, scope: scope, sid: sid, list: [] } };
         }
     }
 

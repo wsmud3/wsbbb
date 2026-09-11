@@ -138,6 +138,8 @@ module.exports = {
         return db.query("update players set update_time=CURRENT_TIMESTAMP where id=?", [id]);
     },
     // 后台统计：注册角色数 / 7日、30日活跃 / 今日新增 / 注册账号数
+    // 全部读数据库，与游戏进程是否在线无关；同时给出"全部服务器"与"当前服务器"两套数值：
+    // 后台状态栏的「注册玩家」取 *全部服务器* 的口径（含离线角色），不随在线人数变化。
     getPlayerStats: function (sid) {
         const now = Date.now();
         const d7 = sqlTime(now - 7 * 86400000);
@@ -147,12 +149,18 @@ module.exports = {
         const dayStart = sqlTime(t0.getTime());
         return db.get(
             "select " +
-            "(select count(*) from players where sid=?) as totalPlayers, " +
-            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active7, " +
-            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active30, " +
-            "(select count(*) from players where sid=? and create_time>=?) as todayNew, " +
-            "(select count(*) from users) as totalUsers",
-            [sid, sid, d7, sid, d30, sid, dayStart]);
+            // —— 全部服务器（不分 sid，含离线）——
+            "(select count(*) from players) as totalPlayers, " +
+            "(select count(*) from players where coalesce(update_time,create_time)>=?) as active7, " +
+            "(select count(*) from players where coalesce(update_time,create_time)>=?) as active30, " +
+            "(select count(*) from players where create_time>=?) as todayNew, " +
+            "(select count(*) from users) as totalUsers, " +
+            // —— 当前所选服务器 ——
+            "(select count(*) from players where sid=?) as totalPlayersSid, " +
+            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active7Sid, " +
+            "(select count(*) from players where sid=? and coalesce(update_time,create_time)>=?) as active30Sid, " +
+            "(select count(*) from players where sid=? and create_time>=?) as todayNewSid",
+            [d7, d30, dayStart, sid, sid, d7, sid, d30, sid, dayStart]);
     },
     // 后台"全部玩家"列表（含离线），keyword 支持角色名/角色ID/账号ID
     listPlayers: function (sid, keyword, limit, offset) {
@@ -171,6 +179,27 @@ module.exports = {
         const params = [sid];
         if (keyword) {
             sql += " and (name like ? or id like ? or cast(userid as text)=?)";
+            params.push('%' + keyword + '%', '%' + keyword + '%', keyword);
+        }
+        return db.get(sql, params).then(function (row) { return (row && row.total) || 0; });
+    },
+    // 后台"全部玩家"（跨全部服务器，含离线角色），keyword 支持角色名/角色ID/账号ID
+    listPlayersAll: function (keyword, limit, offset) {
+        let sql = "select id,name,userid,sid,level,title,create_time,update_time from players";
+        const params = [];
+        if (keyword) {
+            sql += " where (name like ? or id like ? or cast(userid as text)=?)";
+            params.push('%' + keyword + '%', '%' + keyword + '%', keyword);
+        }
+        sql += " order by coalesce(update_time,create_time) desc limit ? offset ?";
+        params.push(limit, offset);
+        return db.all(sql, params);
+    },
+    countPlayersAll: function (keyword) {
+        let sql = "select count(*) as total from players";
+        const params = [];
+        if (keyword) {
+            sql += " where (name like ? or id like ? or cast(userid as text)=?)";
             params.push('%' + keyword + '%', '%' + keyword + '%', keyword);
         }
         return db.get(sql, params).then(function (row) { return (row && row.total) || 0; });
