@@ -101,6 +101,12 @@ USER.prototype.send_commands = function () {
         str.push(",text:" + jsonStr(opts.text));
     if (opts && opts.size)
         str.push(",size:" + JSON.stringify(opts.size));
+    // feedback：浮窗内的提示行（失败原因、消耗说明等），不再往主消息栏推
+    if (opts && opts.feedback)
+        str.push(",feedback:" + jsonStr(opts.feedback));
+    // persistent：需要频繁改动的面板（自制装备重铸、自创武学菜单）不自动关闭
+    if (opts && opts.persistent)
+        str.push(",persistent:true");
     str.push("}");
     this.send(str.join(""));
 }
