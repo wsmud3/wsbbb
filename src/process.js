@@ -455,6 +455,12 @@ const Process = {
         for (var i = 0; i < data.items.length; i++) {
             var it = data.items[i];
             if (it.group) html.push("<div class='command-group-title'>", it.group, "</div>");
+            // 空 cmd 不是可点按钮（点了服务器会回「什么？」），直接跳过
+            if (!it.cmd) {
+                if (it.text) html.push(it.text);
+                if (it.br) html.push("<br>");
+                continue;
+            }
             html.push("<span cmd='" + it.cmd + "'>");
             html.push(it.name);
             html.push("</span>");

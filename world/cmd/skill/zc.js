@@ -231,7 +231,9 @@ function zc_row(text, cmds) {
     return html + '</div>';
 }
 function zc_send(me, html, feedback) {
-    me.send_commands("", { html: html, size: "lg", persistent: true, feedback: feedback || "" });
+    // 只传选项对象：argv 从 0 遍历，单独一个对象即可携带 html/text/feedback，
+    // 且不会产生任何按钮（按钮已在 html 里用 cmd 属性写好）。
+    me.send_commands({ html: html, size: "lg", persistent: true, feedback: feedback || "" });
 }
 
 function find_book(me, book_id) {
