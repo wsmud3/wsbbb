@@ -62,5 +62,11 @@ function query_obj_desc(player,obj, type) {
              json.commands.push({ cmd: key, name: obj.actions[key].name });
         }
     }
+    // 带结构化菜单的物品（如自创秘籍：命名/推演/重新命名）：
+    // 由客户端在开启浮窗时把它交给浮窗，关闭浮窗时仍用 desc 里的内联按钮。
+    if (typeof obj.zc_button_defs === 'function') {
+        var defs = obj.zc_button_defs();
+        if (defs && defs.length) json.zc_menu = defs;
+    }
     return JSON.stringify(json);
 }

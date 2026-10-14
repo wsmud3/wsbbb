@@ -517,10 +517,40 @@ this.zc_menu = function () {
     if (args.length) args.push({ text: this.color_name });
     return args;
 };
+// 按钮同时写两种触发方式，以适配两套渲染路径：
+//   - cmd 属性：浮窗(.float-dialog)用事件委托读取它派发，并据此让按钮换行
+//   - 内联 onclick：通过 innerHTML 渲染的面板（背包「查看」走 packet.js show_sub
+//     的 .html(str)）据此派发
+// 只写其中一种都会让另一条路径上的按钮失效——这正是「背包里看秘籍没有推演按钮」的原因。
+function _zc_btn(cmd, label) {
+    return '<span cmd="' + cmd + '" onclick="window.SendCommand(\'' + cmd + '\')" ' +
+        'style="color:gray;border:solid 1px gray;background:black;border-radius:0.25em;' +
+        'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;">' + label + '</span>';
+}
+// zc_menu：给浮窗/结构化菜单用的按钮数据（与 get_desc 里的按钮同源同命令）
+this.zc_button_defs = function () {
+    var defs = [];
+    if (this.zc_state === "blank") defs.push(["zc name " + this.id, "命名"]);
+    if (this.zc_state === "named" || this.zc_state === "completed" || this.zc_state === "deducing") {
+        defs.push(["zc deduce " + this.id, "推演"]);
+        defs.push(["zc rename " + this.id, "重新命名"]);
+    }
+    return defs;
+};
 this.get_desc = function (me) {
     var desc = this.color_name + "\n";
     desc += this.desc + "\n";
 
-    // 按钮改由显示处通过 send_commands 发出（见 look3.js），这里只返回描述文本
+    if (this.zc_state === "blank") {
+        desc += '<div style="text-align:center;margin-top:4px;">';
+        desc += _zc_btn("zc name " + this.id, "命名");
+        desc += '</div>';
+    }
+    if (this.zc_state === "named" || this.zc_state === "completed" || this.zc_state === "deducing") {
+        desc += '<div style="text-align:center;margin-top:4px;">';
+        desc += _zc_btn("zc deduce " + this.id, "推演") + " ";
+        desc += _zc_btn("zc rename " + this.id, "重新命名");
+        desc += '</div>';
+    }
     return desc;
 };
