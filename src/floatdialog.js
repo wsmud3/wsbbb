@@ -1,4 +1,5 @@
 import Dialog from './dialog/base.js';
+import { chatText } from './utils/chat-text.js';
 import {SendCommand} from './client.js';
 
 // 浮动对话窗：把 NPC 对话/交互选项从顶部对话框搬到可拖拽的浮窗，
@@ -91,6 +92,42 @@ const float_css = `
 .float-dialog .fb-actions>.fb-action>.action-name:hover {
     background-color: black;
     color: #FF0000;
+}
+/* 自创武学菜单：分组标题、每行说明 + 行内按钮、标签页 */
+.float-dialog .fb-actions>.fb-action>.action-desc>.zc-group {
+    display: block;
+    margin-top: 0.4em;
+}
+.float-dialog .fb-actions>.fb-action>.action-desc>.zc-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.1em 0;
+}
+.float-dialog .fb-actions>.fb-action>.action-desc>.zc-row>.zc-btns {
+    display: inline-flex;
+    flex-wrap: wrap;
+}
+.float-dialog .fb-actions>.fb-action>.action-desc>.zc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0.5em;
+    padding-top: 0.35em;
+    border-top: 1px solid #2a2a2a;
+}
+.float-dialog .fb-actions>.fb-action>.action-desc>.zc-skillinfo {
+    display: block;
+    line-height: 1.7em;
+}
+/* 提示行：失败原因/消耗说明显示在同一窗口内，不占主消息栏 */
+.float-dialog .fb-actions>.fb-action>.action-desc>.float-msg {
+    display: block;
+    color: #FFAA00;
+    border-left: 2px solid #FF6600;
+    padding: 0.15em 0 0.15em 0.5em;
+    margin-bottom: 0.35em;
+    white-space: pre-wrap;
 }
 .float-dialog-overlay {
     position: fixed;
@@ -308,11 +345,14 @@ const FloatDialog = {
             .replace(/<span\b[^>]*\bcmd="[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
         let htmlSrc = dialog.html || '';
         if (dialog.cmds && dialog.cmds.length) htmlSrc = stripCmdButtons(htmlSrc);
-        let descHTML = dialog.html ? stripInlineOnclick(htmlSrc) : escapeHtml(dialog.text || '');
+        // 说明文字用游戏自带的 chatText()：它保留白名单颜色标签（hiy/hic/HIG…）、
+        // 丢弃所有其它标签与属性。之前用 escapeHtml 会把 <hiy> 变成字面文本，
+        // 既丢了颜色又难读。
+        let descHTML = dialog.html ? stripInlineOnclick(htmlSrc) : chatText(dialog.text || '');
         // 提示行：失败原因/消耗说明等直接显示在窗口里，
         // 这样开启浮窗后这些信息不会再占用主消息栏。
         if (dialog.feedback) {
-            descHTML = "<div class='float-msg'>" + escapeHtml(dialog.feedback) + "</div>" + descHTML;
+            descHTML = "<div class='float-msg'>" + chatText(dialog.feedback) + "</div>" + descHTML;
         }
         if (dialog.cmds.length) {
             descHTML += "<div class='item-commands'>";

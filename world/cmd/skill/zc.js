@@ -215,6 +215,25 @@ function lvlAskBackCmd(skill_id, book_id, position_key) {
     return parts.join(" ");
 }
 
+// ===== 浮窗菜单渲染助手 =====
+// 自创武学的菜单必须**一次成型**：持久浮窗每收到一条新报文就会替换窗口，
+// 因此不能"每个词条发一条消息"，否则只剩最后一条（表现为"没有任何选项"）。
+// 这里统一把按钮与说明拼成一段 HTML，随一条 send_commands 发出。
+function zc_btn_html(cmd, label) {
+    var safeCmd = String(cmd).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    return '<span cmd="' + safeCmd + '" onclick="window.SendCommand(\'' + safeCmd.replace(/'/g, "\\'") + '\')"'
+        + ' style="color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
+        + 'padding:0.25em 0.6em;margin:2px;cursor:pointer;display:inline-block;">' + label + '</span>';
+}
+function zc_row(text, cmds) {
+    var html = '<div class="zc-row">' + text;
+    if (cmds && cmds.length) html += '<span class="zc-btns">' + cmds.join('') + '</span>';
+    return html + '</div>';
+}
+function zc_send(me, html, feedback) {
+    me.send_commands("", { html: html, size: "lg", persistent: true, feedback: feedback || "" });
+}
+
 function find_book(me, book_id) {
     if (!book_id) {
         var items = me.items;
@@ -1504,27 +1523,27 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
 
 
     var wudaoCount = query_wudao_count(me);
-    // 说明文字随菜单进浮窗（开启浮窗后不再占用主消息栏）
-    var wordsFeedback = extraFeedback
+    var head = extraFeedback
         ? String(extraFeedback) + "\n<hiy>════ 词条管理 · " + skill.name + " · " + posLabel + " ════</hiy>\n武道书: " + wudaoCount + "本"
         : "<hiy>════ 词条管理 · " + skill.name + " · " + posLabel + " ════</hiy>\n武道书: " + wudaoCount + "本";
 
+    // 整块菜单一次成型（持久浮窗每次收报文都会替换窗口，分多条发只剩最后一条）
+    var html = "";
+
     // 部位切换（多部位时）
-    if (book.zc_positions.length > 1) {
-        var tabArgs2 = [];
+    if (book.zc_positions && book.zc_positions.length > 1) {
+        var tabs = [];
         for (var ti2 = 0; ti2 < book.zc_positions.length; ti2++) {
             var tpk2 = book.zc_positions[ti2];
             var tlabel2 = (ZC_POSITIONS[tpk2] && ZC_POSITIONS[tpk2].label) || tpk2;
-            tabArgs2.push("zc words " + skill_id + " " + book.id + " " + tpk2);
-            tabArgs2.push(filter_pos === tpk2 ? "<HIG>" + tlabel2 + "</HIG>" : tlabel2);
+            tabs.push(zc_btn_html("zc words " + skill_id + " " + book.id + " " + tpk2,
+                filter_pos === tpk2 ? "<HIG>" + tlabel2 + "</HIG>" : tlabel2));
         }
-        tabArgs2.push({ persistent: true, size: "lg", feedback: wordsFeedback });
-        me.send_commands.apply(me, tabArgs2);
+        html += '<div class="zc-tabs">' + tabs.join('') + '</div>';
     }
 
+    // 已添加词条 —— 一行一个，每行带「升级」「替换」
     var pwords = book.zc_words[filter_pos] || [];
-
-    // 已添加词条 — 一行一个
     if (pwords.length > 0) {
         for (var wi = 0; wi < pwords.length; wi++) {
             var widx = pwords[wi];
@@ -1532,17 +1551,15 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
             var wl = get_wl(word_levels, widx, filter_pos);
             if (!wdef) continue;
 
-            var cost1 = wdef.upgrade_cost(wl + 1);
             var sk_lv = (sk_data && sk_data.level) || 0;
-            var wordVal = wdef.value(sk_lv, book.grade, wl);
-            var valFmt = wdef.format(wordVal);
+            var valFmt = wdef.format(wdef.value(sk_lv, book.grade, wl));
             var colonIdx = valFmt.indexOf("：");
             var valStr = colonIdx >= 0 ? valFmt.substring(colonIdx + 1) : valFmt;
             var extra = "";
             if (skill.mp_to_hp && widx === 506)
                 extra = " <HIC>（内力" + (39 + wl) + "%→气血）</HIC>";
 
-            // 计算可升到的最大等级（防呆：不超过潜能上限，剑心额外攻击上限9次）
+            // 可升到的最大等级（防呆：不超过潜能上限，剑心额外攻击上限 9 次）
             var max_affordable = wl;
             var cum_cost = 0;
             var hard_cap = (widx === 541) ? 269 : 9999;
@@ -1552,22 +1569,22 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
                 max_affordable = test_lv;
             }
 
-            var line = wdef.name + " <HIG>(Lv." + wl + ")</HIG> <HIG>" + valStr + "</HIG>" + extra;
-            me.set_temp("zc_lvl_position", filter_pos);
-            // 词条说明作为提示行，与升级/替换按钮同窗显示
-            me.send_commands(
-                "_confirm lvlset " + skill_id + " " + book.id + " " + widx + " " + wl + " " + max_affordable, "升级",
-                "zc replaceword " + book.id + " " + filter_pos + " " + widx, "替换",
-                { persistent: true, size: "lg", feedback: wordsFeedback + "\n" + line });
+            var text = wdef.name + " <HIG>(Lv." + wl + ")</HIG> <HIG>" + valStr + "</HIG>" + extra;
+            var btns = [];
+            btns.push(zc_btn_html("_confirm lvlset " + skill_id + " " + book.id + " " + widx + " " + wl + " " + max_affordable, "升级"));
+            btns.push(zc_btn_html("zc replaceword " + book.id + " " + filter_pos + " " + widx, "替换"));
+            html += zc_row(text, btns);
         }
     } else {
-
-        me.notify("(暂无词条)");
+        html += '<div class="zc-row"><hic>（暂无词条）</hic></div>';
     }
 
-    // 返回部位管理（保留本次说明，便于同窗对照）
-    me.send_commands("zc posmenu " + book.id + " " + filter_pos, "返回部位管理", "zc abandon " + book.id, "放弃该部位",
-        { persistent: true, size: "lg", feedback: wordsFeedback });
+    // 返回
+    html += '<div class="zc-tabs">' + zc_btn_html("zc posmenu " + book.id + " " + filter_pos, "返回部位管理")
+        + zc_btn_html("zc abandon " + book.id + " " + filter_pos, "放弃该部位") + '</div>';
+
+    me.set_temp("zc_lvl_position", filter_pos);
+    zc_send(me, html, head);
 };
 // ===== levelset: 设置词条等级(提示输入目标等级) =====
 this.cmd_levelset = function (me, skill_id, arg2) {
@@ -2193,22 +2210,23 @@ this.cmd_pfms = function (me, book_id) {
         return me.notify("你身上没有自创秘籍。");
 
     var total = book.get_total_pfms();
-
-    me.notify("<hiy>════ 管理技能 · " + (book.zc_name || book.name) + " ════</hiy>");
+    var head = "<hiy>════ 管理技能 · " + (book.zc_name || book.name) + " ════</hiy>";
 
     if (total === 0) {
-
-        me.notify("(暂无PFM)");
+        zc_send(me, '<div class="zc-row"><hic>（暂无 PFM）</hic></div>' + '<div class="zc-tabs">'
+            + zc_btn_html("zc deduce " + book.id, "返回推演主页") + '</div>', head + "\n（暂无 PFM）");
         return;
     }
 
+    // 一次性拼完整个技能列表（每个 PFM 一行 + 移除/替换）
+    var html = "";
     for (var pi = 0; pi < book.zc_positions.length; pi++) {
         var pk = book.zc_positions[pi];
         var pfms = book.zc_pfms[pk] || [];
         if (pfms.length === 0) continue;
         var posLabel = (ZC_POSITIONS[pk] && ZC_POSITIONS[pk].label) || pk;
 
-        me.notify(" <hic>" + posLabel + "：</hic>");
+        html += '<div class="zc-group"><hic>' + posLabel + '：</hic></div>';
         for (var fi = 0; fi < pfms.length; fi++) {
             var sel = pfms[fi];
             var src = SKILL.get(sel.skill_id);
@@ -2218,19 +2236,15 @@ this.cmd_pfms = function (me, book_id) {
                 pfmName = src.pfm[sel.pfm_key].name;
                 srcName = src.name;
             }
-
-            me.notify("   【" + pfmName + "】（源自" + srcName + "）");
-            me.send_commands(
-                "zc removepfm " + book.id + " " + pk + " " + fi,
-                "移除" + pfmName,
-                "zc replacepfm " + book.id + " " + pk + " " + fi,
-                "替换" + pfmName
-            , { persistent: true, size: "lg" });
+            var btns2 = [
+                zc_btn_html("zc removepfm " + book.id + " " + pk + " " + fi, "移除"),
+                zc_btn_html("zc replacepfm " + book.id + " " + pk + " " + fi, "替换"),
+            ];
+            html += zc_row("【" + pfmName + "】<nor>（源自" + srcName + "）</nor>", btns2);
         }
     }
-
-    me.notify("<hiy>返回：</hiy>");
-    me.send_commands("zc deduce " + book.id, "返回推演主页", { persistent: true, size: "lg" });
+    html += '<div class="zc-tabs">' + zc_btn_html("zc deduce " + book.id, "返回推演主页") + '</div>';
+    zc_send(me, html, head);
 };
 
 // ===== removepfm: 移除PFM =====
@@ -2748,5 +2762,9 @@ this.cmd_skill_info = function (me, skill_id) {
     }
 
 
-    me.notify(lines.join("\n"));
+    // 技能详情改为浮窗卡片（原来 me.notify 会占满主消息栏）
+    // 「返回推演主页」用技能 id 即可（cmd_deduce 会据此找到对应秘籍）
+    zc_send(me, '<div class="zc-skillinfo">' + lines.join("<br>") + '</div><div class="zc-tabs">'
+        + zc_btn_html("zc deduce " + skill_id, "返回推演主页") + '</div>',
+        lines.join("\n"));
 };
