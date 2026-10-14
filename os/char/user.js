@@ -86,8 +86,12 @@ USER.prototype.send_commands = function () {
     var opts = null;
     if (args.length && args[args.length - 1] && typeof args[args.length - 1] === 'object')
         opts = args.pop();
+    // 只有成对出现 (cmd, name) 才是按钮。
+    // 单独一个字符串（例如历史上误写的 send_commands("")）不是按钮——
+    // 若当成按钮会产出 {cmd:""}，客户端渲染出一个空命令按钮，点它服务器会回「什么？」。
+    var pairCount = Math.floor(args.length / 2);
     var str = ["{type:\"cmds\",items:["];
-    for (var i = 0; i < args.length; i += 2) {
+    for (var i = 0; i < pairCount * 2; i += 2) {
         if (i > 0) str.push(",");
         str.push("{cmd:\"");
         str.push(args[i]);
@@ -95,8 +99,11 @@ USER.prototype.send_commands = function () {
         str.push(args[i + 1]);
         str.push("\"}");
     }
-    // 先闭合 items，再追加 text / size（顺序错了会生成非法 JSON）
+    // 先闭合 items，再追加 text / size / html（顺序错了会生成非法 JSON）
     str.push("]");
+    // html：整块富内容（自创武学菜单等），客户端原样内嵌到浮窗
+    if (opts && opts.html)
+        str.push(",html:" + jsonStr(opts.html));
     if (opts && opts.text)
         str.push(",text:" + jsonStr(opts.text));
     if (opts && opts.size)
