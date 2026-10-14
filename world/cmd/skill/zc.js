@@ -1471,7 +1471,8 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
         return;
     }
 
-    if (book.zc_positions.indexOf(filter_pos) < 0)
+    // book.zc_positions 可能缺失（老档/精简数据），缺失即视为尚无部位
+    if (!book.zc_positions || book.zc_positions.indexOf(filter_pos) < 0)
         return me.notify("该部位尚未推演。");
 
     var pos = ZC_POSITIONS[filter_pos];
@@ -1691,11 +1692,11 @@ this.cmd_lvlask = function (me, target_str, rest) {
     if (target > cur_level) {
         var levels = target - cur_level;
         var total_cost = sum_word_cost(wdef, cur_level + 1, target);
-        if (total_cost === null) return me.send_commands(lvlAskBackCmd(skill_id, book_id, position_key), "返回词条",
+        if (total_cost === null) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
             { persistent: true, size: "lg", feedback: "目标等级或升级费用过大，请分段调整。" });
 
         if (me.pot < total_cost) {
-            me.send_commands(lvlAskBackCmd(skill_id, book_id, position_key), "返回词条",
+            me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
                 { persistent: true, size: "lg", feedback: "潜能不足：升级到 Lv." + target + " 需要 " + potStr(total_cost) + "，当前 " + potStr(me.pot) + "。" });
             return;
         }
@@ -1710,11 +1711,11 @@ this.cmd_lvlask = function (me, target_str, rest) {
               feedback: "将词条「" + wdef.name + "」从 Lv." + cur_level + " 升级到 Lv." + target + "，消耗 " + potStr(total_cost) + " 潜能" });
     } else {
         // 降级
-        if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, position_key), "返回词条",
+        if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
             { persistent: true, size: "lg", feedback: "词条最低为 0 级。" });
         var levels = cur_level - target;
         var refund = sum_word_cost(wdef, target + 1, cur_level);
-        if (refund === null) return me.send_commands(lvlAskBackCmd(skill_id, book_id, position_key), "返回词条",
+        if (refund === null) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
             { persistent: true, size: "lg", feedback: "目标等级或返还费用过大，请分段调整。" });
 
         me.set_temp("zc_lvl_skill", skill_id);
@@ -1853,7 +1854,7 @@ this.cmd_lvl = function (me, target_str, rest) {
         return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "词条「" + wdef.name + "」升级到 Lv." + target + "，消耗 " + potStr(total_cost) + " 潜能。");
     } else {
         // 降级
-        if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, position_key), "返回词条",
+        if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
             { persistent: true, size: "lg", feedback: "词条最低为 0 级。" });
         var levels = cur_level - target;
         var refund = sum_word_cost(wdef, target + 1, cur_level);
