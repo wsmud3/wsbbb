@@ -211,6 +211,55 @@
     bottom: 3em;
 }
 
+/* ========================================
+   对话框打开时菜单栏的让位布局
+   由 src/game/menu-layout.js 加类驱动
+   ======================================== */
+
+/* 「重排」：菜单项改为绝对定位，由脚本算出行列坐标 */
+.right-bar.menu-reflow-layout>.tool-item {
+    position: absolute;
+}
+
+/* 「遮蔽」：菜单栏变成可纵向滚动，底部项优先可见 */
+.right-bar.menu-scroll-layout {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+}
+
+.dialog.menu-shield-active {
+    position: relative;
+    z-index: 12;
+}
+
+/* 上方还有未显示的菜单项时，在对话框底边外沿加一道渐隐提示 */
+.dialog.menu-shield-top::after {
+    content: '';
+    position: absolute;
+    z-index: 13;
+    left: 0;
+    right: 0;
+    bottom: -1.75em;
+    height: 1.75em;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+}
+
+/* 下方还有未显示的菜单项时，在底部栏上方加一道渐隐提示 */
+.bottom-bar.menu-scroll-bottom-shield::after {
+    content: '';
+    position: absolute;
+    z-index: 12;
+    right: 0;
+    bottom: var(--menu-scroll-bottom, 3em);
+    width: var(--menu-scroll-width, 3em);
+    height: 1.75em;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+}
+
 .left-bar {
     left: 0px;
     transition-property: bottom;
@@ -237,6 +286,10 @@
     font-weight: bold;
     position: relative;
     border: solid 1px #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .tool-bar>.tool-item:hover {
@@ -293,13 +346,24 @@
 
 
 .bottom-bar>.br-tool {
-    line-height: 2.5em;
+    line-height: 1em;
     top: 0px;
     font-family: 'Glyphicons Halflings';
 }
 
 .bottom-bar>.br-tool::before {
     content: "\e234";
+    display: block;
+    line-height: 1;
+}
+
+/* 「替换」模式下 br-tool 临时充当关闭按钮，不再使用图标字体 */
+.bottom-bar>.br-tool.dialog-close-replacement {
+    font-family: inherit;
+}
+
+.bottom-bar>.br-tool.dialog-close-replacement::before {
+    content: none;
 }
 
 

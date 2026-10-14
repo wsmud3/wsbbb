@@ -23,6 +23,7 @@ import DialogMaster from './master.js';
 import DialogList from './list.js';
 import DialogAutoPfm from './auto_pfm.js';
 import DialogZc from './zc.js';
+import * as MenuLayout from '../game/menu-layout.js';
 
 // These dialogs receive asynchronous model updates from the server. Such an
 // update must never be treated as a request to open/switch the public dialog.
@@ -156,6 +157,7 @@ const Dialog = {
         this.curItem = name;
         if (data) dialog.onData && dialog.onData(data);
         else dialog.show && dialog.show(null);
+        MenuLayout.onDialogOpen();
         Process.message.scroll2end();
     },
     select: function (name) {
@@ -169,6 +171,7 @@ const Dialog = {
         }
         this.init();
         this.curItem = name;
+        MenuLayout.onDialogOpen();
     },
     init: function () {
         if (this.isShow && this.element && !this.element.hasClass("hide")) return;
@@ -232,6 +235,7 @@ const Dialog = {
         $(".content-room").removeClass("hide");
         if (Dialog.element) Dialog.element.addClass("hide");
         else $(".dialog").addClass("hide");
+        MenuLayout.onDialogClose();
     },
     // Disconnect/login can arrive while any child dialog owns detached DOM.
     // Reset the public shell and every child flag atomically so the next server
@@ -281,6 +285,8 @@ const Dialog = {
         $(".dialog>.dialog-header>.dialog-title").empty();
         $(".content-room").removeClass("hide");
         $(".dialog").addClass("hide");
+        // 断线/登录时对话框被强制收起，菜单必须跟着恢复，否则会一直停在遮蔽态
+        MenuLayout.onDialogClose();
     },
     injectStyle: function (css) {
         const style = document.createElement("style");

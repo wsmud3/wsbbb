@@ -35,17 +35,49 @@ const Setting = {
     show_damage: 0,
     no_master: 0,
     no_team: 0,
+    // 打开顶部对话框时右侧菜单栏的让位方式：reflow 重排 / hide 隐藏 / shield 遮蔽 / unchanged 不变
+    w_type: "reflow",
+    // 菜单栏被隐藏时如何提供关闭入口：0 关闭 / 1 额外按钮 / 2 替换底部按钮
+    dlog_cbtn: 0,
+    // 移动端安全距离（刘海屏 / 手势条避让），单位 px
+    top_safe_distance: 0,
+    bottom_safe_distance: 0,
+    // 对话改用可拖拽浮窗显示，避免盖住房间与战斗区域
+    float_dialog: 0,
+    // 浮窗模式下把已搬进浮窗的文字从主消息流撤掉（避免重复显示）
+    float_archive: 0,
     no_load: true,
+    // 只存 localStorage、不下发服务器的界面偏好键
+    localKeys: ["w_type", "dlog_cbtn", "top_safe_distance", "bottom_safe_distance", "float_dialog", "float_archive"],
     load: function (data) {
         Dialog.keys.init_key();
         Dialog.extend.init_extend();
-        if (!data) return;
-        for (var key in data) {
-            if (key == "fullscreen") {
+        if (data) {
+            for (var key in data) {
+                if (key == "fullscreen") {
+                    continue;
+                }
+                this.set_prop(key, data[key]);
+                this[key] = data[key];
+            }
+        }
+        this.loadLocal();
+    },
+    // 纯前端的界面偏好存在 localStorage，不必为每次切换往返服务器，
+    // 也不占用服务端存档字段。
+    loadLocal: function () {
+        var keys = Setting.localKeys;
+        for (var i = 0; i < keys.length; i++) {
+            var val = localStorage.getItem("ui_" + keys[i]);
+            if (val === null || val === undefined) continue;
+            if (typeof this[keys[i]] === "number") {
+                val = Number(val);
+                if (!isFinite(val)) continue;
+            } else if (val === "") {
                 continue;
             }
-            this.set_prop(key, data[key]);
-            this[key] = data[key];
+            this[keys[i]] = val;
+            this.set_prop(keys[i], val);
         }
     }, set_prop: function (key, value) {
         switch (key) {
@@ -149,6 +181,23 @@ const Setting = {
                     Process.ChannelElement.show();
                 }
                 break;
+            case "w_type":
+            case "dlog_cbtn":
+                // 菜单让位策略变了，请求菜单布局模块重新测量（同一帧内合并）
+                window.dispatchEvent(new Event("menu-layout-change"));
+                break;
+            case "float_dialog":
+                // float_archive 只在浮窗模式开启时才有意义
+                var archiveItem = $(".setting-item[for=float_archive]");
+                if (value == 1) archiveItem.show();
+                else archiveItem.hide();
+                break;
+            case "top_safe_distance":
+                $(".container").css("padding-top", value + "px");
+                break;
+            case "bottom_safe_distance":
+                $(".container").css("padding-bottom", value + "px");
+                break;
 
         }
     },
@@ -156,7 +205,12 @@ const Setting = {
         this[key] = value;
 
         this.set_prop(key, value);
-        SendCommand("setting " + key + " " + value);
+        // 界面偏好只存本地，不下发服务器（服务端不认识这些键）
+        if (Setting.localKeys.indexOf(key) >= 0) {
+            localStorage.setItem("ui_" + key, value);
+        } else {
+            SendCommand("setting " + key + " " + value);
+        }
     },
     launchFullScreen: function (element) {
         element = element || document.documentElement;

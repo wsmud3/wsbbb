@@ -6,10 +6,16 @@ let bottom_tools = null;
 let ToolState = 0;
 let ToolOpacity = 0;
 let ToolSpeed = 0;
+// 动画进行中到达的请求不能直接丢弃，否则菜单会停在中间态。
+// 记下待办，等当前动画结束后立即兑现。
+let PendingHide = false;
+let PendingShow = false;
 
 export function InitTools() {
     if (!tools) {
-        tools = $(".right-bar>.tool-item");
+        // 对话框被菜单布局遮蔽时插入的关闭按钮不参与菜单显隐动画，
+        // 否则它会被一起淡出/display:none，遮蔽态下玩家就关不掉窗口了。
+        tools = $(".right-bar>.tool-item:not(.dialog-close-tool)");
         hideTool = $(".br-tool");
         bottom_tools = $('.bottom-bar>.tool-item');
     }
@@ -35,6 +41,29 @@ export function ShowTools() {
     ToolState = 1;
 }
 
+// 菜单显隐的安全入口：动画中调用时排队，而不是被 ShowTools 的
+// `if (ToolState == 1) return` 静默丢弃。
+export function HideTools() {
+    InitTools();
+    if (ToolState == 0) return;
+    if (ToolState == 1) {
+        PendingHide = true;
+        return;
+    }
+    ShowTools();
+}
+
+export function OpenTools() {
+    InitTools();
+    PendingHide = false;
+    if (ToolState == 2) return;
+    if (ToolState == 1) {
+        PendingShow = true;
+        return;
+    }
+    ShowTools();
+}
+
 export function ShowToolsAnimate(type) {
     if (type == 0) {
         ToolOpacity = ToolOpacity + ToolSpeed;
@@ -51,6 +80,11 @@ export function ShowToolsAnimate(type) {
             window.setTimeout(ShowToolsAnimate.bind(null, type), 100);
         } else {
             ToolState = 2;
+            PendingShow = false;
+            if (PendingHide) {
+                PendingHide = false;
+                ShowTools();
+            }
         }
     } else {
         ToolOpacity = ToolOpacity - ToolSpeed;
@@ -67,8 +101,13 @@ export function ShowToolsAnimate(type) {
             window.setTimeout(ShowToolsAnimate.bind(null, type), 100);
         } else {
             ToolState = 0;
+            PendingHide = false;
             for (var i = 0; i < tools.length; i++) {
                 tools[i].style.display = "none";
+            }
+            if (PendingShow) {
+                PendingShow = false;
+                ShowTools();
             }
         }
     }
