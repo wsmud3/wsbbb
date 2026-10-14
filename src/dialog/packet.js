@@ -1,5 +1,4 @@
 import Setting from '../setting.js';
-import FloatDialog from '../floatdialog.js';
 import Util from '../utils/util.js';
 import SCRIPT from '../script.js';
 import Combat from '../combat.js';
@@ -169,8 +168,11 @@ export default {
             var rcHtml = str.join("");
             // 浮窗开启时整块搬进浮窗（富内容走 html 字段，原样内嵌），
             // 不再占用主消息栏；关闭浮窗或浮窗不可用时保持原行为。
-            if (Setting.float_dialog == 1 && typeof FloatDialog !== 'undefined') {
-                FloatDialog.add("", { type: 'cmds', html: rcHtml, items: [], size: 'lg' });
+            // 浮窗由 window.FloatDialog 提供（不 import，避免 floatdialog 与 dialog/base 的循环依赖
+            // 导致 Dialog 尚未初始化就被访问，进而整个前端白屏）
+            var _fd = typeof window !== 'undefined' ? window.FloatDialog : null;
+            if (Setting.float_dialog == 1 && _fd && typeof _fd.add === 'function') {
+                _fd.add("", { type: 'cmds', html: rcHtml, items: [], size: 'lg' });
                 return;
             }
             // Push to main message area instead of dialog sub-view

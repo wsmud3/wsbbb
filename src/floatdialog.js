@@ -603,4 +603,9 @@ const FloatDialog = {
     }
 };
 
+// 挂到全局：dialog/packet.js 需要在不 import 本模块的前提下使用浮窗
+// （直接 import 会形成 floatdialog → dialog/base → packet → floatdialog 循环，
+//  使 Dialog 在初始化中途为 undefined，顶层抛错导致白屏）
+if (typeof window !== 'undefined') window.FloatDialog = FloatDialog;
+
 export default FloatDialog;
