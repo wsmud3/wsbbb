@@ -283,6 +283,7 @@ const FloatDialog = {
             html: cmdsData.html || '',
             cmds: cmdsData.items || [],
             size: cmdsData.size || '',
+            feedback: cmdsData.feedback || '',
             // 持久浮窗：频繁改动的面板（自制装备重铸等）点按钮不关闭、不自动收起，
             // 只有点「忽略」才收进待处理队列。折叠态也因此能在同一窗口内保持。
             persistent: cmdsData.persistent === true,
@@ -308,6 +309,11 @@ const FloatDialog = {
         let htmlSrc = dialog.html || '';
         if (dialog.cmds && dialog.cmds.length) htmlSrc = stripCmdButtons(htmlSrc);
         let descHTML = dialog.html ? stripInlineOnclick(htmlSrc) : escapeHtml(dialog.text || '');
+        // 提示行：失败原因/消耗说明等直接显示在窗口里，
+        // 这样开启浮窗后这些信息不会再占用主消息栏。
+        if (dialog.feedback) {
+            descHTML = "<div class='float-msg'>" + escapeHtml(dialog.feedback) + "</div>" + descHTML;
+        }
         if (dialog.cmds.length) {
             descHTML += "<div class='item-commands'>";
             for (var i = 0; i < dialog.cmds.length; i++) {
