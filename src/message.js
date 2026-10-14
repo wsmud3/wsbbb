@@ -55,6 +55,50 @@ const MessageQueue = {
         page.append(x + "\n");
         this.count++;
     },
+    /**
+     * 弹出并返回最后一条消息。
+     * 约定：push 写入的是 "msg\n"，因此页面内最后一个 \n 是结尾符，
+     * 倒数第二个 \n 之前的内容需要保留。
+     */
+    pop: function () {
+        if (!this.pages.length) return null;
+        let lastPage = this.pages[this.pages.length - 1];
+        let html = lastPage.html();
+        if (!html) {
+            lastPage.remove();
+            this.pages.pop();
+            return this.pop();
+        }
+        // 页面内容形如 "msg1\nmsg2\n...\nlastMsg\n"
+        let lastNL = html.lastIndexOf("\n");
+        if (lastNL < 0) {
+            let popped = html;
+            lastPage.remove();
+            this.pages.pop();
+            this.count = 0;
+            return popped;
+        }
+        // 去掉结尾的 \n，得到 "msg1\nmsg2\n...\nlastMsg"
+        let beforeTrailing = html.substring(0, lastNL);
+        // 找 lastMsg 前面的 \n
+        let prevNL = beforeTrailing.lastIndexOf("\n");
+        let popped;
+        if (prevNL >= 0) {
+            // popped = "lastMsg"，页面保留 "msg1\nmsg2\n...\n"
+            popped = beforeTrailing.substring(prevNL + 1);
+            lastPage.html(beforeTrailing.substring(0, prevNL + 1));
+        } else {
+            // 页面只有一条消息，整页清空
+            popped = beforeTrailing;
+            lastPage.html("");
+        }
+        this.count = Math.max(0, this.count - 1);
+        if (!lastPage.html().trim() && this.pages.length > 1) {
+            lastPage.remove();
+            this.pages.pop();
+        }
+        return popped;
+    },
     clear: function () {
         for (let item of this.pages) {
             item.remove();

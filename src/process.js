@@ -1,5 +1,6 @@
 
 import MessageQueue from './message.js';
+import FloatDialog from './floatdialog.js';
 import { connectServer, hide2show, isConnected, onLogin, SendCommand, showLoader, GameClient } from './client.js';
 import Combat from './combat.js';
 import Setting from './setting.js';
@@ -434,12 +435,30 @@ const Process = {
         Combat.ShowActions(data);
     }, cmds: function (data) {
         if (!data.items) return;
+        // 浮窗模式：把触发它的那段对话文字搬进浮窗，而不是占着主消息流
+        if (Setting.float_dialog == 1) {
+            var text = Process._lastMessageText || "";
+            Process._lastMessageText = "";
+            if (Setting.float_archive == 1 && text) {
+                // 开启归档时，把已搬进浮窗的行从消息流撤掉，避免重复显示
+                var lines = text.split("\n");
+                for (var li = 0; li < lines.length; li++) {
+                    Process.message.pop();
+                }
+            }
+            FloatDialog.add(text, data);
+            return;
+        }
         var html = ["<div class='item-commands'>"];
         if (!data.items.length) data.items = [data.items];
         for (var i = 0; i < data.items.length; i++) {
-            html.push("<span cmd='" + data.items[i].cmd + "'>");
-            html.push(data.items[i].name);
+            var it = data.items[i];
+            if (it.group) html.push("<div class='command-group-title'>", it.group, "</div>");
+            html.push("<span cmd='" + it.cmd + "'>");
+            html.push(it.name);
             html.push("</span>");
+            if (it.text) html.push(it.text);
+            if (it.br) html.push("<br>");
         }
         html.push("</div>");
         ReceiveMessage(html.join(""));

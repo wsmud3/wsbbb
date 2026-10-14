@@ -183,6 +183,8 @@ export function ReceiveMessage(x) {
     } catch (e) {
         console.error("[message] filter failed", e);
     }
+    // 浮窗模式需要把触发对话的那段文字搬进浮窗，这里留一份原文
+    Process._lastMessageText = x;
     Process.message.push(x);
     Process.message.scroll2end();
     try {

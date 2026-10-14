@@ -318,6 +318,30 @@ const setting_template = `
                     </span>
                 </span>
             </div>
+            <div class="setting-item" for="float_dialog">
+                <span class="title">
+                    对话选项显示为浮动窗口
+                </span>
+                <span class="switch">
+                    <span class="switch-button">
+                    </span>
+                    <span class="switch-text">
+                        关
+                    </span>
+                </span>
+            </div>
+            <div class="setting-item" style="display:none" for="float_archive">
+                <span class="title">
+                    浮动窗口同时归档原文字
+                </span>
+                <span class="switch">
+                    <span class="switch-button">
+                    </span>
+                    <span class="switch-text">
+                        关
+                    </span>
+                </span>
+            </div>
 
             <div class="setting-item" for="show_roomitem">
                 <span class="title">

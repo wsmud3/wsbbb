@@ -42,9 +42,13 @@ const Setting = {
     // 移动端安全距离（刘海屏 / 手势条避让），单位 px
     top_safe_distance: 0,
     bottom_safe_distance: 0,
+    // 对话改用可拖拽浮窗显示，避免盖住房间与战斗区域
+    float_dialog: 0,
+    // 浮窗模式下把已搬进浮窗的文字从主消息流撤掉（避免重复显示）
+    float_archive: 0,
     no_load: true,
     // 只存 localStorage、不下发服务器的界面偏好键
-    localKeys: ["w_type", "dlog_cbtn", "top_safe_distance", "bottom_safe_distance"],
+    localKeys: ["w_type", "dlog_cbtn", "top_safe_distance", "bottom_safe_distance", "float_dialog", "float_archive"],
     load: function (data) {
         Dialog.keys.init_key();
         Dialog.extend.init_extend();
@@ -181,6 +185,12 @@ const Setting = {
             case "dlog_cbtn":
                 // 菜单让位策略变了，请求菜单布局模块重新测量（同一帧内合并）
                 window.dispatchEvent(new Event("menu-layout-change"));
+                break;
+            case "float_dialog":
+                // float_archive 只在浮窗模式开启时才有意义
+                var archiveItem = $(".setting-item[for=float_archive]");
+                if (value == 1) archiveItem.show();
+                else archiveItem.hide();
                 break;
             case "top_safe_distance":
                 $(".container").css("padding-top", value + "px");
