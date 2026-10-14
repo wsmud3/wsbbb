@@ -43,6 +43,74 @@ const FAMS_TATAS = ['WUDANG', 'HUASHAN', 'SHAOLIN',
     };
 })();
 
+// 取角色归属清单遇到异常时缓存 null（表示"未知"）一小段时间，避免启动期或数据库
+// 故障时反复查询。未知期间不做任何剔除。
+let _fb_local_roles = { at: 0, ids: null };
+function collect_local_ids(sid) {
+    const now = Date.now();
+    if (_fb_local_roles.ids && now - _fb_local_roles.at < 60000) return _fb_local_roles.ids;
+    if (_fb_local_roles.ids === null && now - _fb_local_roles.at < 5000) return null;
+    try {
+        const roles = WORLD.DB.getLocalRoles(sid);
+        if (!Array.isArray(roles)) return null;
+        _fb_local_roles = { at: now, ids: new Set(roles.map(r => String(r.id))) };
+        return _fb_local_roles.ids;
+    } catch (e) {
+        _fb_local_roles = { at: now, ids: null };
+        console.error('本服角色清单读取失败，本次跳过跨服数据自检：', e && e.message);
+        return null;
+    }
+}
+// 世界档案里的排行榜/称号只应包含本服角色。跨服访问或转服遗留会让宿主服档案
+// 里出现他服角色（表现为测试服角色出现在正式服排行榜）。取不到角色 id 就无法判断
+// 归属，此时一律不剔除，宁可保留也不误删。
+function sanitize_foreign_stats(stats, sid) {
+    const local = collect_local_ids(sid);
+    if (!local) return 0;
+    // 空 id 视为无归属（占位条目）→ 丢弃；查不到的角色也丢弃，但 local 集合是
+    // "本服全部角色"，因此正常本服角色不会受影响。
+    const belongs = (id) => {
+        if (id === undefined || id === null || id === '') return false;
+        return local.has(String(id));
+    };
+    let removed = 0;
+    // 显式列出榜单字段：注意主榜字段名是大写 TOPS，不能用大小写敏感的前缀正则匹配。
+    const topKeys = ['TOPS'];
+    for (const key in stats) {
+        if (key.length > 5 && key.slice(0, 5) === 'tops_' && Array.isArray(stats[key])) topKeys.push(key);
+    }
+    for (const key of topKeys) {
+        const list = stats[key];
+        if (!Array.isArray(list)) continue;
+        for (const top of list) {
+            if (!top || !top.userid || belongs(top.userid)) continue;
+            // 保留名次占位，只把归属信息清空，避免打乱后续名次计算。
+            top.userid = null;
+            top.name = '武林高手';
+            top.title = null;
+            removed++;
+        }
+    }
+    if (stats.SC_STATS && typeof stats.SC_STATS === 'object') {
+        for (const fam in stats.SC_STATS) {
+            const list = stats.SC_STATS[fam];
+            if (!Array.isArray(list)) continue;
+            stats.SC_STATS[fam] = list.filter(x => !x || belongs(x.id ?? x.userid));
+            removed += list.length - stats.SC_STATS[fam].length;
+        }
+    }
+    for (const key of ['SCORE', 'SC']) {
+        const list = stats[key];
+        if (!Array.isArray(list)) continue;
+        stats[key] = list.filter(x => !x || belongs(x.id ?? x.userid));
+        removed += list.length - stats[key].length;
+    }
+    return removed;
+}
+// 仅供 tools/test_server_isolation.js 直接引用实现做行为验证。
+DATA._sanitizeStats = sanitize_foreign_stats;
+DATA._collectLocalIds = collect_local_ids;
+
 DATA.on_load = function (data) {
     WORLD.MESSAGE.load(data);
     this.remove_temp('xy_status');
@@ -66,6 +134,13 @@ DATA.on_load = function (data) {
     for (let key of FAMS_TATAS) {
         STATS.SC_STATS[key] = sc_stats[key] ??
             Array.from({ length: 20 }, () => ({ "name": "无", "score": 0 }));
+    }
+
+    // 剔除世界档案里不属于本服的角色（两服串号的兜底清理）。
+    // 若取不到角色归属清单，本函数不做任何改动。
+    const stale = sanitize_foreign_stats(STATS, WORLD.SERVERID);
+    if (stale) {
+        console.log("已剔除" + stale + "条不属于本服(" + WORLD.SERVERID + ")的榜单记录");
     }
 
     console.log("全局数据已加载");

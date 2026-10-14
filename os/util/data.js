@@ -183,9 +183,13 @@ stream.write('",level:');
         }
         throw new Error('世界主档及备份均不可读取，拒绝以空存档启动');
     },
-    getRoleData: function (userid, id) {
+    // server 省略时保持旧行为（显式跨服/转服流程按 userid+id 取档）。
+    getRoleData: function (userid, id, server) {
 
-        return DB.getData(userid, id);
+        return DB.getData(userid, id, server);
+    },
+    getLocalRoles: function (server) {
+        return DB.getLocalRoles(server);
     },
     change_name: function (id, name) {
         return DB.updateRoleName(id, name);
