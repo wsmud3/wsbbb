@@ -47,8 +47,10 @@ const FAMS_TATAS = ['WUDANG', 'HUASHAN', 'SHAOLIN',
 // 故障时反复查询。未知期间不做任何剔除。
 let _fb_local_roles = { at: 0, ids: null };
 function collect_local_ids(sid) {
+    // 一旦成功取到就锁存：角色创建/删除远少于榜单写入，且丢弃已确认的清单会让
+    // 一次 DB 抖动变成误删。取不到时返回 null，调用方一律不做任何改动。
+    if (_fb_local_roles.ids) return _fb_local_roles.ids;
     const now = Date.now();
-    if (_fb_local_roles.ids && now - _fb_local_roles.at < 60000) return _fb_local_roles.ids;
     if (_fb_local_roles.ids === null && now - _fb_local_roles.at < 5000) return null;
     try {
         const roles = WORLD.DB.getLocalRoles(sid);
@@ -64,51 +66,92 @@ function collect_local_ids(sid) {
 // 世界档案里的排行榜/称号只应包含本服角色。跨服访问或转服遗留会让宿主服档案
 // 里出现他服角色（表现为测试服角色出现在正式服排行榜）。取不到角色 id 就无法判断
 // 归属，此时一律不剔除，宁可保留也不误删。
+// 世界档案里的排行榜/称号只应包含本服角色。跨服访问或转服遗留会让宿主服档案
+// 里出现他服角色（表现为测试服角色出现在正式服排行榜）。
+//
+// 基于对真实档案的实测，这里必须处理三个容易踩空的点：
+//   1. 榜单容器是**类数组对象（稀疏数组）**：{"0":{...},...,length:30}，
+//      用 Array.isArray() 判断会全部落空（这正是本函数最初完全失效的原因）。
+//   2. 字段名大小写不一致：tops / score 是小写，家族榜前缀是 tops_。
+//   3. 角色标识字段是 `id`；家族榜条目只有 path（NPC 占位，没有 id），必须保留。
 function sanitize_foreign_stats(stats, sid) {
     const local = collect_local_ids(sid);
+    // 取不到归属清单就什么都不做：宁可保留数据，也不误删。
     if (!local) return 0;
-    // 空 id 视为无归属（占位条目）→ 丢弃；查不到的角色也丢弃，但 local 集合是
-    // "本服全部角色"，因此正常本服角色不会受影响。
+    // 有 id 就必须属于本服；没有 id（NPC 占位）视为无需处理，保留。
     const belongs = (id) => {
-        if (id === undefined || id === null || id === '') return false;
+        if (id === undefined || id === null || id === '') return true;
         return local.has(String(id));
     };
+
+    // 稀疏数组（类数组对象）也要遍历
+    const each = (list) => {
+        if (!list || typeof list !== 'object') return [];
+        const len = typeof list.length === 'number' ? list.length : 0;
+        const out = [];
+        for (let i = 0; i < len; i++) if (list[i]) out.push(list[i]);
+        return out;
+    };
+
     let removed = 0;
-    // 显式列出榜单字段：注意主榜字段名是大写 TOPS，不能用大小写敏感的前缀正则匹配。
-    const topKeys = ['TOPS'];
-    for (const key in stats) {
-        if (key.length > 5 && key.slice(0, 5) === 'tops_' && Array.isArray(stats[key])) topKeys.push(key);
-    }
-    for (const key of topKeys) {
-        const list = stats[key];
-        if (!Array.isArray(list)) continue;
-        for (const top of list) {
-            if (!top || !top.userid || belongs(top.userid)) continue;
-            // 保留名次占位，只把归属信息清空，避免打乱后续名次计算。
-            top.userid = null;
+
+    // 主榜：档案里是小写 `tops`（代码内叫 TOPS，但系列化名是 tops），只用 name/score 展示
+    for (const key of ['tops', 'TOPS']) {
+        for (const top of each(stats[key])) {
+            if (top.id === undefined || belongs(top.id)) continue;
+            delete top.id;
+            delete top.userid;
             top.name = '武林高手';
             top.title = null;
             removed++;
         }
     }
-    if (stats.SC_STATS && typeof stats.SC_STATS === 'object') {
-        for (const fam in stats.SC_STATS) {
-            const list = stats.SC_STATS[fam];
-            if (!Array.isArray(list)) continue;
-            stats.SC_STATS[fam] = list.filter(x => !x || belongs(x.id ?? x.userid));
-            removed += list.length - stats.SC_STATS[fam].length;
+
+    // 家族榜：前缀 tops_，条目通常只有 path（NPC），有 id 才校验
+    for (const key in stats) {
+        if (key.length <= 5 || key.slice(0, 5) !== 'tops_') continue;
+        for (const top of each(stats[key])) {
+            if (top.id === undefined || belongs(top.id)) continue;
+            delete top.id;
+            delete top.userid;
+            top.name = '武林高手';
+            top.title = null;
+            if (top.path === undefined) top.path = 'pub/gaoshou1';
+            removed++;
         }
     }
-    for (const key of ['SCORE', 'SC']) {
+
+    // 积分榜：档案里是小写 `score`
+    for (const key of ['score', 'SCORE']) {
         const list = stats[key];
-        if (!Array.isArray(list)) continue;
-        stats[key] = list.filter(x => !x || belongs(x.id ?? x.userid));
-        removed += list.length - stats[key].length;
+        if (!list || typeof list !== 'object') continue;
+        const len = typeof list.length === 'number' ? list.length : 0;
+        for (let i = 0; i < len; i++) {
+            const item = list[i];
+            if (!item || item.id === undefined || belongs(item.id)) continue;
+            delete list[i];
+            removed++;
+        }
     }
+
+    // 门派积分榜：档案里是小写 `score_stats`
+    const famStats = stats.score_stats || stats.SC_STATS;
+    if (famStats && typeof famStats === 'object') {
+        for (const fam in famStats) {
+            const list = famStats[fam];
+            if (!list || typeof list !== 'object') continue;
+            const len = typeof list.length === 'number' ? list.length : 0;
+            for (let i = 0; i < len; i++) {
+                const item = list[i];
+                if (!item || item.id === undefined || belongs(item.id)) continue;
+                delete list[i];
+                removed++;
+            }
+        }
+    }
+
     return removed;
 }
-// 仅供 tools/test_server_isolation.js 直接引用实现做行为验证。
-DATA._sanitizeStats = sanitize_foreign_stats;
 DATA._collectLocalIds = collect_local_ids;
 
 DATA.on_load = function (data) {

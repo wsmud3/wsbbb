@@ -513,6 +513,8 @@ this.zc_menu = function () {
         args.push("zc deduce " + this.id, "推演");
         args.push("zc rename " + this.id, "重新命名");
     }
+    // 让浮窗显示书名作为说明文字（最后一个参数是选项对象）
+    if (args.length) args.push({ text: this.color_name });
     return args;
 };
 this.get_desc = function (me) {

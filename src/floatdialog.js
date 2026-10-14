@@ -64,9 +64,17 @@ const float_css = `
     display: none;
 }
 /* 命令按钮沿用仓库原生的 .item-commands>span 外观，这里只把容器改回行内 */
+/* .action-desc 是 flex 行，只写 display:inline 时按钮不换行、内容多的面板会横向溢出
+   （手机端尤其明显）。改为 flex + wrap，并让单个按钮自身不折行。 */
 .float-dialog .fb-actions>.fb-action>.action-desc>.item-commands {
-    display: inline;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     padding-bottom: 0;
+    white-space: normal;
+}
+.float-dialog .fb-actions>.fb-action>.action-desc>.item-commands>span {
+    white-space: nowrap;
 }
 .float-dialog .fb-actions>.fb-action>.action-name {
     flex: 0;
@@ -256,14 +264,28 @@ const FloatDialog = {
     add(text, cmdsData) {
         if (!cmdsData) return;
         if (this.currentFloat) {
-            // 上一个还没处理就来了新的：收进队列
-            this.hideCurrent();
+            // 持久浮窗（自制装备重铸这类需要频繁改动的面板）是同一块面板的刷新：
+            // 原地替换，不收进队列——否则每点一次按钮都会多一条"未处理的对话"，
+            // 而且折叠态会随窗口销毁而丢失。
+            if (this.currentDialogData && this.currentDialogData.persistent) {
+                clearTimeout(this.autoTimer);
+                this.autoTimer = null;
+                this.currentFloat.remove();
+                this.currentFloat = null;
+                this.currentDialogData = null;
+            } else {
+                // 上一个还没处理就来了新的：收进队列
+                this.hideCurrent();
+            }
         }
         this.createFloatWindow({
             text: text,
             html: cmdsData.html || '',
             cmds: cmdsData.items || [],
             size: cmdsData.size || '',
+            // 持久浮窗：频繁改动的面板（自制装备重铸等）点按钮不关闭、不自动收起，
+            // 只有点「忽略」才收进待处理队列。折叠态也因此能在同一窗口内保持。
+            persistent: cmdsData.persistent === true,
         });
         this.updateWarn();
     },
@@ -287,7 +309,8 @@ const FloatDialog = {
             descHTML += "</div>";
         }
 
-        let inner = '<div class="float-dialog-header">对话</div>' +
+        let title = dialog.persistent ? '对话（点「忽略」收起）' : '对话';
+        let inner = '<div class="float-dialog-header">' + title + '</div>' +
             '<div class="fb-actions"><div class="fb-action">' +
             '<span class="action-desc">' + descHTML + '</span>' +
             '<span class="action-name float-ignore-btn">忽<br>略</span>' +
@@ -323,11 +346,43 @@ const FloatDialog = {
             el.style.top = clampTop((wh - eh) / 2 - 40) + 'px';
         }
 
-        // 命令按钮与「忽略」都用事件委托处理
+        // 「替换」折叠：与主消息栏里的行为一致——
+        // 进入替换模式时隐藏所有「镶嵌」按钮，只显示该词条对应的替换项；再点一次还原。
+        // 位于命令判定之前，因为 .rep-word 本身不带 cmd 属性。
         el.addEventListener('click', (e) => {
+            let repEl = e.target.closest('.rep-word');
+            if (repEl && el.contains(repEl)) {
+                e.stopPropagation();
+                let wordKey = repEl.getAttribute('data-key');
+                let uniq = repEl.getAttribute('data-uniq');
+                let container = uniq ? el.querySelector('.rc-actions-' + uniq) : null;
+                if (!container) {
+                    // 没有分组容器时退化为"切换自身可见性"，至少不静默无反应
+                    container = el;
+                }
+                if (repEl.classList.contains('rep-active')) {
+                    // 取消替换模式
+                    container.querySelectorAll('.rc-rep').forEach(x => { x.style.display = 'none'; });
+                    container.querySelectorAll('.rc-add').forEach(x => { x.style.display = ''; });
+                    repEl.classList.remove('rep-active');
+                    return;
+                }
+                container.querySelectorAll('.rc-add').forEach(x => { x.style.display = 'none'; });
+                container.querySelectorAll('.rc-rep').forEach(x => { x.style.display = 'none'; });
+                container.querySelectorAll('.rc-rep-' + wordKey).forEach(x => { x.style.display = ''; });
+                repEl.classList.add('rep-active');
+                return;
+            }
+
+            // 命令按钮与「忽略」都用事件委托处理
             let cmdEl = e.target.closest('[cmd]');
             if (cmdEl) {
                 SendCommand(cmdEl.getAttribute('cmd'));
+                // 持久浮窗：不关闭，等服务器返回新内容刷新同一个窗口
+                if (dialog.persistent) {
+                    FloatDialog.updateWarn();
+                    return;
+                }
                 FloatDialog.dismissCurrent();
                 FloatDialog.updateWarn();
                 return;
@@ -344,14 +399,18 @@ const FloatDialog = {
 
         this._setupDrag(el);
 
-        // 30 秒未操作就收起并转入待处理队列
+        // 30 秒未操作就收起并转入待处理队列；
+        // 持久浮窗（需要频繁改动的面板）不自动收起，避免改到一半被吞掉。
         clearTimeout(this.autoTimer);
-        this.autoTimer = setTimeout(() => {
-            if (FloatDialog.currentFloat === el) {
-                FloatDialog.hideCurrent();
-                FloatDialog.updateWarn();
-            }
-        }, 30000);
+        this.autoTimer = null;
+        if (!dialog.persistent) {
+            this.autoTimer = setTimeout(() => {
+                if (FloatDialog.currentFloat === el) {
+                    FloatDialog.hideCurrent();
+                    FloatDialog.updateWarn();
+                }
+            }, 30000);
+        }
     },
 
     /** 内容较多时用较大档位（B/C 类），其余保持默认宽度 */

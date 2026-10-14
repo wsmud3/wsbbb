@@ -396,7 +396,10 @@ this.enter = function (me, cmd, arg1, arg2) {
             if (!cmd) {
                 var book = find_book(me, null);
                 if (book) {
-                    me.notify(book.color_name + "\n" + book.desc + "\n使用 <hic>zc deduce " + book.id + "</hic> 推演此秘籍。");
+                    // 描述走消息流，按钮走结构化菜单（浮窗可接管）——
+                    // 原来这里把「推演」当纯文本发，迁移后玩家就找不到按钮了
+                    me.notify(book.color_name + "\n" + book.desc);
+                    me.send_commands("zc deduce " + book.id, "推演此秘籍", { text: book.color_name + " · " + book.desc });
                     return;
                 }
                 return me.notify("你身上没有自创秘籍。可以在朱熹处购买空白秘籍。");
