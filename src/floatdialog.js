@@ -296,7 +296,18 @@ const FloatDialog = {
         // 直接复用 process.js cmds 的 item-commands HTML
         // html：服务端给的整块富内容，原样内嵌（自制装备重铸面板走这条）
         // text：说明文字，转义后显示，避免内容里的尖括号被当标签
-        let descHTML = dialog.html ? dialog.html : escapeHtml(dialog.text || '');
+        // 服务端给的 html 里，按钮可能同时带 cmd 属性与内联 onclick（为了兼容
+        // 用 innerHTML 渲染、没有事件委托的面板，如背包「查看」）。
+        // 浮窗自己有 [cmd] 委托，若保留 onclick 会在同一次点击里派发两次，
+        // 因此这里把内联 onclick 剥掉，浮窗内只走 cmd 委托。
+        const stripInlineOnclick = (h) => String(h || '').replace(/\sonclick="[^"]*"/gi, '');
+        // 若按钮由 items 渲染（结构化菜单），html 里往往也带着同一批按钮，
+        // 两者都保留会出现重复按钮，因此有 items 时把 html 里的 [cmd] 按钮剥掉。
+        const stripCmdButtons = (h) => String(h || '')
+            .replace(/<span\b[^>]*\bcmd="[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
+        let htmlSrc = dialog.html || '';
+        if (dialog.cmds && dialog.cmds.length) htmlSrc = stripCmdButtons(htmlSrc);
+        let descHTML = dialog.html ? stripInlineOnclick(htmlSrc) : escapeHtml(dialog.text || '');
         if (dialog.cmds.length) {
             descHTML += "<div class='item-commands'>";
             for (var i = 0; i < dialog.cmds.length; i++) {

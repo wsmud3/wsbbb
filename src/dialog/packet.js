@@ -206,6 +206,19 @@ export default {
             });
         }
         else if (data.desc) {
+            // 带结构化菜单的物品（自创秘籍）在浮窗开启时整块交给浮窗，
+            // 与其它菜单式面板保持一致；关闭浮窗时仍用 desc 里的内联按钮。
+            var _fd2 = typeof window !== 'undefined' ? window.FloatDialog : null;
+            if (data.zc_menu && data.zc_menu.length && Setting.float_dialog == 1 && _fd2 && typeof _fd2.add === 'function') {
+                var zcItems = [];
+                for (var zi = 0; zi < data.zc_menu.length; zi++) {
+                    zcItems.push({ cmd: data.zc_menu[zi][0], name: data.zc_menu[zi][1] });
+                }
+                _fd2.add(String(data.desc || '').replace(/<[^>]*>/g, ''), {
+                    type: 'cmds', html: data.desc, items: zcItems, size: 'lg', persistent: true,
+                });
+                return;
+            }
             var str = [];
             str.push(data.desc);
             str.push("<span class='item-commands'>");
