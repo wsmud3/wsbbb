@@ -44,7 +44,7 @@ USER.prototype.notify_fail = function (text) {
         this.socket.send(text);
     return false;
 }
-USER.prototype.send_warn = function (content, cmds, time) {
+USER.prototype.send_warn = function (content, cmds, time, opts) {
     var str = ["{type:\"warn\",content:\""];
     str.push(content);
     str.push("\"");
@@ -52,6 +52,11 @@ USER.prototype.send_warn = function (content, cmds, time) {
         str.push(",time:");
         str.push(time);
     }
+    // 可选：把整块富内容(HTML)与尺寸交给浮窗显示；不传时行为不变
+    if (opts && opts.html)
+        str.push(",html:" + JSON.stringify(opts.html));
+    if (opts && opts.size)
+        str.push(",size:" + JSON.stringify(opts.size));
     str.push(",cmds:[");
     for (var i = 0; i < cmds.length; i += 2) {
         if (i > 0) str.push(",");
@@ -64,17 +69,39 @@ USER.prototype.send_warn = function (content, cmds, time) {
     str.push("]}");
     this.send(str.join(""));
 }
+// 生成严格 JSON 安全的字符串字面量（JSON.stringify 会输出字面换行，
+// 在严格 JSON 下非法；这里把控制字符转义掉，客户端 JSON.parse 也能用）
+function jsonStr(s) {
+    return JSON.stringify(String(s))
+        .replace(/\u0008/g, '\\b')
+        .replace(/\u000c/g, '\\f')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+}
 USER.prototype.send_commands = function () {
+    // 最后一个参数可选：若为对象，则其 text 作为浮窗说明文字、size 指定浮窗尺寸档位。
+    // 不传对象时行为与改造前完全一致（现有调用点不受影响）。
+    var args = Array.prototype.slice.call(arguments);
+    var opts = null;
+    if (args.length && args[args.length - 1] && typeof args[args.length - 1] === 'object')
+        opts = args.pop();
     var str = ["{type:\"cmds\",items:["];
-    for (var i = 0; i < arguments.length; i += 2) {
+    for (var i = 0; i < args.length; i += 2) {
         if (i > 0) str.push(",");
         str.push("{cmd:\"");
-        str.push(arguments[i]);
+        str.push(args[i]);
         str.push("\",name:\"");
-        str.push(arguments[i + 1]);
+        str.push(args[i + 1]);
         str.push("\"}");
     }
-    str.push("]}");
+    // 先闭合 items，再追加 text / size（顺序错了会生成非法 JSON）
+    str.push("]");
+    if (opts && opts.text)
+        str.push(",text:" + jsonStr(opts.text));
+    if (opts && opts.size)
+        str.push(",size:" + JSON.stringify(opts.size));
+    str.push("}");
     this.send(str.join(""));
 }
 USER.prototype.is_connect = function () {

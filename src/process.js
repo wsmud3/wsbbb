@@ -434,19 +434,20 @@ const Process = {
     actions: function (data) {
         Combat.ShowActions(data);
     }, cmds: function (data) {
-        if (!data.items) return;
-        // 浮窗模式：把触发它的那段对话文字搬进浮窗，而不是占着主消息流
+        if (!data.items && !data.html) return;
+        // 浮窗模式：把触发它的说明文字/富内容搬进浮窗，而不是占着主消息流
         if (Setting.float_dialog == 1) {
-            var text = Process._lastMessageText || "";
+            var pass = (data.text !== undefined) ? data.text : (Process._lastMessageText || "");
             Process._lastMessageText = "";
-            if (Setting.float_archive == 1 && text) {
-                // 开启归档时，把已搬进浮窗的行从消息流撤掉，避免重复显示
-                var lines = text.split("\n");
+            // 服务端明确给了 text（含空串）说明它已把内容交给我们，就不再按行数删消息队列
+            // ——float_archive 那套「按行数 pop」依赖行数对齐，是脆弱的；仅在回退路径上仍需要它
+            if (data.text === undefined && Setting.float_archive == 1 && pass) {
+                var lines = String(pass).split("\n");
                 for (var li = 0; li < lines.length; li++) {
                     Process.message.pop();
                 }
             }
-            FloatDialog.add(text, data);
+            FloatDialog.add(pass, data);
             return;
         }
         var html = ["<div class='item-commands'>"];

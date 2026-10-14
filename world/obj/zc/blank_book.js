@@ -502,22 +502,23 @@ this.get_word_def = function (word_index) {
     return SKILL.ZC_WORDS[local_idx] || null;
 };
 
-var S = function(cmd) { return "onclick=\"window.SendCommand('" + cmd + "')\""; };
-var BTN_STYLE = "color:gray;border:solid 1px gray;background:black;border-radius:0.25em;padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;";
+// 菜单按钮数据（由显示处调用 send_commands 发出；不在这里直接发消息，
+// 因为 get_desc 还被 extends/stats.js 等纯文本上下文调用）
+this.zc_menu = function () {
+    var args = [];
+    if (this.zc_state === "blank") {
+        args.push("zc name " + this.id, "命名");
+    }
+    if (this.zc_state === "named" || this.zc_state === "completed" || this.zc_state === "deducing") {
+        args.push("zc deduce " + this.id, "推演");
+        args.push("zc rename " + this.id, "重新命名");
+    }
+    return args;
+};
 this.get_desc = function (me) {
     var desc = this.color_name + "\n";
     desc += this.desc + "\n";
 
-    if (this.zc_state === "blank") {
-        desc += '<div style="text-align:center;margin-top:4px;">';
-        desc += '<span ' + S("zc name " + this.id) + ' style="' + BTN_STYLE + '">命名</span>';
-        desc += '</div>';
-    }
-    if (this.zc_state === "named" || this.zc_state === "completed" || this.zc_state === "deducing") {
-        desc += '<div style="text-align:center;margin-top:4px;">';
-        desc += '<span ' + S("zc deduce " + this.id) + ' style="' + BTN_STYLE + '">推演</span> ';
-        desc += '<span ' + S("zc rename " + this.id) + ' style="' + BTN_STYLE + '">重新命名</span>';
-        desc += '</div>';
-    }
+    // 按钮改由显示处通过 send_commands 发出（见 look3.js），这里只返回描述文本
     return desc;
 };
