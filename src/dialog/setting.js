@@ -44,6 +44,16 @@ export default {
                 case "dialog_size":
                     this.select_value(item.find(".color-item"), value);
                     break;
+                case "w_type":
+                case "dlog_cbtn":
+                    // 选项组按 value 属性回显（与字号项同一套机制）
+                    this.select_value(item.find(".color-item"), value);
+                    break;
+                case "top_safe_distance":
+                case "bottom_safe_distance":
+                    item.find(".setting-range").val(value);
+                    item.find(".range-value").text(value);
+                    break;
                 case "auto_pfm":
                     break;
                 case "auto_pfm2":
@@ -112,6 +122,8 @@ export default {
                 .on("click", ".switch", this.switchClick);
             this.selectitem.off("click", ".color-item")
                 .on("click", ".color-item", this.colorClick);
+            this.selectitem.off("input", ".setting-range")
+                .on("input", ".setting-range", this.rangeInput);
         } else if (item == "custom") {
             this.selectitem.off("click", ".switch")
                 .on("click", ".switch", this.switchClick);
@@ -234,6 +246,8 @@ export default {
             case "combat_size":
             case "dialog_size":
             case "menu_size":
+            case "w_type":
+            case "dlog_cbtn":
                 value = elem.attr('value');
                 break;
             case "fontsize":
@@ -251,6 +265,15 @@ export default {
                 break;
         }
         Setting.save(forProp, value);
+    },
+    // 滑块（顶部/底部安全距离）实时跟随拖动，拖动过程不下发服务器
+    rangeInput: function () {
+        var elem = $(this);
+        var forProp = elem.parent().attr("for");
+        if (!forProp) return;
+        var value = parseInt(elem.val(), 10) || 0;
+        Setting.save(forProp, value);
+        elem.siblings(".range-value").text(value);
     }
 };
 
@@ -595,6 +618,41 @@ const setting_template = `
                     <span class="color-item" value="1em">x1</span>
                     <span class="color-item" value="1.2em">x1.2</span>
                 </span>
+            </div>
+            <div class="setting-item" for="w_type">
+                <span class="title">
+                    打开窗口时菜单栏的布局方式
+                </span>
+                <span class="color-list">
+                    <span class="color-item" value="reflow">重排</span>
+                    <span class="color-item" value="hide">隐藏</span>
+                    <span class="color-item" value="shield">遮蔽</span>
+                    <span class="color-item" value="unchanged">不变</span>
+                </span>
+            </div>
+            <div class="setting-item" for="dlog_cbtn">
+                <span class="title">
+                    隐藏菜单栏时显示关闭窗口按钮
+                </span>
+                <span class="color-list">
+                    <span class="color-item" value="0">关闭</span>
+                    <span class="color-item" value="1">额外</span>
+                    <span class="color-item" value="2">替换</span>
+                </span>
+            </div>
+            <div class="setting-item" for="top_safe_distance">
+                <span class="title">
+                    顶部安全距离
+                </span>
+                <input type="range" class="setting-range" value="0" min="0" max="100" />
+                <span class="range-value">0</span>
+            </div>
+            <div class="setting-item" for="bottom_safe_distance">
+                <span class="title">
+                    底部安全距离
+                </span>
+                <input type="range" class="setting-range" value="0" min="0" max="100" />
+                <span class="range-value">0</span>
             </div>
             <h3>游戏设置</h3>
             <div class="setting-item" for="no_master">
@@ -1084,5 +1142,20 @@ const setting_css = `
 .pfm-row button:hover { background: #e94560; }
 .pfm-row.disabled .pfm-name { color: #555; text-decoration: line-through; }
 .pfm-hint { font-size: 0.7rem; color: #666; margin: 4px 0 0 0.625em; }
+
+/* 安全距离滑块 */
+.setting .setting-range {
+    flex: 1;
+    max-width: 8em;
+    margin: 0 0.5em;
+    accent-color: #008000;
+    cursor: pointer;
+}
+
+.setting .range-value {
+    width: 2.5em;
+    text-align: center;
+    color: #cecece;
+}
 `;
 
