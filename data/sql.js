@@ -210,9 +210,21 @@ module.exports = {
         return db.get(sql, [name]);
     },
 
-    getData: function (userid, id) {
-        return db.get("select a.id,a.name,a.title,a.level,a.data,b.pwd,b.level user_level from players a left join users b on a.userid=b.id  where  a.userid=? and a.id=?",
-            [userid, id]);
+    // 读取单个角色存档。
+    // 传入 server 时按 (userid, id, sid) 三重约束，避免同一账号在两服都有角色时
+    // 被跨服取档（测试服/正式服数据串号的一条路径）。
+    // 不传 server 时保持旧行为，供显式跨服/转服流程使用。
+    getData: function (userid, id, server) {
+        if (server === undefined || server === null) {
+            return db.get("select a.id,a.name,a.title,a.level,a.data,b.pwd,b.level user_level from players a left join users b on a.userid=b.id  where  a.userid=? and a.id=?",
+                [userid, id]);
+        }
+        return db.get("select a.id,a.name,a.title,a.level,a.data,b.pwd,b.level user_level from players a left join users b on a.userid=b.id  where  a.userid=? and a.id=? and a.sid=?",
+            [userid, id, server]);
+    },
+    // 本服角色清单，供世界档案自检：档案里出现他服角色（跨服访问/转服遗留）时予以剔除。
+    getLocalRoles: function (server) {
+        return db.all("select id,name,userid,sid from players where sid=?", [server]);
     },
     updateUserLevel: function (uid, level) {
         return db.query("update users set level=? where id=?", [level, uid]);

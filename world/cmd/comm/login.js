@@ -86,7 +86,8 @@ this.loginIn = async function (user, id) {
     if (user._loadingRole) return;
     user._loadingRole = true;
     try {
-        const data = await WORLD.DB.getRoleData(user.userid, id);
+        // 显式传入本服 sid：同一账号可能在两服都有角色，不传会跨服取档。
+        const data = await WORLD.DB.getRoleData(user.userid, id, WORLD.SERVERID);
         if (!data) return user.send("{type:'loginerror',msg:'角色读取失败，请重新登陆 '}");
 
         if (!user.socket || user.socket.destroyed) return;
