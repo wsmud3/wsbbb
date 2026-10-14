@@ -32,9 +32,25 @@ const call = new Function("WORLD", "FAMILIES", "console", "SKILL", "OBJ", "NPC",
 const quiet = { log() { }, warn() { }, error() { } };
 const api = call(WORLD, FAMILIES, quiet, {}, {}, {}, {}, {}, []);
 
-const stats = { TOPS: scenario.TOPS || [], SCORE: scenario.SCORE || [], SC_STATS: scenario.SC_STATS || {} };
+// 按**真实档案结构**构造：榜单是类数组对象（稀疏数组），字段名小写。
+// kind 为 "array" 时故意用普通数组，用来验证实现不是"只认普通数组"。
+const sparse = (arr) => {
+    const o = { length: arr.length };
+    for (let i = 0; i < arr.length; i++) if (arr[i]) o[i] = arr[i];
+    return o;
+};
+const build = (arr) => (scenario.kind === "array" ? arr : sparse(arr));
+
+const stats = {
+    tops: build(scenario.tops || []),
+    score: build(scenario.score || []),
+    score_stats: {},
+};
 for (const k of ["WUDANG", "HUASHAN", "SHAOLIN", "EMEI", "GAIBANG", "XIAOYAO", "SHASHOU", "NONE"]) {
-    stats["tops_" + k] = [];
+    stats["tops_" + k] = build([{ path: "pub/gaoshou1" }]);
+}
+for (const fam in (scenario.score_stats || {})) {
+    stats.score_stats[fam] = build(scenario.score_stats[fam]);
 }
 const removed = api.sanitize(stats, scenario.sid);
 process.stdout.write(JSON.stringify({ removed, stats }));

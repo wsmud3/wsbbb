@@ -152,6 +152,8 @@ function sanitize_foreign_stats(stats, sid) {
 
     return removed;
 }
+// 仅供 tools/test_server_isolation.js 直接引用实现做行为验证。
+DATA._sanitizeStats = sanitize_foreign_stats;
 DATA._collectLocalIds = collect_local_ids;
 
 DATA.on_load = function (data) {
