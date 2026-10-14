@@ -172,7 +172,7 @@ export default {
             // 导致 Dialog 尚未初始化就被访问，进而整个前端白屏）
             var _fd = typeof window !== 'undefined' ? window.FloatDialog : null;
             if (Setting.float_dialog == 1 && _fd && typeof _fd.add === 'function') {
-                _fd.add("", { type: 'cmds', html: rcHtml, items: [], size: 'lg' });
+                _fd.add("", { type: 'cmds', html: rcHtml, items: [], size: 'lg', persistent: true });
                 return;
             }
             // Push to main message area instead of dialog sub-view
