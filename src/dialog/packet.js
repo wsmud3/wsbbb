@@ -1,4 +1,5 @@
 import Setting from '../setting.js';
+import FloatDialog from '../floatdialog.js';
 import Util from '../utils/util.js';
 import SCRIPT from '../script.js';
 import Combat from '../combat.js';
@@ -87,7 +88,8 @@ export default {
         } else if (data.rcdesc) {
             var self = this;
             var uniq = Date.now();
-            var S = function(cmd) { return "onclick=\"window.SendCommand('" + cmd + "')\""; };
+            // 按钮统一用 cmd 属性：浮窗与主消息栏两条渲染路径都能接管（原来只支持 onclick）
+            var S = function(cmd) { return "cmd=\"" + cmd + "\""; };
             var str = [];
             str.push(data.rcdesc);
             str.push('<br><hic>当前词条：</hic><br>');
@@ -164,6 +166,13 @@ export default {
             str.push('<br><span class="item-commands">');
             str.push('<span ' + S(this.command_before + 'recast ' + data.id + ' rename') + '>改名</span>');
             str.push('</span>');
+            var rcHtml = str.join("");
+            // 浮窗开启时整块搬进浮窗（富内容走 html 字段，原样内嵌），
+            // 不再占用主消息栏；关闭浮窗或浮窗不可用时保持原行为。
+            if (Setting.float_dialog == 1 && typeof FloatDialog !== 'undefined') {
+                FloatDialog.add("", { type: 'cmds', html: rcHtml, items: [], size: 'lg' });
+                return;
+            }
             // Push to main message area instead of dialog sub-view
             var msgContainer = $(".content-message");
             var msgPage = msgContainer.children("pre").last();

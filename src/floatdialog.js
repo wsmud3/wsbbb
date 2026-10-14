@@ -199,16 +199,49 @@ const float_css = `
 `;
 
 Dialog.injectStyle(float_css + `
+/* 尺寸档位：默认 24em；宽屏 32em；内容较多时可用 .float-size-lg 再加宽。
+   手机端（<=480px）强制不超过视口宽度，避免超出屏幕外无法操作。 */
+.float-dialog.float-size-lg {
+    width: 36em;
+}
+.float-dialog-unified.float-size-lg {
+    width: 36em;
+}
+@media (min-width: 768px) {
+    .float-dialog { width: 28em; }
+    .float-dialog-unified { width: 28em; }
+    .float-dialog.float-size-lg { width: 40em; }
+    .float-dialog-unified.float-size-lg { width: 40em; }
+}
 @media (min-width: 1200px) {
-    .float-dialog {
-        width: 36em;
+    .float-dialog { width: 32em; }
+    .float-dialog-unified { width: 32em; }
+    .float-dialog.float-size-lg { width: 46em; }
+    .float-dialog-unified.float-size-lg { width: 46em; }
+}
+@media (max-width: 480px) {
+    .float-dialog,
+    .float-dialog.float-size-lg {
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
     }
-    .float-dialog-unified {
-        width: 36em;
+    .float-dialog-unified,
+    .float-dialog-unified.float-size-lg {
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
     }
+    .float-dialog .fb-actions { padding: 0.4em; }
+    .float-dialog .fb-actions > .fb-action { padding-left: 0.5em; }
 }
 `);
 
+
+/** 最小转义：说明文字当纯文本显示，避免内容里的尖括号被解析成标签 */
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
 
 const FloatDialog = {
     /** 未被处理的对话（超时或主动收起后进这里排队） */
@@ -226,7 +259,12 @@ const FloatDialog = {
             // 上一个还没处理就来了新的：收进队列
             this.hideCurrent();
         }
-        this.createFloatWindow({text, cmds: cmdsData.items || []});
+        this.createFloatWindow({
+            text: text,
+            html: cmdsData.html || '',
+            cmds: cmdsData.items || [],
+            size: cmdsData.size || '',
+        });
         this.updateWarn();
     },
 
@@ -234,7 +272,9 @@ const FloatDialog = {
         this.currentDialogData = dialog;
 
         // 直接复用 process.js cmds 的 item-commands HTML
-        let descHTML = dialog.text || '';
+        // html：服务端给的整块富内容，原样内嵌（自制装备重铸面板走这条）
+        // text：说明文字，转义后显示，避免内容里的尖括号被当标签
+        let descHTML = dialog.html ? dialog.html : escapeHtml(dialog.text || '');
         if (dialog.cmds.length) {
             descHTML += "<div class='item-commands'>";
             for (var i = 0; i < dialog.cmds.length; i++) {
@@ -254,7 +294,7 @@ const FloatDialog = {
             '</div></div>';
 
         let el = document.createElement('div');
-        el.className = 'float-dialog';
+        el.className = 'float-dialog' + (dialog.size === 'lg' ? ' float-size-lg' : '');
         el.innerHTML = inner;
 
         // 跟随全局字号（.container 上的 font-size）
@@ -270,13 +310,17 @@ const FloatDialog = {
         let wh = window.innerHeight;
         let ew = el.offsetWidth;
 
+        // 位置夹取：保证整个浮窗始终在视口内（手机端尤其重要，避免拖出屏幕外点不到）
+        let eh = el.offsetHeight;
+        let clampLeft = (v) => Math.max(4, Math.min(v, Math.max(4, ww - ew - 4)));
+        let clampTop = (v) => Math.max(4, Math.min(v, Math.max(4, wh - eh - 4)));
         // 有记住的位置就用记住的，否则居中
         if (FloatDialog.savedLeft !== null && FloatDialog.savedTop !== null) {
-            el.style.left = Math.max(0, Math.min(FloatDialog.savedLeft, ww - ew)) + 'px';
-            el.style.top = Math.max(0, FloatDialog.savedTop) + 'px';
+            el.style.left = clampLeft(FloatDialog.savedLeft) + 'px';
+            el.style.top = clampTop(FloatDialog.savedTop) + 'px';
         } else {
-            el.style.left = Math.max(0, (ww - ew) / 2) + 'px';
-            el.style.top = Math.max(0, (wh - 100) / 2) + 'px';
+            el.style.left = clampLeft((ww - ew) / 2) + 'px';
+            el.style.top = clampTop((wh - eh) / 2 - 40) + 'px';
         }
 
         // 命令按钮与「忽略」都用事件委托处理
@@ -308,6 +352,23 @@ const FloatDialog = {
                 FloatDialog.updateWarn();
             }
         }, 30000);
+    },
+
+    /** 内容较多时用较大档位（B/C 类），其余保持默认宽度 */
+    _applySize(el, size) {
+        if (!el) return;
+        if (size === 'lg') el.classList.add('float-size-lg');
+        else el.classList.remove('float-size-lg');
+    },
+
+    /** 视口变化时把浮窗拉回可视区域（横竖屏切换、手机地址栏收起等） */
+    _handleResize() {
+        let el = this.currentFloat;
+        if (!el) return;
+        let ww = window.innerWidth, wh = window.innerHeight;
+        let ew = el.offsetWidth, eh = el.offsetHeight;
+        el.style.left = Math.max(4, Math.min(parseFloat(el.style.left) || 4, Math.max(4, ww - ew - 4))) + 'px';
+        el.style.top = Math.max(4, Math.min(parseFloat(el.style.top) || 4, Math.max(4, wh - eh - 4))) + 'px';
     },
 
     _setupDrag(el) {

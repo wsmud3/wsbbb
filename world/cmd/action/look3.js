@@ -41,6 +41,11 @@
 	            return me.send(skill_base.query_desc(me, 1000));
 	        }
 	        me.notify(item.get_desc(me));
+	        // 自创秘籍等带菜单的物品：描述走消息流，按钮走结构化菜单（浮窗可接管）
+	        if (typeof item.zc_menu === 'function') {
+	            var zcArgs = item.zc_menu();
+	            if (zcArgs && zcArgs.length) me.send_commands.apply(me, zcArgs);
+	        }
 	        return;
 	    }
 	    if (userid === me.id) return me.send(me.query_desc(me, "look3"));

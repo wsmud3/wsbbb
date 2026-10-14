@@ -515,39 +515,39 @@ this.cmd_deduce = function (me, book_id) {
             remaining.push(key);
     }
 
-    var _S = function(cmd) { return "onclick=\"window.SendCommand('" + cmd + "')\""; };
-    var _BTN = "color:gray;border:solid 1px gray;background:black;border-radius:0.25em;padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;";
-
-    var desc = '<div style="text-align:left;">';
+    // 结构化菜单：说明文字随 text 一起进浮窗，主消息栏不再被按钮占用
+    var args = [];
+    var textLines = [];
 
     // 已推演部位 — 位置按钮（点击进入词条/技能子菜单）
     if (book.zc_positions.length > 0) {
-        desc += "<hiy>已推演部位：</hiy><br>";
+        textLines.push("已推演部位：");
         for (var i = 0; i < book.zc_positions.length; i++) {
             var pk = book.zc_positions[i];
             var label = ZC_POSITIONS[pk].label;
-            desc += '<span ' + _S("zc posmenu " + book.id + " " + pk) + ' style="' + _BTN + '">' + label + '</span> ';
+            args.push("zc posmenu " + book.id + " " + pk, label);
         }
         if (book.get_total_pfms() > 0) {
-            desc += '<span ' + _S("zc pfms " + book.id) + ' style="' + _BTN + '">管理技能</span>';
+            args.push("zc pfms " + book.id, "管理技能");
         }
-        desc += "<br>";
     }
 
     // 推演新部位
     if (remaining.length > 0) {
-        desc += "<hiy>推演新部位：</hiy><br>";
+        textLines.push("推演新部位：");
         for (var r = 0; r < remaining.length; r++) {
-            desc += '<span ' + _S("zc select " + book.id + " " + remaining[r]) + ' style="' + _BTN + '">' + ZC_POSITIONS[remaining[r]].label + '</span> ';
+            args.push("zc select " + book.id + " " + remaining[r], ZC_POSITIONS[remaining[r]].label);
         }
-        desc += "<br>";
     } else {
-        desc += "<hic>所有部位已推演完毕。</hic><br>";
+        textLines.push("所有部位已推演完毕。");
     }
 
-    desc += '</div>';
-
-    me.notify(desc);
+    if (args.length) {
+        args.push({ text: textLines.join("\n"), size: "lg" });
+        me.send_commands.apply(me, args);
+    } else {
+        me.notify(textLines.join("\n"));
+    }
 };
 
 // ===== posmenu: 已推演部位子菜单 → 词条/技能 =====
@@ -560,23 +560,17 @@ this.cmd_posmenu = function (me, book_id, position_key) {
     var pos = ZC_POSITIONS[position_key];
     if (!pos) return me.notify("无效部位。");
 
-    var _S = function(cmd) { return "onclick=\"window.SendCommand('" + cmd + "')\""; };
-    var _BTN = "color:gray;border:solid 1px gray;background:black;border-radius:0.25em;padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;";
-    var _DIV = "text-align:left;margin-top:4px;";
-
-    var desc = "<hiy>" + book.color_name + "</hiy> · " + pos.label + "部位\n";
-    desc += '<div style="' + _DIV + '">';
-    desc += '<span ' + _S("zc wordselect " + book.id + " " + position_key) + ' style="' + _BTN + '">词条推演</span> ';
+    // 部位子菜单同样改为结构化菜单
+    var args = ["zc wordselect " + book.id + " " + position_key, "词条推演"];
     if (book.zc_skill_id && (book.zc_words[position_key] || []).length > 0) {
-        desc += '<span ' + _S("zc words " + book.zc_skill_id + " " + book.id + " " + position_key) + ' style="' + _BTN + '">词条升级</span> ';
+        args.push("zc words " + book.zc_skill_id + " " + book.id + " " + position_key, "词条升级");
     }
-    desc += '<span ' + _S("zc addpfm " + book.id + " " + position_key) + ' style="' + _BTN + '">技能</span> ';
-    desc += '<span ' + _S("zc removepos " + book.id + " " + position_key) + ' style="' + _BTN + '">移除部位</span> ';
-    desc += '<span ' + _S("zc abandon " + book.id) + ' style="' + _BTN + '">放弃推演</span> ';
-    desc += '<span ' + _S("zc deduce " + book.id) + ' style="' + _BTN + '">返回</span>';
-    desc += '</div>';
-
-    me.notify(desc);
+    args.push("zc addpfm " + book.id + " " + position_key, "技能");
+    args.push("zc removepos " + book.id + " " + position_key, "移除部位");
+    args.push("zc abandon " + book.id, "放弃推演");
+    args.push("zc deduce " + book.id, "返回");
+    args.push({ text: book.color_name + " · " + pos.label + "部位", size: "lg" });
+    me.send_commands.apply(me, args);
 };
 
 // ===== select: 选择部位 → 词条选择 =====
@@ -1403,9 +1397,6 @@ this.cmd_wordselect = function (me, book_id, position_key) {
 };
 
 // ===== words: 查看/推演词条 (部位筛选 + 紧凑一行一词条) =====
-var _S = function(cmd) { return "onclick=\"window.SendCommand('" + cmd + "')\""; };
-var _BTN = "color:gray;border:solid 1px gray;background:black;border-radius:0.25em;padding:0.15em 0.5em;margin:0 2px;cursor:pointer;font-size:13px;";
-var _BTN_HIG = "color:#00FF00;border:solid 1px #00FF00;background:black;border-radius:0.25em;padding:0.15em 0.5em;margin:0 2px;cursor:pointer;font-size:13px;";
 
 this.cmd_words = function (me, skill_id, book_id_and_pos) {
     var parts = (book_id_and_pos || "").split(" ");
