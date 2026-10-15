@@ -222,24 +222,66 @@ function collectRestarts(state) {
 
 // ───────────────────────── 采集：部署 ─────────────────────────
 
-function collectDeploy(state) {
-    const f = path.join(LOG_DIR, 'deployed_ref');
-    let ref = '';
-    try { ref = fs.readFileSync(f, 'utf8').trim(); } catch (_) { }
-    if (!ref) return [];
-    if (state.deployRef === ref) return [];
-    const isFirst = !state.deployRef;
-    state.deployRef = ref;
-    if (isFirst || !state.initialized) return [];
-    // 查这次部署是成功还是失败
-    let tail = '';
+/** 判断三服是否健康（用于区分"拒绝部署"与"真的出事了"） */
+function servicesHealthy() {
     try {
-        tail = execFileSync('tail', ['-n', '6', path.join(LOG_DIR, 'deploy.log')], { timeout: 10000 }).toString();
-    } catch (_) { }
-    const failed = /failed|refused|Deployment failed/i.test(tail);
-    return [`【部署${failed ? '失败' : '完成'}】新版本 ${ref.slice(0, 7)}\n` +
-        (failed ? '  ⚠ 部署日志里有失败记录，请查看 log/deploy.log\n' : '  ✓ 三服已切到新版本\n') +
-        '  ' + trunc(sanitize(tail.trim().split('\n').slice(-2).join('\n  ')), 300)];
+        const { execFileSync } = require("child_process");
+        for (const port of [31303, 31304, 8088]) {
+            const out = execFileSync("curl", ["-s", "-m", "5", `http://127.0.0.1:${port}/health`], { timeout: 8000 }).toString();
+            if (!/\"ok\"/.test(out)) return false;
+        }
+        return true;
+    } catch (_) { return false; }
+}
+
+function collectDeploy(state) {
+    const msgs = [];
+    const logFile = path.join(LOG_DIR, "deploy.log");
+
+    // ---- ① 部署失败：独立追踪失败行，连续 3 次才告警 ----
+    // 不能靠 deployed_ref 判断失败 —— 部署被拒绝时它根本不变（原实现的漏报原因）。
+    if (!state.deployFailOffset) state.deployFailOffset = 0;
+    if (!state.initialized) {
+        state.deployFailOffset = fileSize(logFile);
+        state.deployFailStreak = 0;
+    } else {
+        const { lines: newLines, newOffset } = readNewLines(logFile, state.deployFailOffset);
+        state.deployFailOffset = newOffset;
+        const fails = newLines.filter(l => /failed|refused|Deployment failed/i.test(l));
+        const oks = newLines.filter(l => /Verified release/i.test(l));
+        if (oks.length) state.deployFailStreak = 0;                 // 成功一次即清零
+        if (fails.length) {
+            state.deployFailStreak = (state.deployFailStreak || 0) + fails.length;
+            // 连续 3 次才告警：单次拒绝通常是提交过程中工作区短暂变脏，属瞬时状态
+            if (state.deployFailStreak >= 3) {
+                const healthy = servicesHealthy();
+                const why = fails[fails.length - 1].replace(/^\[[^\]]+\]\s*/, "").slice(0, 160);
+                msgs.push(
+                    (healthy ? "【部署受阻】代码尚未更新" : "【部署失败】且服务异常") +
+                    `（已连续 ${state.deployFailStreak} 次）\n` +
+                    `  原因: ${why}\n` +
+                    (healthy
+                        ? "  ℹ 三服健康检查正常，游戏未受影响 —— 只是新代码没上去。\n    常见原因：提交过程中工作区变脏、或在非 main 分支。\n    若持续超过 15 分钟再看，通常是提交还没结束。"
+                        : "  ⚠ 健康检查也不通过，这可能真的出事了，请尽快查看 log/deploy.log")
+                );
+                state.deployFailStreak = 0;      // 告警后清零，避免每分钟重复轰炸
+            }
+        }
+    }
+
+    // ---- ② 部署成功：按 deployed_ref 变化通知 ----
+    const f = path.join(LOG_DIR, "deployed_ref");
+    let ref = "";
+    try { ref = fs.readFileSync(f, "utf8").trim(); } catch (_) { }
+    if (ref && state.deployRef !== ref) {
+        const isFirst = !state.deployRef;
+        state.deployRef = ref;
+        if (!isFirst && state.initialized) {
+            msgs.push(`【部署完成】新版本 ${ref.slice(0, 7)}\n  ✓ 三服已切到新版本，健康检查通过`);
+        }
+    }
+
+    return msgs;
 }
 
 // ───────────────────────── 采集：日报 ─────────────────────────
