@@ -12,6 +12,12 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
     log "Dirty checkout; deployment refused"
     exit 1
 fi
+# 属主自检：git 以当前用户运行，无法覆盖非本用户属主的文件，
+# 那种情况下 merge 会失败并只留下一行含糊日志。这里提前给出明确原因。
+if ! node tools/check_repo_ownership.js --quiet >>"$LOG" 2>&1; then
+    log "Repo ownership/state precheck failed; see above lines. Run check_repo_ownership.js for detail"
+    exit 1
+fi
 git fetch -q origin main
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)

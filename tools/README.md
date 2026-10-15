@@ -36,6 +36,14 @@
 | `check_deploy_health.js <sha>` | 校验三个服务上报的 release 是否等于给定 sha |
 | `backup_database.js` | 数据库备份 |
 
+## 3b. 部署前自检
+
+| 脚本 | 用途 |
+|---|---|
+| \`check_repo_ownership.js [--fix] [--quiet]\` | 找出会**静默阻塞自动部署**的仓库状态问题：非 \`mud\` 属主的已跟踪文件/目录（git 无法覆盖它们，merge 会在"恰好要改到它们"时失败）、当前分支不是 main、工作区脏、\`.git\` 不可写、残留锁文件。\`--fix\` 在 root 身份下自动修属主。已接入 \`deploy/pull.sh\` 作为前置诊断。 |
+
+预防性自愈由 \`/home/mud/bin/repair-repo-ownership.sh\`（root，每日 cron）负责。
+
 ## 4. 审计工具（手工执行，只读）
 
 见 [`audit/README.md`](audit/README.md)。共 4 个：按钮质量与安全、报文/转义/fallback、
