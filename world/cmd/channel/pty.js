@@ -40,6 +40,7 @@ this.enter = function (me, str) {
     } else {
         msg = UTIL.htmlEncode(UTIL.replace_word(str));
     }
+    if (WORLD.chatlog) WORLD.chatlog.record("pty", me, str, { party: me.query_temp("pt") });
     msg = JSON.stringify({ type: "msg", ch: "pty", content: msg, uid: me.id, name: name })
     for (var i = 0; i < pt.roles.length; i++) {
         var user = pt.roles[i].user;

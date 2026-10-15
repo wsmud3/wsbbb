@@ -16,6 +16,7 @@ this.enter = function (me, str) {
         }
     }
 
+    if (WORLD.chatlog) WORLD.chatlog.record("tm", me, str);
     msg = UTIL.htmlEncode(UTIL.replace_word(str));
     me.send_team(JSON.stringify({ type: "msg", ch: "tm", content: msg, uid: me.id, name: me.name }));
     me.add_temp('chat2', 1, UTIL.diff_time());

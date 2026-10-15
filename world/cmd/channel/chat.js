@@ -42,6 +42,8 @@ this.enter = function (me, str) {
         let lv6 = me.query_temp('lv6');
         if (lv6) content.lv6 = lv6;
     }
+    // 记录到聊天日志（供运维机器人按时间段查询）
+    if (WORLD.chatlog) WORLD.chatlog.record("chat", me, str, { lv: me.level || 0 });
     msg = JSON.stringify(content);
     for (var i = 0; i < WORLD.USERS.length; i++) {
         if (!WORLD.USERS[i].query_setting("off_chat"))

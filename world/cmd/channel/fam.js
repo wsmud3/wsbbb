@@ -25,6 +25,7 @@ this.enter = function (me, str) {
         msg = UTIL.htmlEncode(UTIL.replace_word(str));
     }
   
+    if (WORLD.chatlog) WORLD.chatlog.record("fam", me, str, { family: me.family && me.family.name });
     msg = JSON.stringify({ type: "msg", ch: "fam", content: msg, uid: me.id, name: name, fam: me.family.name })
     for (var i = 0; i < WORLD.USERS.length; i++) {
         if (WORLD.USERS[i].family == me.family && !WORLD.USERS[i].query_setting("off_fam"))
