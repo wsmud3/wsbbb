@@ -216,7 +216,13 @@ ITEM.prototype.format_temp = function (temp, timeout = 120000) {
         var v = temp[key];
         if (!v) continue;
         if (v && typeof v == "object" && v.e && Object.prototype.hasOwnProperty.call(v, "v")) {
-            if (dt > v.e || !v.v) continue;
+            // 原判断是 `if (dt > v.e || !v.v) continue;`，其中 dt = Date.now() + timeout
+            // （timeout 默认 120000），等价于"剩余寿命不足 timeout 就丢弃"——
+            // 而 @param timeout 的本意是"多保留一段余量"。结果 PFM 冷却
+            // （pfm.js: set_temp(key, 1, distime + rtime)）与物品使用冷却
+            // （use.js: set_temp(...)）这类 ≤120 秒的条目在写档时被清掉，
+            // 玩家完全退出再登录即可无视冷却。改为只跳过**已过期**的条目。
+            if (v.e <= Date.now() || !v.v) continue;
             var svInner;
             if (typeof v.v == "string") svInner = JSON.stringify(v.v);
             else if (v.v && typeof v.v == "object") {

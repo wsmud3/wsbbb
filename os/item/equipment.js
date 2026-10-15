@@ -578,15 +578,40 @@ EQUIPMENT.prototype.query_group_desc = function (me, str) {
 
 EQUIPMENT.prototype.check_group = function (me, isadd) {
     if (!this.group_prop || !this.group_name) return;
+    // group_prop 是"累计表"：穿满 count 件时应有的整套**总**加成
+    // （装备文件里写 `if (count >= 5) ...`；query_group_desc 也按件数门槛展示 N 件套）。
+    // 原实现把它当成"第 count 件的增量"，而同一套每件装备都会看到相同的 count，
+    // 于是各自授予一次整档 → 重复累加：实测 lv4 门派套穿 4 件 str+100（应 +50）、
+    // 穿 8 件 con+200/diff_sh_per+32（应 +50/+8）。全仓 148 个文件用 `>=` 表，
+    // 只有 6 个（lm_* 系列）用 `==` 表与原语义凑巧吻合。
+    //
+    // 两处关键：
+    //  1) 把"已授予该角色的该套总加成"按组名记在角色上，每次只应用差值
+    //     （记在装备实例上不行：同套每件都会各授一份）
+    //  2) 只统计**有效**件数 —— me.equipment 是按 eq_type 索引、含 null 空洞的数组
+    //     （read_equipment 会把 11 个槽位显式填 null），故不能用 .length
+    if (!me._group_grants) me._group_grants = {};
     var count = isadd ? 1 : 0;
     for (var i = 0; i < me.equipment.length; i++) {
-        if (me.equipment[i] && me.equipment[i].group_name == this.group_name) {
+        var eq = me.equipment[i];
+        if (eq && eq.group_name == this.group_name) {
             count++;
         }
     }
-    var prop = this.group_prop(count);
-    if (prop) {
-        me.change_prop(prop, isadd);
+    var want = this.group_prop(count) || {};
+    var had = me._group_grants[this.group_name] || {};
+    var keys = {};
+    for (var k in had) keys[k] = true;
+    for (var k in want) keys[k] = true;
+    var delta = {};
+    var hasDelta = false;
+    for (var k in keys) {
+        var d = (want[k] || 0) - (had[k] || 0);
+        if (d) { delta[k] = d; hasDelta = true; }
     }
-
+    if (hasDelta) me.change_prop(delta, true);
+    me._group_grants[this.group_name] = want;
+    var empty = true;
+    for (var k in want) { empty = false; break; }
+    if (!isadd && empty) delete me._group_grants[this.group_name];
 }
