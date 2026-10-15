@@ -18,7 +18,7 @@ const trialNpc = fs.readFileSync(path.join(root, "world", "npc", "pub", "zhenyi_
 const zhenyiSource = fs.readFileSync(path.join(root, "world", "zhenyi.js"), "utf8");
 const pfmSource = fs.readFileSync(path.join(root, "world", "cmd", "battle", "pfm.js"), "utf8");
 const tuoliSource = fs.readFileSync(path.join(root, "world", "obj", "cash", "tuoli.js"), "utf8");
-const cleanBuildSource = fs.readFileSync(path.join(root, "tools", "clean_vite_assets.js"), "utf8");
+const buildFrontendSource = fs.readFileSync(path.join(root, "tools", "build_frontend.js"), "utf8");
 
 assert.ok(panel.includes("show_zhenyi_detail") && panel.includes("skill-item zy-item grade"), "真意面板必须沿用技能列表的点击展开结构与 grade 颜色");
 assert.ok(panelCss.includes(".zy-item>.zy-name") && panelCss.includes("color: var(--border-color)"), "grade 必须直接改变真意名称颜色，不能只显示颜色文字");
@@ -40,7 +40,20 @@ assert.ok(trialNpc.includes("trial_stats(intent)") && !/player\.(max_hp|max_mp|g
 assert.ok(pfmSource.includes("try {") && pfmSource.includes("finally {") && pfmSource.includes("end_pfm"), "绝招失败或抛错时必须清理真意释放上下文");
 assert.ok(!zhenyiSource.includes("target.damage(extra, me, 100)") && !zhenyiSource.includes("target.damage(burn, me, 100)") && !zhenyiSource.includes("from.damage(reflect, me, 100)"), "真意附伤与反伤不得绕过防御");
 assert.ok(tuoliSource.includes("is_in_trial(me)"), "真意试炼尚未离场时必须阻止叛师");
-assert.ok(cleanBuildSource.includes("generatedBundle") && cleanBuildSource.includes("unlinkSync"), "前端构建前必须清理旧哈希 bundle");
+// 构建产物必须：构建到 staging、发布前校验引用非空、先发 assets 再原子替换 index.html、保留旧哈希产物
+assert.ok(
+    buildFrontendSource.includes("mkdtempSync") &&
+    buildFrontendSource.includes("Empty asset") &&
+    buildFrontendSource.includes("cpSync") &&
+    buildFrontendSource.includes("renameSync") &&
+    buildFrontendSource.includes("rmSync(stage"),
+    "前端构建必须走 staging 目录、校验引用非空、先发 assets 再原子替换 index.html，并清理 staging"
+);
+// 旧哈希产物要保留（打开中的页面仍在引用），不要为"清理干净"把它们删掉
+assert.ok(
+    !/unlinkSync\(path\.join\([^)]*assets/.test(buildFrontendSource),
+    "构建流程不应删除已发布的旧哈希产物——打开中的页面仍会引用它们"
+);
 
 const pureMechanics = [];
 for (const data of Object.values(WORLD.ZHENYI.DATA)) {
