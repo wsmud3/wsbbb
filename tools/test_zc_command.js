@@ -81,6 +81,69 @@ const nasty = zcBtnHtml('zc x"><b>', '标签');
 assert.ok(!/cmd="zc x"><b>"/.test(nasty), 'cmd 属性未对引号/尖括号做实体转义');
 assert.ok(nasty.indexOf('&quot;') >= 0 && nasty.indexOf('&lt;') >= 0, 'cmd 属性缺少实体转义');
 
+const blankBtn = (function () {
+    const bs = read('world/obj/zc/blank_book.js');
+    const m = bs.match(/function _zc_btn\(cmd, label\) \{[\s\S]*?\n\}/);
+    assert.ok(m, '未找到 blank_book.js 的 _zc_btn');
+    // eslint-disable-next-line no-new-func
+    return new Function(m[0] + '; return _zc_btn;')();
+})();
+
+// ---- 2b. 按钮 HTML 质量：style 完整 + 危险字符实体化 ----
+// 真实事故：style 属性在 border-radius 之后就被闭合，导致
+// padding/margin/cursor/display 全部被浏览器丢弃（按钮没内边距、不变手型）；
+// 以及 onclick 里的命令未实体化，命令含 "<" / "'" 时可注入或破坏 JS 字符串。
+const DQ = String.fromCharCode(34);
+const BS = String.fromCharCode(92);
+const SQ = String.fromCharCode(39);
+
+for (const [fnName, fn] of [['zc_btn_html', zcBtnHtml], ['_zc_btn', blankBtn]]) {
+    // 普通命令：三条属性齐全、style 完整
+    const b = fn('zc deduce iblt1155ab9d', '推演');
+    const attrs = [...b.matchAll(/(\w+)\s*=\s*(["'])((?:(?!\2).)*)\2/g)].map(m => ({ n: m[1], v: m[3] }));
+    const names = attrs.map(a => a.n);
+    assert.deepStrictEqual(names, ['cmd', 'onclick', 'style'],
+        fnName + ' 的属性应为 cmd/onclick/style，实际: ' + names.join(','));
+    const style = attrs.find(a => a.n === 'style').v;
+    const decl = style.split(';').filter(x => x.trim()).map(x => x.split(':')[0].trim());
+    for (const want of ['color', 'border', 'background', 'border-radius', 'padding', 'margin', 'cursor', 'display']) {
+        assert.ok(decl.includes(want),
+            fnName + ' 的 style 缺少 ' + want + '（属性可能在中间被提前闭合）。实际声明: ' + decl.join(','));
+    }
+    assert.ok(!style.includes(DQ) && !style.includes(SQ),
+        fnName + ' 的 style 值里出现引号，会提前闭合属性');
+
+    // 危险输入：不得注入标签，且 onclick 必须能派发出与输入一致的命令
+    const dangers = [
+        'zc x"><script>alert(1)</script>',
+        "zc x' onmouseover='alert(1)",
+        'zc a&b<c>d',
+        'zc </span><img src=x onerror=alert(1)>',
+        'zc both' + SQ + ' and' + DQ + ' and' + BS + 'slash',
+    ];
+    for (const cmd of dangers) {
+        const html = fn(cmd, '标签');
+        assert.ok(!/<script/i.test(html) && !/<img/i.test(html),
+            fnName + ' 对 ' + JSON.stringify(cmd) + ' 产生了未转义的标签: ' + html.slice(0, 160));
+        // 取 onclick，按浏览器的方式还原实体后求值，检查派发的命令
+        const m = html.match(/onclick=(["'])([\s\S]*?)\1/);
+        assert.ok(m, fnName + ' 生成的按钮缺少 onclick');
+        const decoded = m[2]
+            .split('&apos;').join(SQ).split('&#39;').join(SQ)
+            .split('&quot;').join(DQ).split('&lt;').join('<').split('&gt;').join('>')
+            .split('&amp;').join('&');
+        let got = null;
+        // onclick 里写的是 window.SendCommand(...)，所以要同时提供 window
+        const fakeWindow = { SendCommand: c => { got = c; } };
+        // eslint-disable-next-line no-new-func
+        const run = new Function('window', 'SendCommand', decoded + ';');
+        run(fakeWindow, fakeWindow.SendCommand);
+        assert.strictEqual(got, cmd,
+            fnName + ' 点击后派发的命令与输入不一致\n  输入: ' + JSON.stringify(cmd) +
+            '\n  派发: ' + JSON.stringify(got) + '\n  onclick: ' + decoded);
+    }
+}
+
 // ---- 3. 契约：命令注册与兜底文案 ----
 // zc.js 必须以 COMMAND 子类身份声明 command = "zc"，否则不会进 WORLD.COMMANDS
 assert.ok(/this\.inherits\(COMMAND\)/.test(zcSrc), 'zc.js 未继承 COMMAND');
