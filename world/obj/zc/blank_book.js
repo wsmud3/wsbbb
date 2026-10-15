@@ -529,13 +529,32 @@ function _zc_btn(cmd, label) {
     // 重要：源码里不得出现反斜杠转义。游戏加载走 BASE.CREATE -> sanitizeScript
     // -> vm.compileFunction；sanitizeScript 会被字符串内的反斜杠误导，
     // 使源码损坏、编译失败，整个文件静默加载不出来（按钮随之消失）。
-    // 因此 onclick 里的单引号写成 &#39; 实体，由浏览器解析时还原。
-    var amp = String.fromCharCode(38);
+    // 因此：字符串字面量用单引号，引号/反斜杠字符一律用 fromCharCode 拼。
+    var cmdText = String(cmd);
     var dq = String.fromCharCode(34);
-    var onclick = 'window.SendCommand(' + amp + 'apos;' + cmd + amp + 'apos;)';
-    return '<span cmd=' + dq + cmd + dq + ' onclick=' + dq + onclick + dq
-        + ' style=' + dq + 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;' + dq
-        + 'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;' + dq + '>' + label + '</span>';
+    var amp = String.fromCharCode(38);
+    var sq = String.fromCharCode(39);
+    var bs = String.fromCharCode(92);
+    // HTML 实体化：cmd 与 onclick 都要做，否则含尖括号/引号的命令会注入标签或事件
+    var escHtml = function (v) {
+        return String(v).split(amp).join(amp + 'amp;')
+            .split(dq).join(amp + 'quot;')
+            .split(sq).join(amp + '#39;')
+            .split('<').join(amp + 'lt;')
+            .split('>').join(amp + 'gt;');
+    };
+    // JS 字面量转义：onclick 里的命令用单引号括起，需把命令自身的
+    // 单引号与反斜杠写成十六进制转义（bs + x27 / bs + bs），这样命令里的
+    // 引号不会提前结束字符串，也不会把后面的字符当成转义符。
+    var escJs = function (v) {
+        return String(v).split(bs).join(bs + bs)
+            .split(sq).join(bs + 'x27');
+    };
+    var onclick = 'window.SendCommand(' + amp + 'apos;' + escHtml(escJs(cmdText)) + amp + 'apos;)';
+    var style = 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
+        + 'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;';
+    return '<span cmd=' + dq + escHtml(cmdText) + dq + ' onclick=' + dq + onclick + dq
+        + ' style=' + dq + style + dq + '>' + label + '</span>';
 }
 // zc_menu：给浮窗/结构化菜单用的按钮数据（与 get_desc 里的按钮同源同命令）
 this.zc_button_defs = function () {
