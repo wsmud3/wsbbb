@@ -21,6 +21,7 @@
 - **上传内容** — 已把本地最新版本推送到 `https://github.com/wsmud3/wsbbb` 的 `main`，包含上一条的全部改动（服务端/前端配色表补齐 0~9、`SKILL.MAX_GRADE = 9`、`www/` 产物重建、文档注释同步）
 - **发布前校验** — `npm run validate:systems` 全部通过（退出码 0：编码检查、真意/房间/系统完整性/装备重铸、山外山、后台面板与后台接口回归）；核对 `www/index.html` 指向的新哈希产物确实内含本次改动（`levels` 表新增 `hiw:7/ hib:8/ him:9`、`level_color`/`wrap_name` 色阶扩到 10 项、`.grade7/.grade8/.grade9` 边框样式）
 - **校验边界** — 本机未安装 `node_modules`，`npm test` 中依赖数据库/HTTP 的用例（`test_release_safety.cjs` 等）与 `npm run build` **未能在本机执行**；未重启服务器、未做线上验收。完整比对清单与边界见 [docs/release-2026-09-12.md](docs/release-2026-09-12.md)
+- **后续变更** — 上条 grade7~9 扩展已于后续撤销，武学品阶回到 **grade 0~6（7 档）**：配色表/等级名/`levels` 表恢复 7 项，`query_grade` 封顶 6，技能注册表改回 `new Array(7)`，`.grade7~9` 样式删除。详见 [docs/release-2026-09-12.md](docs/release-2026-09-12.md)
 
 ## 2026-09-11 · 后台「注册」改为全部注册玩家 + 玩家栏「全部玩家」跨服显示
 
