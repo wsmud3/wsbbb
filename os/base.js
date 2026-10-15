@@ -273,6 +273,12 @@ function sanitizeScript(src) {
     return out.join('');
 }
 
+// 供 tools/ 下的回归测试直接复用**同一份实现**（避免测试复制一份而再次误诊）。
+// 游戏自身仍通过本文件内的函数名调用，此导出不影响运行时行为。
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports.sanitizeScript = sanitizeScript;
+}
+
 //根据文件路径new一个对象
 BASE.ITEMS = {};
 BASE.CREATE = function (path, fname) {
