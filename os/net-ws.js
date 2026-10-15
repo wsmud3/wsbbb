@@ -54,6 +54,9 @@ function onClientConnect(socket) {
     socket.on('timeout', this.onClientTimeout.bind(this, socket));
     $this.onSocketIn(socket);
     socket.on('data', function (data) {
+        // 所有入站数据的唯一入口。任何解析/业务异常都必须被限制在**这一个连接**内：
+        // 以前异常会逃出去触发 uncaughtException，导致整个进程存档后 exit(1)。
+        try {
         if (socket.protocol) {
             socket.protocol.readData(data, socket, $this);
         } else {
@@ -68,10 +71,20 @@ function onClientConnect(socket) {
             // waiting for fragmented WebSocket headers.
             if (socket._handshakeBuffer.length >= 4 &&
                 socket._handshakeBuffer.toString('ascii', 0, 4) !== 'GET ') {
-                socket.protocol = protocols.tcp;
-                var tcpData = socket._handshakeBuffer;
-                socket._handshakeBuffer = null;
-                socket.protocol.readData(tcpData, socket, $this);
+                // 首字节不是 HTTP 方法。历史上这里无条件切到"长度前缀裸 TCP"
+                // 协议并调用 onTcpReceive，但没有任何实现者注册该回调，
+                // 于是 TypeError 逃出本处理器、触发 uncaughtException 让
+                // **整个进程退出**（任何网络客户端发 5 字节即可达成 DoS）。
+                // 现在只有确实注册了该回调才启用这条协议，
+                // 否则按格式非法的连接断开（与下文非法 HTTP 请求行的处理一致）。
+                if (typeof $this.onTcpReceive === 'function') {
+                    socket.protocol = protocols.tcp;
+                    var tcpData = socket._handshakeBuffer;
+                    socket._handshakeBuffer = null;
+                    socket.protocol.readData(tcpData, socket, $this);
+                    return;
+                }
+                socket.destroy();
                 return;
             }
             var headerEnd = socket._handshakeBuffer.indexOf(Buffer.from("\r\n\r\n"));
@@ -96,6 +109,10 @@ function onClientConnect(socket) {
             // A client is allowed to send the first frame in the same TCP
             // packet as the HTTP upgrade.  Do not discard it.
             if (frameData.length) socket.protocol.readData(frameData, socket, $this);
+        }
+        } catch (e) {
+            try { console.error('连接数据处理失败，已断开该连接:', (e && e.message) || e); } catch (_) { }
+            try { socket.destroy(); } catch (_) { }
         }
     });
 }
@@ -375,7 +392,11 @@ var protocols = {
 
                 isread = true;
 
-                server.onTcpReceive(msg, socket);
+                // 二次保险：正常路径下 protocol 只会在 onTcpReceive 存在时才被设为 tcp。
+                // 这里再挡一次，避免任何路径下的 TypeError 打挂进程。
+                if (typeof server.onTcpReceive === 'function')
+                    server.onTcpReceive(msg, socket);
+                else { socket.destroy(); return; }
 
                 start = index + length;
 
