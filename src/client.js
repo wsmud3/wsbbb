@@ -183,8 +183,11 @@ export function ReceiveMessage(x) {
     } catch (e) {
         console.error("[message] filter failed", e);
     }
-    // 浮窗模式需要把触发对话的那段文字搬进浮窗，这里留一份原文
+    // 浮窗模式需要把触发对话的那段文字搬进浮窗，这里留一份原文 + 时间戳。
+    // 时间戳用来判断这条文字是不是「刚刚」收到的——只有紧跟着的那条菜单报文
+    // 才应该复用它；否则浮窗顶部会显示与本次操作无关的旧消息。
     Process._lastMessageText = x;
+    Process._lastMessageTime = Date.now();
     Process.message.push(x);
     Process.message.scroll2end();
     try {

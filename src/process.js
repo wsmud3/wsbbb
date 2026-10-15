@@ -437,8 +437,19 @@ const Process = {
         if (!data.items && !data.html) return;
         // 浮窗模式：把触发它的说明文字/富内容搬进浮窗，而不是占着主消息流
         if (Setting.float_dialog == 1) {
-            var pass = (data.text !== undefined) ? data.text : (Process._lastMessageText || "");
+            // 说明文字：服务端给了 text 就用它；否则回退到「刚刚触发这条菜单的消息」。
+            // 回退必须带新鲜度判断——_lastMessageText 是玩家收到的最后一条消息
+            // （可能是聊天/战斗/别人的喊话），若中间插入了别的消息，直接采用会让
+            // 浮窗顶部显示无关的旧文字。宁可不显示，也不要显示错的。
+            var pass;
+            if (data.text !== undefined) {
+                pass = data.text;
+            } else {
+                var fresh = (Process._lastMessageTime && (Date.now() - Process._lastMessageTime) <= 800);
+                pass = fresh ? (Process._lastMessageText || "") : "";
+            }
             Process._lastMessageText = "";
+            Process._lastMessageTime = 0;
             // 服务端明确给了 text（含空串）说明它已把内容交给我们，就不再按行数删消息队列
             // ——float_archive 那套「按行数 pop」依赖行数对齐，是脆弱的；仅在回退路径上仍需要它
             if (data.text === undefined && Setting.float_archive == 1 && pass) {
