@@ -37,7 +37,9 @@ const BACKLOG_MAX = 40;          // 单轮最多推送条数
 //   fatal 严重异常 —— 不设上限，这类绝不能因配额丢掉
 //   服务错误/重启 —— 合并后每天个位数，给 40 条余量
 //   部署/日报     —— 8 条足够
-const QUOTA = { fatal: Infinity, service: 40, info: 8 };
+const QUOTA = { fatal: Infinity, service: 100000, info: 100000 };   // 等于取消日常上限
+const BURST_MAX = 20;            // 只防雪崩：单轮最多发这么多条
+const DAILY_HARD_MAX = 100000;   // 每日硬上限（设为极大值＝不限制）
 const STATE_GUARD = '/var/lib/mud-qqbot/state.json';                // 单轮最多推送多少条（防止积压后刷屏）
 
 // ───────────────────────── 基础设施 ─────────────────────────
@@ -401,8 +403,15 @@ async function main() {
     const used = state.sendDays[day];
     if (typeof used === 'number') { state.sendDays[day] = { fatal: 0, service: 0, info: 0 }; }
 
+    // 单轮上限：正常一轮 1~3 条；超过 20 条说明是异常爆发，先发 20 条其余下轮继续
+    let burstNote = null;
+    let queue = messages.slice(0, BACKLOG_MAX);
+    if (queue.length > BURST_MAX) {
+        burstNote = `[BURST] ${queue.length} messages aggregated; sending first ${BURST_MAX}, rest next round.`;
+        queue = queue.slice(0, BURST_MAX);
+    }
     let sent = 0, failed = 0, skipped = 0;
-    for (const item of messages.slice(0, BACKLOG_MAX)) {
+    for (const item of queue) {
         const kind = item.kind || 'info';
         const cap = QUOTA[kind];
         const cur = state.sendDays[day][kind] || 0;
@@ -418,7 +427,7 @@ async function main() {
             failed++;
             process.stderr.write(`发送失败: ${r.err || r.status} ${r.body || ''}\n`);
         }
-        await new Promise(res => setTimeout(res, 800));   // 频率保护
+        await new Promise(res => setTimeout(res, 1500));   // 频率保护
     }
     // 超配额时不静默丢弃：明确记日志，并告知一次（否则"没收到告警"会被误判为"没事"）
     if (skipped) {
@@ -435,6 +444,7 @@ async function main() {
             }
         }
     }
+    if (burstNote) { await oneBotSend(env, burstNote); }
     const totals = state.sendDays[day];
     if (sent || failed) process.stderr.write(`推送完成：成功 ${sent}，失败 ${failed}，配额跳过 ${skipped}（今日 fatal ${totals.fatal} / service ${totals.service} / info ${totals.info}）\n`);
     saveState(state);
