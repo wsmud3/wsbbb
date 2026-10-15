@@ -523,9 +523,19 @@ this.zc_menu = function () {
 //     的 .html(str)）据此派发
 // 只写其中一种都会让另一条路径上的按钮失效——这正是「背包里看秘籍没有推演按钮」的原因。
 function _zc_btn(cmd, label) {
-    return '<span cmd="' + cmd + '" onclick="window.SendCommand(\'' + cmd + '\')" ' +
-        'style="color:gray;border:solid 1px gray;background:black;border-radius:0.25em;' +
-        'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;">' + label + '</span>';
+    // 按钮同时写两种触发方式，以适配两套渲染路径：
+    //   - cmd 属性：浮窗(.float-dialog)用事件委托读取它派发
+    //   - 内联 onclick：通过 innerHTML 渲染的面板（背包「查看」走 packet.js show_sub）
+    // 重要：源码里不得出现反斜杠转义。游戏加载走 BASE.CREATE -> sanitizeScript
+    // -> vm.compileFunction；sanitizeScript 会被字符串内的反斜杠误导，
+    // 使源码损坏、编译失败，整个文件静默加载不出来（按钮随之消失）。
+    // 因此 onclick 里的单引号写成 &#39; 实体，由浏览器解析时还原。
+    var amp = String.fromCharCode(38);
+    var dq = String.fromCharCode(34);
+    var onclick = 'window.SendCommand(' + amp + 'apos;' + cmd + amp + 'apos;)';
+    return '<span cmd=' + dq + cmd + dq + ' onclick=' + dq + onclick + dq
+        + ' style=' + dq + 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;' + dq
+        + 'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;' + dq + '>' + label + '</span>';
 }
 // zc_menu：给浮窗/结构化菜单用的按钮数据（与 get_desc 里的按钮同源同命令）
 this.zc_button_defs = function () {

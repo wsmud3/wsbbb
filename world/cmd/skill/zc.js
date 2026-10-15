@@ -14,7 +14,8 @@ var ZC_POSITIONS = {
     "轻功":  { base: "dodge",     label: "轻功" },
     "招架":  { base: "parry",     label: "招架" },
 };
-SKILL.ZC_POSITIONS = ZC_POSITIONS;
+// 加载期守卫：SKILL 可能尚未定义（加载顺序），缺失时跳过，避免整个命令文件加载失败。
+if (typeof SKILL !== 'undefined' && SKILL) SKILL.ZC_POSITIONS = ZC_POSITIONS;
 
 var POSITION_TO_KEY = {
     "force":    ["force"],
@@ -188,9 +189,12 @@ function del_wl(word_levels, slot, position_key) {
 }
 
 // Export helpers to SKILL for access from skill.js
-SKILL.get_wl = get_wl;
-SKILL.set_wl = set_wl;
-SKILL.del_wl = del_wl;
+// 加载期守卫：SKILL 缺失时跳过（同上），否则命令文件加载会整体失败。
+if (typeof SKILL !== 'undefined' && SKILL) {
+    SKILL.get_wl = get_wl;
+    SKILL.set_wl = set_wl;
+    SKILL.del_wl = del_wl;
+}
 
 // Send client notification to refresh skill display after ZC word changes
 function notify_skill_update(me, skill_id) {
@@ -220,10 +224,19 @@ function lvlAskBackCmd(skill_id, book_id, position_key) {
 // 因此不能"每个词条发一条消息"，否则只剩最后一条（表现为"没有任何选项"）。
 // 这里统一把按钮与说明拼成一段 HTML，随一条 send_commands 发出。
 function zc_btn_html(cmd, label) {
-    var safeCmd = String(cmd).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    return '<span cmd="' + safeCmd + '" onclick="window.SendCommand(\'' + safeCmd.replace(/'/g, "\\'") + '\')"'
-        + ' style="color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
-        + 'padding:0.25em 0.6em;margin:2px;cursor:pointer;display:inline-block;">' + label + '</span>';
+    // 重要：本函数体内不得出现反斜杠转义。
+    // os/base.js#sanitizeScript 处理字符串内反斜杠时会多跳一位，
+    // 使字符串状态错乱、后续源码被改写，vm.compileFunction 报语法错误，
+    // 整个 zc.js 加载失败 -> 命令未注册 -> 所有 zc 命令都回「什么？」。
+    // 做法：字符串字面量统一用单引号；需要引号字符时用 fromCharCode。
+    var cmdText = String(cmd);
+    var dq = String.fromCharCode(34);
+    var amp = String.fromCharCode(38);
+    var attr = cmdText.split(amp).join(amp + 'amp;').split(dq).join(amp + 'quot;').split('<').join(amp + 'lt;');
+    var onclick = 'window.SendCommand(' + amp + 'apos;' + cmdText + amp + 'apos;)';
+    return '<span cmd=' + dq + attr + dq + ' onclick=' + dq + onclick + dq
+        + ' style=' + dq + 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;' + dq
+        + 'padding:0.25em 0.6em;margin:2px;cursor:pointer;display:inline-block;' + dq + '>' + label + '</span>';
 }
 function zc_row(text, cmds) {
     var html = '<div class="zc-row">' + text;
