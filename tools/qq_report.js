@@ -33,7 +33,11 @@ const MAX_MESSAGE_CHARS = 1200;        // 单条消息最长字符数
 const BACKLOG_MAX = 40;          // 单轮最多推送条数
 // 以下是防止"消息风暴"的硬闸门。风控角度：短时间内给同一账号连发大量消息
 // 是第三方客户端被判定为异常行为最常见的原因，因此宁可少发也不刷屏。
-const DAILY_MAX = 30;            // 每天最多推送条数（超出则丢弃并记账）
+// 分类配额：一刀切的上限会掩盖问题（也曾经把正常告警挤掉）。按重要性分级：
+//   fatal 严重异常 —— 不设上限，这类绝不能因配额丢掉
+//   服务错误/重启 —— 合并后每天个位数，给 40 条余量
+//   部署/日报     —— 8 条足够
+const QUOTA = { fatal: Infinity, service: 40, info: 8 };
 const STATE_GUARD = '/var/lib/mud-qqbot/state.json';                // 单轮最多推送多少条（防止积压后刷屏）
 
 // ───────────────────────── 基础设施 ─────────────────────────
@@ -175,7 +179,9 @@ function collectFatal(state) {
 }
 
 function collectPm2Errors(state) {
-    const msgs = [];
+    // 合并成一条：以前每个日志文件各发一条，一次小波动就是好几条消息
+    const parts = [];
+    const meta = [];
     for (const [key, file, label] of [
         ['errGame', 'pm2-game-error.log', '正式服'],
         ['errTest', 'pm2-game-test-error.log', '测试服'],
@@ -187,10 +193,14 @@ function collectPm2Errors(state) {
         const { lines, newOffset } = readNewLines(f, off);
         if (!lines.length) { state.offsets[key] = newOffset; continue; }
         state.offsets[key] = newOffset;
-        msgs.push(`【${label} 错误】${file} 新增 ${lines.length} 行\n` +
-            lines.slice(-MAX_LINES_PER_MESSAGE).map(l => '  ' + trunc(sanitize(l), 180)).join('\n'));
+        parts.push(`▎${label}（${lines.length} 行）\n` +
+            lines.slice(-8).map(l => '  ' + trunc(sanitize(l), 170)).join('\n'));
+        meta.push(label + ' ' + lines.length + ' 行');
     }
-    return msgs;
+    if (!parts.length) return [];
+    let body = parts.join('\n');
+    if (body.length > 1600) body = body.slice(0, 1600) + '\n  …（内容过长已截断，完整内容见服务器日志）';
+    return [`【服务错误汇总】${meta.join(' / ')}\n${body}`];
 }
 
 /** pm2 重启次数增长 = 进程崩过（最可靠的"出事了"信号） */
@@ -203,7 +213,9 @@ function collectRestarts(state) {
     }
     let list;
     try { list = JSON.parse(raw); } catch (_) { return []; }
-    const msgs = [];
+    // 合并成一条：以前每个进程各发一条，一次 pm2 reload 就会连发 3 条
+    const hits = [];
+    let worst = 0;
     for (const p of list) {
         const name = p.name, r = p.pm2_env && p.pm2_env.restart_time;
         if (typeof r !== 'number') continue;
@@ -212,12 +224,13 @@ function collectRestarts(state) {
         if (!state.initialized || prev === undefined) continue;
         const delta = r - prev;
         if (delta > 0) {
-            msgs.push(`【进程重启】${name} 重启了 ${delta} 次（累计 ${r} 次）\n` +
-                `  状态: ${p.pm2_env && p.pm2_env.status}\n` +
-                (delta >= 3 ? '  ⚠ 短时间内多次重启，很可能是崩溃循环，建议尽快查看 fatal 日志' : ''));
+            hits.push(`  ${name}: +${delta}（累计 ${r}）`);
+            if (delta > worst) worst = delta;
         }
     }
-    return msgs;
+    if (!hits.length) return [];
+    return [`【进程重启】${hits.length} 个服务发生重启\n${hits.join('\n')}` +
+        (worst >= 3 ? '\n  ⚠ 有服务短时间多次重启，可能是崩溃循环，建议查看 fatal 日志' : '')];
 }
 
 // ───────────────────────── 采集：部署 ─────────────────────────
@@ -251,7 +264,13 @@ function collectDeploy(state) {
         const oks = newLines.filter(l => /Verified release/i.test(l));
         if (oks.length) state.deployFailStreak = 0;                 // 成功一次即清零
         if (fails.length) {
-            state.deployFailStreak = (state.deployFailStreak || 0) + fails.length;
+            // 只统计**新**失败行：以前每轮都会把"最后一行失败"重新读进来计数，
+            // 于是同一行被反复累加（实测涨到 2525）。用内容标记去重。
+            const lastLine = fails[fails.length - 1];
+            if (state.deployLastFailLine !== lastLine) {
+                state.deployLastFailLine = lastLine;
+                state.deployFailStreak = (state.deployFailStreak || 0) + fails.length;
+            }
             // 连续 3 次才告警：单次拒绝通常是提交过程中工作区短暂变脏，属瞬时状态
             if (state.deployFailStreak >= 3) {
                 const healthy = servicesHealthy();
@@ -352,12 +371,14 @@ async function main() {
     const state = loadState();
     const firstRun = !state.initialized;
 
+    // 每项带类别，供分类配额使用
     const messages = [];
-    try { messages.push(...collectDeploy(state)); } catch (e) { process.stderr.write('deploy: ' + e.message + '\n'); }
-    try { messages.push(...collectFatal(state)); } catch (e) { process.stderr.write('fatal: ' + e.message + '\n'); }
-    try { messages.push(...collectPm2Errors(state)); } catch (e) { process.stderr.write('pm2: ' + e.message + '\n'); }
-    try { messages.push(...collectRestarts(state)); } catch (e) { process.stderr.write('restart: ' + e.message + '\n'); }
-    try { messages.push(...collectDigest(state)); } catch (e) { process.stderr.write('digest: ' + e.message + '\n'); }
+    const add = (arr, kind) => { for (const t of (arr || [])) messages.push({ kind, text: t }); };
+    try { add(collectFatal(state), 'fatal'); } catch (e) { process.stderr.write('fatal: ' + e.message + '\n'); }
+    try { add(collectPm2Errors(state), 'service'); } catch (e) { process.stderr.write('pm2: ' + e.message + '\n'); }
+    try { add(collectRestarts(state), 'service'); } catch (e) { process.stderr.write('restart: ' + e.message + '\n'); }
+    try { add(collectDeploy(state), 'info'); } catch (e) { process.stderr.write('deploy: ' + e.message + '\n'); }
+    try { add(collectDigest(state), 'info'); } catch (e) { process.stderr.write('digest: ' + e.message + '\n'); }
 
     if (firstRun) {
         // 首次运行不推送历史积压，只发一条"已上线"确认，并把所有偏移量固定到当前末尾
@@ -373,25 +394,49 @@ async function main() {
 
     saveState(state);
 
-    // 每日总量闸门
+    // 分类配额（messages 里每项是 {kind, text}）
     const day = today();
     if (!state.sendDays) state.sendDays = {};
-    if (!state.sendDays[day]) state.sendDays[day] = 0;
-    let quota = DAILY_MAX - state.sendDays[day];
-    if (quota <= 0) {
-        process.stderr.write(`今日已达推送上限 ${DAILY_MAX} 条，本轮跳过（防止消息风暴触发风控）\n`);
-        saveState(state);
-        return 0;
-    }
+    if (!state.sendDays[day]) state.sendDays[day] = { fatal: 0, service: 0, info: 0 };
+    const used = state.sendDays[day];
+    if (typeof used === 'number') { state.sendDays[day] = { fatal: 0, service: 0, info: 0 }; }
 
-    let sent = 0, failed = 0;
-    for (const m of messages.slice(0, Math.min(BACKLOG_MAX, quota))) {
+    let sent = 0, failed = 0, skipped = 0;
+    for (const item of messages.slice(0, BACKLOG_MAX)) {
+        const kind = item.kind || 'info';
+        const cap = QUOTA[kind];
+        const cur = state.sendDays[day][kind] || 0;
+        if (cur >= cap) { skipped++; continue; }
+        const m = item.text;
         const text = trunc(m, MAX_MESSAGE_CHARS);
         const r = await oneBotSend(env, text);
-        if (r.ok) { sent++; state.sendDays[day] = (state.sendDays[day] || 0) + 1; } else { failed++; process.stderr.write(`发送失败: ${r.err || r.status} ${r.body || ''}\n`); }
+        if (r.ok) {
+            sent++;
+            state.sendDays[day][kind] = (state.sendDays[day][kind] || 0) + 1;
+            if (state.quotaNotified) delete state.quotaNotified[kind];
+        } else {
+            failed++;
+            process.stderr.write(`发送失败: ${r.err || r.status} ${r.body || ''}\n`);
+        }
         await new Promise(res => setTimeout(res, 800));   // 频率保护
     }
-    if (sent || failed) process.stderr.write(`推送完成：成功 ${sent}，失败 ${failed}（今日累计 ${state.sendDays[day]}/${DAILY_MAX}）\n`);
+    // 超配额时不静默丢弃：明确记日志，并告知一次（否则"没收到告警"会被误判为"没事"）
+    if (skipped) {
+        state.quotaNotified = state.quotaNotified || {};
+        for (const item of messages.slice(0, BACKLOG_MAX)) {
+            const kind = item.kind || 'info';
+            if ((state.sendDays[day][kind] || 0) >= QUOTA[kind] && !state.quotaNotified[kind]) {
+                state.quotaNotified[kind] = 1;
+                const names = { fatal: '严重异常', service: '服务错误/重启', info: '部署/日报' };
+                await oneBotSend(env, `【配额提示】「${names[kind] || kind}」类消息今日已达上限 ${QUOTA[kind]} 条，
+本类后续消息今日不再推送（其它类别不受影响）。
+明天自动恢复。`);
+                break;
+            }
+        }
+    }
+    const totals = state.sendDays[day];
+    if (sent || failed) process.stderr.write(`推送完成：成功 ${sent}，失败 ${failed}，配额跳过 ${skipped}（今日 fatal ${totals.fatal} / service ${totals.service} / info ${totals.info}）\n`);
     saveState(state);
     return 0;
 }
