@@ -260,6 +260,14 @@ try {
     if (!data) throw parseError;
 }
 if (!data || typeof data !== "object") throw new Error("角色存档格式无效");
+// data.prop 缺失或类型不符时（写档中断、手工改档、旧版本）不能直接索引：
+// 原写法会抛 TypeError，被 loginIn 捕获后只回"数据加载失败"，
+// 玩家**每次登录都失败且无自愈路径**。这里退化为全 0 并告警。
+if (!Array.isArray(data.prop)) {
+console.error("[存档修复] %s 的存档缺少合法的 prop 数组（实际类型 %s），已按 0 处理",
+this.name || this.id, data.prop === null ? "null" : typeof data.prop);
+data.prop = [];
+}
 for (var i = 0; i < SAVE_NUMPROP.length; i++) {
 this[SAVE_NUMPROP[i]] = data.prop[i] || 0;
 }
@@ -371,7 +379,18 @@ var fixed = [];
 for (var i = 0; i < objs.length; i++) {
 var obj = objs[i];
 if (obj && obj.eq_type !== undefined) {
+// 同一槽位出现第二条时，原实现直接 `fixed[eq_type] = obj` 覆盖 ——
+// 被覆盖的那件既不在 equipment、也不回 items/stores，会**永久丢失**。
+// 触发场景：旧版本存档格式、写档中断、手工改档等。
+// 现在保留先到的那件在槽位，把多余件退回背包，并打印告警。
+if (fixed[obj.eq_type]) {
+console.error("[装备修复] %s 的槽位 %s 存在重复装备，已将 %s 退回背包",
+this.name || this.id, obj.eq_type, obj.name);
+if (!this.items) this.items = [];
+this.items.push(obj);
+} else {
 fixed[obj.eq_type] = obj;
+}
 }
 }
 for (var j = 0; j < 11; j++) {
@@ -803,8 +822,13 @@ USER.prototype.remove_obj = function (obj, count) {
     if (!obj) return;
     count = count || obj.count || 1;
     var newobj = this.remove_item(obj, count);
+    if (!newobj) {
+        // 移除失败（物件不在背包、或 count 超过持有数导致 uncombine 返回 undefined）。
+        // 原实现无论成功与否都调用 items_changed → 客户端收到 remove:count，
+        // 背包显示与实际服务端状态不一致（玩家会以为物件已被消耗）。
+        return null;
+    }
     if (newobj == obj) {
-
         obj.notify_action(this, false);
     }
     this.items_changed(obj, count);
