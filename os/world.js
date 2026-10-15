@@ -338,6 +338,13 @@ WORLD = {
 };
 function loadResource() {
     let fs = require("fs");
+    // 本次加载的失败记录。以前这里是"一个 try 包住全部 8 个目录"：任何一个目录
+    // 缺失（ENOENT）都会让**后面的目录完全不再加载**，只留一行 console.log，
+    // 然后 status=0 照常开门 —— 表现为大量命令/物件/技能不存在，玩家只看到
+    // "点了没反应"或「什么？」。实测：world/family 缺失时只加载 157/1914 个文件，
+    // 占 91% 的 OBJ/AREA/SKILL/MAP/TASK 全部静默缺失。
+    var loadFailures = [];
+    var skipped = [];
     function readdir(basePath, path) {
         path = path || basePath;
         let files = fs.readdirSync(path);
@@ -347,48 +354,49 @@ function loadResource() {
             let stat = fs.statSync(sub_path);
             if (stat.isDirectory()) {
                 count += readdir(basePath, sub_path + "/");
-            } else {
+            } else if (sub_path.endsWith(".js")) {
                 let fname = sub_path.replace(basePath, "").replace(".js", "");
                 BASE.CREATE(basePath, fname);
                 count++;
+            } else {
+                // 目录里的非脚本文件（例如 world/npc_server_config.json）：
+                // 以前也会 count++ 并送进 BASE.CREATE，导致日志里的数字虚高。
+                skipped.push(sub_path);
             }
         }
         return count;
     }
+    // 逐目录加载：某个目录缺失/读取失败只记录，**继续**后面的目录
+    function loadDir(dir) {
+        try {
+            let count = readdir(dir);
+            console.log("%s %d ", dir, count);
+            return count;
+        } catch (e) {
+            loadFailures.push(dir + ": " + ((e && e.message) ? e.message : e));
+            console.log("%s 加载失败: %s", dir, (e && e.message) || e);
+            return 0;
+        }
+    }
+    let sum = 0;
+    sum += loadDir(__PATH.EXTENDS);
+    sum += loadDir(__PATH.COMMAND);
+    sum += loadDir(__PATH.FAMILY);
+    sum += loadDir(__PATH.OBJ);
+    sum += loadDir(__PATH.AREA);
+    sum += loadDir(__PATH.SKILL);
+    sum += loadDir(__PATH.MAP);
+    sum += loadDir(__PATH.TASK);
+    console.log('资源脚本加载%d', sum);
+    if (skipped.length) console.log("跳过非脚本文件 %d 个", skipped.length);
+    if (loadFailures.length) {
+        // 明确的一行汇总：以前这类问题只会散落在日志里，很难被发现
+        console.log("【资源加载异常】%d 个目录未能加载，相关功能会静默缺失:", loadFailures.length);
+        for (var i = 0; i < loadFailures.length; i++) console.log("  - " + loadFailures[i]);
+    }
     try {
-        let sum = 0;
-        let count = readdir(__PATH.EXTENDS);
-        console.log("%s %d ", __PATH.EXTENDS, count);
-        sum += count;
-        count = readdir(__PATH.COMMAND);
-        console.log("%s%d ", __PATH.COMMAND, count);
-        sum += count;
-        count = readdir(__PATH.FAMILY);
-        console.log("%s %d ", __PATH.FAMILY, count);
-        sum += count;
-
-
-        count = readdir(__PATH.OBJ);
-        console.log("%s %d ", __PATH.OBJ, count);
-        sum += count;
-
-        count = readdir(__PATH.AREA);
-        console.log("%s %d ", __PATH.AREA, count);
-        sum += count;
-
-        count = readdir(__PATH.SKILL);
-        console.log("%s %d ", __PATH.SKILL, count);
-        sum += count;
-
-        count = readdir(__PATH.MAP);
-        console.log("%s %d ", __PATH.MAP, count);
-        sum += count;
-        count = readdir(__PATH.TASK);
-        console.log("%s %d ", __PATH.TASK, count);
-        sum += count;
-        console.log('资源脚本加载%d', sum);
         WORLD.on_resource_loaded();
     } catch (e) {
-        console.log("error: ", e, e.stack);
+        console.log("on_resource_loaded error: ", e, e.stack);
     }
 }
