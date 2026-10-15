@@ -79,8 +79,9 @@ this.enter = function (me, sk, pfmid) {
     if (me.mp < pfm_mp) {
         return me.notify("你的内力不够，无法使用" + name);
     }
-    if (pfm.check && !pfm.check(me,
-        lv, sk)) return;
+    // 这里原来还有一次 `pfm.check(me, lv, sk)`，与下面第 108 行的
+    // `!pfm.no_check && pfm.check(me, lv)` 重复：有副作用的 check（扣物品、掷随机）
+    // 会被执行两次，而且第二次少传 sk 参数。只保留后者。
 
     if (pfm.enable_skill && pfm.enable_skill != sk) {
         if (!sp_skill.can_enables || sp_skill.can_enables.indexOf(pfm.enable_skill) < 0) {
@@ -158,6 +159,13 @@ this.enter = function (me, sk, pfmid) {
                 me.set_temp("sk/last_pfm_id", pfm.id, 30000);
                 me.set_temp("sk/last_pfm_lv", lv, 30000);
             }
+        } catch (e) {
+            // 绝招脚本内部抛错时，伤害/效果往往已经结算了一部分，但异常会一路穿出
+            // 本命令被 WORLD.request 的外层 catch 吞掉 —— 于是下面的
+            // `if (isrelease)` 整块被跳过：内力不退、CD 不写、release_time 不设，
+            // 玩家可以无限连发。这里按"已释放"处理，保证扣费与冷却一定生效。
+            isrelease = true;
+            console.error("绝招 %s 执行出错（已按已释放结算）:", pfm.id, (e && e.stack) || e);
         } finally {
             // 无论绝招成功、主动返回 false 或抛错，都必须结束本次真意上下文。
             if (WORLD.ZHENYI && zy_pfm_started) WORLD.ZHENYI.end_pfm(me, target, pfm, sp_skill, isrelease);

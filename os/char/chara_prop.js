@@ -158,23 +158,42 @@ CHARACTER.prototype._apply_zc_stack = function (key, stat, pctChange, maxStacks)
     }
     this[stat] += delta;
     tracker.count += 1;
-    tracker.deltas.push([stat, delta, this[stat]]);
+    // 第三个元素记为【施加前】的基准值（原为 this[stat]，即施加后的值，
+    // 会让重算无法回到基准）。
+    tracker.deltas.push([stat, delta, this[stat] - delta]);
     tracker.stat = stat;
     tracker.pctChange = pctChange;
-    this._zc_stack_order.push({ key: key, stat: stat, pctChange: pctChange });
+    // 记下本层施加前的基准值：重算时必须以它为基准，
+    // 否则会用"已放大的当前值"再放大一次（NPC 的 recount 不会重置基准）。
+    this._zc_stack_order.push({ key: key, stat: stat, pctChange: pctChange, base: this[stat] - delta });
     return true;
 };
 
 CHARACTER.prototype._reapply_zc_stacks = function () {
     var order = this._zc_stack_order || [];
+    if (!order.length) return;
+    // 幂等重放。原实现是 "this[stat] += delta"，但 NPC 的 recount
+    // （world/extends/char/combat.js 的 `if (!(this.gj > 0))` 单向棘轮）
+    // 不会把 stat 重置回基准，所以每次调用都在已改过的值上再加一次 delta：
+    // 被 -10% 后连续 recount 会 900→810→729→656→590→531 逐次坍缩。
+    // 这里改为先把被动过的 stat 恢复到基准，再按层序完整重放一遍。
+    var baseStats = this._zc_base_stats || {};
+    for (var stat in baseStats) {
+        this[stat] = baseStats[stat];
+    }
     for (var i = 0; i < order.length; i++) {
         var entry = order[i], tracker = this._zc_stacks && this._zc_stacks[entry.key];
         if (!tracker || tracker.count <= 0) continue;
-        var delta;
-        if (entry.stat === "diff_sh_per") delta = entry.pctChange;
-        else if (entry.stat === "gjsd") delta = -this[entry.stat] * entry.pctChange;
-        else delta = this[entry.stat] * entry.pctChange;
-        this[entry.stat] += delta;
+        // 与 _apply_zc_stack 使用完全相同的公式与顺序（同 stat 多层为复利叠加）
+        var repeat = tracker.count;
+        for (var n = 0; n < repeat; n++) {
+            var cur = this[entry.stat];
+            var delta;
+            if (entry.stat === "diff_sh_per") delta = entry.pctChange;
+            else if (entry.stat === "gjsd") delta = -cur * entry.pctChange;
+            else delta = cur * entry.pctChange;
+            this[entry.stat] = cur + delta;
+        }
     }
 };
 

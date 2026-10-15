@@ -32,6 +32,11 @@ this.enter = function (me, count, arg) {
         if (count !== undefined) {
             move_count = parseInt(count);
         }
+        // count<=0 必须显式拒绝。原判断 `!(move_count <= move_item.count)` 对 0 恒假，
+        // 0 会穿过去并在 remove_item_byid(arg, 0) 的 `count > 0` 判断处落到 else 分支
+        // → 整叠被 splice 出背包，而仓库只 += 0 → 物品凭空消失。
+        // 复现：仓库塞满 + 仓库已有同名堆叠，输入 store 0 <背包那叠的 id>。
+        if (!(move_count > 0)) return me.notify("数量不对。");
         if (!(move_count <= move_item.count)) return me.notify("你要存什么东西？");
 
         move_item = me.remove_item_byid(arg, move_count);
