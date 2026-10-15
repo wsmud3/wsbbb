@@ -25,7 +25,9 @@
     "audit:zc": "node tools/audit/audit_zc_refactor.js",
     "audit:callsites": "node tools/audit/audit_callsites.js",
     "audit": "npm run audit:buttons && npm run audit:messages && npm run audit:callsites",
-    "test:chattext": "node -e \"console.log('用浏览器打开 tools/test_chat_text.html 查看结果')\""
+    "test:chattext": "node -e \"console.log('用浏览器打开 tools/test_chat_text.html 查看结果')\"",
+    "check:repo": "node tools/check_repo_ownership.js",
+    "check:repo:fix": "node tools/check_repo_ownership.js --fix"
   },
   "author": "",
   "license": "ISC",
