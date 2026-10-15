@@ -23,6 +23,7 @@ this.enter = function (me, str) {
     } else {
         msg = UTIL.htmlEncode(UTIL.replace_word(str));
     }
+    if (WORLD.chatlog) WORLD.chatlog.record("es", me, str, { lv: me.level || 0, server: WORLD.SERVER.name });
     msg = JSON.stringify({ type: "msg", ch: "es", content: msg, uid: me.id, lv: (me.level || 0), name: name, server: WORLD.SERVER.name });
 
     for (var i = 0; i < WORLD.USERS.length; i++) {

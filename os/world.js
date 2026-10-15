@@ -1,5 +1,6 @@
 
 require("./util/util");
+
 const db = require("./util/data");
 WORLD = {
     USERS: [],
@@ -107,6 +108,9 @@ WORLD = {
             return false;
         });
     },
+    // 聊天记录持久化（供运维机器人按时间段查询）。
+    // 放在 WORLD 对象内部、startup 之前：此时 WORLD 已定义。
+    // （曾放在文件开头导致 'chatlog 加载失败 WORLD is not defined'，钩子因保护判断而不记录）
     startup: async function (sid) {
         if (sid) {
             sid = parseInt(sid);
@@ -336,6 +340,9 @@ WORLD = {
 
     }
 };
+
+// 聊天记录持久化模块挂到 WORLD 上（在 WORLD 定义之后加载，避免 WORLD 未定义）
+try { WORLD.chatlog = require('./chatlog'); } catch (e) { console.error('chatlog 加载失败', e.message); }
 function loadResource() {
     let fs = require("fs");
     // 本次加载的失败记录。以前这里是"一个 try 包住全部 8 个目录"：任何一个目录
