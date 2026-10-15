@@ -398,7 +398,7 @@ export default {
         }
         this.element.html(html.join(""));
 
-    }, level_color: ["wht", "hig", "hic", "hij", "hiz", "hio", "ord", "hiw", "hib", "him"]
+    }, level_color: ["wht", "hig", "hic", "hij", "hiz", "hio", "ord"]
     , get_lvdesc: function (level) {
         if (level < 1000)
             return Dialog.skills.skill_levels[parseInt(level / 50)];
@@ -453,8 +453,7 @@ export default {
         Util.checkScroll(elem.next());
     }
 };
-// 武学等级配色：0白 1绿 2青 3黄 4粉 5橙 6红 7亮白 8亮蓝 9亮粉
-const level_desc = ["wht", "hig", "hic", "hiy", "him", "hio", 'ord', "hiw", "hib", "him"];
+const level_desc = ["wht", "hig", "hic", "hiy", "him", "hio", 'ord'];
 function wrap_name(obj) {
     let tag = level_desc[obj.grade];
     return `<${tag}>${obj.name}</${tag}>`;
