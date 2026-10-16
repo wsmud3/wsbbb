@@ -426,6 +426,11 @@ async function main() {
         } else {
             failed++;
             process.stderr.write(`发送失败: ${r.err || r.status} ${r.body || ''}\n`);
+            // 发不出去必须留痕：以前完全静默，导致机器人掉线 18 小时没人知道
+            try {
+                require('fs').appendFileSync('/home/mud/mud/log/qqbot-down.log',
+                    `[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] [SEND-FAIL] ${r.err || r.status}\n`);
+            } catch (_) { }
         }
         await new Promise(res => setTimeout(res, 1500));   // 频率保护
     }
