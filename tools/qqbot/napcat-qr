@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+'use strict';
+/**
+ * napcat-qr —— 取一张**新鲜**的 QQ 登录二维码（root only，mud 经 sudo 调用）
+ *
+ * 修复的三个问题（旧版）：
+ *   ① 只调 GetQQLoginQrcode —— 那是**返回缓存**的接口，NapCat 会把同一张码
+ *      反复给出来。改为先调 RefreshQRcode 强制重新生成。
+ *   ② 新鲜度判断写作 `st.mtimeMs >= before` —— "等于"也算新鲜，
+ *      于是永远返回旧文件。改为：mtime 必须**严格变新**且**内容哈希必须变化**。
+ *   ③ 刷新失败时静默返回旧图（用户扫了没用）。现在改为：重试 → 必要时重启
+ *      NapCat 触发全新登录流程 → 仍失败则明确报错，绝不给过期图。
+ *
+ * 输出：
+ *   已登录       →  LOGGED
+ *   取到新二维码 →  {"png":"<base64>","link":"https://txz.qq.com/p?k=..."}
+ *   失败         →  非零退出，stderr 写明原因
+ */
+const http = require('http');
+const crypto = require('crypto');
+const fs = require('fs');
+const { execFile } = require('child_process');
+
+const CFG = '/root/Napcat/opt/QQ/resources/app/app_launcher/napcat/config/webui.json';
+const QRP = '/root/Napcat/opt/QQ/resources/app/app_launcher/napcat/cache/qrcode.png';
+const NAPCAT_LOG = '/var/log/napcat.log';
+
+function post(path, body, headers) {
+    return new Promise(res => {
+        const d = JSON.stringify(body || {});
+        const r = http.request({
+            hostname: '127.0.0.1', port: 6099, path, method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(d) }, headers || {}),
+            timeout: 20000,
+        }, x => { let b = ''; x.on('data', c => b += c); x.on('end', () => res(b)); });
+        r.on('timeout', () => { r.destroy(); res(''); });
+        r.on('error', () => res(''));
+        r.write(d); r.end();
+    });
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function fail(m) { process.stderr.write(m + '\n'); process.exit(1); }
+function qrStat() {
+    try { const s = fs.statSync(QRP); return { mtime: s.mtimeMs, size: s.size }; }
+    catch (_) { return null; }
+}
+function qrHash() {
+    try { return crypto.createHash('md5').update(fs.readFileSync(QRP)).digest('hex'); }
+    catch (_) { return ''; }
+}
+function lastLink() {
+    try {
+        const raw = fs.readFileSync(NAPCAT_LOG, 'utf8');
+        const ms = raw.match(/https:\/\/txz\.qq\.com\/p\?k=[^\s]+/g);
+        return ms && ms.length ? ms[ms.length - 1] : '';
+    } catch (_) { return ''; }
+}
+function run(cmd, args) {
+    return new Promise(res => execFile(cmd, args, { timeout: 60000 }, (e, o) => res(e ? '' : String(o))));
+}
+
+(async () => {
+    let token = '';
+    try { token = JSON.parse(fs.readFileSync(CFG, 'utf8')).token || ''; } catch (_) { return fail('读 WebUI 配置失败'); }
+    if (!token) return fail('WebUI token 为空');
+    const hash = crypto.createHash('sha256').update(token + '.napcat').digest('hex');
+
+    async function login() {
+        try { return JSON.parse(await post('/api/auth/login', { hash })).data.Credential || ''; }
+        catch (_) { return ''; }
+    }
+    let cred = await login();
+    if (!cred) {
+        // WebUI 不可达通常意味着 NapCat 整个进程不在（例如崩溃/被 OOM 杀掉）。
+        // 此时先尝试把服务拉起来 —— 机器人反正已经不可用，启动它是安全的，
+        // 而且只有拉起来之后才可能拿到登录二维码。
+        await run('systemctl', ['start', 'napcat']);
+        for (let i = 0; i < 40; i++) {
+            await sleep(2000);
+            cred = await login();
+            if (cred) break;
+        }
+        // 登录流程本身还需要一点时间才生成二维码，再给一段缓冲
+        if (cred) await sleep(5000);
+    }
+    if (!cred) return fail('NapCat WebUI 登录失败（已尝试启动服务仍不可达）');
+
+    const isLoggedIn = async () => {
+        try {
+            const info = JSON.parse(await post('/api/QQLogin/GetQQLoginInfo', {}, { Authorization: 'Bearer ' + cred }));
+            return !!(info.data && (info.data.uin || info.data.uid));
+        } catch (_) { return false; }
+    };
+
+    if (await isLoggedIn()) { process.stdout.write('LOGGED\n'); return; }
+
+    /**
+     * 取一张新码：强制刷新 → 等文件真正变化 → 校验哈希不同。
+     * 若强制刷新无效（NapCat 有时需要重新进入登录流程），重启一次 NapCat 再试。
+     */
+    async function tryObtain(allowRestart) {
+        const before = qrStat();
+        const beforeHash = qrHash();
+
+        // ① 强制重新生成
+        await post('/api/QQLogin/RefreshQRcode', {}, { Authorization: 'Bearer ' + cred });
+
+        // ② 等文件"严格变新"且哈希变化（最长 12 秒）
+        for (let i = 0; i < 48; i++) {
+            await sleep(250);
+            const now = qrStat();
+            if (!now || now.size < 200) continue;
+            const grew = !before || now.mtime > before.mtime + 1;   // 严格变新
+            const changed = qrHash() !== beforeHash;
+            if (grew && changed) {
+                return { png: fs.readFileSync(QRP), link: lastLink() };
+            }
+        }
+
+        // ③ 强制刷新无效 → 重启 NapCat 触发全新登录流程（此时机器人本来就没在线）
+        if (allowRestart) {
+            await run('systemctl', ['restart', 'napcat']);
+            // 等 WebUI/登录流程就绪
+            for (let i = 0; i < 30; i++) {
+                await sleep(2000);
+                cred = await login();
+                if (cred && !(await isLoggedIn())) break;
+                if (cred && (await isLoggedIn())) return 'LOGGED';
+            }
+            if (await isLoggedIn()) return 'LOGGED';
+            await post('/api/QQLogin/RefreshQRcode', {}, { Authorization: 'Bearer ' + cred });
+            const h2 = qrHash();
+            for (let i = 0; i < 60; i++) {
+                await sleep(250);
+                const now = qrStat();
+                if (now && now.size > 200 && qrHash() !== h2) {
+                    return { png: fs.readFileSync(QRP), link: lastLink() };
+                }
+            }
+        }
+        return null;
+    }
+
+    let r = await tryObtain(true);
+    if (r === 'LOGGED') { process.stdout.write('LOGGED\n'); return; }
+    if (!r) return fail('无法获得新鲜二维码（强制刷新与重启 NapCat 均未生成新码）');
+
+    process.stdout.write(JSON.stringify({ png: r.png.toString('base64'), link: r.link }) + '\n');
+})();
