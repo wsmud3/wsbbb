@@ -58,6 +58,31 @@ function lastLink() {
 function run(cmd, args) {
     return new Promise(res => execFile(cmd, args, { timeout: 60000 }, (e, o) => res(e ? '' : String(o))));
 }
+/**
+ * 抓取腾讯的"新设备验证"链接（accounts.qq.com/safe/verify）。
+ * 这个链接**只在被踢下线后 NapCat 尝试密码登录的那一刻**由腾讯下发，
+ * 平时调 PasswordLogin 会直接返回 "QQ Is Logined"，不会给链接。
+ * 因此只能从日志里抓最近一次下发的（并做时效判断，避免给过期链接）。
+ */
+function safeVerifyLink(maxAgeSec) {
+    maxAgeSec = maxAgeSec || 900;   // 默认只认 15 分钟内的
+    try {
+        const raw = fs.readFileSync(NAPCAT_LOG, 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
+        const lines = raw.split('\n');
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const l = lines[i];
+            if (l.indexOf('accounts.qq.com/safe/verify') < 0) continue;
+            const m = l.match(/(\d\d-\d\d \d\d:\d\d:\d\d)/);
+            if (!m) continue;
+            const t = new Date('2026-' + m[1].replace(' ', 'T') + 'Z');
+            if (isNaN(t.getTime())) continue;
+            if ((Date.now() - t.getTime()) / 1000 > maxAgeSec) return '';   // 太旧，宁可不给
+            const u = l.match(/https:\/\/accounts\.qq\.com\/safe\/verify\?[^\s'"]+/);
+            return u ? u[0] : '';
+        }
+    } catch (_) { }
+    return '';
+}
 
 (async () => {
     let token = '';
@@ -145,5 +170,10 @@ function run(cmd, args) {
     if (r === 'LOGGED') { process.stdout.write('LOGGED\n'); return; }
     if (!r) return fail('无法获得新鲜二维码（强制刷新与重启 NapCat 均未生成新码）');
 
-    process.stdout.write(JSON.stringify({ png: r.png.toString('base64'), link: r.link }) + '\n');
+    // 同时附带"新设备验证"链接（若有新鲜的下发记录）
+    process.stdout.write(JSON.stringify({
+        png: r.png.toString('base64'),
+        link: r.link,
+        verify: safeVerifyLink(900),
+    }) + '\n');
 })();
