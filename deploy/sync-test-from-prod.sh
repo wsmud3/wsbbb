@@ -40,6 +40,9 @@ log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*" >> "$LOG"; }
 
 # 755 而不是 700：清单要让 mudmod 组（朋友）能读，否则他不知道哪些改动在生效
 install -d -m 755 -o root -g root "$STATE"
+# 与 test-git-sync.sh 共用一把锁：两者都会读写 overrides/
+exec 9>"$STATE/sync.lock" 2>/dev/null || exit 0
+flock -n 9 || exit 0
 REV=$(sudo -u mud git -C "$SRC" rev-parse HEAD 2>/dev/null) || exit 0
 [ -n "$REV" ] || exit 0
 
@@ -161,7 +164,14 @@ if [ -d "$OVER" ] && [ -n "$(ls -A "$OVER" 2>/dev/null)" ]; then
 fi
 
 # 复核：软链接必须还在，否则立即停手
-for l in data log node_modules .env; do
+# data 已改为测试服独立的真实目录（数据库隔离）：必须存在且**不能**是软链接
+if [ ! -d "$DEST/data" ] || [ -L "$DEST/data" ]; then
+    log "严重：$DEST/data 必须是独立真实目录（数据库隔离），停止同步并请人工检查"
+    rm -rf "$STAGE"
+    exit 1
+fi
+# 其余三个仍必须是软链接（依赖、配置、日志与正式服一致）
+for l in log node_modules .env; do
     if [ ! -L "$DEST/$l" ]; then
         log "严重：$DEST/$l 不是软链接，停止同步并请人工检查"
         rm -rf "$STAGE"
