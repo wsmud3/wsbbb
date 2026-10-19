@@ -30,9 +30,17 @@ const DOWN_LOG = '/home/mud/mud/log/qqbot-down.log';
 const QR_PNG = '/root/Napcat/opt/QQ/resources/app/app_launcher/napcat/cache/qrcode.png';
 const QR_HELPER = '/usr/local/bin/napcat-qr';
 
-// 提醒节奏：掉线后在这些分钟数发提醒（每封都附新二维码）
+// 提醒节奏，分两段：
+//   第一阶段（前 3 小时）：密集提醒，因为大概率用户就在附近，扫一下就好
+//   第二阶段（超过 3 小时）：**每 6 小时一次，永不停止**
+//
+// 为什么要第二阶段：最初的设计是"提醒 6 次后放弃"，结果 10-16 那次机器人
+// 离线了 2.6 天，6 封邮件在周五晚上 3 小时内发完，之后 59 小时完全静默 ——
+// 用户在周末使用机器人时才发现它坏了。把"避免刷屏"排在"别让用户不知道"
+// 前面是错的：监控失效时沉默，等于监控不存在。
 const REMIND_AT_MIN = [0, 5, 15, 30, 60, 180];
-const MAX_REMINDERS = REMIND_AT_MIN.length;
+const MAX_REMINDERS = REMIND_AT_MIN.length;   // 密集阶段次数（仅用于邮件里显示进度）
+const PERSIST_EVERY_SEC = 6 * 3600;          // 长期阶段：每 6 小时一次
 
 let notify = null;
 try { notify = require('/home/mud/bin/notify.js'); } catch (e) { console.error('notify 加载失败', e.message); }
@@ -102,10 +110,11 @@ async function freshQRCode() {
     const out = (await run('sudo', ['-n', QR_HELPER], 180000)).trim();
     // 助手在"已登录"时直接返回 LOGGED —— 这个信息本身有用（说明无需扫码）
     if (out === 'LOGGED') return 'LOGGED';
-    let png = null;
+    let png = null, verify = '';
     try {
         const j = JSON.parse(out);
         if (j && j.png) png = Buffer.from(j.png, 'base64');
+        if (j && j.verify) verify = j.verify;      // 腾讯的"新设备验证"链接（若有）
     } catch (_) { }
     // 助手没给图才退化到读文件。注意：缓存文件可能是过期的，
     // 所以只作为最后兜底，并且要求文件较新（10 分钟内）。
@@ -123,16 +132,20 @@ async function freshQRCode() {
         const ms = raw.match(/https:\/\/txz\.qq\.com\/p\?k=[^\s]+/g);
         if (ms && ms.length) link = ms[ms.length - 1];
     } catch (_) { }
-    return { png, link };
+    return { png, link, verify };
 }
 
 /** 组装二维码提醒邮件（内嵌图片，用户直接在邮件里扫） */
 function buildQrMail(qr, downFor, attempt, why) {
     const cid = 'qr' + Date.now();
     const first = attempt === 1;
+    // 标题要能一眼看出严重程度：离线超过 1 天的用红字标题风格
+    const days = downFor / 86400;
     const subject = first
         ? 'QQ 机器人已离线 —— 请扫码恢复（邮件内可直接扫）'
-        : `QQ 机器人仍未恢复（第 ${attempt} 次提醒）—— 请扫码`;
+        : (downFor >= 86400
+            ? `⚠ 机器人已离线 ${Math.floor(days)} 天 ${Math.floor((downFor % 86400) / 3600)} 小时（第 ${attempt} 次提醒）`
+            : `QQ 机器人仍未恢复（第 ${attempt} 次提醒，已离线 ${human(downFor)}）—— 请扫码`);
 
     const html = `<!DOCTYPE html><html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#222;line-height:1.6">
 <h2 style="margin:0 0 8px;color:#c0392b">${first ? 'QQ 机器人已离线' : '机器人仍未恢复'}</h2>
@@ -151,9 +164,19 @@ function buildQrMail(qr, downFor, attempt, why) {
 </div>
 
 <p style="margin:18px 0 6px;font-size:13px;color:#666">扫码后请在手机上点「确认登录」，机器人会自动恢复，届时你会收到一封恢复通知。</p>
+${qr.verify ? `<div style="border:1px solid #e0a800;background:#fffbea;border-radius:8px;padding:14px;margin:16px 0">
+  <div style="font-weight:600;color:#8a6d00;margin-bottom:6px">另一条路：完成腾讯的「新设备验证」（可能让登录更持久）</div>
+  <div style="font-size:13px;color:#555;line-height:1.6">
+    这次被踢的原因很可能是腾讯只给了<b>短期凭据</b>（实测约 1.5~2 小时就作废）。<br>
+    腾讯在下发这个链接时，就是在要求完成新设备验证。若走完它，登录态<b>可能变成长期有效</b>，就不用每两小时扫一次码。<br>
+    <span style="color:#a00">注意：此链接有时效，且其中的图片验证码我无法替你识别 —— 需要你本人操作。</span>
+  </div>
+  <div style="margin-top:8px;font-size:12px;word-break:break-all"><a href="${qr.verify}">${qr.verify.slice(0, 110)}…</a></div>
+</div>` : ''}
 ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客户端压缩导致扫不出，可在<b>手机 QQ 内</b>打开此链接完成同样授权：<br><span style="word-break:break-all">${qr.link}</span></p>` : ''}
 <hr style="border:none;border-top:1px solid #eee;margin:18px 0">
-<p style="font-size:12px;color:#999;margin:0">本邮件由服务器上的独立看护进程发出，不依赖 QQ 通道 —— 因此机器人掉线时它仍然可用。<br>提醒节奏：离线后 ${REMIND_AT_MIN.join(' / ')} 分钟各一次，之后停止；恢复后自动通知。</p>
+<p style="font-size:12px;color:#999;margin:0">本邮件由服务器上的独立看护进程发出，不依赖 QQ 通道 —— 因此机器人掉线时它仍然可用。<br>
+提醒节奏：离线后 ${REMIND_AT_MIN.join(' / ')} 分钟各一次，之后<b>每 ${PERSIST_EVERY_SEC/3600} 小时一次，直到你处理为止（不会停止）</b>。恢复后自动通知。</p>
 </body></html>`;
 
     const text = [
@@ -171,6 +194,44 @@ ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客�
 
     return { subject, text, html, images: [{ cid, data: qr.png, filename: 'qq-login-qr.png' }] };
 }
+
+// 看护脚本自身的异常必须留痕 —— 否则"监控坏了"这件事本身没人知道，
+// 而这正是我们要解决的问题（10-16 那次就是脚本抛错后静默退出）。
+process.on('uncaughtException', e => {
+    log('✗✗ 看护脚本未捕获异常: ' + ((e && e.stack) || e));
+    process.exit(1);
+});
+process.on('unhandledRejection', e => {
+    log('✗✗ 看护脚本未处理 Promise 拒绝: ' + ((e && e.stack) || e));
+});
+
+// 单实例锁：cron 每分钟触发，而一次运行可能耗时数十秒（取二维码、发邮件、重启服务），
+// 并发运行会导致重复发信（实测发生过同一分钟发了两封一模一样的邮件）。
+const LOCK = STATE_DIR + '/.watchdog.lock';
+function acquireLock() {
+    try {
+        fs.mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
+    } catch (_) { }
+    try {
+        const st = fs.statSync(LOCK);
+        // 超过 10 分钟的锁视为残留（进程被杀等），强制回收
+        if (Date.now() - st.mtimeMs > 10 * 60000) { try { fs.unlinkSync(LOCK); } catch (_) { } }
+    } catch (_) { }
+    try {
+        const fd = fs.openSync(LOCK, 'wx');       // O_EXCL：已存在则失败
+        fs.writeSync(fd, String(process.pid));
+        fs.closeSync(fd);
+        return true;
+    } catch (_) {
+        return false;                              // 已有实例在跑
+    }
+}
+if (!acquireLock()) {
+    // 另一个实例正在运行，本次直接退出（不写日志，避免每分钟刷一行）
+    process.exit(0);
+}
+function releaseLock() { try { fs.unlinkSync(LOCK); } catch (_) { } }
+process.on('exit', releaseLock);
 
 (async () => {
     try { fs.mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 }); } catch (_) { }
@@ -205,6 +266,7 @@ ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客�
         st.pending = [];
         st.remindersSent = 0;
         st.nextReminderIdx = 0;
+        st.lastReminderAt = nowSec();
         st.lastQr = null;
     } else if (!prevAlive && alive) {
         transition = 'up';
@@ -281,10 +343,22 @@ ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客�
 
     // ---------- ④ 持续掉线：按节奏提醒（每封附新二维码）----------
     if (!alive && st.downSince) {
-        const elapsedMin = (nowSec() - st.downSince) / 60;
+        const elapsedSec = nowSec() - st.downSince;
+        const elapsedMin = elapsedSec / 60;
         const idx = st.nextReminderIdx || 0;
-        if (idx < REMIND_AT_MIN.length && elapsedMin >= REMIND_AT_MIN[idx]) {
-            const attempt = idx + 1;
+
+        // 判断这次要不要提醒：先走密集阶段，走完后进入"每 6 小时一次"的长期阶段
+        let due = false;
+        if (idx < REMIND_AT_MIN.length) {
+            due = elapsedMin >= REMIND_AT_MIN[idx];
+        } else {
+            // 长期阶段：距上次提醒超过 6 小时就再发一封（永不放弃）
+            const since = st.lastReminderAt || st.downSince;
+            due = (nowSec() - since) >= PERSIST_EVERY_SEC;
+        }
+
+        if (due) {
+            const attempt = (st.remindersSent || 0) + 1;
             if (notify && notify.mailReady()) {
                 const qr = await freshQRCode();
                 if (qr) {
@@ -299,10 +373,14 @@ ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客�
                 }
             }
             st.remindersSent = attempt;
-            st.nextReminderIdx = idx + 1;
-            if (idx + 1 >= REMIND_AT_MIN.length) {
-                log('已达提醒次数上限，停止提醒（机器人恢复后会自动通知）');
+            st.lastReminderAt = nowSec();
+            if (idx < REMIND_AT_MIN.length) {
+                st.nextReminderIdx = idx + 1;
+                if (idx + 1 >= REMIND_AT_MIN.length) {
+                    log(`密集提醒结束，转入长期提醒：每 ${PERSIST_EVERY_SEC/3600} 小时一次，直到恢复`);
+                }
             }
+            log(`累计提醒 ${attempt} 次（已离线 ${human(elapsedSec)}）`);
         }
     }
 
@@ -344,4 +422,20 @@ ${qr.link ? `<p style="margin:6px 0;font-size:12px;color:#888">若图片被客�
     }
 
     saveState(st);
-})();
+})().catch(async e => {
+    log('✗✗ 看护理主流程异常: ' + ((e && e.stack) || e));
+    // 尽量用邮件把"监控自己坏了"这件事告诉用户 —— 这是最后一道防线
+    try {
+        if (notify && notify.mailReady()) {
+            await notify.send('监控脚本自身出错（请检查）',
+                `看护脚本执行时抛出异常，可能已无法正常监控机器人。\n\n` +
+                `错误: ${(e && e.message) || e}\n` +
+                `时间: ${bj()}（北京时间）\n\n` +
+                `栈:
+${String((e && e.stack) || '').slice(0, 800)}\n\n` +
+                `建议: 查看 /var/log/mud-qqbot-watchdog.log`,
+                { channels: ['mail'] });
+        }
+    } catch (_) { }
+    process.exit(1);
+});
