@@ -38,7 +38,8 @@ EDITS_HASH_FILE=$STATE/edits.hash
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*" >> "$LOG"; }
 
-install -d -m 700 -o root -g root "$STATE"
+# 755 而不是 700：清单要让 mudmod 组（朋友）能读，否则他不知道哪些改动在生效
+install -d -m 755 -o root -g root "$STATE"
 REV=$(sudo -u mud git -C "$SRC" rev-parse HEAD 2>/dev/null) || exit 0
 [ -n "$REV" ] || exit 0
 
@@ -171,6 +172,7 @@ done
 # 基线 = 上游原样（不含本地修改）；下次据此判断"谁改过"
 mv -f /tmp/mts-new.sha256 "$BASE" 2>/dev/null || true
 chown root:root "$BASE" 2>/dev/null || true
+chmod 644 "$LIST" 2>/dev/null || true
 
 # 测试服的 release 标记（os/release.js 读 <根>/.git/HEAD）
 install -d -m 755 -o mud -g mudmod "$DEST/.git"
