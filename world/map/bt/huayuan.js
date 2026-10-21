@@ -1,5 +1,7 @@
-	this.inherits(ROOM);
-	this.name = "花园";
-	this.desc = "一座精致的花园，奇花异草遍布，芬芳扑鼻。园中有一方石桌，一名白衣少女正端坐其中抚琴，琴声悠扬却暗含杀机。";
-	this.exits = { "north": "bt/menlang" };
-	this.set_npc(["bt/ouyangfeng", 1], ["bt/baiyishaonv", 1]);
+this.inherits(ROOM);
+this.name = "花园";
+this.desc = "这是个美丽的大花园，园子里面种着鲜艳的红玫瑰。白衣少女常来这里嬉戏。沿着弯弯曲曲的花径，可以通到山庄的许多地方，北面可见巍巍大厅。";
+this.exits = {
+    "north": "bt/dating",
+    "south": "bt/menlang",
+};
