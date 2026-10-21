@@ -14,14 +14,13 @@ this.set({
     room_path: "hslj/",
     ss_title: "中神通"
 });
-this.map = [
-    { n: "入口", id: "hslj/rukou", p: [0, 0], exits: ["n", "s", "e", "w"] },
-    { n: "东擂台", id: "hslj/dongleitai", p: [1, 0], exits: ["w", "e"] },
-    { n: "西擂台", id: "hslj/xileitai", p: [-1, 0], exits: ["e"] },
-    { n: "南擂台", id: "hslj/nanleitai", p: [0, 1], exits: ["n"] },
-    { n: "北擂台", id: "hslj/beileitai", p: [0, -1], exits: ["s"] },
-    { n: "中央决战台", id: "hslj/zhongyangtai", p: [2, 0], exits: ["w"] }
-];
+	this.map = [
+	    { n: "西峰", id: "hslj/west", p: [-1, 0], exits: ["e"] },
+	    { n: "北峰", id: "hslj/north", p: [0, -1], exits: ["s"] },
+	    { n: "论剑台", id: "hslj/tai", p: [0, 0], exits: ["w", "e", "s", "n"] },
+	    { n: "南峰", id: "hslj/south", p: [0, 1], exits: ["n"] },
+	    { n: "东峰", id: "hslj/east", p: [1, 0], exits: ["w"] },
+	];
 		this.drops = [
 	    "book/bc#duanjiajian",
 	    "book/bc#kumushengong",
