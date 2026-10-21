@@ -4,3 +4,4 @@ this.desc = "这是『日月神教』下第三大堂：青龙堂的大厅。一�
 this.exits = {
     "north": "hmy/ql_lang",
 };
+this.set_npc("hmy/jiabu");   // 青龙堂长老 贾布

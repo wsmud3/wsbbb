@@ -6,3 +6,4 @@ this.exits = {
     "east": "hmy/shulin",
     "south": "hmy/qinglongtang",
 };
+this.set_npc("pub/baodi");   // 神秘商人 易直非

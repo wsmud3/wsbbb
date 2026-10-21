@@ -21,3 +21,4 @@ this.add_action("kw_ferry", null, function (me) {
     me.send_room("$N付了船资，船夫撑船将$N送到江对岸。");
     me.moveto("kw/songhuajiang");
 });
+this.set_npc("kw/chuanfu");   // 船夫

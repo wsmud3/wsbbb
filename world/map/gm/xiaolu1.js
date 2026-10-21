@@ -5,3 +5,4 @@ this.exits = {
     "north": "gm/guangmingding",
     "south": "gm/banshanyao",
 };
+this.set_npc("gm/zhoudian");   // 五散人 周颠

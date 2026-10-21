@@ -5,3 +5,4 @@ this.exits = {
     "south": "gm/qi_jumu",
     "east": "gm/lianwu",
 };
+this.set_npc("gm/zhuangzheng");   // 锐金旗掌旗使 庄铮

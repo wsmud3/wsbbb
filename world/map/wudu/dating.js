@@ -5,3 +5,6 @@ this.exits = {
     "west": "wudu/lianwuchang",
     "east": "wudu/huayuan",
 };
+this.set_npc("wudu/panxiuda");   // 五毒教护法 笑面阎罗 潘秀达
+this.set_npc("wudu/cenqisi");   // 五毒教护法 五毒秀士 岑其斯
+this.set_npc("wudu/qiyunao");   // 五毒教长老 锦衣毒丐 齐云敖

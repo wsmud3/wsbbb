@@ -4,3 +4,4 @@ this.desc = "嵩山古称方外，又称崇山，为五岳中的中岳，由太�
 this.exits = {
     "north": "ss/tianzhongge",
 };
+this.set_npc("pub/baodi");   // 神秘商人 易直非

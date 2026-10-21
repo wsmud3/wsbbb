@@ -4,3 +4,4 @@ this.desc = "顺山涧漂流而下，沿溪遍布珍稀树木，泉石，林木�
 this.exits = {
     "east": "hs2/xiaolu",
 };
+this.set_npc("hs2/quyang");   // 日月神教前辈长老 曲洋

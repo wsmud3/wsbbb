@@ -4,3 +4,4 @@ this.desc = "这就是明教的山门，朱红色的两根大柱子矗立在你�
 this.exits = {
     "north": "gm/zhandao",
 };
+this.set_npc("pub/baodi");   // 神秘商人 易直非

@@ -5,3 +5,4 @@ this.exits = {
     "south": "hs2/jiedao",
     // "north": 目标「刘府大院」未知
 };
+this.set_npc("hs2/songshandizi");   // 嵩山弟子

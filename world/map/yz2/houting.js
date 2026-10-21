@@ -5,3 +5,4 @@ this.exits = {
     "south": "yz2/dating",
     "east": "yz2/neitang",
 };
+this.set_npc("yz2/abih");   // 贴身丫环 阿碧

@@ -5,3 +5,4 @@ this.exits = {
     "east": "gm/qi_houtu",
     "north": "gm/qi_ruijin",
 };
+this.set_npc("gm/wencangsong");   // 巨木旗掌旗使 闻苍松

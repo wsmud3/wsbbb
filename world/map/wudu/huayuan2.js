@@ -5,3 +5,4 @@ this.exits = {
     "east": "wudu/huating2",
     "south": "wudu/huayuan",
 };
+this.set_npc("wudu/hehongyao");   // 五毒教长老 疤面丐婆 何红药

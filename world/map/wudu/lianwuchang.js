@@ -6,3 +6,4 @@ this.exits = {
     "south": "wudu/nanyuan",
     "west": "wudu/damen",
 };
+this.set_npc("wudu/shaqianli");   // 黑龙 沙千里

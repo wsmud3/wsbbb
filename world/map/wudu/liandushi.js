@@ -4,3 +4,4 @@ this.desc = "这里是五毒教弟子专门的练毒室，可以在这里练制�
 this.exits = {
     "north": "wudu/nanyuan",
 };
+this.set_npc("wudu/dulangzhong");   // 毒郎中
