@@ -18,6 +18,7 @@ this.set({
 	    { n: "西峰", id: "hslj/west", p: [-1, -1], exits: ["e"] },
 	    { n: "北峰", id: "hslj/north", p: [0, -2], exits: ["s"] },
 	    { n: "论剑台", id: "hslj/tai", p: [0, -1], exits: ["w", "e", "s", "n"] },
+	    { n: "绝壁", id: "hslj/juebi", p: [0, -2], exits: ["s"] },
 	    { n: "论剑台下", id: "hslj/leitaixia", p: [0, 0], exits: ["u"] },
 	    { n: "南峰", id: "hslj/south", p: [0, 0], exits: ["n"] },
 	    { n: "东峰", id: "hslj/east", p: [1, -1], exits: ["w"] },
