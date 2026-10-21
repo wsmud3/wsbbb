@@ -14,17 +14,19 @@
 		    room_path: "hs2/",
 		    ss_title: "娜美鲁多"
 		});
-		this.map = [
-    { n: "山路", id: "hs2/shanlu", p: [0, 0], exits: ["s"] },
-    { n: "刘府大门", id: "hs2/liufudamen", p: [0, -1], exits: ["n", "s"] },
-    { n: "刘府大院", id: "hs2/liufudayuan", p: [0, -2], exits: ["n", "s", "w"] },
-    { n: "后花园", id: "hs2/huayuan", p: [-1, -2], exits: ["e", "n"] },
-    { n: "琴舍", id: "hs2/qinshe", p: [-1, -3], exits: ["s", "n"] },
-    { n: "竹林", id: "hs2/zhulin", p: [-1, -4], exits: ["s", "n"] },
-    { n: "祝融殿", id: "hs2/zhurongdian", p: [-1, -5], exits: ["s"] },
-    { n: "刘府大厅", id: "hs2/liufudating", p: [0, -3], exits: ["n", "s"] },
-    { n: "刘府后厅", id: "hs2/liufuhouting", p: [0, -4], exits: ["n"] }
-];
+			this.map = [
+	    { n: "山涧", id: "hs2/shanjian", p: [-2, 0], exits: ["e"] },
+	    { n: "林间小道", id: "hs2/xiaolu", p: [-1, 0], exits: ["e", "w"] },
+	    { n: "刘府大门", id: "hs2/liufudamen", p: [0, -1], exits: ["s", "n"] },
+	    { n: "衡阳西街", id: "hs2/jiedao", p: [0, 0], exits: ["n", "e", "w"] },
+	    { n: "衡阳城", id: "hs2/hengyang", p: [1, 0], exits: ["w", "e"] },
+	    { n: "山路", id: "hs2/shanlu", p: [2, 0], exits: ["w", "se"] },
+	    { n: "南天门", id: "hs2/nantianmen", p: [3, 1], exits: ["nw", "s"] },
+	    { n: "狮子岩", id: "hs2/shiziyan", p: [3, 2], exits: ["e", "n"] },
+	    { n: "望日台", id: "hs2/wangritai", p: [4, 2], exits: ["s", "w"] },
+	    { n: "祝融殿", id: "hs2/zhurongdian", p: [4, 3], exits: ["n", "s"] },
+	    { n: "祝融峰", id: "hs2/zhurongfeng", p: [4, 4], exits: ["n"] },
+	];
 		this.drops = [
 		    "book/bc#chuanyunzong",
 		    "book/bc#liuyunzhang",

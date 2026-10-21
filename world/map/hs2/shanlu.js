@@ -1,4 +1,7 @@
 this.inherits(ROOM);
 this.name = "山路";
-this.desc = "一条蜿蜒的山路通向衡山深处，两旁青松翠柏，郁郁葱葱。远处传来阵阵琴音，似有似无，仿佛在指引着来客。南面隐约可见一座气势不凡的府邸。";
-this.exits = { "south": "hs2/liufudamen" };
+this.desc = "你走在衡山山路上，四望山峰错落，林壑幽深，溪泉飞瀑，云雾缭绕，不觉心胸大快。山路转过芙蓉峰，西面远远看到藏经阁，东南方向通往南天门。";
+this.exits = {
+    "west": "hs2/hengyang",
+    "southeast": "hs2/nantianmen",
+};
