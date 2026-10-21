@@ -4,5 +4,4 @@ this.desc = "这是『日月神教』下第一大堂：白虎堂的大厅，教�
 this.exits = {
     "south": "hmy/fl_lang",
 };
-this.set_npc("hmy/shangguanyun");   // 白虎堂长老 上官云
 this.set_npc("hmy/tongbaixiong");   // 风雷堂长老 童百熊

@@ -28,6 +28,13 @@ this.set({
 	    { n: "树林", id: "hmy/shulin", p: [-1, 0], exits: ["n", "e", "w", "s"] },
 	    { n: "天香堂", id: "hmy/tx_tang", p: [-1, 1], exits: ["n"] },
 	    { n: "悬崖", id: "hmy/xuanya", p: [0, 0], exits: ["w"] },
+    { n: "悬崖", id: "hmy/xuanya2", p: [1, 0], exits: ["w"] },
+    { n: "悬崖", id: "hmy/xuanya3", p: [2, 0], exits: ["s"] },
+    { n: "大门", id: "hmy/damen", p: [3, 0], exits: ["w", "e"] },
+    { n: "后厅", id: "hmy/houting", p: [4, 0], exits: ["w", "s"] },
+    { n: "密道", id: "hmy/midao", p: [4, 1], exits: ["n", "e"] },
+    { n: "小花园", id: "hmy/xiaohuayuan", p: [4, 2], exits: ["w", "e"] },
+    { n: "闺房", id: "hmy/guifang", p: [5, 2], exits: ["w"] },
 	];
 // 闺房令牌检查（同时检查temp标记和背包中的令牌物品）
 this.check_tokens = function(me) {
