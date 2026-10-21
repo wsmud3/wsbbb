@@ -9,7 +9,7 @@ this.set({
     max_hp: 340000,
     mp: 141000,
     max_mp: 141000,
-    score: 100,
+    score: 0,
     gj: 37800,
     fy: 19669,
     mz: 27800,
@@ -31,5 +31,4 @@ this.set_drop({
 });
 this.on_enter = function (me) {
     me.notify("白衣少女冷冷道：擅闯白驼山花园，你可知死字怎么写？");
-    this.do_kill(me);
 };

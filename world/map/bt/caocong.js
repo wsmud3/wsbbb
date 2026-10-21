@@ -5,5 +5,14 @@ this.exits = {
     "west": "bt/caocong",
     "south": "bt/caocong",
     "east": "bt/ximen",
-    "north": "bt/caocong",
+    "north": "bt/caocong2",
+};
+
+// [mech] 草丛里的毒蛇（攻略：继续向西走到草丛有一只毒蛇，杀）
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    if (me.query_temp("bt_she1_dead")) return;
+    if (this.find_obj_bypath("bt/she")) return;
+    NPC.CREATE("bt/she", this);
+    this.refresh(me);
 };

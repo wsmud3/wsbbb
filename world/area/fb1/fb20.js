@@ -16,6 +16,8 @@ this.set({
 });
 	this.map = [
 	    { n: "草丛", id: "bt/caocong", p: [-3, -1], exits: ["w", "s", "e", "n"] },
+	    { n: "草丛", id: "bt/caocong2", p: [-3, -2], exits: ["s", "n"] },
+	    { n: "岩洞", id: "bt/yandong", p: [-3, -3], exits: ["s"] },
 	    { n: "西门", id: "bt/ximen", p: [-2, -1], exits: ["w", "e"] },
 	    { n: "长廊", id: "bt/changlang", p: [-1, -1], exits: ["s", "w", "e"] },
 	    { n: "药房", id: "bt/yaofang", p: [-1, 0], exits: ["n"] },

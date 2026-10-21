@@ -29,3 +29,13 @@ this.on_enter = function (me) {
     me.notify("巨蟒从岩洞中窜出，张开血盆大口向你吞来！");
     this.do_kill(me);
 };
+
+// [mech] 蟒蛇：击杀后副本完成（攻略：杀了之后，完成度100%）
+this.score = 90;
+this.on_die = function (killer) {
+    if (killer && killer.is_player) {
+        killer.set_temp("bt_mangshe_dead", 1);
+        killer.notify("<hio>巨蟒轰然倒地，白驼山一行就此了结。</hio>");
+        killer.notify("<hig>可回动作栏点「完成副本」结算。</hig>");
+    }
+};
