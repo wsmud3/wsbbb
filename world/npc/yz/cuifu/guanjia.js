@@ -9,7 +9,7 @@ this.set({
     max_mp: 250,
     hp: 250,
     max_hp: 250,
-    score: 20
+    score: 0
 });
 this.set_objects(
     ["eq/lv0/cloth", 1, 1]
