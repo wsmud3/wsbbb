@@ -14,22 +14,26 @@ this.set({
     room_path: "gm/",
     ss_title: "光明右使"
 });
-this.map = [
-    { n: "山门", id: "gm/shanmen", p: [0, 0], exits: ["n"] },
-    { n: "半山亭", id: "gm/banshanting", p: [0, 1], exits: ["n", "s"] },
-    { n: "半山腰", id: "gm/banshanyao", p: [0, 2], exits: ["n", "s"] },
-    { n: "林间小屋", id: "gm/linjianxiaowu", p: [0, 3], exits: ["n", "s"] },
-    { n: "光明顶", id: "gm/guangmingding", p: [0, 4], exits: ["n", "s", "e", "w"] },
-    { n: "密道", id: "gm/midao1", p: [-1, 4], exits: ["e", "w"] },
-    { n: "密道深处", id: "gm/midao2", p: [-2, 4], exits: ["e", "n"] },
-    { n: "密室", id: "gm/mishi2", p: [-2, 5], exits: ["s", "e"] },
-    { n: "厚土坊", id: "gm/houtufang", p: [0, 5], exits: ["n", "s", "w"] },
-    { n: "巨木坊", id: "gm/jumufang", p: [-1, 5], exits: ["e"] },
-    { n: "洪水坊", id: "gm/hongshuifang", p: [1, 4], exits: ["w"] },
-    { n: "锐金坊", id: "gm/ruijinfang", p: [0, 6], exits: ["n", "s"] },
-    { n: "烈火坊", id: "gm/liehuofang", p: [0, 7], exits: ["n", "s"] },
-    { n: "圣火坊", id: "gm/shenghuofang", p: [0, 8], exits: ["s"] }
-];
+	this.map = [
+	    { n: "锐金旗", id: "gm/qi_ruijin", p: [-2, -6], exits: ["s", "e"] },
+	    { n: "巨木旗", id: "gm/qi_jumu", p: [-2, -5], exits: ["e", "n"] },
+	    { n: "练武场", id: "gm/lianwu", p: [-1, -6], exits: ["s", "e", "n", "w"] },
+	    { n: "厚土旗", id: "gm/qi_houtu", p: [-1, -5], exits: ["n", "s", "e", "w"] },
+	    { n: "光明顶", id: "gm/guangmingding", p: [-1, -4], exits: ["n", "s"] },
+	    { n: "林间小路", id: "gm/xiaolu1", p: [-1, -3], exits: ["n", "s"] },
+	    { n: "半山腰", id: "gm/banshanyao", p: [-1, -2], exits: ["e", "n", "s"] },
+	    { n: "半山厅", id: "gm/banshanting", p: [-1, -1], exits: ["se", "n"] },
+	    { n: "烈火旗", id: "gm/qi_liehuo", p: [0, -6], exits: ["s", "e", "w"] },
+	    { n: "洪水旗", id: "gm/qi_hongshui", p: [0, -5], exits: ["n", "e", "w"] },
+	    { n: "山坡", id: "gm/shanpo1", p: [0, -2], exits: ["e", "w"] },
+	    { n: "山路", id: "gm/shanlu", p: [0, 0], exits: ["nw", "e"] },
+	    { n: "断崖", id: "gm/duanya", p: [1, -6], exits: ["e"] },
+	    { n: "山崖", id: "gm/shanya", p: [1, -5], exits: ["w"] },
+	    { n: "半山腰", id: "gm/shanpo2", p: [1, -2], exits: ["e", "w"] },
+	    { n: "栈道", id: "gm/zhandao", p: [1, 0], exits: ["w", "s"] },
+	    { n: "山门", id: "gm/shanmen", p: [1, 1], exits: ["n"] },
+	    { n: "悬天石", id: "gm/xuantianshi", p: [2, -2], exits: ["w"] },
+	];
 	this.drops = [
 	    "book/bc#shenghuoshengong",
 	    "book/bc#qingfushenfa",
