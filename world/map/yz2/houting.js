@@ -6,3 +6,7 @@ this.exits = {
     "east": "yz2/neitang",
 };
 this.set_npc("yz2/abih");   // 贴身丫环 阿碧
+
+// 描述里内嵌 <cmd cmd='look pai'>牌匾</cmd>，此处补上对应对象
+// TODO: 牌匾原文待从原版补齐（当前为占位描述）
+this.set_item("pai", "牌匾", "厅上悬着一块牌匾，字迹古朴，此处文字待补。", []);

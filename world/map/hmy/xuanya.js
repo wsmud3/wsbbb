@@ -4,3 +4,7 @@ this.desc = "你终于走出了那片阴深的森林，不由长长地舒了口�
 this.exits = {
     "west": "hmy/shulin",
 };
+
+// 描述里内嵌 <cmd cmd='look xiazi'>匣子</cmd>，此处补上对应对象
+// TODO: 匣子内容/后续命令待从原版补齐（当前为占位描述）
+this.set_item("xiazi", "匣子", "崖边有一个匣子，此处描述待补。", []);
