@@ -105,8 +105,10 @@
 	    killer.set_temp("cihang_lanjiang_kills", prevKills);
 	    killer.notify("<hio>你第" + prevKills + "次击杀了浪翻云！</hio>");
 
-	    if (prevKills >= 3) {
-	        killer.notify("<hir>三次击杀！浪翻云最后的残影消散于天地之间！</hir>");
+	    var need = 3;
+	    try { if (env && env.query_temp(killer, "diff", 0) === 0) need = 1; } catch (e) { need = 3; }
+	    if (prevKills >= need) {
+	        killer.notify("<hir>第" + prevKills + "次击杀达成！浪翻云最后的残影消散于天地之间！</hir>");
 	        killer.notify("<hio>恭喜你完成了庞斑的嘱托！你获得了称号「剑魔」！</hio>");
 	        killer.set_temp("cihang_lanjiang_done", 1);
 	        killer.add_title("剑魔", "fb");

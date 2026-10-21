@@ -112,8 +112,10 @@
 	    killer.set_temp("cihang_lanjiang_kills", prevKills);
 	    killer.notify("<hio>你第" + prevKills + "次击杀了庞斑！</hio>");
 
-	    if (prevKills >= 3) {
-	        killer.notify("<hir>三次击杀！庞斑的身影在魔气中彻底崩碎！</hir>");
+	    var need = 3;
+	    try { if (env && env.query_temp(killer, "diff", 0) === 0) need = 1; } catch (e) { need = 3; }
+	    if (prevKills >= need) {
+	        killer.notify("<hir>第" + prevKills + "次击杀达成！庞斑的身影在魔气中彻底崩碎！</hir>");
 	        killer.notify("<hio>恭喜你完成了浪翻云的嘱托！你获得了称号「魔师」！</hio>");
 	        killer.set_temp("cihang_lanjiang_done", 1);
 	        killer.add_title("魔师", "fb");

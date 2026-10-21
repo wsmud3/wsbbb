@@ -50,7 +50,8 @@ this.spawn_boss = function (me) {
     this.boss_kill_count = me.query_temp("cihang_lanjiang_kills", 0);
 
     me.notify("<hir>拦江岛上，" + bossName + "已等候多时！第" + (this.boss_kill_count + 1) + "次对决开始！</hir>");
-    me.notify("<hiw>此战不死不休——你必须连续击杀" + bossName + "三次，且中间不能死亡。</hiw>");
+    var need = this.query_temp(me, "diff", 0) === 1 ? 3 : 1;
+    me.notify("<hiw>此战不死不休——你必须连续击杀" + bossName + UTIL.to_c(need) + "次，且中间不能死亡。</hiw>");
 
     boss.do_kill(me);
     this.refresh(me);

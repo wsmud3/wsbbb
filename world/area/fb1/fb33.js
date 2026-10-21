@@ -19,7 +19,8 @@ this.set({
     drop_npcs1: ["cihang/fanqinghui"]
 });
 	this.map = [
-	    { n: "赏雨亭", id: "cihang/shangyuting", p: [-2, 3], exits: ["e"] },
+	    { n: "赏雨亭", id: "cihang/shangyuting", p: [-2, 3], exits: ["e", "s"] },
+	    { n: "拦江岛", id: "cihang/lanjiangdao", p: [-2, 4], exits: ["s"] },
 	    { n: "碎石小路", id: "cihang/xiaolu2", p: [-1, 3], exits: ["e", "w"] },
 	    { n: "帝踏峰", id: "cihang/shanmen", p: [0, 0], exits: ["s"] },
 	    { n: "山门", id: "cihang/shanmen", p: [0, 1], exits: ["s", "n"] },
@@ -56,5 +57,8 @@ this.on_leaved = function (me) {
     me.remove_temp("cihang_yishu");
     me.remove_temp("cihang_yishu_got");
     me.remove_temp("cihang_siguan_ready");
+    me.remove_temp("cihang_qcm");
+    me.remove_temp("cihang_done");
+    me.remove_temp("cihang_yishu_given");
     me.remove_status("cihang_lanjiang_lock", true);
 };
