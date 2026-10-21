@@ -5,7 +5,7 @@
 		    desc: "衡山为五岳之南岳，山色秀丽，云雾缥缈。刘正风金盆洗手之际，嵩山派前来发难，更有魔教长老曲洋现身，一场武林风波就此展开。",
 		    score: 160,
 		    is_show: true,
-		    first: "hs2/shanlu",
+		    first: "hs2/hengyang",
 		    is_copy: true,
 		    expend: 10,
 		    is_multi: false,

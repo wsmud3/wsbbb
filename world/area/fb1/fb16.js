@@ -4,7 +4,7 @@ this.set({
     name: "泰山",
     desc: "五岳独尊的东岳泰山，山势雄奇，直插云霄。自山门而上，石阶陡峭，云雾缭绕，非轻功卓绝者难以攀登。据说泰山三道人隐居于此，镇守着山顶的武学秘籍。",
     score: 130,
-    first: "ts/shanmen",
+    first: "ts/daizong",
     is_show: true,
     is_copy: true,
     expend: 10,
