@@ -1,8 +1,5 @@
 this.inherits(ROOM);
-this.name = "云梦之泽";
-this.desc = "你眼前是一片一望无际的芦苇荡。眺望远处，芦苇一直连接到天边，天空显得特别低矮。芦苇中的水洼发出阵阵的恶臭。水里和芦苇中似乎有些东西在爬动。身临此地，使人感到一股莫名的恐惧。";
-this.exits = {
-    "south": "ym/zhaoze1",
-    "north": "ym/zhaoze1",
-    "east": "ym/zhaoze1",
-};
+this.name = "云梦沼泽";
+this.desc = "沼泽愈发泥泞，每走一步都深深陷入淤泥之中。水面上漂浮着腐烂的枝叶，两条巨鳄在浑浊的水中游弋，眼中闪烁着凶狠的光芒。";
+this.exits = { "north": "ym/zhaoze1", "south": "ym/zhaoze3" };
+this.set_npc(["ym/eyu", 2]);
