@@ -18,3 +18,5 @@
 		        }
 		    }
 		};
+this.set_npc("hs/npc03");   // 恒山派弟子 仪琳
+this.set_npc("hs/npc04");   // 恒山派弟子 哑婆婆
