@@ -14,19 +14,21 @@ this.set({
     room_path: "hmy/",
     ss_title: "日月教主"
 });
-this.map = [
-    { n: "山谷", id: "hmy/shangu", p: [0, 0], exits: ["n", "s", "e"] },
-    { n: "白虎堂", id: "hmy/baihutang", p: [-1, 1], exits: ["s"] },
-    { n: "青龙堂", id: "hmy/qinglongtang", p: [1, 0], exits: ["w"] },
-    { n: "树林", id: "hmy/shulin", p: [0, -1], exits: ["n", "e", "s"] },
-    { n: "风雷堂", id: "hmy/fengleitang", p: [0, -2], exits: ["n"] },
-    { n: "悬崖", id: "hmy/xuanya", p: [1, -1], exits: ["w", "e"] },
-    { n: "大门", id: "hmy/damen", p: [2, -1], exits: ["w", "e"] },
-    { n: "后庭", id: "hmy/houting", p: [3, -1], exits: ["s", "w"] },
-    { n: "密道", id: "hmy/midao", p: [3, -2], exits: ["n", "e"] },
-    { n: "小花园", id: "hmy/xiaohuayuan", p: [4, -2], exits: ["w", "e"] },
-    { n: "闺房", id: "hmy/guifang", p: [5, -2], exits: ["w"] }
-];
+	this.map = [
+	    { n: "大厅", id: "hmy/fl_ting", p: [-2, -3], exits: ["s"] },
+	    { n: "走廊", id: "hmy/bh_lang", p: [-2, -2], exits: ["s", "n"] },
+	    { n: "白虎堂", id: "hmy/baihutang", p: [-2, -1], exits: ["s", "n"] },
+	    { n: "山谷", id: "hmy/shangu", p: [-2, 0], exits: ["n", "e", "s"] },
+	    { n: "青龙堂", id: "hmy/qinglongtang", p: [-2, 1], exits: ["s", "n"] },
+	    { n: "长廊", id: "hmy/ql_lang", p: [-2, 2], exits: ["s", "n"] },
+	    { n: "青龙堂大厅", id: "hmy/ql_ting", p: [-2, 3], exits: ["n"] },
+	    { n: "大厅", id: "hmy/bh_ting", p: [-1, -3], exits: ["s"] },
+	    { n: "草地", id: "hmy/fl_lang", p: [-1, -2], exits: ["n", "s"] },
+	    { n: "风雷堂", id: "hmy/fengleitang", p: [-1, -1], exits: ["n", "s"] },
+	    { n: "树林", id: "hmy/shulin", p: [-1, 0], exits: ["n", "e", "w", "s"] },
+	    { n: "天香堂", id: "hmy/tx_tang", p: [-1, 1], exits: ["n"] },
+	    { n: "悬崖", id: "hmy/xuanya", p: [0, 0], exits: ["w"] },
+	];
 // 闺房令牌检查（同时检查temp标记和背包中的令牌物品）
 this.check_tokens = function(me) {
     function _hasToken(me, tokenName) {
