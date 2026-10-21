@@ -1,4 +1,6 @@
 this.inherits(ROOM);
 this.name = "大门";
-this.desc = `这里是温府的大门，两扇朱红色的大门敞开，门前一对石狮子威武庄严。门匾上"温府"二字笔力遒劲，显示出府邸主人的富贵与权势。门内隐约可见庭院深深，若有若无的脂粉香气从府中飘出。`;
-this.exits = { "south": "wf/dayuan" };
+this.desc = "这里就是成都大户温家的<cmd cmd='look men'>大门</cmd>，门口两个大石狮，威武异常，大门紧锁着，门上的铜环却亮得刺眼。围墙很高，门匾上写着两个烫金的大字“温府”，果然气度不凡。门的旁边有一株<cmd cmd='look tree'>参天大树</cmd>, 人站在下面很是凉快。";
+this.exits = {
+    "north": "wf/dayuan",
+};

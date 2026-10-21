@@ -14,20 +14,20 @@ this.set({
     room_path: "wf/",
     ss_title: "金蛇郎君"
 });
-this.map = [
-    { n: "大门", id: "wf/damen", p: [0, 0], exits: ["s"] },
-    { n: "大院", id: "wf/dayuan", p: [0, -1], exits: ["n", "s", "e"] },
-    { n: "大厅", id: "wf/dating", p: [0, -2], exits: ["n", "s"] },
-    { n: "东厢房", id: "wf/dongxiang", p: [1, -1], exits: ["n", "e"] },
-    { n: "西厢房", id: "wf/xixiang", p: [2, -1], exits: ["w", "s"] },
-    { n: "后厢房", id: "wf/houxiang", p: [2, -2], exits: ["n", "w"] },
-    { n: "走廊", id: "wf/lang1", p: [0, -3], exits: ["n", "s"] },
-    { n: "走廊", id: "wf/lang2", p: [0, -4], exits: ["n", "s", "w"] },
-    { n: "走廊", id: "wf/lang3", p: [0, -5], exits: ["n", "s"] },
-    { n: "走廊尽头", id: "wf/lang_end", p: [0, -6], exits: ["n", "s"] },
-    { n: "木桩", id: "wf/muzhuang", p: [0, -7], exits: ["n", "s"] },
-    { n: "金蛇郎君处", id: "wf/jinshe", p: [0, -8], exits: ["n"] },
-
+	this.map = [
+	    { n: "侧房", id: "wf/wen5", p: [-2, -3], exits: ["w"] },
+	    { n: "走廊", id: "wf/lang3", p: [-1, -4], exits: ["s", "nw", "e"] },
+	    { n: "走廊", id: "wf/lang1", p: [-1, -3], exits: ["n", "w", "se"] },
+	    { n: "侧房", id: "wf/wen3", p: [0, -4], exits: ["e"] },
+	    { n: "侧房", id: "wf/wen4", p: [0, -3], exits: ["w"] },
+	    { n: "大厅", id: "wf/dating", p: [0, -2], exits: ["nw", "ne", "s"] },
+	    { n: "大院", id: "wf/dayuan", p: [0, -1], exits: ["n"] },
+	    { n: "大门", id: "wf/damen", p: [0, 0], exits: ["n"] },
+	    { n: "走廊", id: "wf/lang2", p: [1, -3], exits: ["ne", "w", "s"] },
+	    { n: "走廊", id: "wf/zoulang4", p: [1, -2], exits: ["sw", "n", "e"] },
+	    { n: "亭子", id: "wf/tingzi", p: [2, -5], exits: ["s"] },
+	    { n: "走廊尽头", id: "wf/lang_end", p: [2, -4], exits: ["sw", "se", "n"] },
+	    { n: "侧房", id: "wf/wen2", p: [2, -2], exits: ["e"] },
 	];
 	this.drops = [
 	    "book/bc#jinshejianfa",
