@@ -5,3 +5,4 @@ this.exits = {
     "southdown": "ts/yitian",
     "northup": "ts/shiba1",
 };
+this.set_npc("ts/npc01");   // 玉磬子

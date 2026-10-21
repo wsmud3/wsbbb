@@ -5,3 +5,4 @@ this.exits = {
     "east": "hs2/xiaolu",
 };
 this.set_npc("hs2/quyang");   // 日月神教前辈长老 曲洋
+this.set_npc("hs2/npc01");   // 古灵精怪 曲非烟

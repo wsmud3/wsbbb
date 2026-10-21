@@ -5,3 +5,4 @@ this.exits = {
     "north": "hs2/wangritai",
     "south": "hs2/zhurongfeng",
 };
+this.set_npc("hs2/npc02");   // 潇湘夜雨 莫大

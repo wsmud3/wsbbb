@@ -5,3 +5,5 @@ this.exits = {
     "westdown": "qc/sanwan",
     "northup": "qc/songfengguan",
 };
+this.set_npc("qc/npc01");   // 青城派外门弟子 青城派弟子
+this.set_npc("qc/npc02");   // 青城派外门弟子 青城派弟子
