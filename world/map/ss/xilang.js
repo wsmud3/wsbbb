@@ -4,3 +4,4 @@ this.desc = "这里是环绕池塘的走廊，画阑雕栋，却也美仑美奂�
 this.exits = {
     "east": "ss/huimengtang",
 };
+this.set_npc("ss/bochen");       // 卜沉 score55（西廊）

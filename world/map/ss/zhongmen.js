@@ -5,3 +5,4 @@ this.exits = {
     "north": "ss/huimengtang",
     "south": "ss/junjichanyuan",
 };
+this.set_npc("ss/dengbagong");   // 邓八公 score55（中门）

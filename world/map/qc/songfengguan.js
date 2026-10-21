@@ -5,3 +5,4 @@ this.exits = {
     "north": "qc/zhongmen",
     "southdown": "qc/shangqing",
 };
+this.set_npc("qc/yucanghai");    // 余沧海 score60：松风观(掌门)

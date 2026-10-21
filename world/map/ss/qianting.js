@@ -5,3 +5,5 @@ this.exits = {
     "southdown": "ss/junjishanmen",
     "north": "ss/junjichanyuan",
 };
+this.set_npc("ss/zhongzhen");    // 钟镇 score55（前庭）
+this.set_npc("ss/shatianweng");  // 沙天翁 score55（中门之前）

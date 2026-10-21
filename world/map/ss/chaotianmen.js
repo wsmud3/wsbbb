@@ -5,3 +5,4 @@ this.exits = {
     "northup": "ss/junjishanmen",
     "southdown": "ss/tieliang",
 };
+this.set_npc("ss/zuoting");      // 左挺 score55

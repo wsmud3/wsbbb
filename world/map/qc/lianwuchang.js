@@ -6,3 +6,4 @@ this.exits = {
     "north": "qc/shangqingdian",
     "east": "qc/huayuan",
 };
+this.set_npc("qc/neimen");       // 内门弟子 score35：练武场

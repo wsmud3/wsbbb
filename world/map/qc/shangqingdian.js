@@ -4,3 +4,4 @@ this.desc = "殿中陈设奢华，显见青城派财力不菲。正中的三清�
 this.exits = {
     "south": "qc/lianwuchang",
 };
+this.set_npc("qc/yurenyan");    // 余人彦 score45：上清殿

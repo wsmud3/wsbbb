@@ -5,3 +5,5 @@ this.exits = {
     "south": "ss/qianting",
     "north": "ss/zhongmen",
 };
+this.set_npc("ss/lubai");       // 陆柏 score55（禅院）
+this.set_npc("ss/yuehou");      // 乐厚 score55（禅院）

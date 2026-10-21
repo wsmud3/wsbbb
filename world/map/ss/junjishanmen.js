@@ -6,3 +6,4 @@ this.exits = {
     "southdown": "ss/chaotianmen",
     "westup": "ss/shandao2",
 };
+this.set_npc("ss/wandaping");    // 万大平 score55（山门）
