@@ -9,7 +9,7 @@ this.set({
     max_hp: 715200,
     mp: 149000,
     max_mp: 149000,
-    score: 10,
+    score: 0,
     gj: 41520,
     fy: 25958,
     mz: 41520,

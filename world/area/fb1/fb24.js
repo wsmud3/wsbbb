@@ -24,6 +24,7 @@ this.set({
 	    { n: "后院", id: "yz2/houyuan", p: [3, 2], exits: ["n", "s"] },
 	    { n: "云锦楼", id: "yz2/yunjinlou", p: [3, 3], exits: ["n", "e"] },
 	    { n: "后厅", id: "yz2/houting", p: [4, -1], exits: ["s", "e"] },
+	    { n: "还施水阁", id: "yz2/huanshi", p: [4, -2], exits: ["s"] },
 	    { n: "大厅", id: "yz2/dating", p: [4, 0], exits: ["w", "e", "n"] },
 	    { n: "小厅", id: "yz2/xiaoting", p: [4, 3], exits: ["w"] },
 	    { n: "内堂", id: "yz2/neitang", p: [5, -1], exits: ["w"] },
