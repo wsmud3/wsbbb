@@ -1,5 +1,7 @@
 this.inherits(ROOM);
 this.name = "中岳大殿";
-this.desc = "宏伟的大殿气势磅礴，飞檐斗拱，雕梁画栋。殿前广场上，数十名嵩山弟子正在操练剑法，剑光霍霍，整齐划一。殿内供奉着中岳大帝的神像，香火缭绕中透着一股凛然的威严。西边是太室阙，东边通向峻极山门。";
-this.exits = { "east": "ss/junjishanmen", "west": "ss/taishique" };
-this.set_npc(["ss/zhongzhen", 1]);
+this.desc = "大殿面阔九间，进深五间，重檐庑殿式屋顶，座落在七尺高的台基上，气势雄伟。大殿中供奉岳神天中王。";
+this.exits = {
+    "northup": "ss/shandao",
+    "south": "ss/tianzhongge",
+};

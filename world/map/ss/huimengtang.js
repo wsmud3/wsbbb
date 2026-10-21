@@ -1,5 +1,9 @@
-	this.inherits(ROOM);
-		this.name = "会盟堂";
-		this.desc = "会盟堂是五岳剑派议事之地，堂内正中摆着一张巨大的长桌，两侧摆满座椅，每张椅上刻着各派的名号。墙壁上悬挂着历代五岳盟主的画像，左冷禅的画像高悬正中，目光俯视全场。这里见证了无数决定江湖走向的重要时刻。西边是中门。";
-		this.exits = { "west": "ss/zhongmen" };
-		this.set_npc(["ss/zuolengchan", 1]);
+this.inherits(ROOM);
+this.name = "会盟堂";
+this.desc = "这里是五岳剑派中枢所在堂中放着一张黄稠太师椅，那是盟主的宝座。两边雁形排列这泰、华、衡、的青昵、白绸、红罗、黑绫座椅，椅后插着各派的五色旗。";
+this.exits = {
+    "north": "ss/jianchi",
+    "south": "ss/zhongmen",
+    "east": "ss/donglang",
+    "west": "ss/xilang",
+};
