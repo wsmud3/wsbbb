@@ -1,10 +1,7 @@
 this.inherits(ROOM);
 this.name = "崖底";
-this.desc = "这里是后山悬崖的底部，四周怪石嶙峋，浓雾弥漫。抬头望去，崖壁如刀削般笔直，高不见顶。一块巨石上刻着两行字：「生门——跳下来者不死，即证菩提。」西面隐约可见一座石窟，散发着霸道的气息。";
-this.exits = { "west": "jncz/xiewangshiku" };
-this.set_npc([]);
-this.add_action("climb", "攀爬上去", function (me) {
-    me.notify("<hiy>你沿着崖壁攀爬而上，回到了观音殿。生门试炼已成，菩提在心。</hiy>");
-    me.moveto("jncz/guanyindian");
-    return true;
-});
+this.desc = "这是禅院后面峭壁的底下，一条小河环流而下，前面就是陡峭的山崖，崖面几近垂直，毫无借力之处，没有高明的轻功几乎不可能从这里上去。峭壁上面就是禅院的后院部分，地势险恶怪不得没有僧兵看守。";
+this.exits = {
+    "south": "jncz/xiaolu",
+};
+this.set_npc(["jncz/auto_2", 1], ["jncz/auto_3", 1], ["jncz/auto_4", 1]);

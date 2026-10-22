@@ -1,5 +1,5 @@
-	this.inherits(ROOM);
-	this.name = "山洞";
-	this.desc = "幽暗的山洞中，血刀老祖与四位大侠混战，刀光剑影。";
-	this.exits = { "west": "xd/dongkou" };
-	this.set_npc(["xd/xuedaolaozu", 1], ["xd/luhuajia", 1], ["xd/luhuajib", 1], ["xd/luhuajid", 1], ["xd/luhuaji", 1]);
+this.inherits(ROOM);
+this.name = "山洞";
+this.desc = "空空荡荡一个山洞，倒也还算干净，尽头摆了一张石床。";
+this.exits = {};
+this.set_npc(["xd/diyun", 1]);

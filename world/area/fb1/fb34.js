@@ -18,11 +18,11 @@ this.set({
 	ss_title: "踏破九重天"
 });
 this.map = [
-	{ n: "山门",       id: "zhanshen/shanmen",       p: [0, 0], exits: ["n"] },
-	{ n: "神道",       id: "zhanshen/shendao",       p: [0, 1], exits: ["n", "s"] },
-	{ n: "前殿",       id: "zhanshen/qiandian",      p: [0, 2], exits: ["n", "s"] },
-	{ n: "九重天",     id: "zhanshen/jiuchongtian",  p: [0, 3], exits: ["n", "s"] },
-	{ n: "武神殿",     id: "zhanshen/wushendian",    p: [0, 4], exits: ["s"] }
+	{ n: "武神殿", id: "zhanshen/wushendian", p: [0, -4], exits: ["s"] },
+	{ n: "九重天", id: "zhanshen/jiuchongtian", p: [0, -3], exits: ["n", "s"] },
+	{ n: "前殿", id: "zhanshen/qiandian", p: [0, -2], exits: ["n", "s"] },
+	{ n: "神道", id: "zhanshen/shendao", p: [0, -1], exits: ["n", "s"] },
+	{ n: "战神殿山门", id: "zhanshen/shanmen", p: [0, 0], exits: ["n"] },
 ];
 this.drops = [];
 

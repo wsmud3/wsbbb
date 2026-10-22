@@ -14,15 +14,20 @@ this.set({
     ss_title: "星宿老仙"
 });
 this.map = [
-    { n: "入口", id: "xx/rukou", p: [0, 0], exits: ["w", "e", "n"] },
+    { n: "星宿海", id: "xx/xxh6", p: [-2, -2], exits: [] },
+    { n: "毒潭", id: "xx/dutan1", p: [-2, 1], exits: ["s"] },
+    { n: "毒潭深处", id: "xx/dutan2", p: [-2, 2], exits: ["n", "s"] },
+    { n: "化功殿", id: "xx/huagongdian", p: [-2, 3], exits: ["n", "s"] },
+    { n: "化功密室", id: "xx/huagongmishi", p: [-2, 4], exits: ["n"] },
+    { n: "星宿海", id: "xx/xxh2", p: [-1, -2], exits: ["s"] },
+    { n: "星宿海", id: "xx/xxh4", p: [-1, -1], exits: ["n"] },
     { n: "左星宿海", id: "xx/zuohaishi", p: [-1, 0], exits: ["e"] },
+    { n: "日月洞", id: "xx/riyuedong", p: [0, -2], exits: ["s"] },
+    { n: "星宿海", id: "xx/zhonghaishi", p: [0, -1], exits: ["n"] },
+    { n: "星宿海入口", id: "xx/rukou", p: [0, 0], exits: ["n", "e", "w"] },
+    { n: "星宿海", id: "xx/xxh3", p: [1, -2], exits: ["s"] },
+    { n: "星宿海", id: "xx/xxh5", p: [1, -1], exits: ["n"] },
     { n: "右星宿海", id: "xx/youhaishi", p: [1, 0], exits: ["w"] },
-    { n: "中星宿海", id: "xx/zhonghaishi", p: [0, -1], exits: ["n", "s", "e"] },
-    { n: "毒潭", id: "xx/dutan1", p: [1, -1], exits: ["w", "s"] },
-    { n: "毒潭深处", id: "xx/dutan2", p: [1, -2], exits: ["n", "s"] },
-    { n: "化功殿", id: "xx/huagongdian", p: [1, -3], exits: ["n", "s"] },
-    { n: "化功密室", id: "xx/huagongmishi", p: [1, -4], exits: ["n", "w"] },
-    { n: "日月洞", id: "xx/riyuedong", p: [0, -2], exits: ["s"] }
 ];
 this.drops = [
     "book/bc#zhaixinggong",

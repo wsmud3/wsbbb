@@ -1,4 +1,7 @@
 this.inherits(ROOM);
 this.name = "海滩";
-this.desc = "一片金色沙滩，海浪轻拍着礁石，海风带着咸湿的气息。北面是一片桃林，繁花似锦，美不胜收。东边隐约可见一处隐蔽的山洞。";
-this.exits = { "north": "th/taohuazhen1", "east": "th/shandong" };
+this.desc = "这是桃花岛前的海滩。往北是一望无际的大海；往南则是一片桃花林。蓝蓝的海蓝蓝的天，金黄色的沙滩，粉红的桃花，这一切都是那么美。";
+this.exits = {
+    "south": "th/tao0",
+};
+this.set_npc(["th/auto_1", 1]);

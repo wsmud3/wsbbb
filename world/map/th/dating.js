@@ -1,5 +1,9 @@
 this.inherits(ROOM);
-this.name = "大厅";
-this.desc = "桃花岛的正厅，布置雅致，正中挂着黄药师的画像。";
-this.exits = {"north":"th/menlang","south":"th/taolin"};
+this.name = "山庄正厅";
+this.desc = "这里是桃花山庄的正厅。整个大厅十分宽阔。厅中挂满了各种名家的书法真迹。但最显眼的则是正中挂的一幅<cmd cmd='look duilian'>对联(duilian)</cmd> ";
+this.exits = {
+    "north": "th/wofang",
+    "east": "th/shufang",
+    "west": "th/qianyuan",
+};
 this.set_npc([]);
