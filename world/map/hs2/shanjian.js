@@ -4,4 +4,4 @@ this.desc = "顺山涧漂流而下，沿溪遍布珍稀树木，泉石，林木�
 this.exits = {
     "east": "hs2/xiaolu",
 };
-this.set_npc(["hs2/quyang", 1], ["hs2/shanjian_1", 1]);
+this.set_npc(["hs2/auto_2", 1], ["hs2/auto_1", 1]);
