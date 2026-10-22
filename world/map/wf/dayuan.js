@@ -4,3 +4,4 @@ this.desc = "这里就是温宅进门的一个大庭院，地上铺着一块块�
 this.exits = {
     "north": "wf/dating",
 };
+this.set_npc([]);

@@ -2,6 +2,6 @@ this.inherits(ROOM);
 this.name = "侧房";
 this.desc = "这里就是温家老三温方山的住处，他正努气满面站在房里不知道在嘀咕什么。";
 this.exits = {
-    "east": "wf/lang2",
+    "east": "wf/zoulang2",
 };
-this.set_npc(["wf/wenjia", 1]);
+this.set_npc([]);
