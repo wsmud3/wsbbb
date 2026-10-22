@@ -3,7 +3,7 @@
 	    id: "hs",
 	    name: "恒山",
 	    desc: "恒山为五岳之一，山势险峻，白云缭绕。恒山派由定静、定闲、定仪三位师太执掌，剑法轻灵，身法飘逸，名震武林。",
-	    score: 130,
+	    score: 100,
 	    is_show: true,
 	    first: "hs/daziling",
 	    is_copy: true,
