@@ -1,4 +1,4 @@
-﻿this.inherits(COMMAND);
+this.inherits(COMMAND);
 this.command = "go";
 //this.regex = /^(\w+)(?:\s+(n|s|m))?$/;
 
@@ -61,15 +61,22 @@ this.enter = function (me, dir) {
     me.moveto(next_room, sendOutMessage(me, dir), sendInMessage(me), dir);
 }
 
+// 简称 → 房间出口键（房间文件统一用 north/south/... 这类长名，
+// 客户端点小地图 / 出口按钮时可能发回简称，必须一一对上）。
+// 旧写法是把 doors 和 doors_short 按下标硬配，两串顺序并不一致
+// （doors[0] 是 west，doors_short[0] 是 s），结果 go s 会走到西边、
+// go w 会走到南边——按钮点了「没反应 / 走错门」就是这么来的。
 var OUTER_DOORS = {
+    s: "south", n: "north", w: "west", e: "east",
+    se: "southeast", sw: "southwest", nw: "northwest", ne: "northeast",
+    d: "down", u: "up",
+    sd: "southdown", nd: "northdown", ed: "eastdown", wd: "westdown",
+    su: "southup", nu: "northup", eu: "eastup", wu: "westup",
+    enter: "enter", out: "out"
 };
 var doors = ["west", "north", "south", "east", "northwest", "southwest", "northeast", "southeast",
     "down", "up", "westdown", "northdown", "southdown", "eastdown", "westup", "northup", "southup", "eastup", "enter", "out"];
-var doors_short = ["s", "n", "w", "e", "se", "sw", "nw", "ne", "d", "u", "sd", "ed", "nd", "wd", "su", "eu", "wu", "nu"];
 for (var i = 0; i < doors.length; i++) {
-    if (i < doors_short.length) {
-        OUTER_DOORS[doors_short[i]] = doors[i];
-    }
     OUTER_DOORS[doors[i]] = doors[i];
 }
 function sendOutMessage(player, dir) {

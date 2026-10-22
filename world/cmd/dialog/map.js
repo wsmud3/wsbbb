@@ -1,4 +1,4 @@
-﻿this.inherits(COMMAND);
+this.inherits(COMMAND);
 this.command = "map";
 this.allow_busy = true;
 this.allow_state = true;
@@ -60,8 +60,34 @@ this.createMapJson = function (area_obj, area) {
     var obj = {};
     obj.type = "map";
     obj.path = area;
-    obj.map = area_obj.map;
+    obj.map = filterMap(area_obj.map);
     return JSON.stringify(obj);
+}
+/**
+ * 只把「真实存在、且坐标合法」的房间下发给客户端。
+ *
+ * 副本 this.map 是美术数据，历史上被重建脚本改过多次，难免残留
+ * 已被删除 / 改名的房间条目；照原样下发，小地图上就会画出根本走不进去的房间。
+ * 数据层由 tools/check_map_layout.js 负责校验修干净，这里做运行期兜底：
+ * 客户端拿到的每个矩形，一定对应一个能 ROOM.Get 到的房间。
+ */
+function filterMap(map) {
+    if (!map || !map.length) return [];
+    var out = [];
+    for (var i = 0; i < map.length; i++) {
+        var e = map[i];
+        if (!e || typeof e.id !== "string" || !e.id) continue;
+        if (!Array.isArray(e.p) || e.p.length < 2) continue;
+        if (!isFinite(e.p[0]) || !isFinite(e.p[1])) continue;
+        if (!ROOM.Get(e.id)) continue;
+        var room = {};
+        room.n = e.n;
+        room.id = e.id;
+        room.p = [Math.round(e.p[0]), Math.round(e.p[1])];
+        room.exits = Array.isArray(e.exits) ? e.exits : [];
+        out.push(room);
+    }
+    return out;
 }
 function getAreaByPath(areas, path) {
     if (!areas) return;

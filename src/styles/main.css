@@ -521,6 +521,21 @@
     overflow: auto;
 }
 
+/* 可交互地图：对话框里的每个房间矩形都是可点的「前往」按钮 */
+.dialog-content .map-room {
+    cursor: pointer;
+}
+
+.dialog-content .map-room:hover {
+    fill: #4a4a4a;
+    stroke: #fff;
+}
+
+.map-loading {
+    padding: 1em;
+    color: gray;
+}
+
 .room-title {
     color: #ffff00;
     line-height: 1.875em;

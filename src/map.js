@@ -269,6 +269,9 @@ export default {
         this.LastFix = { moved: norm.moved, filled: norm.filled, total: map.length, shown: norm.rooms.length };
         if (!norm.rooms.length) return;
         var rooms = norm.rooms;
+        // 缓存规整后的房间表：点击地图「前往」时的 BFS 就用这一份，
+        // 保证按钮 / 连线 / 寻路三者看的是同一份数据。
+        this.NavRooms = rooms;
         var occ = {};
         for (var q = 0; q < rooms.length; q++) occ[rooms[q].x + "," + rooms[q].y] = true;
 
@@ -373,6 +376,13 @@ export default {
         }
         html.push("</svg>");
         content.html(html.join(""));
+        // 可交互地图（对话框里的那张）开着的时候，把新画出来的 svg 搬进去，
+        // 否则对话框里还停在旧图、甚至一片空白——「小地图有房间、可交互地图
+        // 没有对应按钮」就是这么来的。
+        if (typeof Dialog !== "undefined" && Dialog.isShow &&
+            Dialog.curItem === "map" && Dialog.map && Dialog.map.attach) {
+            Dialog.map.attach();
+        }
         this.MapContent = $("svg");
         if (!this.IsShow) {
             this.IsShow = true;
@@ -405,6 +415,126 @@ export default {
         }
         return pos;
     },
+    // ────────────────────────────────────────────────────────────────
+    // 点击地图房间「前往」
+    //
+    // 小地图上的每个 rect 就是该副本 this.map 的一个条目（一件可点的「按钮」）。
+    // p:[x,y] 与 exits 的方向是一一对应的（坐标由 tools/fix_map_layout.js 按
+    // 房间文件真实出口重排），所以「格子上有邻居 + exits 里有这个方向」就是
+    // 一条真实可走的路；据此在客户端做 BFS，得到方向序列后逐条 go 过去。
+    // 一旦中途房间对不上（被 NPC 挡住、踩了机关传送、进入战斗），立即停下，
+    // 绝不盲目继续发命令。
+    NAV_DIRS: {
+        n: "north", s: "south", e: "east", w: "west",
+        ne: "northeast", nw: "northwest", se: "southeast", sw: "southwest"
+    },
+    NAV_SHOULD: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
+    BuildNav: function (rooms) {
+        var at = {}, adj = {};
+        for (var i = 0; i < rooms.length; i++) at[rooms[i].x + "," + rooms[i].y] = rooms[i];
+        for (var j = 0; j < rooms.length; j++) {
+            var room = rooms[j], out = {};
+            for (var k = 0; k < room.exits.length; k++) {
+                var code = room.exits[k];
+                if (typeof code !== "string") continue;
+                var parsed = this.parseDir(code);
+                if (!parsed) continue;
+                var delta = this.MAP_DELTA[parsed.base];
+                if (!delta) continue;                  // u/d/enter/out 画不出格子，寻路也不走
+                var steps = parsed.steps || 1;
+                var to = at[(room.x + delta[0] * steps) + "," + (room.y + delta[1] * steps)];
+                if (!to || to.id === room.id) continue;
+                if (!out[parsed.base]) out[parsed.base] = to.id;
+            }
+            adj[room.id] = out;
+        }
+        return { at: at, adj: adj };
+    },
+    /** 返回 [{dir, to}] ；走不到返回 null。 */
+    FindPath: function (fromId, toId, nav) {
+        if (fromId === toId) return [];
+        var prev = {}, seen = {}, queue = [fromId];
+        seen[fromId] = true;
+        while (queue.length) {
+            var cur = queue.shift();
+            var outs = nav.adj[cur] || {};
+            for (var i = 0; i < this.NAV_SHOULD.length; i++) {
+                var d = this.NAV_SHOULD[i];
+                var next = outs[d];
+                if (!next || seen[next]) continue;
+                seen[next] = true;
+                prev[next] = { from: cur, dir: d };
+                if (next === toId) {
+                    var plan = [], node = toId;
+                    while (node !== fromId) {
+                        plan.unshift({ dir: prev[node].dir, to: node });
+                        node = prev[node].from;
+                    }
+                    return plan;
+                }
+                queue.push(next);
+            }
+        }
+        return null;
+    },
+    /** 地图上点一个房间：算出路线就开始走，每进一间房核对一次。 */
+    NavigateTo: function (id) {
+        var cur = this.Room && this.Room.path;
+        if (!cur) return;
+        if (!this.NavRooms || !this.NavRooms.length) {
+            return ReceiveMessage("<yel>地图还没加载好，稍等一下再点。</yel>");
+        }
+        if (id === cur) return ReceiveMessage("<yel>你已经在这里了。</yel>");
+        var nav = this.BuildNav(this.NavRooms);
+        if (!nav.at) return;
+        var plan = this.FindPath(cur, id, nav);
+        if (!plan || !plan.length) {
+            return ReceiveMessage("<yel>小地图上没有从「" + (this.Room.name || cur) +
+                "」走过去的完整路线（可能中间是机关 / 上下坡出口）。</yel>");
+        }
+        if (plan.length > 40) {
+            return ReceiveMessage("<yel>目标太远（" + plan.length + " 步），地图寻路暂不支持。</yel>");
+        }
+        this.Walk = { plan: plan, index: 0, expect: plan[0].to, path: id };
+        ReceiveMessage("<hig>开始前往" + (this.RoomName(id) || id) + "（" + plan.length + " 步）。</hig>");
+        this.WalkStep();
+    },
+    RoomName: function (id) {
+        var rooms = this.NavRooms || [];
+        for (var i = 0; i < rooms.length; i++) if (rooms[i].id === id) return rooms[i].n;
+        return "";
+    },
+    WalkStep: function () {
+        if (!this.Walk) return;
+        var w = this.Walk;
+        if (w.index >= w.plan.length) { this.Walk = null; return; }
+        var step = w.plan[w.index];
+        w.expect = step.to;
+        w.index++;
+        w.time = Date.now();
+        SendCommand("go " + (this.NAV_DIRS[step.dir] || step.dir));
+    },
+    /** 由 SetRoom 在「真的换了房间」时调用，核对路线。 */
+    WalkArrived: function (path) {
+        if (!this.Walk) return;
+        var w = this.Walk;
+        if (w.time && Date.now() - w.time > 5000) {
+            this.Walk = null;
+            ReceiveMessage("<yel>自动寻路超时，已停止。</yel>");
+            return;
+        }
+        if (path !== w.expect) {
+            this.Walk = null;
+            ReceiveMessage("<yel>自动寻路中断了（路上有阻挡或机关）。</yel>");
+            return;
+        }
+        if (w.index >= w.plan.length) {
+            this.Walk = null;
+            ReceiveMessage("<hig>你到了。</hig>");
+            return;
+        }
+        this.WalkStep();
+    },
     State: 0,
     ZoomState: 100,
     Buffer: {},
@@ -428,7 +558,10 @@ export default {
         var ph = this.MapHeight * this.ZoomState / 100;
         this.MapContent.attr("viewBox", "0,0," + pw + "," + ph);
     }, SetRoom: function (rm) {
+        var changed = !this.Room || this.Room.path !== rm.path;
         this.Room = rm;
+        // 自动寻路：只有真的换了房间才核对，避免 ShowMap 里的自调用误判
+        if (changed) this.WalkArrived(rm.path);
         if (!this.IsShow) return;
 
         if (this.CurRoomItem) {
