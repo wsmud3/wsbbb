@@ -4,6 +4,6 @@ this.desc = "你走在一条长长的走廊上，上面雕梁画柱，飞檐琉�
 this.exits = {
     "northeast": "wf/zoulangtou",
     "west": "wf/wen3",
-    "south": "wf/zoulang2",
+    "south": "wf/zoulang1",
 };
 this.set_npc([]);
