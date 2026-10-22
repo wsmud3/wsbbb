@@ -4,4 +4,4 @@ this.desc = "你走进这间小小的厅室, 看到里面放着一张紫檀木�
 this.exits = {
     "west": "yz2/yunjinlou",
 };
-this.set_npc("follower/wang");   // 神仙姐姐 王语嫣
+this.set_npc(["yz2/auto_2", 1]);

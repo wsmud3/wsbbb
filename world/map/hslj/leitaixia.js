@@ -4,3 +4,4 @@ this.desc = "这里是华山最高一座山峰，眼前是一方圆数十丈的�
 this.exits = {
     "up": "hslj/tai",
 };
+this.set_npc(["hslj/auto_2", 1]);

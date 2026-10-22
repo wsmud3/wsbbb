@@ -1,5 +1,8 @@
 this.inherits(ROOM);
-this.name = "无乐殿";
-this.desc = "无乐殿中，寂静无声，世间的欢乐在此不值一提。";
-this.exits = { "south": "tl/wujing", "west": "tl/sheli" };
+this.name = "无乐阁";
+this.desc = "这是历代大理王侯前来进香还愿时休息的地方。阁内檀象宝炉，软榻矮几，一应俱全，清静之中隐然透出一丝富贵之象。";
+this.exits = {
+    "south": "tl/wujing",
+    "northwest": "tl/ta",
+};
 this.set_npc(["tl/benchen", 1]);

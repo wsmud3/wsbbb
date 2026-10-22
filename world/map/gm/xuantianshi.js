@@ -4,3 +4,4 @@ this.desc = "从石上远眺，只见云海苍茫处，险绝万峦生，昆仑�
 this.exits = {
     "west": "gm/shanpo2",
 };
+this.set_npc([]);

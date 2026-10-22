@@ -4,5 +4,4 @@ this.desc = "这里便是恒山白云庵的斋堂。斋堂里摆满了长长的�
 this.exits = {
     "south": "hs/xilang",
 };
-this.set_npc("hs/npc07");   // 恒山派弟子 仪光
-this.set_npc("hs/npc08");   // 恒山派弟子 仪和
+this.set_npc(["hs/auto_1", 1], ["hs/auto_2", 1]);

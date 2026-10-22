@@ -5,4 +5,4 @@ this.exits = {
     "northup": "ss/chaotianmen",
     "southwest": "ss/shandao",
 };
-this.set_npc("ss/gaokexin");     // 高克新 score55
+this.set_npc([]);

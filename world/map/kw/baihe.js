@@ -1,5 +1,9 @@
 this.inherits(ROOM);
 this.name = "白河";
-this.desc = "一条冰冻的白河横在面前，河面结着厚厚的冰层。北边有一间简陋的小屋，东边通往密林方向。";
-this.exits = { "east": "kw/milin1", "west": "kw/gucaoduo", "north": "kw/xiaowu" };
+this.desc = "这里是长白山下的一个小村，只有四，五间粗陋的小木屋。这里并没有固定的居民，木屋都是进山采参的参客所盖，为的是在进山前能在这里好好的休息一下。东面就是巍峨耸立的长白大山。";
+this.exits = {
+    "west": "kw/caoguduo",
+    "east": "kw/milin",
+    "north": "kw/xiaowu",
+};
 this.set_npc(["kw/pingsi", 1]);

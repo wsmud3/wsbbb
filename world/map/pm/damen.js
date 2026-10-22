@@ -5,3 +5,4 @@ this.exits = {
     "north": "pm/dating",
     "south": "pm/dadao",
 };
+this.set_npc(["pm/auto_2", 1]);

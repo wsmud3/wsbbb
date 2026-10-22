@@ -4,3 +4,4 @@ this.desc = "这里是余沧海的寝室。余沧海虽然是道家弟子，可�
 this.exits = {
     "south": "qc/huayuan",
 };
+this.set_npc(["qc/yucanghai", 1]);

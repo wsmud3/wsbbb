@@ -6,3 +6,4 @@ this.exits = {
     "northwest": "hs/shandao",
     "northup": "hs/tongyuangu",
 };
+this.set_npc([]);

@@ -4,4 +4,4 @@ this.desc = "你走在青城山路上。山木蔽日，幽静宜人。西上就�
 this.exits = {
     "westup": "qc/tianshidong",
 };
-this.set_npc("qc/waimendizi");   // 外门弟子 score25：山道扫叶
+this.set_npc([]);

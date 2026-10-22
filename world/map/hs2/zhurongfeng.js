@@ -4,3 +4,4 @@ this.desc = "祝融峰之高为衡山大四绝之首。在此俯瞰群峰，尽�
 this.exits = {
     "north": "hs2/zhurongdian",
 };
+this.set_npc([]);

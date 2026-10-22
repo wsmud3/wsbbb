@@ -5,3 +5,4 @@ this.exits = {
     "south": "qc/tianshidong",
     "northup": "qc/sanwan",
 };
+this.set_npc([]);

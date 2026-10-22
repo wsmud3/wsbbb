@@ -4,3 +4,4 @@ this.desc = "这是『日月神教』下第四大堂:天香堂的大厅，远远
 this.exits = {
     "north": "hmy/shulin",
 };
+this.set_npc(["hmy/auto_1", 1]);

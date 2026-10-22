@@ -4,5 +4,5 @@ this.desc = "你爬上半山腰，望着对面的山。这边的山柔静阴郁�
 this.exits = {
     "east": "gm/shanpo1",
     "north": "gm/xiaolu1",
-    "south": "gm/banshanting",
 };
+this.set_npc(["gm/auto_3", 1], ["gm/auto_4", 1]);

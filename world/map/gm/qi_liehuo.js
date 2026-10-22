@@ -4,5 +4,5 @@ this.desc = "这里是明教的烈火旗，许多教众在忙着把山下采集�
 this.exits = {
     "south": "gm/qi_hongshui",
     "east": "gm/duanya",
-    "west": "gm/lianwu",
 };
+this.set_npc(["gm/auto_9", 1], ["gm/auto_4", 1]);

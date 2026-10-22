@@ -7,4 +7,4 @@ this.exits = {
     "east": "ss/donglang",
     "west": "ss/xilang",
 };
-this.set_npc("ss/zuolengchan");  // 左冷禅 score180（会盟堂 BOSS）
+this.set_npc(["ss/zuolengchan", 1]);

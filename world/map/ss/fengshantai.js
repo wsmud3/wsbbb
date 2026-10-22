@@ -4,3 +4,4 @@ this.desc = "峻极封禅台由大麻石所建，每块大石都凿得极是平�
 this.exits = {
     "eastdown": "ss/shandao2",
 };
+this.set_npc([]);

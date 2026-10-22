@@ -4,3 +4,4 @@ this.desc = "这里是五毒教存放药品的地方，只见十多个黑漆木�
 this.exits = {
     "west": "wudu/nanyuan",
 };
+this.set_npc([]);

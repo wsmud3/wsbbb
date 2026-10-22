@@ -1,0 +1,10 @@
+this.inherits(ROOM);
+this.name = "舍利塔";
+this.desc = "这是天龙三塔中最高的一座，高约三百余尺，共有十六级。相传塔顶原本供奉着一颗前代高僧的舍利子，但在当年奸臣杨义贞弑上德帝篡位以至天下大乱时，舍利子不知何因而失踪了，这也成为天龙寺历代主持的心腹大事。这个传言也不知是真是假。";
+this.exits = {
+    "south": "tl/baodian",
+    "north": "tl/talin",
+    "southwest": "tl/wuwo",
+    "southeast": "tl/wule",
+};
+this.set_npc([]);

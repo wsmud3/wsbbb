@@ -5,5 +5,4 @@ this.exits = {
     "east": "gm/xuantianshi",
     "west": "gm/shanpo1",
 };
-
-this.set_npc("gm/zhangzhong");   // 五散人 张中
+this.set_npc([]);

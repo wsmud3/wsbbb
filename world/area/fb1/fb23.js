@@ -15,19 +15,20 @@ this.set({
     ss_title: "移花宫主"
 });
 this.map = [
+    { n: "邀月宫", id: "yh/yaoyuegong", p: [-2, 0], exits: [] },
+    { n: "涟星宫", id: "yh/lianxinggong", p: [-2, 1], exits: [] },
+    { n: "藏剑阁", id: "yh/cangjiange", p: [-2, 5], exits: ["s"] },
+    { n: "水榭", id: "yh/shuixie", p: [-2, 6], exits: ["n"] },
+    { n: "暗道", id: "yh/andao", p: [-2, 8], exits: [] },
+    { n: "前厅", id: "yh/qianting", p: [-1, 1], exits: ["s", "w"] },
+    { n: "宫主卧室", id: "yh/woshi", p: [-1, 2], exits: [] },
     { n: "山道", id: "yh/shandao", p: [0, 0], exits: ["s"] },
-    { n: "花径", id: "yh/huajing1", p: [0, -1], exits: ["n"] },
-    { n: "花径", id: "yh/huajing2", p: [0, -2], exits: ["n"] },
-    { n: "花径", id: "yh/huajing3", p: [0, -3], exits: ["n"] },
-    { n: "花径", id: "yh/huajing4", p: [0, -4], exits: ["n"] },
-    { n: "花径尽头", id: "yh/huajing5", p: [0, -5], exits: ["s", "e"] },
-    { n: "前庭", id: "yh/qianting", p: [1, -5], exits: ["n", "s", "e", "w"] },
-    { n: "邀月宫", id: "yh/yaoyuegong", p: [2, -5], exits: ["w"] },
-    { n: "涟星宫", id: "yh/lianxinggong", p: [0, -5], exits: ["e"] },
-    { n: "水榭", id: "yh/shuixie", p: [1, -6], exits: ["w", "n"] },
-    { n: "藏剑阁", id: "yh/cangjiange", p: [1, -7], exits: ["s"] },
-    { n: "卧室", id: "yh/woshi", p: [1, -4], exits: ["n", "s"] },
-    { n: "暗道", id: "yh/andao", p: [1, -3], exits: ["n"] }
+    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: [] },
+    { n: "花径尽头", id: "yh/huajing5", p: [0, 2], exits: [] },
+    { n: "花径", id: "yh/huajing4", p: [0, 3], exits: ["n", "s", "e"] },
+    { n: "花径", id: "yh/huajing3", p: [0, 4], exits: ["n", "e"] },
+    { n: "花径", id: "yh/huajing2", p: [1, 3], exits: [] },
+    { n: "花径", id: "yh/huajing1", p: [1, 4], exits: ["n"] },
 ];
 this.drops = [
     "book/bc#mingyugong", "book/bc#yihuajiemu", "book/bc#yifengjianfa",

@@ -4,5 +4,6 @@ this.desc = "这是广场偏上的一条碎石小路，一些不知名的树木�
 this.exits = {
     "south": "cihang/xiaolu3",
     "west": "cihang/guangchang",
-    "east": "cihang/tingyuting",
+    "east": "cihang/tingyu",
 };
+this.set_npc([]);

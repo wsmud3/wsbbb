@@ -1,6 +1,7 @@
 this.inherits(ROOM);
-this.name = "山门";
-this.desc = "你站在帝踏峰山脚，远处山腰处的慈航静斋在白云深处若隐若现，你看着那写着“家在此山中，云深不知处”的山门，耳边似乎听到有禅钟敲响，涤尘滤俗，让你不由得化烦忘忧。";
+this.name = "帝踏峰";
+this.desc = "这是耸拔群山之中，人迹罕至，遥望远处山路迂回，清幽宁恬，在翠云舒卷里，慈航静斋临岩角山，巧妙深藏地溶入了这令人大叹观止的美景中。";
 this.exits = {
-    "south": "cihang/qichongmen",
+    "south": "cihang/shanyao",
 };
+this.set_npc(["cihang/auto_1", 1]);

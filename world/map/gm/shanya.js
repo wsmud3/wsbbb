@@ -4,3 +4,4 @@ this.desc = "自洪水旗向东走，来到一个陡峭的山崖。它高耸入�
 this.exits = {
     "west": "gm/qi_hongshui",
 };
+this.set_npc([]);

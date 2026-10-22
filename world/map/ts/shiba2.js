@@ -5,3 +5,4 @@ this.exits = {
     "southdown": "ts/longmen",
     "northup": "ts/shengxian",
 };
+this.set_npc([]);

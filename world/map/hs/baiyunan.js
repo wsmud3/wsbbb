@@ -7,5 +7,4 @@ this.exits = {
     "east": "hs/donglang",
     "west": "hs/xilang",
 };
-this.set_npc("hs/npc01");   // 恒山派弟子 仪文
-this.set_npc("hs/npc02");   // 恒山派弟子 仪质
+this.set_npc(["hs/auto_4", 1], ["hs/auto_7", 1]);

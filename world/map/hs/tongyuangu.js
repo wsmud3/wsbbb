@@ -4,3 +4,4 @@ this.desc = "通元谷孤处见性峰下，相传为张果老成仙前修道之�
 this.exits = {
     "southdown": "hs/guolaoling",
 };
+this.set_npc([]);

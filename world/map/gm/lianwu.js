@@ -4,9 +4,5 @@ this.desc = "这是明教的练武场。由数块巨大的花岗岩铺垫而成�
 this.exits = {
     "south": "gm/qi_houtu",
     "east": "gm/qi_liehuo",
-    // "north": 目标「聚议厅」未知
-    "west": "gm/qi_ruijin",
 };
-
-this.set_npc("gm/weiyixiao");   // 青翼蝠王 韦一笑
-this.set_npc("gm/yintianzheng");   // 白眉鹰王 殷天正
+this.set_npc(["gm/auto_13", 1], ["gm/auto_10", 1]);

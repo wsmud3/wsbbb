@@ -6,3 +6,4 @@ this.exits = {
     "south": "yz2/xiaojing",
     "east": "yz2/wuchang",
 };
+this.set_npc([]);

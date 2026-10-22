@@ -4,3 +4,4 @@ this.desc = "你踏上了小岛的岸边，这里就是慕容世家的领地，�
 this.exits = {
     "east": "yz2/hc1",
 };
+this.set_npc([]);

@@ -15,17 +15,19 @@ this.set({
     ss_title: "神雕大侠"
 });
 this.map = [
+    { n: "地下暗河", id: "gm2/anhe", p: [-2, 3], exits: [] },
+    { n: "古墓", id: "gm2/gumukou", p: [-1, -2], exits: [] },
+    { n: "寒玉密室", id: "gm2/hanyuchuang2", p: [-1, 2], exits: ["s", "e"] },
+    { n: "寒玉床室", id: "gm2/hanyuchuang1", p: [-1, 3], exits: ["n"] },
+    { n: "峭壁", id: "gm2/qiaobi", p: [-1, 4], exits: ["s"] },
+    { n: "平台", id: "gm2/pingtai", p: [-1, 5], exits: ["n", "e"] },
+    { n: "前厅", id: "gm2/qianting", p: [0, -1], exits: [] },
     { n: "古墓入口", id: "gm2/gumurukou", p: [0, 0], exits: ["e"] },
-    { n: "寒玉密室", id: "gm2/hanyuchuang2", p: [0, 6], exits: ["s", "e"] },
-    { n: "寒玉床室", id: "gm2/hanyuchuang1", p: [0, 7], exits: ["n"] },
+    { n: "寒玉密室尽头", id: "gm2/hanyumishi", p: [0, 2], exits: ["w"] },
+    { n: "剑冢", id: "gm2/jianzhong", p: [0, 5], exits: ["w"] },
     { n: "卧室", id: "gm2/woshi", p: [1, -1], exits: ["s"] },
-    { n: "后堂", id: "gm2/houtang", p: [1, 0], exits: ["n", "s", "w"] },
-    { n: "琴室", id: "gm2/qinshi", p: [1, 1], exits: ["n", "s"] },
-    { n: "暗河", id: "gm2/anhe", p: [1, 2], exits: ["n", "s"] },
-    { n: "峭壁", id: "gm2/qiaobi", p: [1, 3], exits: ["n", "s"] },
-    { n: "平台", id: "gm2/pingtai", p: [1, 4], exits: ["n", "e"] },
-    { n: "寒玉密室尽头", id: "gm2/hanyumishi", p: [1, 6], exits: ["w"] },
-    { n: "剑冢", id: "gm2/jianzhong", p: [2, 4], exits: ["w"] },
+    { n: "后堂", id: "gm2/houtang", p: [1, 0], exits: ["n", "e"] },
+    { n: "琴室", id: "gm2/qinshi", p: [2, 0], exits: ["w"] },
 ];
 	this.drops = [
 	    "book/bc#yunvxinjing",

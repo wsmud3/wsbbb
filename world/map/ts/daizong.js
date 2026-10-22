@@ -4,3 +4,4 @@ this.desc = "位于泰安县城以北约一里，此处是登泰山的入口。�
 this.exits = {
     "northup": "ts/yitian",
 };
+this.set_npc([]);

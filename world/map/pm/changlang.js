@@ -4,6 +4,7 @@ this.desc = "这是一条非常精美的长廊，柱子和栏杆是用华贵的�
 this.exits = {
     "north": "pm/huayuan",
     "south": "pm/dating",
-    "west": "pm/xifengge",
-    "east": "pm/liaofengxuan",
+    "west": "pm/liangong",
+    "east": "pm/wuqi",
 };
+this.set_npc([]);

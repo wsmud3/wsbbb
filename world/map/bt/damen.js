@@ -4,3 +4,4 @@ this.desc = "这就是闻名天下的『白驼山庄』的大门。大门梁上�
 this.exits = {
     "north": "bt/liangong",
 };
+this.set_npc([]);

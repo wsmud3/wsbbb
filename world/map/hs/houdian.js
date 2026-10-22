@@ -4,3 +4,4 @@ this.desc = "恒山派白云庵后殿，是恒山派掌门人的居所，这里�
 this.exits = {
     "south": "hs/baiyunan",
 };
+this.set_npc(["hs/dingjing", 1], ["hs/dingxian", 1], ["hs/dingyi", 1]);

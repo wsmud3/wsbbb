@@ -4,3 +4,4 @@ this.desc = "大字岭是入恒山必由之路。石壁上镌有 【恒宗】 �
 this.exits = {
     "northup": "hs/hufengkou",
 };
+this.set_npc([]);

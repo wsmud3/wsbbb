@@ -4,5 +4,4 @@ this.desc = "这里是恒山派弟子练功的房间，房间中央立着几个�
 this.exits = {
     "south": "hs/donglang",
 };
-this.set_npc("hs/npc05");   // 恒山派弟子 仪敏
-this.set_npc("hs/npc06");   // 恒山派弟子 仪清
+this.set_npc(["hs/auto_3", 1], ["hs/auto_5", 1]);

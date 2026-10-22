@@ -6,3 +6,4 @@ this.exits = {
     "west": "bt/changlang",
     "south": "bt/damen",
 };
+this.set_npc([]);

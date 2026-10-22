@@ -4,3 +4,4 @@ this.desc = "没有亲眼见到，没有人会相信，在嵩山绝顶上居然�
 this.exits = {
     "south": "ss/huimengtang",
 };
+this.set_npc([]);

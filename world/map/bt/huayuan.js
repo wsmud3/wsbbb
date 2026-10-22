@@ -5,13 +5,4 @@ this.exits = {
     "north": "bt/dating",
     "south": "bt/menlang",
 };
-
-// [mech] 花园：白衣少女（攻略：可在花园的白衣少女处刷五神剑所需 buff，再回来击杀欧阳锋）
-this.on_enter = function (me) {
-    if (!me.is_player) return;
-    if (this.find_obj_bypath("bt/baiyishaonv")) return;
-    NPC.CREATE("bt/baiyishaonv", this);
-    this.refresh(me);
-    me.notify("<hiw>白衣少女立在花径尽头，冷眼看着你：「白驼山不是你能撒野的地方。」</hiw>");
-    me.notify("<hiy>（她并不主动出手——若要刷五神剑所需的 buff，可与她比试）</hiy>");
-};
+this.set_npc(["bt/auto_1", 1], ["bt/baiyishaonv", 1]);

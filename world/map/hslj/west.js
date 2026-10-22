@@ -4,3 +4,4 @@ this.desc = "这里是华山西边的一座山峰，眼前是一方圆数十丈�
 this.exits = {
     "east": "hslj/tai",
 };
+this.set_npc([]);

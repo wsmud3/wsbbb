@@ -4,3 +4,4 @@ this.desc = "天色昏暗，山道两旁的大树垂下沉沉的枝叶，在昏�
 this.exits = {
     "east": "gm/qi_liehuo",
 };
+this.set_npc([]);

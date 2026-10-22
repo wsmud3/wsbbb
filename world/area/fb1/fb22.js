@@ -15,20 +15,27 @@ this.set({
     ss_title: "金毛狮王"
 });
 this.map = [
-    { n: "海岩石", id: "bh/haiyanshi", p: [0, 0], exits: ["w", "e"] },
-    { n: "火山路", id: "bh/huoshanlu1", p: [-1, 0], exits: ["e", "w"] },
+    { n: "火山", id: "bh/huoshan", p: [-4, 0], exits: ["e"] },
+    { n: "熔岩洞底", id: "bh/rongyandong3", p: [-4, 1], exits: ["s"] },
+    { n: "熔岩洞深处", id: "bh/rongyandong2", p: [-4, 2], exits: ["n", "s"] },
+    { n: "熔岩洞", id: "bh/rongyandong1", p: [-4, 3], exits: ["n"] },
+    { n: "冰谷尽头", id: "bh/binggu3", p: [-4, 4], exits: ["s"] },
+    { n: "冰谷深处", id: "bh/binggu2", p: [-4, 5], exits: ["n", "s"] },
+    { n: "冰谷", id: "bh/binggu1", p: [-4, 6], exits: ["n"] },
+    { n: "火山脚下", id: "bh/huoshanjiaoxia", p: [-3, 0], exits: ["e", "w"] },
     { n: "火山路", id: "bh/huoshanlu2", p: [-2, 0], exits: ["e", "w"] },
-    { n: "火山脚下", id: "bh/huoshanjiaoxia", p: [-3, 0], exits: ["e", "w", "n"] },
-    { n: "熔岩洞", id: "bh/rongyandong1", p: [-3, 1], exits: ["s", "n"] },
-    { n: "熔岩洞深处", id: "bh/rongyandong2", p: [-3, 2], exits: ["s", "n"] },
-    { n: "熔岩洞底", id: "bh/rongyandong3", p: [-3, 3], exits: ["s"] },
-    { n: "火山口", id: "bh/huoshan", p: [-4, 0], exits: ["e"] },
-    { n: "丛林", id: "bh/conglin1", p: [1, 0], exits: ["e", "w"] },
-    { n: "丛林", id: "bh/conglin2", p: [2, 0], exits: ["e", "w", "n"] },
-    { n: "冰谷", id: "bh/binggu1", p: [2, 1], exits: ["s", "n"] },
-    { n: "冰谷深处", id: "bh/binggu2", p: [2, 2], exits: ["s", "n"] },
-    { n: "冰谷尽头", id: "bh/binggu3", p: [2, 3], exits: ["s"] },
-    { n: "石山", id: "bh/shishan", p: [3, 0], exits: ["w"] }
+    { n: "火山", id: "bh/huoshan1", p: [-1, -4], exits: ["e"] },
+    { n: "火山路", id: "bh/huoshanlu1", p: [-1, 0], exits: ["e", "w"] },
+    { n: "火山脚下", id: "bh/huoshanjiao", p: [0, -4], exits: ["e", "w"] },
+    { n: "石山", id: "bh/shishan2", p: [0, -2], exits: [] },
+    { n: "海边岩石", id: "bh/haiyanshi", p: [0, 0], exits: ["e", "w"] },
+    { n: "火山路", id: "bh/yslu2", p: [1, -4], exits: ["w"] },
+    { n: "熊洞", id: "bh/xiongdong", p: [1, -3], exits: [] },
+    { n: "石山", id: "bh/shishan", p: [1, -2], exits: ["n", "s", "w"] },
+    { n: "丛林", id: "bh/conglin2", p: [1, -1], exits: ["n"] },
+    { n: "丛林", id: "bh/conglin1", p: [1, 0], exits: ["n"] },
+    { n: "火山路", id: "bh/yslu1", p: [2, -3], exits: [] },
+    { n: "海边岩石", id: "bh/haibian", p: [2, -2], exits: [] },
 ];
 
 // 冰火岛区域buff

@@ -5,3 +5,4 @@ this.exits = {
     "west": "yz2/anbian",
     "east": "yz2/zhuangmen",
 };
+this.set_npc([]);
