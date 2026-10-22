@@ -5,3 +5,17 @@ this.exits = {
     "north": "wf/dating",
 };
 this.set_npc([]);
+
+// 原版机制（攻略第 11 节）：大门锁着，需要 500 级基本轻功【跳上树】翻墙进府。
+this.set_item("tree", "大树", "一株参天大树，枝干伸到围墙上方。", [
+    ["pa shu", "跳上树", function (me) {
+        var lv = me.query_skill("dodge", 0);
+        if (lv < 500) {
+            me.notify("<red>这棵树太高了，你的基本轻功不到 500 级，怎么也跃不上去。</red>");
+            return true;
+        }
+        me.notify("<hig>你提一口气，攀着树干翻过围墙，落进了温府大院。</hig>");
+        me.moveto("wf/dayuan", me.name + "攀上大树翻墙进了温府。", me.name + "从墙头翻了下来。");
+        return true;
+    }]
+]);

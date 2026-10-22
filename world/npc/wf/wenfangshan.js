@@ -51,3 +51,18 @@ this.on_enter = function (me) {
     me.notify("温方达喝道：来者何人！留下命来！");
     this.do_kill(me);
 };
+
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    var room = this.environment;
+    if (!room) return;
+    var alive = 0;
+    for (var i = 0; i < room.items.length; i++) {
+        var o = room.items[i];
+        if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
+    }
+    if (alive === 0) {
+        killer.set_temp("wf_zhen_done", 1, 7200000);
+        killer.notify("<hiy>温家五老尽数伏诛，阵法已破。再去点一次木桩。</hiy>");
+    }
+};
