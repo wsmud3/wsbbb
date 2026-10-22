@@ -9,7 +9,7 @@
 	    max_hp: 858000,
 	    mp: 164000,
 	    max_mp: 164000,
-	    score: 65,
+	    score: 0,
 	    gj: 62940,
 	    fy: 47424,
 	    mz: 60210,
@@ -38,3 +38,9 @@
         me.notify("本参双手合十：'阿弥陀佛。'");
     }
 }; this.on_die = function(killer) { if (killer && killer.is_player) killer.set_temp('tl_killed_any', 1); };
+
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    var room = this.environment;
+    if (room && room.on_monk_die && killer.query_temp("tl_capture")) room.on_monk_die(killer);
+};
