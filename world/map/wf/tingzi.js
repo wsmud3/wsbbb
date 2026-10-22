@@ -28,7 +28,6 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
             var names = ["wenfangyi", "wenfangshan", "wenfangshi", "wenfangnan"];
             var full = !me.query_temp("wf_wufangda_dead");
             if (full) names.unshift("wenfangda");
-            me.set_temp("wf_zhen_full", full ? 1 : 0, 7200000);
             me.send_room("$N纵身跳上木桩，湖心小岛后忽然转出几条人影。");
             if (!full) me.notify("<hir>（温方达已死，温家阵法不完整——这一趟最多只能到 99%。）</hir>");
             for (var j = 0; j < names.length; j++) {
