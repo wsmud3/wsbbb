@@ -21,7 +21,7 @@ this.map = [
     { n: "暗道", id: "yh/andao", p: [-2, 12], exits: [] },
     { n: "山道", id: "yh/shandao", p: [-2, 14], exits: [] },
     { n: "花径", id: "yh/yihua0", p: [-2, 16], exits: [] },
-    { n: "花径", id: "yh/huajing", p: [-1, -1], exits: [] },
+    { n: "花径", id: "yh/huajing", p: [-1, -1], exits: ["s"] },
     { n: "花径", id: "yh/huajing1", p: [-1, 0], exits: ["n"] },
     { n: "邀月宫", id: "yh/yaoyuegong", p: [-1, 4], exits: ["ne", "se"] },
     { n: "花径尽头", id: "yh/huajing5", p: [-1, 6], exits: [] },

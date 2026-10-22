@@ -15,7 +15,8 @@ this.set({
     ss_title: "光明右使"
 });
 	this.map = [
-	    { n: "练武场", id: "gm/lianwu", p: [-2, -7], exits: ["s", "e"] },
+	    { n: "圣火堂", id: "gm/shenghuotang", p: [-2, -8], exits: ["s"] },
+	    { n: "练武场", id: "gm/lianwu", p: [-2, -7], exits: ["n", "s", "e"] },
 	    { n: "厚土旗", id: "gm/qi_houtu", p: [-2, -6], exits: ["n"] },
 	    { n: "光明顶", id: "gm/guangmingding", p: [-2, -5], exits: ["n"] },
 	    { n: "林间小路", id: "gm/xiaolu1", p: [-2, -4], exits: ["n"] },

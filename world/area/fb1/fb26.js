@@ -15,13 +15,12 @@ this.set({
     ss_title: "灵鹫宫主"
 });
 	this.map = [
+	    { n: "闭关室", id: "pm/biguanshi", p: [-1, 0], exits: [] },
 	    { n: "憩凤阁", id: "pm/qifengge", p: [-1, 2], exits: ["e"] },
 	    { n: "戏凤阁", id: "pm/xifengge", p: [-1, 3], exits: ["e"] },
-	    { n: "百丈涧", id: "pm/jian", p: [-1, 7], exits: ["s"] },
-	    { n: "失足岩", id: "pm/yan", p: [-1, 8], exits: ["n", "s"] },
-	    { n: "断魂崖", id: "pm/ya", p: [-1, 9], exits: ["n"] },
-	    { n: "仙愁门", id: "pm/xianchoumen", p: [-1, 11], exits: [] },
-	    { n: "闭关室", id: "pm/biguanshi", p: [-1, 13], exits: [] },
+	    { n: "百丈涧", id: "pm/jian", p: [-1, 8], exits: ["s"] },
+	    { n: "失足岩", id: "pm/yan", p: [-1, 9], exits: ["n", "s"] },
+	    { n: "断魂崖", id: "pm/ya", p: [-1, 10], exits: ["n"] },
 	    { n: "百丈涧", id: "pm/baizhangjian", p: [0, -3], exits: ["s"] },
 	    { n: "失足岩", id: "pm/shizuyan", p: [0, -2], exits: ["n", "s"] },
 	    { n: "断魂崖", id: "pm/duanhunya", p: [0, -1], exits: ["n", "s"] },
@@ -31,7 +30,8 @@ this.set({
 	    { n: "长廊", id: "pm/changlang", p: [0, 3], exits: ["n", "s", "e", "w"] },
 	    { n: "独尊厅", id: "pm/dating", p: [0, 4], exits: ["n", "s"] },
 	    { n: "独尊厅大门", id: "pm/damen", p: [0, 5], exits: ["n", "s"] },
-	    { n: "青石大道", id: "pm/dadao", p: [0, 6], exits: ["n"] },
+	    { n: "青石大道", id: "pm/dadao", p: [0, 6], exits: ["n", "s"] },
+	    { n: "仙愁门", id: "pm/xianchoumen", p: [0, 7], exits: ["n"] },
 	    { n: "藕香榭", id: "pm/ouxiangxie", p: [1, 2], exits: ["w"] },
 	    { n: "蓼风轩", id: "pm/liaofengxuan", p: [1, 3], exits: ["w"] },
 	];

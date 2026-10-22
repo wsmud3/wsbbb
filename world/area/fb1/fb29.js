@@ -15,14 +15,14 @@ this.set({
     ss_title: "血刀老祖"
 });
 this.map = [
-    { n: "雪山山谷", id: "xd/shangu", p: [-1, 3], exits: [] },
-    { n: "洞口", id: "xd/dongkou", p: [-1, 5], exits: ["e"] },
-    { n: "雪山山口", id: "xd/shankou", p: [0, 0], exits: [] },
-    { n: "血池尽头", id: "xd/xuechi3", p: [0, 1], exits: ["s", "e"] },
-    { n: "血池深处", id: "xd/xuechi2", p: [0, 2], exits: ["n", "s"] },
-    { n: "血池", id: "xd/xuechi1", p: [0, 3], exits: ["n", "w"] },
-    { n: "山洞", id: "xd/shandong", p: [0, 5], exits: [] },
-    { n: "忘忧谷", id: "xd/wangyougu", p: [1, 1], exits: [] },
+    { n: "雪山山口", id: "xd/shankou", p: [0, 0], exits: ["s"] },
+    { n: "雪山山谷", id: "xd/shangu", p: [0, 1], exits: ["n", "s", "e"] },
+    { n: "山洞", id: "xd/shandong", p: [0, 2], exits: [] },
+    { n: "忘忧谷", id: "xd/wangyougu", p: [1, 1], exits: ["e"] },
+    { n: "血池尽头", id: "xd/xuechi3", p: [2, -1], exits: ["s"] },
+    { n: "血池深处", id: "xd/xuechi2", p: [2, 0], exits: ["n", "s"] },
+    { n: "血池", id: "xd/xuechi1", p: [2, 1], exits: ["n", "e", "w"] },
+    { n: "洞口", id: "xd/dongkou", p: [3, 1], exits: [] },
 ];
 	this.drops = [
 	    "book/bc#shenkongxing2",
