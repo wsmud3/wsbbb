@@ -1,22 +1,24 @@
 this.inherits(ROOM);
 this.name = "松花江面";
-this.desc = "这里是松花江的江面，冰面早已解冻，清澈的江水涛涛北去，两岸是如烟如雾松支，柳条。船夫悠闲地在船尾把着舵。";
-this.exits = {};
+this.desc = "西面就是宽阔的松花江。江水浑浊，一眼望不到对岸。江边系着一条渡船。";
+this.exits = {
+    "east": "kw/damen",
+};
 this.set_npc([]);
 
-// 原版机制（攻略第 10 节）：回到副本起点，点击西方的江面，船夫收取 1 金渡河费。
-// 过河后进入雪地，一路向西直到看见北方有出口，往北走杀死阎基达成 100%。
-this.set_item("jiangmian", "松花江面", "江面宽阔，水色浑黄，一眼望不到对岸。", [
-    "dujiang", "渡江", function (me) {
-        if (!me.query_temp("kw_boatman")) {
-            me.notify("<red>还没跟船夫打过招呼，没人肯为你摆渡（先去船厂找船夫）。</red>");
+// 原版（实测）：在大门往西会遇船夫，收 1 两黄金（10000 文）渡到对岸雪地。
+// 这里把船夫与交钱按钮放在江面。
+this.set_item("chuan", "渡船", "一条不大的渡船系在岸边。", [
+    ["zuo chuan", "坐船过江", function (me) {
+        if (!me.is_player) return true;
+        var money = me.query_prop ? (me.query_prop("money") || 0) : 0;
+        if (money < 10000) {
+            me.notify("<red>船夫摇头：坐船到江对面要 1 两黄金（10000 文），你钱不够。</red>");
             return true;
         }
-        me.notify("<hiy>船夫撑起竹篙：「客官，渡河要一文钱。」</hiy>");
-        me.add_money(-1);
-        me.set_temp("kw_ferry", 1, 7200000);
-        me.moveto("kw/xuedi1", me.name + "坐上渡船过了松花江。", me.name + "从渡船上跳下来，踩进厚厚的雪里。");
-        me.notify("<hig>船靠岸了，眼前是一片茫茫雪原。</hig>");
+        me.add_money(-10000);
+        me.notify("<hiy>船夫接过船资，撑起竹篙。</hiy>");
+        me.moveto("kw/xuedi1");
         return true;
-    }
+    }]
 ]);
