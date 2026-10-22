@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "山脚";
 this.desc = "缥缈峰山脚，云雾缭绕，古木参天。一条陡峭的山路蜿蜒而上。";
-this.exits = { "north": "pm/shandao1" };
+this.exits = { "north": "pm/duanhunya" };
 this.set_npc([]);
 this.tonglao_spawned = false;
 

@@ -14,19 +14,24 @@ this.set({
     room_path: "pm/",
     ss_title: "灵鹫宫主"
 });
-this.map = [
-    { n: "山脚", id: "pm/shanjiao", p: [0, 0], exits: ["n"] },
-    { n: "山道", id: "pm/shandao1", p: [0, 1], exits: ["n", "s"] },
-    { n: "山道", id: "pm/shandao2", p: [0, 2], exits: ["n", "s", "e"] },
-    { n: "山涧", id: "pm/shanjian", p: [1, 2], exits: ["w", "e"] },
-    { n: "瀑布", id: "pm/pubu", p: [2, 2], exits: ["w", "s"] },
-    { n: "悬崖边", id: "pm/xuanyabian", p: [0, 3], exits: ["n", "s"] },
-    { n: "山顶", id: "pm/shanding", p: [0, 4], exits: ["n", "s"] },
-    { n: "灵鹫宫", id: "pm/lingjiugong", p: [0, 5], exits: ["n", "s"] },
-    { n: "大殿", id: "pm/dadian", p: [0, 6], exits: ["n", "s"] },
-    { n: "密室", id: "pm/mishi", p: [0, 7], exits: ["s", "n"] },
-    { n: "李秋水居", id: "pm/liqiushui", p: [0, 8], exits: ["s"] }
-];
+	this.map = [
+	    { n: "山脚", id: "pm/shanjiao", p: [0, 0], exits: ["n"] },
+	    { n: "断魂崖", id: "pm/duanhunya", p: [0, 1], exits: ["n", "s"] },
+	    { n: "失足岩", id: "pm/shizuyan", p: [0, 2], exits: ["n", "s"] },
+	    { n: "百丈涧", id: "pm/baizhangjian", p: [0, 3], exits: ["s"] },
+	    { n: "仙愁门", id: "pm/xianchoumen", p: [0, 4], exits: ["n", "s"] },
+	    { n: "青石大道", id: "pm/dadao", p: [0, 5], exits: ["n", "sd"] },
+	    { n: "独尊厅大门", id: "pm/damen", p: [0, 6], exits: ["n", "s"] },
+	    { n: "独尊厅", id: "pm/dating", p: [0, 7], exits: ["n", "s"] },
+	    { n: "戏凤阁", id: "pm/xifengge", p: [-1, 8], exits: ["e"] },
+	    { n: "长廊", id: "pm/changlang", p: [0, 8], exits: ["n", "s", "w", "e"] },
+	    { n: "蓼风轩", id: "pm/liaofengxuan", p: [1, 8], exits: ["w"] },
+	    { n: "憩凤阁", id: "pm/qifengge", p: [-1, 9], exits: ["e"] },
+	    { n: "花园", id: "pm/huayuan", p: [0, 9], exits: ["n", "s", "w", "e"] },
+	    { n: "藕香榭", id: "pm/ouxiangxie", p: [1, 9], exits: ["w"] },
+	    { n: "小路", id: "pm/xiaodao", p: [0, 10], exits: ["n", "s"] },
+	    { n: "闭关室", id: "pm/biguanshi", p: [0, 11], exits: ["s"] },
+	];
 this.drops = [
     "book/bc#tianyuqijian",
     "book/bc#shenjianjue",
