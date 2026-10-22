@@ -10,7 +10,7 @@ this.set({
     max_hp: 132600,
     mp: 53000,
     max_mp: 53000,
-    score: 40,
+    score: 0,
     gj: 16065,
     fy: 7480,
     mz: 12835,
@@ -44,4 +44,25 @@ this.set_drop({
 this.on_enter = function (me) {
     me.notify("刘正风看到你，微微颔首：阁下是来助我刘家脱困的么？费斌那厮就在堂上，请壮士速速出手！");
     // Friendly - does not attack
+};
+
+// 原版机制（攻略第 15 节）：救出刘正风——在刘正风死之前击杀费斌即可通关。
+// 若刘正风先死，费斌未除，则本关失败。
+this.on_died = function (killer, corpse) {
+    var room = this.die_room || this.environment;
+    if (!room) return;
+    var feibin = null;
+    for (var i = 0; i < room.items.length; i++) {
+        var o = room.items[i];
+        if (o && o.path === "hs2/feibin" && o.hp > 0) { feibin = o; break; }
+    }
+    if (feibin) {
+        room.send_room("<hir>刘正风倒下了……费斌还没死，这一趟救不出他了。</hir>");
+        if (killer && killer.is_player) {
+            killer.remove_temp("hs2_rescue");
+            killer.notify("<red>刘正风已死而费斌未除，本次营救失败。</red>");
+        }
+    } else {
+        room.send_room("<hig>刘正风长出一口气：多谢壮士相救！</hig>");
+    }
 };

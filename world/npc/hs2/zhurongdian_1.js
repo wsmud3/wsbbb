@@ -1,6 +1,7 @@
 // 由采集数据生成：原版 wuyue/henshan/zhurongdian 的「潇湘夜雨 莫大」
 this.inherits(NPC);
 this.set({
+    score: 0,
     name: "莫大",
     title: "潇湘夜雨",
     desc: "潇湘夜雨 莫大",

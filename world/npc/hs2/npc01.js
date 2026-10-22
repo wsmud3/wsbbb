@@ -1,6 +1,7 @@
 // 由采集数据生成：原版 wuyue/henshan/shanjian 的「古灵精怪 曲非烟」
 this.inherits(NPC);
 this.set({
+    score: 0,
     name: "曲非烟",
     title: "古灵精怪",
     desc: "古灵精怪 曲非烟",
