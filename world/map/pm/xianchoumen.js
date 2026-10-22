@@ -33,3 +33,22 @@ this.on_enter = function(me) {
         me.notify('李秋水冷冷地看了你一眼：「不相干的人，滚远些。」');
     }
 };
+
+this.add_action("bei", "背起女童", function (me) {
+    if (!me.is_player) return true;
+    var alive = 0;
+    for (var i = 0; i < this.items.length; i++) {
+        var o = this.items[i];
+        if (o && o.path === "pm/liqiushui" && o.hp > 0) alive++;
+    }
+    if (alive) {
+        me.notify("<red>李秋水还没死，童姥不会跟你走。</red>");
+        return true;
+    }
+    me.set_temp("pm_carry", 1, 7200000);
+    me.send_room("$N把女童负在背上，四维一沉——原来她就是天山童姥。");
+    me.moveto("pm/biguanshi", me.name + "背着童姥飞奔而去。", me.name + "背着童姥冲进闭关室。");
+    me.add_fbscore(250);
+    me.notify("<hig>童姥在你背上吐出一口气：总算到了。此关便算你过。</hig>");
+    return true;
+});
