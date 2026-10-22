@@ -31,7 +31,7 @@ for fb in sorted(glob.glob(os.path.join(MUD,'world/area/fb1/fb*.js'))):
         for t in rooms.get(c,{}).get('exits',{}).values():
             if t in rooms and t not in seen: seen.add(t); q.append(t)
         for n in rooms.get(c,{}).get('npc',[]):
-            if n not in npcs: npcs.add(n); tot+=nscore(pref+"/"+n)
+            tot+=nscore(pref+"/"+n)
     rows.append((nm,pref,need,tot,len(seen),len(rooms),'OK' if tot>=need else '不足'))
 print('%-8s %-10s %6s %6s %6s %6s %s'%('副本','前缀','需求','可达分','可达房','总房','状态'))
 bad=0
