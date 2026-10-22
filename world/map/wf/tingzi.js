@@ -38,13 +38,14 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
         // 四兄弟已清 → 传送到小院，金蛇郎君现身
         me.send_room("$N再次纵身跳上木桩，眼前一花——竟已落在府后的小院里。");
         me.moveto("wf/xiaoyuan");
-        var xy = ROOM.Get("wf/xiaoyuan");
+        var xy = me.environment;
         if (xy) {
             var x = NPC.CREATE("wf/jinshelangjun", xy);
             if (x) {
                 xy.send_room("$N从大树后缓缓转出，一身金蛇软甲。");
                 x.do_kill(me);
             }
+            me.set_temp("wf_jinshe_spawned", 1, 7200000);
         }
         return true;
     }]
