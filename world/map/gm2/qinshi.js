@@ -9,7 +9,7 @@ this.set_npc([]);
 // 原版机制：琴室点「古琴」弹几下，触动机关后出现通往地下暗河的出口，
 // 同时小龙女和杨过出现（攻略：弹几下，小龙女和杨过会出来）。
 this.set_item("qin", "古琴", "石桌上放着一把古琴，琴身温润。", [
-    ["tan qin", "弹琴", function (me) {
+    ["tanqin", "弹琴", function (me) {
         if (me.query_temp("gm2_qin_ok")) {
             me.notify("机关已经开了。");
             return true;

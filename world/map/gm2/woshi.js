@@ -8,7 +8,7 @@ this.set_npc([]);
 
 // 原版机制（攻略第 30 节）：进卧室点「画」（没有高亮），看剑指哪个方向，记下来。
 this.set_item("hua", "古画", "床头的墙上挂着一幅淡淡的水墨画，画中一柄长剑斜指一方。", [
-    ["kan hua", "看画", function (me) {
+    ["kanhua", "看画", function (me) {
         var dirs = ["北", "南", "东", "西"];
         var d = dirs[Math.floor(Math.random() * dirs.length)];
         var map = { "北": "north", "南": "south", "东": "east", "西": "west" };

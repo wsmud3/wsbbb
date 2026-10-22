@@ -8,7 +8,7 @@ this.set_npc("yz/zhubanxian");
 this.set_item("tree", "大榕树", "一棵枝叶茂盛的大榕树，看来似乎可以爬上去", [[
     "climb", "爬",  climb_tree
 ]]);
-this.add_action("climb tree", "爬树");
+this.add_action("climbtree", "爬树");
 
 function climb_tree(me, par) {
     if (par != "tree") return me.notify("你要爬什么？");
