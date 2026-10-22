@@ -4,3 +4,4 @@ this.desc = "这里就是温家老四温方施的住处，据说他在成都口�
 this.exits = {
     "west": "wf/lang1",
 };
+this.set_npc(["wf/wenjia", 1]);

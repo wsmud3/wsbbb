@@ -4,3 +4,4 @@ this.desc = "这里就是温家老二温方义的住处，房间整洁，墙上�
 this.exits = {
     "east": "wf/lang1",
 };
+this.set_npc(["wf/wenjia", 1]);

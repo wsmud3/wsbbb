@@ -4,3 +4,4 @@ this.desc = "这里就是温家老五温方南的住处，他是个爱附庸风�
 this.exits = {
     "west": "wf/lang1",
 };
+this.set_npc(["wf/wenjia", 1]);
