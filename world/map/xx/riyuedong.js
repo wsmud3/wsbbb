@@ -5,3 +5,10 @@ this.exits = {
     "south": "xx/zhonghaishi",
 };
 this.set_npc(["xx/dingchunqiu", 1]);
+
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    if (me.query_temp("xx_shihouzi")) return;
+    me.notify("<red>洞口被星宿派弟子拦住：二师兄狮吼子不放行，谁也进不了日月洞。</red>");
+    me.moveto("xx/zhonghaishi", null, null);
+};
