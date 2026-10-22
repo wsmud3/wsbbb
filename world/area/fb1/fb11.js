@@ -50,3 +50,11 @@ this.set({
 	    { obj: ["eq/lv2/wf_pifeng", "eq/lv2/wf_jie", "eq/lv2/wf_xiangnang"], odds: 9300 },
 	    { obj: ["eq/lv3/wf_jian", "eq/lv3/wf_gun"], odds: 250 },
 	];
+
+// 离开副本时清掉温府的一次性标记，下次进来重新生成温老大/阵法
+this.on_leaved = function (me) {
+    me.remove_temp("wf_wenlaoda");
+    me.remove_temp("wf_zhen_start");
+    me.remove_temp("wf_zhen_done");
+    me.remove_temp("wf_entered");
+};
