@@ -1,6 +1,7 @@
 // 由采集数据生成：原版 wuyue/qingcheng/shangqing 的「青城派外门弟子 青城派弟子」
 this.inherits(NPC);
 this.set({
+    score: 0,
     name: "青城派弟子",
     title: "青城派外门弟子",
     desc: "青城派外门弟子 青城派弟子",

@@ -1,5 +1,6 @@
 this.inherits(NPC);
 this.set({
+    score: 0,
     name: "于人豪",
     desc: "一位贩卖各种属性词条石的商人，据说他的石头可以镶嵌到自制装备上。",
     title: "",
