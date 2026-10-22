@@ -6,9 +6,10 @@ this.exits = {
 };
 this.set_npc([]);
 
-// 原版实测（cd/wen/tingzi）：
-//   第一次 tiao zhuang → 一次放出温家老二温方义 / 老三温方山 / 老四温方施 / 老五温方南
-//   四兄弟全部击杀后再次 tiao zhuang → 传送到【小院】并出现【金蛇郎君 夏雪宜】
+// 原版（攻略 + 实测）：
+//   第一次 tiao zhuang → 温家五兄弟一起出战（1v5）
+//   但温方达如果在【大厅】先被杀了，阵法就不完整，这里只能放出 4 个 —— 最后最多 99%
+//   五兄弟全部击杀后再 tiao → 传送到小院，金蛇郎君出现；杀他补满 100%
 this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，看上去不是很结实。", [
     ["tiao", "跳上去", function (me) {
         if (!me.is_player) return true;
@@ -23,19 +24,23 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
         }
         if (!me.query_temp("wf_zhuang_spawned")) {
             me.set_temp("wf_zhuang_spawned", 1, 7200000);
-            me.send_room("$N纵身跳上木桩，湖心小岛后忽然转出几条人影。");
+            // 温方达还活着 → 五兄弟齐出；已被提前杀掉 → 只有四兄弟（阵法不全）
             var names = ["wenfangyi", "wenfangshan", "wenfangshi", "wenfangnan"];
+            var full = !me.query_temp("wf_wufangda_dead");
+            if (full) names.unshift("wenfangda");
+            me.set_temp("wf_zhen_full", full ? 1 : 0, 7200000);
+            me.send_room("$N纵身跳上木桩，湖心小岛后忽然转出几条人影。");
+            if (!full) me.notify("<hir>（温方达已死，温家阵法不完整——这一趟最多只能到 99%。）</hir>");
             for (var j = 0; j < names.length; j++) {
                 var e = NPC.CREATE("wf/" + names[j], this);
                 if (e) e.do_kill(me);
             }
             return true;
         }
-        if (me.query_temp("wf_jinshe_done")) {
+        if (me.query_temp("wf_jinshe_spawned")) {
             me.notify("<hiy>木桩后已经没人了。</hiy>");
             return true;
         }
-        // 四兄弟已清 → 传送到小院，金蛇郎君现身
         me.send_room("$N再次纵身跳上木桩，眼前一花——竟已落在府后的小院里。");
         me.moveto("wf/xiaoyuan");
         var xy = me.environment;

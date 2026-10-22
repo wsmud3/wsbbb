@@ -10,7 +10,7 @@ this.set({
     max_hp: 66500,
     mp: 38500,
     max_mp: 38500,
-    score: 21,
+    score: 0,
     gj: 7770,
     fy: 5069,
     mz: 8316,
@@ -55,6 +55,7 @@ this.on_enter = function (me) {
 
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
+    if (this.path === "wf/wenfangda") killer.set_temp("wf_wufangda_dead", 1, 7200000);
     var room = this.environment;
     if (!room) return;
     var alive = 0;
@@ -62,37 +63,11 @@ this.on_died = function (killer, corpse) {
         var o = room.items[i];
         if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
     }
-    if (alive === 0) {
-        killer.set_temp("wf_zhen_done", 1, 7200000);
-        killer.notify("<hiy>温家五老尽数伏诛，阵法已破。再去点一次木桩。</hiy>");
-    }
-};
-
-this.on_died = function (killer, corpse) {
-    if (!killer || !killer.is_player) return;
-    var room = this.environment;
-    if (!room) return;
-    var alive = 0;
-    for (var i = 0; i < room.items.length; i++) {
-        var o = room.items[i];
-        if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
-    }
-    if (alive === 0) {
-        killer.set_temp("wf_zhuang_done", 1, 7200000);
-        killer.notify("<hiy>温家四兄弟尽数伏诛。再跳一次木桩。</hiy>");
-    }
-};
-
-this.on_died = function (killer, corpse) {
-    if (!killer || !killer.is_player) return;
-    var room = this.environment;
-    if (!room) return;
-    var alive = 0;
-    for (var i = 0; i < room.items.length; i++) {
-        var o = room.items[i];
-        if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
-    }
-    if (alive === 0) {
-        killer.notify("<hiy>温家四兄弟尽数伏诛，再去跳一次木桩。</hiy>");
+    if (alive === 0 && !killer.query_temp("wf_zhen_awarded")) {
+        killer.set_temp("wf_zhen_awarded", 1, 7200000);
+        var full = killer.query_temp("wf_zhen_full");
+        killer.add_fbscore(full ? 99 : 98);
+        killer.notify(full ? "<hig>温家五兄弟尽数伏诛，阵法已破！再去跳一次木桩。</hig>"
+                           : "<hir>温家四兄弟伏诛，但阵法不完整——这一趟最多 99%。</hir>");
     }
 };

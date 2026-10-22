@@ -9,7 +9,7 @@ this.set({
     max_hp: 189280,
     mp: 772000,
     max_mp: 772000,
-    score: 30,
+    score: 0,
     gj: 3178,
     fy: 1677,
     mz: 3022,
@@ -48,4 +48,12 @@ this.set_drop({
 this.on_enter = function (me) {
     me.notify("金蛇郎君缓缓抬起头，眼中寒光一闪：既然来了，就不要走了。");
     this.do_kill(me);
+};
+
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    if (killer.query_temp("wf_jinshe_award")) return;
+    killer.set_temp("wf_jinshe_award", 1, 7200000);
+    killer.add_fbscore(1);
+    killer.notify("<hig>金蛇郎君夏雪宜伏诛。</hig>");
 };
