@@ -56,7 +56,7 @@ this.on_enter = function (me) {
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
     if (this.path === "wf/wenfangda") killer.set_temp("wf_wufangda_dead", 1, 7200000);
-    var room = this.environment;
+    var room = this.die_room || this.environment;
     if (!room) return;
     var alive = 0;
     for (var i = 0; i < room.items.length; i++) {
