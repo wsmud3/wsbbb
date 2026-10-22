@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "大门";
 this.desc = "这里是温府的大门，两扇朱红色的大门紧闭，门前一对石狮子威武庄严。院墙很高，墙边有一株参天大树，枝干粗壮，一直伸到围墙上方。";
-this.exits = { "south": "wf/dayuan" };
+this.exits = { "north": "wf/dayuan" };
 this.set_npc([]);
 
 // 原版机制：门上锁了，需要 500 级基本轻功【跳上树】进府。

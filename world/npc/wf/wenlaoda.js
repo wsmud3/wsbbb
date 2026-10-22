@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "温老大",
     desc: "温府的家主，性情暴烈。他一心护着温家，却也怕温家五老成阵后六亲不认。",
-    title: "温府家主",
+
     gender: 1,
     age: 55,
     per: 10,
