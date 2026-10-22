@@ -64,5 +64,5 @@ this.on_die = function (killer) {
         override: 2,
         prop: { ds_per: 50, mz_per: 20 }
     });
-    df.send_room("<hir>杨莲亭倒在血泊之中，东方不败厉啸一声，双目尽赤——狂暴！鬼魅身法随之展开！</hir>");
+    if (df && typeof df.send_room === "function") df.send_room("<hir>杨莲亭倒在血泊之中，东方不败厉啸一声，双目尽赤——狂暴！鬼魅身法随之展开！</hir>");
 };

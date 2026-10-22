@@ -48,7 +48,7 @@ this.xd_move_west = function () {
             here.send_room("$N提刀向西掠去，脚步极快。");
             here.item_changed(this, false);
             room.item_changed(this, true);
-            room.send_room("$N大步踏进山谷，血刀上还滴着血。");
+            if (room && typeof room.send_room === "function") room.send_room("$N大步踏进山谷，血刀上还滴着血。");
         }
     }
 };

@@ -25,11 +25,8 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
         if (!me.query_temp("wf_zhuang_spawned")) {
             me.set_temp("wf_zhuang_spawned", 1, 7200000);
             // 温方达还活着 → 五兄弟齐出；已被提前杀掉 → 只有四兄弟（阵法不全）
-            var names = ["wenfangyi", "wenfangshan", "wenfangshi", "wenfangnan"];
-            var full = !me.query_temp("wf_wufangda_dead");
-            if (full) names.unshift("wenfangda");
+            var names = ["wenfangda", "wenfangyi", "wenfangshan", "wenfangshi", "wenfangnan"];
             me.send_room("$N纵身跳上木桩，湖心小岛后忽然转出几条人影。");
-            if (!full) me.notify("<hir>（温方达已死，温家阵法不完整——这一趟最多只能到 99%。）</hir>");
             for (var j = 0; j < names.length; j++) {
                 var e = NPC.CREATE("wf/" + names[j], this);
                 if (e) e.do_kill(me);
@@ -46,7 +43,7 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
         if (xy) {
             var x = NPC.CREATE("wf/jinshelangjun", xy);
             if (x) {
-                xy.send_room("$N从大树后缓缓转出，一身金蛇软甲。");
+                if (xy && typeof xy.send_room === "function") xy.send_room("$N从大树后缓缓转出，一身金蛇软甲。");
                 x.do_kill(me);
             }
             me.set_temp("wf_jinshe_spawned", 1, 7200000);

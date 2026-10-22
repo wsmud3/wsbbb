@@ -57,12 +57,12 @@ this.on_died = function (killer, corpse) {
         if (o && o.path === "hs2/feibin" && o.hp > 0) { feibin = o; break; }
     }
     if (feibin) {
-        room.send_room("<hir>刘正风倒下了……费斌还没死，这一趟救不出他了。</hir>");
+        if (room && typeof room.send_room === "function") room.send_room("<hir>刘正风倒下了……费斌还没死，这一趟救不出他了。</hir>");
         if (killer && killer.is_player) {
             killer.remove_temp("hs2_rescue");
             killer.notify("<red>刘正风已死而费斌未除，本次营救失败。</red>");
         }
     } else {
-        room.send_room("<hig>刘正风长出一口气：多谢壮士相救！</hig>");
+        if (room && typeof room.send_room === "function") room.send_room("<hig>刘正风长出一口气：多谢壮士相救！</hig>");
     }
 };
