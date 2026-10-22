@@ -5,9 +5,27 @@ this.exits = {
     "south": "wf/zoulangtou",
 };
 this.set_npc([]);
-this.set_item("zhuang", "zhuang", "这是几根分布得怪里怪气的木桩，看上去不是很结实。", [
+
+// 原版（实测）：亭子木桩「跳上去」放出温家老二温方义 + 老三温方山。
+// 关键：必须幂等——重复跳不能重复生成（之前漏了这层，导致越跳越多）。
+this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，看上去不是很结实。", [
     ["tiao", "跳上去", function (me) {
         if (!me.is_player) return true;
+        // 场上已有存活的温家兄弟 → 不重复生成
+        var alive = [];
+        for (var i = 0; i < this.items.length; i++) {
+            var o = this.items[i];
+            if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive.push(o);
+        }
+        if (alive.length) {
+            me.notify("<hiy>温家兄弟已经围上来了，先打完再说。</hiy>");
+            return true;
+        }
+        // 这一轮已经打完 → 不再重复刷
+        if (me.query_temp("wf_tingzi_done")) {
+            me.notify("<hiy>木桩后已经没人了。</hiy>");
+            return true;
+        }
         me.send_room("$N纵身跳上木桩，四周忽然转出几条人影。");
         var n1 = NPC.CREATE("wf/wenfangyi", this);
         var n2 = NPC.CREATE("wf/wenfangshan", this);
