@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "阎基",
     desc: "一个面目可憎的独眼汉子，手持一柄鬼头大刀。此人阴险狡诈，专干杀人越货的勾当。",
-    title: "<hired>关外悍匪</hired>",
+    title: "<hired>江湖医生</hired>",
     gender: 1,
     age: 35,
     per: 8,
