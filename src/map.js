@@ -187,11 +187,93 @@ export default {
     }, GetColor: function (name, issel) {
         return this.colors[name.toLowerCase()] || "dimgrey";
     },
+    // ────────────────────────────────────────────────────────────────
+    // 小地图渲染兜底
+    // this.map 是「美术数据」：坐标是手写/脚本推出来的，实际数据里经常出现
+    //   · 两个房间共用同一个 p          → 图标叠在一起，只能看见一个
+    //   · 某条出口朝某个方向，但那个格子上没有房间 → 线画进虚空 / 穿过别的房间
+    //   · 个别条目缺 p、或 id 重复
+    // 直接照着数据摆点，看上去就是「小地图很乱」。所以渲染前统一规整一遍：
+    //   1. 坏条目丢掉、缺 p 的补一个空位、p 重复的后来者错位到最近空位；
+    //   2. 画线前查格子，目标格上真有房间才画整条连线，
+    //      否则只画一小截「出口」短线（既不画进虚空，也不会横穿整张图）。
+    // 这一层只影响显示，不改任何玩法数据。
+    MAP_DELTA: {
+        n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0],
+        ne: [1, -1], nw: [-1, -1], se: [1, 1], sw: [-1, 1]
+    },
+    /** 从 (x,y) 起按切比雪夫半径由内向外找第一个没被占的格子（顺序稳定，可复现）。 */
+    FindFree: function (x, y, used) {
+        if (!used[x + "," + y]) return [x, y];
+        for (var r = 1; r <= 64; r++) {
+            var best = null, bestAng = 1e9;
+            for (var dx = -r; dx <= r; dx++) {
+                for (var dy = -r; dy <= r; dy++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+                    if (used[(x + dx) + "," + (y + dy)]) continue;
+                    var ang = Math.atan2(dy, dx) + Math.PI;
+                    if (ang < bestAng) {
+                        bestAng = ang;
+                        best = [x + dx, y + dy];
+                    }
+                }
+            }
+            if (best) return best;
+        }
+        return [x, y + 128];
+    },
+    /**
+     * 把服务端下发的 map 规整成「总能安全画」的房间列表。
+     * 返回 { rooms:[{id,n,x,y,exits}], moved:n, filled:n }
+     *   moved  —— 因为坐标撞车被挪开的房间数
+     *   filled —— 因为缺/坏 p 被补了坐标的房间数
+     */
+    NormRooms: function (map) {
+        var rooms = [], used = {}, moved = 0, filled = 0, anchor = [0, 0];
+        if (!map || !map.length) return { rooms: rooms, moved: 0, filled: 0 };
+        for (var i = 0; i < map.length; i++) {
+            var e = map[i];
+            if (!e || typeof e !== "object") continue;
+            if (typeof e.id !== "string" || !e.id) continue;
+            var x = null, y = null;
+            if (e.p && e.p.length >= 2 && isFinite(e.p[0]) && isFinite(e.p[1])) {
+                x = Math.round(e.p[0]);
+                y = Math.round(e.p[1]);
+            }
+            var cell;
+            if (x === null) {
+                filled++;
+                cell = this.FindFree(anchor[0], anchor[1], used);
+            } else if (used[x + "," + y]) {
+                moved++;
+                cell = this.FindFree(x, y, used);
+            } else {
+                cell = [x, y];
+            }
+            used[cell[0] + "," + cell[1]] = true;
+            anchor = cell;
+            rooms.push({
+                id: e.id,
+                n: (typeof e.n === "string" && e.n) ? e.n : e.id,
+                x: cell[0], y: cell[1],
+                exits: (e.exits instanceof Array) ? e.exits : []
+            });
+        }
+        return { rooms: rooms, moved: moved, filled: filled };
+    },
     ShowMap: function (map, id) {
         if (!map) return;
         this.CurMapID = id;
+        var norm = this.NormRooms(map);
+        // 数据被兜底修正过就记一笔，方便以后从控制台排查是不是数据又坏了
+        this.LastFix = { moved: norm.moved, filled: norm.filled, total: map.length, shown: norm.rooms.length };
+        if (!norm.rooms.length) return;
+        var rooms = norm.rooms;
+        var occ = {};
+        for (var q = 0; q < rooms.length; q++) occ[rooms[q].x + "," + rooms[q].y] = true;
+
         var html = [];
-        var pos = this.getMinPos(map);
+        var pos = this.getMinPos(rooms);
         var offX = 0 - pos.minX;
         var offY = 0 - pos.minY;
         var unitY = 50;
@@ -207,82 +289,87 @@ export default {
             this.MapWidth = content_width;
         }
         this.MapHeight = (pos.maxY + offY + 1) * unitY;
-        if (this.MapWidth < 0 || this.MapHeight < 0) return;
-        var reg = /^([a-z]{1,2})(\d)?([d|l])?$/;
+        if (!(this.MapWidth > 0) || !(this.MapHeight > 0)) return;
         html.push('<svg class="map" height="' + this.MapHeight + '" width="' + this.MapWidth + '">');
-        for (var i = 0; i < map.length; i++) {
-            html.push("<rect class='map-room' rm='" + map[i].id + "' ");
 
-            var l = (map[i].p[0] + offX) * unitX + off_x + 20;
-            var t = (map[i].p[1] + offY) * unitY + 20;
+        for (var i = 0; i < rooms.length; i++) {
+            var room = rooms[i];
+            var l = (room.x + offX) * unitX + off_x + 20;
+            var t = (room.y + offY) * unitY + 20;
+            html.push("<rect class='map-room' rm='" + room.id + "' ");
             html.push("x='" + l + "' y='" + t + "'");
             html.push(' fill="dimgrey" stroke-width="1" stroke="gray" ');
             html.push('width="' + unitW + '" height="' + unitH + '"></rect>');
-            var exits = map[i].exits;
-            if (exits) {
-                for (var j = 0; j < exits.length; j++) {
-                    var exitCode = exits[j];
-                    // Use parseDir helper for consistent handling of "enter"/"out"/composite dirs
-                    var parsed = this.parseDir(exitCode);
-                    if (!parsed) continue;
-                    var baseDir = parsed.base;
-                    var length = parsed.steps;
-                    var mod = parsed.mod;
-                    var pos1;
-                    var pos2;
-                    switch (baseDir) {
-                        case "w":
-                            pos1 = [l - (unitX - unitW) - unitX * (length - 1), t + unitH / 2];
-                            pos2 = [l, t + unitH / 2];
-                            break;
-                        case "e":
-                            pos1 = [l + unitW, t + unitH / 2];
-                            pos2 = [l + unitX + unitX * (length - 1), t + unitH / 2];
-                            break;
-                        case "s":
-                            pos1 = [l + unitW / 2, t + unitH];
-                            pos2 = [l + unitW / 2, t + unitY + unitY * (length - 1)];
-                            break;
-                        case "n":
-                            pos1 = [l + unitW / 2, t];
-                            pos2 = [l + unitW / 2, t - (unitY - unitH) - unitY * (length - 1)];
-                            break;
-                        case "nw":
-                            pos1 = [l - length * unitX + unitW, t - length * unitY + unitH];
-                            pos2 = [l, t];
-                            break;
-                        case "ne":
-                            pos1 = [l + unitW, t];
-                            pos2 = [l + length * unitX, t - (unitY - unitH)];
-                            break;
-                        case "se":
-                            pos1 = [l + unitW, t + unitH];
-                            pos2 = [l + length * unitX, t + length * unitY];
-                            break;
-                        case "sw":
-                            pos1 = [l, t + unitH];
-                            pos2 = [l - (unitX - unitW) - unitX * (length - 1), t + length * unitY];
-                            break;
-                    }
-                    if (pos1) {
-                        html.push('<line  stroke="gray" ');
-                        html.push(" x1='" + pos1[0] + "' y1='" + pos1[1] + "' x2='" + pos2[0] + "' y2='" + pos2[1] + "'");
-                        if (mod) {
-                            html.push(" stroke-dasharray='5,5'");
-                        }
-                        if (mod == "l") {
-                            html.push(" stroke-width='10'");
-                        } else {
-                            html.push(" stroke-width='1'");
-                        }
-                        html.push("></line >");
-                    }
 
+            var drawn = {};
+            for (var j = 0; j < room.exits.length; j++) {
+                var exitCode = room.exits[j];
+                if (typeof exitCode !== "string") continue;
+                var parsed = this.parseDir(exitCode);
+                if (!parsed) continue;
+                var baseDir = parsed.base;
+                var length = parsed.steps || 1;
+                var mod = parsed.mod;
+                var delta = this.MAP_DELTA[baseDir];
+                if (!delta) continue;                       // u/d/enter/out 本来就画不出来
+                if (drawn[baseDir]) continue;               // 同一方向重复写了，只画一条
+                drawn[baseDir] = true;
+
+                // 这条出线真正指向的格子；上面有房间才算「连通」
+                var linked = !!occ[(room.x + delta[0] * length) + "," + (room.y + delta[1] * length)];
+
+                var near = null, far = null;
+                switch (baseDir) {
+                    case "w":
+                        near = [l, t + unitH / 2];
+                        far = [l - unitX * length + unitW, t + unitH / 2];
+                        break;
+                    case "e":
+                        near = [l + unitW, t + unitH / 2];
+                        far = [l + unitX * length, t + unitH / 2];
+                        break;
+                    case "s":
+                        near = [l + unitW / 2, t + unitH];
+                        far = [l + unitW / 2, t + unitY * length];
+                        break;
+                    case "n":
+                        near = [l + unitW / 2, t];
+                        far = [l + unitW / 2, t - unitY * length + unitH];
+                        break;
+                    case "nw":
+                        near = [l, t];
+                        far = [l - unitX * length + unitW, t - unitY * length + unitH];
+                        break;
+                    case "ne":
+                        near = [l + unitW, t];
+                        far = [l + unitX * length, t - unitY * length + unitH];
+                        break;
+                    case "se":
+                        near = [l + unitW, t + unitH];
+                        far = [l + unitX * length, t + unitY * length];
+                        break;
+                    case "sw":
+                        near = [l, t + unitH];
+                        far = [l - unitX * length + unitW, t + unitY * length];
+                        break;
                 }
-
+                if (!near) continue;
+                var endX = far[0], endY = far[1];
+                if (!linked) {
+                    // 目标格上没有房间：只画 45% 的一小截，表示「这里有条路通出去」
+                    endX = near[0] + (far[0] - near[0]) * 0.45;
+                    endY = near[1] + (far[1] - near[1]) * 0.45;
+                }
+                html.push('<line  stroke="gray" ');
+                html.push(" x1='" + near[0] + "' y1='" + near[1] + "' x2='" + endX + "' y2='" + endY + "'");
+                if (mod) html.push(" stroke-dasharray='5,5'");
+                if (mod == "l") html.push(" stroke-width='10'");
+                else html.push(" stroke-width='1'");
+                html.push("></line >");
             }
+
             html.push(' <text x="' + (l + 30) + '" y="' + (t + 14) + '" text-anchor="middle" style="font-size:12px;" ');
-            this.pushName(html, map[i].n, true);
+            this.pushName(html, room.n, true);
         }
         html.push("</svg>");
         content.html(html.join(""));
@@ -304,22 +391,17 @@ export default {
             html.push('">' + rm_name + '</text>');
         }
     },
-    getMinPos: function (map) {
-        var pos = {
-            minX: 99999,
-            minY: 99999,
-            maxX: 0,
-            maxY: 0
-        };
-        for (var i = 0; i < map.length; i++) {
-            var x = map[i].p[0];
-            var y = map[i].p[1];
-            if (x < pos.minX) {
-                pos.minX = x;
-            } if (x > pos.maxX) pos.maxX = x;
-            if (y < pos.minY) {
-                pos.minY = y;
-            } if (y > pos.maxY) pos.maxY = y;
+    getMinPos: function (rooms) {
+        var pos = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        if (!rooms || !rooms.length) return pos;
+        pos.minX = pos.maxX = rooms[0].x;
+        pos.minY = pos.maxY = rooms[0].y;
+        for (var i = 1; i < rooms.length; i++) {
+            var x = rooms[i].x, y = rooms[i].y;
+            if (x < pos.minX) pos.minX = x;
+            if (x > pos.maxX) pos.maxX = x;
+            if (y < pos.minY) pos.minY = y;
+            if (y > pos.maxY) pos.maxY = y;
         }
         return pos;
     },
