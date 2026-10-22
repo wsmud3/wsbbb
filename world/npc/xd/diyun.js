@@ -28,3 +28,14 @@ this.set_drop(
     {obj: ["book/bc#shenzhaojing"], odds: 7620}
 );
 // 狄云是被囚禁的NPC，不主动攻击玩家
+
+this.on_died = function (killer, corpse) {
+    var room = this.environment;
+    if (!room) return;
+    var b = ROOM.Get("xd/wangyougu");
+    if (!b) return;
+    for (var i = 0; i < b.items.length; i++) {
+        var o = b.items[i];
+        if (o && o.path === "xd/xuedaolaozu" && o.hp > 0 && o.xd_move_west) { o.xd_move_west(); break; }
+    }
+};
