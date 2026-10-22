@@ -22,7 +22,7 @@ this.set_item("lingpai", "灵位牌子", "神龛上供着一块灵位牌子，�
         me.remove_temp("yz2_bai");
         me.send_room("$N第三次拜下，神龛后轰然裂开一道门户——还施水阁出现了！");
         me.notify("<hig>还施水阁的门开了。</hig>");
-        me.send_commands("enter huanshi", "进入还施水阁");
+        me.send_commands("enterhuanshi", "进入还施水阁");
         return true;
     }]
 ]);

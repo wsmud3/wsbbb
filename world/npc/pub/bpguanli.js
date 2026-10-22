@@ -32,8 +32,8 @@
 	    }
 	    me.send(str.join(""));
 	    if (me.query_temp('pt_lv', 0) < 5) {
-	        me.send_commands("party fam", "开启帮派战",
-	            "party boss", "发送英雄帖",
+	        me.send_commands("partyfam", "开启帮派战",
+	            "partyboss", "发送英雄帖",
 	            "systask xyparty start", "守卫襄阳",
 	            "systask lvliu_party start", "绿柳山庄");
 	    }

@@ -18,6 +18,6 @@ this.add_action("askhyd", "仓库盘点", function (me, par) {
 
     me.send("帮会管理员说道：我们本周的活跃度是：" + pt.query_score() + ",每周一重置。");
     if (me.query_temp('pt_lv', 0) < 5) {
-        me.send_commands("party fam", "开启帮派战", "party boss", "发送英雄帖");
+        me.send_commands("partyfam", "开启帮派战", "partyboss", "发送英雄帖");
     }
 });

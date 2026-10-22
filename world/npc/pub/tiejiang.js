@@ -24,12 +24,12 @@
 	        if (!item || item.count < 10) return me.notify("铁匠说道：材料不够就别来烦我。");
 
 	        me.notify("铁匠点头说道：嗯，不错，你想锻造什么武器？");
-	        me.send_commands("duanzao sword", '剑', "duanzao blade", '刀', "duanzao club", '棍', "duanzao staff", '杖',
-	            "duanzao whip", '鞭', "duanzao none", '拳', "duanzao throwing", '暗器');
+	        me.send_commands("duanzaosword", '剑', "duanzaoblade", '刀', "duanzaoclub", '棍', "duanzaostaff", '杖',
+	            "duanzaowhip", '鞭', "duanzaonone", '拳', "duanzaothrowing", '暗器');
 
 	    } else if (!arg) {
 	        me.notify("铁匠说道：你能找到10块<hio>元晶</hio>我就免费帮你锻造一把你自己的武器。");
-	        me.send_commands("duanzao ok", "我要锻造武器");
+	        me.send_commands("duanzaook", "我要锻造武器");
 	    } else {
 	        var is_throwing = (arg === "throwing");
 	        if (!is_throwing) {

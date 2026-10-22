@@ -23,10 +23,10 @@
 	        var item = me.find_obj_bypath("st/yuanjing");
 	        if (!item || item.count < 10) return me.notify("杨永福说道：材料不够就别来烦我。");
 	        me.notify("杨永福点头说道：嗯，你想制作什么饰品？");
-	        me.send_commands("zhizuo ring", '戒指', "zhizuo necklace", '项链', "zhizuo jewels", '饰品');
+	        me.send_commands("zhizuoring", '戒指', "zhizuonecklace", '项链', "zhizuojewels", '饰品');
 	    } else if (!arg) {
 	        me.notify("杨永福说道：你能找到10块<hio>元晶</hio>我就帮你制作一件饰品，你要做什么？");
-	        me.send_commands("zhizuo ok", "我要制作饰品");
+	        me.send_commands("zhizuook", "我要制作饰品");
 	    } else {
 	        var parts = { ring: 1, necklace: 1, jewels: 1 };
 	        if (!parts[arg]) return me.notify("杨永福摇头道：我不会制作这种饰品。");

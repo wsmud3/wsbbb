@@ -19,7 +19,7 @@ this.set_item("chuang", "床", "一张宽大的绣榻。", [
         me.send_room("$N依着花数把绣榻向左移了 " + l + " 下、向右移了 " + r + " 下。");
         me.set_temp("yh_anmen", 1, 7200000);
         me.notify("<hig>床后墙上裂开一道暗道入口。</hig>");
-        me.send_commands("enter andao", "进入暗道");
+        me.send_commands("enterandao", "进入暗道");
         return true;
     }]
 ]);

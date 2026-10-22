@@ -22,11 +22,11 @@
 	        var item = me.find_obj_bypath("st/yuanjing");
 	        if (!item || item.count < 10) return me.notify("曾柔说道：材料不够就别来烦我。");
 	        me.notify("曾柔点头说道：嗯，你想制作什么防具？");
-	        me.send_commands("caifeng cloth", '衣服', "caifeng shoes", '鞋子', "caifeng head", '头部',
-	            "caifeng cape", '披风', "caifeng wrist", '护腕', "caifeng waist", '腰带');
+	        me.send_commands("caifengcloth", '衣服', "caifengshoes", '鞋子', "caifenghead", '头部',
+	            "caifengcape", '披风', "caifengwrist", '护腕', "caifengwaist", '腰带');
 	    } else if (!arg) {
 	        me.notify("曾柔说道：你能找到10块<hio>元晶</hio>我就帮你制作一件防具，你要做什么部位的？");
-	        me.send_commands("caifeng ok", "我要制作防具");
+	        me.send_commands("caifengok", "我要制作防具");
 	    } else {
 	        var parts = { cloth: 1, shoes: 1, head: 1, cape: 1, wrist: 1, waist: 1 };
 	        if (!parts[arg]) return me.notify("曾柔摇头道：我不会制作这种防具。");
