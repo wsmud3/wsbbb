@@ -32,7 +32,20 @@ this.set_drop({
     obj: ["book/bc#kongmingquan", "book/bc#jinyangong"],
     odds: 8500
 });
-this.on_enter = function (me) {
-    me.notify("周伯通笑嘻嘻地跳出来：哈哈，有人来陪我玩了！来来来，先打过我再说！");
-    this.do_kill(me);
-};
+
+// 原版机制：与周伯通切磋后拿到石匣（直接拿是行不通的，他会说没门儿）
+this.add_action("qiecuo", "切磋", function (me) {
+    if (me.query_temp("th_shixia") || me.query_temp("th_done")) {
+        me.notify("周伯通摆手道：石匣已经给你啦，还打什么。");
+        return true;
+    }
+    if (!me.query_temp("th_ask")) {
+        me.notify("周伯通斜着眼道：你是谁？没门儿，我凭什么跟你打？");
+        return true;
+    }
+    me.set_temp("th_shixia", 1, 7200000);
+    me.add_obj("res/shixia", 1);
+    me.send_room("$N与周伯通拆了几招，老顽童哈哈大笑。");
+    me.notify("<hiy>周伯通笑道：好小子，有点意思！这石匣你拿去罢，反正我也打不开。</hiy>");
+    return true;
+});
