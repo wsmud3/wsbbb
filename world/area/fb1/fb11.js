@@ -51,10 +51,11 @@ this.set({
 	    { obj: ["eq/lv3/wf_jian", "eq/lv3/wf_gun"], odds: 250 },
 	];
 
-// 离开副本时清掉温府的一次性标记，下次进来重新生成温老大/阵法
+// 离开副本（含 cr over）时清空温府所有一次性标记，保证下一趟是从零开始
 this.on_leaved = function (me) {
-    me.remove_temp("wf_wenlaoda");
-    me.remove_temp("wf_zhen_start");
-    me.remove_temp("wf_zhen_done");
-    me.remove_temp("wf_entered");
+    if (!me || !me.remove_temp) return;
+    var keys = ["wf_wenlaoda", "wf_zhen_start", "wf_zhen_done", "wf_entered",
+        "wf_zhuang_spawned", "wf_zhuang_clear", "wf_jinshe_spawned",
+        "wf_jinshe_done", "wf_tingzi_spawned", "wf_tingzi_done"];
+    for (var i = 0; i < keys.length; i++) me.remove_temp(keys[i]);
 };
