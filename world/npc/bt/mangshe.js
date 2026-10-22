@@ -1,5 +1,6 @@
 this.inherits(MONSTER);
 this.set({
+    score: 40,
     name: "蟒蛇",
     desc: "一条水桶粗的巨蟒，鳞片乌黑发亮，血盆大口足以吞下一头牛。",
     hp: 664000,
