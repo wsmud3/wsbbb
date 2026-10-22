@@ -21,11 +21,12 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
             me.notify("<hiy>温家兄弟已经围上来了，先打完再说。</hiy>");
             return true;
         }
-        // 这一轮已经打完 → 不再重复刷
-        if (me.query_temp("wf_tingzi_done")) {
+        // 这一趟副本里只放一次（幂等的唯一依据，与死活无关）
+        if (me.query_temp("wf_tingzi_spawned")) {
             me.notify("<hiy>木桩后已经没人了。</hiy>");
             return true;
         }
+        me.set_temp("wf_tingzi_spawned", 1, 7200000);
         me.send_room("$N纵身跳上木桩，四周忽然转出几条人影。");
         var n1 = NPC.CREATE("wf/wenfangyi", this);
         var n2 = NPC.CREATE("wf/wenfangshan", this);
