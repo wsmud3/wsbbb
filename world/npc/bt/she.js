@@ -1,6 +1,6 @@
 this.inherits(MONSTER);
 this.set({
-    score: 30,
+    score: 45,
     name: "毒蛇",
     desc: "一条色彩斑斓的毒蛇，三角蛇头，吐着猩红的信子。",
     hp: 520000,
