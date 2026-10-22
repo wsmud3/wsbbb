@@ -256,7 +256,7 @@ export default {
                 id: e.id,
                 n: (typeof e.n === "string" && e.n) ? e.n : e.id,
                 x: cell[0], y: cell[1],
-                exits: (e.exits instanceof Array) ? e.exits : []
+                exits: Array.isArray(e.exits) ? e.exits : []
             });
         }
         return { rooms: rooms, moved: moved, filled: filled };
