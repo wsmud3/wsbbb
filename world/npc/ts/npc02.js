@@ -1,6 +1,7 @@
 // 由采集数据生成：原版 wuyue/taishan/longmen 的「玉音子」
 this.inherits(NPC);
 this.set({
+    score: 46,
     name: "玉音子",
     title: "玉音子",
     desc: "玉音子",

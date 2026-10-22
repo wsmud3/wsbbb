@@ -9,7 +9,7 @@ this.set({
     max_mp: 2500,
     hp: 2500,
     max_hp: 2500,
-    score: 15
+    score: 63
 }); this.set_objects([
     "eq/lv1/guanfu", 1, 1
 ], [

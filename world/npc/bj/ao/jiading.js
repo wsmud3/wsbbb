@@ -9,7 +9,7 @@ this.set({
     max_mp: 500,
     hp: 500,
     max_hp: 500,
-    score: 10
+    score: 20
 });
 this.skill_map(
     ["club", 150],

@@ -7,7 +7,7 @@ this.set({
     max_mp: 50,
     hp: 50,
     max_hp: 50,
-    score: 5,
+    score: 18,
     dex: 10,
     str: 10
 });
