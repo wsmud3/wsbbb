@@ -5,5 +5,5 @@ this.exits = {
     "south": "cihang/zhudian",
     "north": "cihang/qichongmen",
     "west": "cihang/xiaolu2",
-    "east": "cihang/xiaolu2",
+    "east": "cihang/xiaolu1",
 };

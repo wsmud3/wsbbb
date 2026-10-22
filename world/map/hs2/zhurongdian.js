@@ -1,7 +1,7 @@
 	this.inherits(ROOM);
 		this.name = "祝融殿";
 		this.desc = "衡山之巅，祝融殿巍然矗立。殿内供奉着火神祝融的神像，通体赤红，手持火焰令箭，威严赫赫。殿中热气蒸腾，仿佛地火在脚下涌动。透过殿窗远眺，七十二峰如碧螺般散落云海之中。殿前的古松虬枝盘曲，似火龙腾空。";
-		this.exits = { "south": "hs2/zhulin" };
+		this.exits = { "north": "hs2/wangritai", "south": "hs2/zhurongfeng", "east": "hs2/zhulin" };
 
 		this.add_action('wudi_xl', '修炼', function (me) {
 		    WORLD.COMMANDS.wudi_xl.enter(me, 'hengshan_s');

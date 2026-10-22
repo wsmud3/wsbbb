@@ -5,5 +5,5 @@ this.exits = {
     "north": "wudu/lianwuchang",
     "south": "wudu/liandushi",
     "west": "wudu/xiangfang",
-    "east": "wudu/dating",
+    "east": "wudu/yaoshi",
 };

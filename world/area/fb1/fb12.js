@@ -17,15 +17,15 @@ this.set({
 	this.map = [
 	    { n: "大门", id: "wudu/damen", p: [0, 0], exits: ["e"] },
 	    { n: "厢房", id: "wudu/xiangfang", p: [0, 1], exits: ["e"] },
-	    { n: "练武场", id: "wudu/lianwuchang", p: [1, 0], exits: ["e", "s", "w"] },
-	    { n: "南院", id: "wudu/nanyuan", p: [1, 1], exits: ["n", "s", "w", "e"] },
+	    { n: "练武场", id: "wudu/lianwuchang", p: [1, 0], exits: ["s", "e", "w"] },
+	    { n: "南院", id: "wudu/nanyuan", p: [1, 1], exits: ["n", "s", "e", "w"] },
 	    { n: "练毒室", id: "wudu/liandushi", p: [1, 2], exits: ["n"] },
-	    { n: "药室", id: "wudu/dating", p: [2, 0], exits: ["w", "e"] },
+	    { n: "大厅", id: "wudu/dating", p: [2, 0], exits: ["e", "w"] },
 	    { n: "药室", id: "wudu/yaoshi", p: [2, 1], exits: ["w"] },
-	    { n: "花园", id: "wudu/huayuan2", p: [3, -1], exits: ["e", "s"] },
-	    { n: "花园", id: "wudu/huayuan", p: [3, 0], exits: ["w", "e", "n"] },
-	    { n: "腾蛟亭", id: "wudu/huating2", p: [4, -1], exits: ["w", "s"] },
-	    { n: "花厅", id: "wudu/huating", p: [4, 0], exits: ["w", "n"] },
+	    { n: "花园", id: "wudu/huayuan2", p: [3, -1], exits: ["s", "e"] },
+	    { n: "花园", id: "wudu/huayuan", p: [3, 0], exits: ["n", "e", "w"] },
+	    { n: "腾蛟亭", id: "wudu/huating2", p: [4, -1], exits: ["s", "w"] },
+	    { n: "花厅", id: "wudu/huating", p: [4, 0], exits: ["n", "w"] },
 	];
 this.drops = [
     "book/bc#wudushengong", "book/bc#wuduyanluobu", "book/bc#wudugoufa",

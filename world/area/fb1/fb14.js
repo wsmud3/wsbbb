@@ -15,18 +15,18 @@ this.set({
     ss_title: "哈基米"
 });
 	this.map = [
-	    { n: "三弯九倒", id: "qc/sanwan", p: [-2, 5], exits: ["sd", "eu"] },
-	    { n: "古龙桥", id: "qc/gulongqiao", p: [-2, 6], exits: ["s", "nu"] },
-	    { n: "天师洞", id: "qc/tianshidong", p: [-2, 7], exits: ["eastdown", "n"] },
-	    { n: "青城山路", id: "qc/shanlu", p: [-2, 7], exits: ["westup"] },
-	    { n: "上清殿", id: "qc/shangqingdian", p: [-1, 0], exits: ["s"] },
-	    { n: "练武场", id: "qc/lianwuchang", p: [-1, 1], exits: ["s", "n", "e"] },
-	    { n: "走廊", id: "qc/zoulang", p: [-1, 2], exits: ["s", "n"] },
-	    { n: "穿廊门", id: "qc/zhongmen", p: [-1, 3], exits: ["s", "n"] },
-	    { n: "松风观", id: "qc/songfengguan", p: [-1, 4], exits: ["n", "sd"] },
-	    { n: "上清宫", id: "qc/shangqing", p: [-1, 5], exits: ["wd", "nu"] },
-	    { n: "卧室", id: "qc/woshi", p: [0, 0], exits: ["s"] },
-	    { n: "花园", id: "qc/huayuan", p: [0, 1], exits: ["w", "n"] },
+	    { n: "三弯九倒", id: "qc/sanwan", p: [-1, -2], exits: ["s", "e"] },
+	    { n: "古龙桥", id: "qc/gulongqiao", p: [-1, -1], exits: ["n", "s"] },
+	    { n: "天师洞", id: "qc/tianshidong", p: [-1, 0], exits: ["n", "e"] },
+	    { n: "上清殿", id: "qc/shangqingdian", p: [0, -7], exits: ["s"] },
+	    { n: "练武场", id: "qc/lianwuchang", p: [0, -6], exits: ["n", "s", "e"] },
+	    { n: "走廊", id: "qc/zoulang", p: [0, -5], exits: ["n", "s"] },
+	    { n: "穿廊门", id: "qc/zhongmen", p: [0, -4], exits: ["n", "s"] },
+	    { n: "松风观", id: "qc/songfengguan", p: [0, -3], exits: ["n", "s"] },
+	    { n: "上清宫", id: "qc/shangqing", p: [0, -2], exits: ["n", "w"] },
+	    { n: "青城山路", id: "qc/shanlu", p: [0, 0], exits: ["w"] },
+	    { n: "卧室", id: "qc/woshi", p: [1, -7], exits: ["s"] },
+	    { n: "花园", id: "qc/huayuan", p: [1, -6], exits: ["n", "w"] },
 	];
 this.drops = [
     "book/bc#tagexing", "book/bc#cuixinzhang", "book/bc#songfengjianfa"

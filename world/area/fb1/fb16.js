@@ -14,16 +14,16 @@ this.set({
     ss_title: "阿西噶"
 });
 	this.map = [
-	    { n: "玉皇顶", id: "ts/yuhaungding", p: [0, -6], exits: ["sd"] },
-	    { n: "南天门", id: "ts/nantian", p: [0, -5], exits: ["sd", "nu"] },
-	    { n: "十八盘", id: "ts/shiba3", p: [0, -4], exits: ["sd", "nu"] },
-	    { n: "龙门", id: "ts/longmen", p: [0, -3], exits: ["sd", "nu"] },
-	    { n: "升仙坊", id: "ts/shengxian", p: [0, -3], exits: ["sd", "nu"] },
-	    { n: "十八盘", id: "ts/shiba1", p: [0, -2], exits: ["sd", "nu"] },
-	    { n: "十八盘", id: "ts/shiba2", p: [0, -2], exits: ["sd", "nu"] },
-	    { n: "二天门", id: "ts/ertian", p: [0, -1], exits: ["sd", "nu"] },
-	    { n: "一天门", id: "ts/yitian", p: [0, 0], exits: ["sd", "nu"] },
-	    { n: "岱宗坊", id: "ts/daizong", p: [0, 1], exits: ["nu"] },
+	    { n: "玉皇顶", id: "ts/yuhaungding", p: [0, -9], exits: ["s"] },
+	    { n: "南天门", id: "ts/nantian", p: [0, -8], exits: ["n", "s"] },
+	    { n: "十八盘", id: "ts/shiba3", p: [0, -7], exits: ["n", "s"] },
+	    { n: "升仙坊", id: "ts/shengxian", p: [0, -6], exits: ["n", "s"] },
+	    { n: "十八盘", id: "ts/shiba2", p: [0, -5], exits: ["n", "s"] },
+	    { n: "龙门", id: "ts/longmen", p: [0, -4], exits: ["n", "s"] },
+	    { n: "十八盘", id: "ts/shiba1", p: [0, -3], exits: ["n", "s"] },
+	    { n: "二天门", id: "ts/ertian", p: [0, -2], exits: ["n", "s"] },
+	    { n: "一天门", id: "ts/yitian", p: [0, -1], exits: ["n", "s"] },
+	    { n: "岱宗坊", id: "ts/daizong", p: [0, 0], exits: ["n"] },
 	];
 this.drops = [
     "book/bc#taishanquanfa", "book/bc#taishanjianfa", "book/bc#panshishengong",

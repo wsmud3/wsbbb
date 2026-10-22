@@ -14,24 +14,25 @@
 	    ss_title: "雪山飞狐"
 	});
 		this.map = [
-	    { n: "大门坎子", id: "kw/damenkanzi", p: [0, 0], exits: ["w", "ne"] },
-	    { n: "二门坎子", id: "kw/ermenkanzi", p: [1, 0], exits: ["sw", "e"] },
-	    { n: "满天星", id: "kw/mantianxing", p: [2, 0], exits: ["w", "se"] },
-	    { n: "草谷垛", id: "kw/gucaoduo", p: [2, 1], exits: ["nw", "e"] },
-	    { n: "白河", id: "kw/baihe", p: [3, 1], exits: ["w", "e", "n"] },
-	    { n: "小茅屋", id: "kw/xiaowu", p: [3, 0], exits: ["s"] },
-	    { n: "密林", id: "kw/milin1", p: [4, 1], exits: ["w", "eu"] },
-	    { n: "密林", id: "kw/milin2", p: [5, 1], exits: ["wd", "su"] },
-	    { n: "密林", id: "kw/milin3", p: [5, 2], exits: ["nd", "eu"] },
-	    { n: "黑风口", id: "kw/heifengkou", p: [6, 2], exits: ["e", "wd"] },
-	    { n: "小天池", id: "kw/xiaotianchi", p: [7, 2], exits: ["w", "eu"] },
-	    { n: "瀑布", id: "kw/pubu", p: [8, 2], exits: ["e"] },
-	    { n: "松花江面", id: "kw/songhuajiang", p: [-1, 0], exits: ["e"] },
-	    { n: "船厂", id: "kw/chuanchang", p: [-1, 1], exits: ["e", "s"] },
-	    { n: "雪地", id: "kw/xuedi1", p: [-1, 2], exits: ["w", "s", "n", "e"] },
-	    { n: "荒路", id: "kw/huangdi", p: [-2, 2], exits: ["e", "n"] },
+	    { n: "雪地", id: "kw/xuedi1", p: [-2, 0], exits: [] },
 	    { n: "山神庙", id: "kw/shanmiao", p: [-2, 1], exits: ["s"] },
-	];
+	    { n: "雪地", id: "kw/xuedi2", p: [-2, 2], exits: ["n"] },
+	    { n: "船厂", id: "kw/chuanchang", p: [-2, 4], exits: [] },
+	    { n: "荒路", id: "kw/huangdi", p: [-2, 6], exits: [] },
+	    { n: "松花江", id: "kw/songhuajiang", p: [-1, 0], exits: ["e", "w"] },
+	    { n: "大门坎子", id: "kw/damenkanzi", p: [0, 0], exits: ["w", "ne"] },
+	    { n: "二门坎子", id: "kw/ermenkanzi", p: [1, -1], exits: ["e"] },
+	    { n: "满天星", id: "kw/mantianxing", p: [2, -1], exits: ["e", "w"] },
+	    { n: "谷草跺", id: "kw/gucaoduo", p: [3, -1], exits: ["e", "w"] },
+	    { n: "小屋", id: "kw/xiaowu", p: [4, -2], exits: ["s"] },
+	    { n: "白河", id: "kw/baihe", p: [4, -1], exits: ["n", "e", "w"] },
+	    { n: "密林", id: "kw/milin1", p: [5, -1], exits: ["e", "w"] },
+	    { n: "密林", id: "kw/milin2", p: [6, -1], exits: ["e", "w"] },
+	    { n: "密林", id: "kw/milin3", p: [7, -1], exits: ["e", "w"] },
+	    { n: "黑风口", id: "kw/heifengkou", p: [8, -1], exits: ["e", "w"] },
+	    { n: "小天池", id: "kw/xiaotianchi", p: [9, -1], exits: ["e", "w"] },
+	    { n: "瀑布", id: "kw/pubu", p: [10, -1], exits: ["w"] },
+		];
 	this.drops = [
 	    "book/bc#lengyueshengong", "book/bc#hujiadaofa", "book/book#sixiangbu",
 	    "eq/lv3/kw_dao", "res/xiongdan"
