@@ -9,6 +9,10 @@ this.exits = {
 this.set_npc([]);
 
 // 原版机制：点击木桩跳上去 → 温家五老一起出战（1v5）→ 打完再点 → 金蛇郎君出现。
+// 原版机制（攻略第 11 节）：
+//   温家五老分散在府中各处（大厅温方达 / 亭子温方义+温方山 / 侧房温方施、温方南），
+//   玩家必须先破掉五老，再到走廊尽头点木桩跳上去——此时金蛇郎君才会现身。
+//   （采集数据里五老的尸体就分布在这些房间，说明他们是静态放置，不是木桩召唤的）
 this.set_item("zhuang", "木桩", "一根练功用的木桩，桩身布满刀痕与掌印。", [
     ["tiao", "跳上去", function (me) {
         var alive = 0;
@@ -16,20 +20,28 @@ this.set_item("zhuang", "木桩", "一根练功用的木桩，桩身布满刀痕
             var o = this.items[i];
             if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
         }
-        if (alive) { me.notify("<hiy>温家五老正在结阵，先打完再说！</hiy>"); return true; }
-        if (me.query_temp("wf_zhen_done")) {
-            var x = NPC.CREATE("wf/jinshelangjun", this);
-            if (x) { me.notify("<hiy>你再次跳上木桩，石门缓缓打开——金蛇郎君走了出来！</hiy>"); x.do_kill(me); }
+        var ljs = 0;
+        for (var j = 0; j < this.items.length; j++) {
+            var q = this.items[j];
+            if (q && q.path === "wf/jinshelangjun" && q.hp > 0) ljs++;
+        }
+        if (alive > 0) {
+            me.notify("<hiy>温家五老还没破完（府中还有 " + alive + " 位），阵法不成，木桩毫无反应。</hiy>");
             return true;
         }
-        me.send_room("$N纵身跳上木桩，四周忽然响起衣袂破风之声。");
-        var names = ["wenfangda", "wenfangyi", "wenfangshan", "wenfangshi", "wenfangnan"];
-        for (var j = 0; j < names.length; j++) {
-            var e = NPC.CREATE("wf/" + names[j], this);
-            if (e) e.do_kill(me);
+        if (ljs > 0) {
+            me.notify("<hiy>金蛇郎君就在眼前，先打完再说。</hiy>");
+            return true;
         }
-        me.set_temp("wf_zhen_start", 1, 7200000);
-        me.notify("<hir>温家五老结阵向你围来！以 1 敌 5，务必全部击杀。</hir>");
+        if (!me.query_temp("wf_zhen_done")) {
+            me.notify("<hiy>你跳上木桩，四周静悄悄的，什么也没有发生。</hiy>");
+            return true;
+        }
+        var x = NPC.CREATE("wf/jinshelangjun", this);
+        if (x) {
+            me.send_room("$N再次跳上木桩，木桩后石门缓缓打开——金蛇郎君走了出来！");
+            x.do_kill(me);
+        }
         return true;
     }]
 ]);
