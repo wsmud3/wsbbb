@@ -8,9 +8,8 @@ this.set_npc([]);
 // 过河后进入雪地，一路向西直到看见北方有出口，往北走杀死阎基达成 100%。
 this.set_item("jiangmian", "松花江面", "江面宽阔，水色浑黄，一眼望不到对岸。", [
     "dujiang", "渡江", function (me) {
-        var cf = this.find_obj("kw/chuanfu");
-        if (!cf) {
-            me.notify("<red>四下没有船夫的影子，无人摆渡。</red>");
+        if (!me.query_temp("kw_boatman")) {
+            me.notify("<red>还没跟船夫打过招呼，没人肯为你摆渡（先去船厂找船夫）。</red>");
             return true;
         }
         me.notify("<hiy>船夫撑起竹篙：「客官，渡河要一文钱。」</hiy>");

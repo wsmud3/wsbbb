@@ -6,3 +6,9 @@ this.exits = {
     "northeast": "kw/chuanchang",
 };
 this.set_npc(["kw/chuanfu", 1]);
+
+// 见到船夫，记下可以请他摆渡
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    me.set_temp("kw_boatman", 1, 7200000);
+};
