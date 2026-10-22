@@ -19,3 +19,13 @@ this.on_leave = function (me, dir) {
     if (dir === "north") return me.notify_fail("这扇门是紧闭着的，要不想想办法翻墙过去吧。");
     return true;
 };
+
+// 进入温府（大门）时清空上一趟残留的 wf_ 标记，保证每次都是全新一趟
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    var keys = ["wf_wenlaoda", "wf_zhen_start", "wf_zhen_done", "wf_entered",
+        "wf_zhuang_spawned", "wf_zhuang_clear", "wf_jinshe_spawned",
+        "wf_jinshe_done", "wf_tingzi_spawned", "wf_tingzi_done",
+        "wf_wufangda_dead", "wf_zhen_full", "wf_zhen_awarded", "wf_jinshe_award"];
+    for (var i = 0; i < keys.length; i++) me.remove_temp(keys[i]);
+};
