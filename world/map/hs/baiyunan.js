@@ -7,4 +7,4 @@ this.exits = {
     "east": "hs/donglang",
     "west": "hs/xilang",
 };
-this.set_npc(["hs/auto_4", 1], ["hs/auto_7", 1]);
+this.set_npc(["hs/npc01", 1], ["hs/npc02", 1]);

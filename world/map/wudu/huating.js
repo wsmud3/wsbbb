@@ -5,4 +5,4 @@ this.exits = {
     "west": "wudu/huayuan",
     "north": "wudu/huating2",
 };
-this.set_npc(["wudu/auto_1", 1]);
+this.set_npc(["wudu/hetieshou", 1]);

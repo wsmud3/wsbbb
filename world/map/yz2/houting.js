@@ -5,4 +5,4 @@ this.exits = {
     "south": "yz2/dating",
     "east": "yz2/neitang",
 };
-this.set_npc(["yz2/auto_4", 1]);
+this.set_npc(["yz2/abih", 1]);

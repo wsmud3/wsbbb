@@ -5,4 +5,4 @@ this.exits = {
     "east": "th/damen",
     "north": "th/road1",
 };
-this.set_npc(["th/auto_3", 1]);
+this.set_npc(["th/luchengfeng", 1]);

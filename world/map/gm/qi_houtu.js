@@ -4,4 +4,4 @@ this.desc = "这里是明教厚土旗。旗中教众个个膀粗腰圆，力大�
 this.exits = {
     "north": "gm/lianwu",
 };
-this.set_npc(["gm/auto_5", 1], ["gm/auto_4", 1]);
+this.set_npc(["gm/yanyuan", 1], ["gm/auto_4", 1]);

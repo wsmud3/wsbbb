@@ -4,4 +4,4 @@ this.desc = "这是一座用长白山松木垒成的小屋，屋内打扫的很�
 this.exits = {
     "south": "kw/baihe",
 };
-this.set_npc(["kw/auto_2", 1]);
+this.set_npc(["kw/hufei", 1]);

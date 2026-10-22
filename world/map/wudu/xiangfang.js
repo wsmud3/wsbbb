@@ -4,4 +4,4 @@ this.desc = "这是一间乱糟糟的厢房，里面到处都是各种大大小�
 this.exits = {
     "east": "wudu/nanyuan",
 };
-this.set_npc(["wudu/auto_6", 1]);
+this.set_npc(["wudu/bairan", 1]);

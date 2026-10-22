@@ -4,4 +4,4 @@ this.desc = "你走进了一间卧房。一股若有若无的甜香扑鼻而来�
 this.exits = {
     "south": "th/dating",
 };
-this.set_npc(["th/auto_4", 1]);
+this.set_npc(["th/huangrong", 1]);

@@ -4,4 +4,4 @@ this.desc = "你走进一片松林，阳光照在松林中，一缕一缕的阳�
 this.exits = {
     "north": "gm/guangmingding",
 };
-this.set_npc(["gm/auto_2", 1], ["gm/auto_4", 1]);
+this.set_npc(["gm/zhoudian", 1], ["gm/auto_4", 1]);

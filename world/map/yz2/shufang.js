@@ -4,4 +4,4 @@ this.desc = "这里是燕子坞的书房, 天下武功皆荟粹与此, 包罗万
 this.exits = {
     "west": "yz2/dating",
 };
-this.set_npc(["yz2/auto_1", 1]);
+this.set_npc(["yz2/murongfu", 1]);
