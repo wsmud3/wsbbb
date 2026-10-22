@@ -2,7 +2,7 @@ this.inherits(ROOM);
 this.name = "武神殿";
 this.desc = "一座无比宏大的殿堂，穹顶高不可及，漫天星斗在殿顶流转，仿佛整个宇宙都收纳于此。大殿正中，一尊高达百丈的战神雕像巍然矗立，那雕像的面容模糊不清，似乎随着观者的心境而变化——传说每一个登临武神之境的人，看到的都是自己的面容。雕像脚下，九条巨龙石雕环绕而伏，龙头朝向殿门，似乎在向每一位踏入此殿的武神俯首称臣。\n\n殿中弥漫着一股苍茫古老的威压，那是历代武神残留在天地间的意志。四壁之上，一幅幅壁画描绘着远古神魔大战的壮丽场景——而这其中最显眼的，是一幅崭新的空白画卷，仿佛在等待着下一位武神的传说被铭刻其上。";
 this.exits = { "south": "zhanshen/jiuchongtian" };
-this.set_npc([]);
+this.set_npc(["zhanshen/chiyou", 1]);
 this.no_relive = true;
 
 this.on_enter = function (me) {

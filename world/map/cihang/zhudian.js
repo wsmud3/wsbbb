@@ -4,4 +4,4 @@ this.desc = "宽广的长方大殿延展眼前，殿尽处是个盘膝而坐，�
 this.exits = {
     "north": "cihang/guangchang",
 };
-this.set_npc(["cihang/auto_2", 1]);
+this.set_npc(["cihang/wentianni", 1]);

@@ -4,4 +4,4 @@ this.desc = "慈航静斋后山的一个亭子，左侧远方俨如犬牙陡立�
 this.exits = {
     "east": "cihang/xiaolu2",
 };
-this.set_npc(["cihang/auto_4", 1]);
+this.set_npc([]);

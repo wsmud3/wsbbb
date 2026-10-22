@@ -42,6 +42,7 @@ this.on_enter = function (me) {
 };
 
 // 选择分支（攻略：第三条=我来挑战你→浪子线；观战→国师线）
+this.set_npc(["cihang/pangban", 1]);
 this.add_action("cihang_opt", null, function (me, arg) {
     if (!me.is_player) return true;
     var opt = String(arg || "").trim();

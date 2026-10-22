@@ -24,6 +24,7 @@ this.on_enter = function (me) {
     me.send_commands("cihang_bing 1", "我来寻浪翻云", "cihang_bing 2", "我来寻庞斑");
 };
 
+this.set_npc(["cihang/jinbingyun", 1]);
 this.add_action("cihang_bing", null, function (me, arg) {
     if (!me.is_player) return true;
     var opt = String(arg || "").trim();

@@ -7,4 +7,4 @@ this.exits = {
     "south": "hslj/south",
     "north": "hslj/north",
 };
-this.set_npc(["hslj/dongxie", 1], ["hslj/auto_1", 1], ["hslj/xidu", 1], ["hslj/beigai", 1], ["hslj/zhongshentong", 1]);
+this.set_npc(["hslj/dongxie", 1], ["hslj/nandi", 1], ["hslj/xidu", 1], ["hslj/beigai", 1], ["hslj/zhongshentong", 1]);
