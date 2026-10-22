@@ -97,3 +97,17 @@ this.on_died = function (killer, corpse) {
         killer.notify("<hiy>温家兄弟这一波清干净了。</hiy>");
     }
 };
+
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    var room = this.environment;
+    if (!room) return;
+    var alive = 0;
+    for (var i = 0; i < room.items.length; i++) {
+        var o = room.items[i];
+        if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
+    }
+    if (alive === 0) {
+        killer.notify("<hiy>温家四兄弟尽数伏诛，再去跳一次木桩。</hiy>");
+    }
+};
