@@ -15,19 +15,19 @@ this.set({
     ss_title: "金蛇郎君"
 });
 	this.map = [
-	    { n: "侧房", id: "wf/wen5", p: [-2, -3], exits: ["w"] },
-	    { n: "走廊", id: "wf/lang3", p: [-1, -4], exits: ["s", "nw", "e"] },
+	    { n: "侧房", id: "wf/wen3", p: [-2, -4], exits: ["e"] },
+	    { n: "侧房", id: "wf/wen2", p: [-2, -3], exits: ["e"] },
+	    { n: "走廊", id: "wf/lang2", p: [-1, -4], exits: ["s", "w", "ne"] },
 	    { n: "走廊", id: "wf/lang1", p: [-1, -3], exits: ["n", "w", "se"] },
-	    { n: "侧房", id: "wf/wen3", p: [0, -4], exits: ["e"] },
-	    { n: "侧房", id: "wf/wen4", p: [0, -3], exits: ["w"] },
-	    { n: "大厅", id: "wf/dating", p: [0, -2], exits: ["nw", "ne", "s"] },
+	    { n: "亭子", id: "wf/tingzi", p: [0, -6], exits: ["s"] },
+	    { n: "走廊尽头", id: "wf/lang_end", p: [0, -5], exits: ["n", "se", "sw"] },
+	    { n: "大厅", id: "wf/dating", p: [0, -2], exits: ["s", "ne", "nw"] },
 	    { n: "大院", id: "wf/dayuan", p: [0, -1], exits: ["n"] },
 	    { n: "大门", id: "wf/damen", p: [0, 0], exits: ["n"] },
-	    { n: "走廊", id: "wf/lang2", p: [1, -3], exits: ["ne", "w", "s"] },
-	    { n: "走廊", id: "wf/zoulang4", p: [1, -2], exits: ["sw", "n", "e"] },
-	    { n: "亭子", id: "wf/tingzi", p: [2, -5], exits: ["s"] },
-	    { n: "走廊尽头", id: "wf/lang_end", p: [2, -4], exits: ["sw", "se", "n"] },
-	    { n: "侧房", id: "wf/wen2", p: [2, -2], exits: ["e"] },
+	    { n: "走廊", id: "wf/lang3", p: [1, -4], exits: ["s", "e", "nw"] },
+	    { n: "走廊", id: "wf/zoulang4", p: [1, -3], exits: ["n", "e", "sw"] },
+	    { n: "侧房", id: "wf/wen4", p: [2, -4], exits: ["w"] },
+	    { n: "侧房", id: "wf/wen5", p: [2, -3], exits: ["w"] },
 	];
 	this.drops = [
 	    "book/bc#jinshejianfa",
