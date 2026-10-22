@@ -221,6 +221,12 @@ function checkArea(area) {
     const mapDirs = [...new Set((e.exits || []).map(drawDir).filter(Boolean))];
     const realDirs = [...new Set(Object.keys(room.exits).map(drawDir).filter(Boolean))];
 
+    // 3.5) 孤立房间：this.exits 是空的，从哪儿都进不去
+    //      （多半是 patch_area.py 采集时没抓到出口，或出口目标名字解析失败）
+    if (!Object.keys(room.exits).length) {
+      W('孤立房间', `${id}(${room.name}) 的房间文件 this.exits 为空，从任何房间都走不进去`);
+    }
+
     // 4) 假连线：map 里有方向，房间文件里没有
     for (const d of mapDirs) {
       if (!realDirs.includes(d)) E('假连线', `${id} 的 exits 有 ${d}，但房间文件没有这个出口`);
@@ -281,6 +287,12 @@ function checkArea(area) {
     const missingReachable = [...seen].filter((id) => !byId.has(id) && loadRoom(id));
     if (missingReachable.length) {
       E('缺房间', `从入口可达但未进图: ${missingReachable.join(', ')}`);
+    }
+    // 9.5) 反向：房间进了图，但从入口根本走不到
+    //      （出口单向写反 / 采集漏了返回出口 —— 重建副本最容易踩的坑）
+    const unreachable = [...byId.keys()].filter((id) => !seen.has(id) && loadRoom(id));
+    if (unreachable.length) {
+      W('不可达', `${unreachable.length}/${byId.size} 间房在 map 里但从入口 ${area.first} 走不到: ${unreachable.join(', ')}`);
     }
     // 10) 单向出口（原版设计里就有，仅提示）
     const OPP = { n: 's', s: 'n', e: 'w', w: 'e', ne: 'sw', sw: 'ne', nw: 'se', se: 'nw', u: 'd', d: 'u', enter: 'out', out: 'enter' };
