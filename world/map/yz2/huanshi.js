@@ -28,3 +28,8 @@ this.on_enter = function (me) {
         me.notify("<hiy>水阁中寂静无声，只闻水响。四壁书架密密排开，或有武功残页藏于其中。</hiy>");
     }
 };
+// 搜索过还施水阁后打标记，回后厅会触发慕容博
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    me.set_temp("yz2_shushi", 1, 7200000);
+};
