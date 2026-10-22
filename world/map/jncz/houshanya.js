@@ -23,3 +23,10 @@ this.add_action("jump_cliff", "跳下去", function (me) {
     }
     return true;
 });
+
+// 盗帅线：后山崖可上钟楼
+this.add_action("shang zhonglou", "上钟楼", function (me) {
+    if (!me.is_player) return true;
+    me.moveto("jncz/zhonglou", me.name + "登上钟楼。", me.name + "踏进钟楼。");
+    return true;
+});
