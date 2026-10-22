@@ -1,14 +1,8 @@
 this.inherits(ROOM);
 this.name = "火山路";
-this.desc = "通往火山的道路，炽热的岩浆在脚下不远处流淌。";
-this.exits = { "west": "bh/huoshanjiaoxia", "east": "bh/huoshanlu1" };
-this.on_enter = function(me) {
-    if (!me.is_player) return;
-    me.set_temp('bh_fire_stack', (me.query_temp('bh_fire_stack') || 0) + 1);
-    if (me.query_temp('bh_fire_stack') > 5) me.set_temp('bh_fire_stack', 5);
-    me.add_status({
-        id: 'bh_fire', name: '灼热', duration: 20000,
-        desc: '灼热难耐(' + me.query_temp('bh_fire_stack') + '层), 每3秒扣' + (me.query_temp('bh_fire_stack') * 2) + '%当前HP'
-    });
+this.desc = "岩石路皆由火山灰堆成，厉时久，地面十分坚硬。在这里已可以看见那缕黑烟之中竟有红火光不断的喷出，原来黑烟之处是一座活火山，走到这里已感到一丝的热气扑面而来，再走十多里路就到达火山脚下了。";
+this.exits = {
+    "east": "bh/huoshanlu1",
+    "west": "bh/huoshanjiao",
 };
-this.set_npc(["bh/yanlong", 2]);
+this.set_npc(["bh/yanlong", 1]);

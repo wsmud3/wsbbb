@@ -16,7 +16,7 @@
 			this.map = [
 	    { n: "封禅台", id: "ss/fengshantai", p: [-1, -6], exits: ["e"] },
 	    { n: "太室阙", id: "ss/taishi", p: [-1, -2], exits: [] },
-	    { n: "峻极山门", id: "ss/junjishanmen", p: [-1, 2], exits: [] },
+	    { n: "峻极山门", id: "ss/shanmen", p: [-1, 2], exits: [] },
 	    { n: "中岳大殿", id: "ss/zhongyuedadian", p: [-1, 4], exits: [] },
 	    { n: "峻极禅院", id: "ss/junjichanyuan", p: [-1, 6], exits: [] },
 	    { n: "西廊", id: "ss/xilang", p: [0, -10], exits: ["e"] },
@@ -30,7 +30,7 @@
 	    { n: "中门", id: "ss/zhongmen", p: [1, -9], exits: ["n", "s"] },
 	    { n: "峻极禅院", id: "ss/chanyuan", p: [1, -8], exits: ["n", "s"] },
 	    { n: "前庭", id: "ss/qianting", p: [1, -7], exits: ["n", "s"] },
-	    { n: "峻极山门", id: "ss/shanmen", p: [1, -6], exits: ["n", "s", "w"] },
+	    { n: "峻极山门", id: "ss/junjishanmen", p: [1, -6], exits: ["n", "s", "w"] },
 	    { n: "朝天门", id: "ss/chaotianmen", p: [1, -5], exits: ["n", "s"] },
 	    { n: "铁梁峡", id: "ss/tieliang", p: [1, -4], exits: ["n", "sw"] },
 	    { n: "东廊", id: "ss/donglang", p: [2, -10], exits: ["w"] },

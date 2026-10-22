@@ -15,7 +15,6 @@
 		    ss_title: "娜美鲁多"
 		});
 			this.map = [
-	    { n: "刘府大门", id: "hs2/liufudamen", p: [-4, 7], exits: [] },
 	    { n: "山涧", id: "hs2/shanjian", p: [-3, 0], exits: ["e"] },
 	    { n: "竹林", id: "hs2/zhulin", p: [-3, 5], exits: ["s"] },
 	    { n: "琴舍", id: "hs2/qinshe", p: [-3, 6], exits: ["n", "s"] },
@@ -23,8 +22,9 @@
 	    { n: "刘府大院", id: "hs2/liufudayuan", p: [-3, 8], exits: ["s"] },
 	    { n: "刘府大厅", id: "hs2/liufudating", p: [-3, 9], exits: ["n", "s"] },
 	    { n: "刘府后厅", id: "hs2/liufuhouting", p: [-3, 10], exits: ["n"] },
+	    { n: "刘府大门", id: "hs2/liufumen", p: [-3, 12], exits: [] },
 	    { n: "林间小道", id: "hs2/xiaolu", p: [-2, 0], exits: ["e", "w"] },
-	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["s"] },
+	    { n: "刘府大门", id: "hs2/liufudamen", p: [-1, -1], exits: ["s"] },
 	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n", "e", "w"] },
 	    { n: "衡阳城", id: "hs2/hengyang", p: [0, 0], exits: ["e", "w"] },
 	    { n: "山路", id: "hs2/shanlu", p: [1, 0], exits: ["w", "se"] },

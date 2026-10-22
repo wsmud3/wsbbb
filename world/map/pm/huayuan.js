@@ -4,7 +4,7 @@ this.desc = "你的眼前出现了一个美丽的花园，花园里种着一些�
 this.exits = {
     "north": "pm/xiaodao",
     "south": "pm/changlang",
-    "west": "pm/woshi",
-    "east": "pm/chufang",
+    "west": "pm/qifengge",
+    "east": "pm/ouxiangxie"
 };
 this.set_npc([]);

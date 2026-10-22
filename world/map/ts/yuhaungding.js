@@ -4,3 +4,4 @@ this.desc = "此处便是泰山绝顶。这里有一座玉帝观，观前为古�
 this.exits = {
     "southdown": "ts/nantian",
 };
+this.set_npc([]);

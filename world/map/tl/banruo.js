@@ -4,6 +4,6 @@ this.desc = "这是个普通的石台，相传当年佛祖曾降临此台传法�
 this.exits = {
     "east": "tl/wujing",
     "west": "tl/wuchang",
-    "south": "tl/munitang",
+    "south": "tl/muni",
 };
 this.set_npc([]);

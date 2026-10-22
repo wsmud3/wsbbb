@@ -5,3 +5,4 @@ this.exits = {
     "south": "hmy/ql_lang",
     "north": "hmy/shangu",
 };
+this.set_npc([]);
