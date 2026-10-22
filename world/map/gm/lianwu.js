@@ -4,5 +4,7 @@ this.desc = "这是明教的练武场。由数块巨大的花岗岩铺垫而成�
 this.exits = {
     "south": "gm/qi_houtu",
     "east": "gm/qi_liehuo",
+
+    "north": "gm/shenghuotang",
 };
 this.set_npc(["gm/weiyixiao", 1], ["gm/yintianzheng", 1]);

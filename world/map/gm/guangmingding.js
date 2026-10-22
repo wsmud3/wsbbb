@@ -4,4 +4,4 @@ this.desc = "这里就是明教光明顶。你走到这里，可看见三个黄�
 this.exits = {
     "north": "gm/qi_houtu",
 };
-this.set_npc(["gm/auto_6", 1], ["gm/shuobude", 1], ["gm/pengyingyu", 1]);
+this.set_npc(["gm/miejueshitai", 1], ["gm/shuobude", 1], ["gm/pengyingyu", 1]);
