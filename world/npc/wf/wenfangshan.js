@@ -1,5 +1,6 @@
 this.inherits(NPC);
 this.set({
+    title: "温家老三",
     name: "温方山",
     desc: "温家五兄弟个个身材魁梧，面目凶恶。五人自幼一起习武，彼此心意相通，组成五行八卦阵后更是威力倍增，令人闻风丧胆。",
 
@@ -64,5 +65,20 @@ this.on_died = function (killer, corpse) {
     if (alive === 0) {
         killer.set_temp("wf_zhen_done", 1, 7200000);
         killer.notify("<hiy>温家五老尽数伏诛，阵法已破。再去点一次木桩。</hiy>");
+    }
+};
+
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    var room = this.environment;
+    if (!room) return;
+    var alive = 0;
+    for (var i = 0; i < room.items.length; i++) {
+        var o = room.items[i];
+        if (o && o.path && o.path.indexOf("wf/wenfang") === 0 && o.hp > 0) alive++;
+    }
+    if (alive === 0) {
+        killer.set_temp("wf_zhuang_done", 1, 7200000);
+        killer.notify("<hiy>温家四兄弟尽数伏诛。再跳一次木桩。</hiy>");
     }
 };
