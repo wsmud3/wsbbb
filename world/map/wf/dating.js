@@ -6,4 +6,4 @@ this.exits = {
     "northeast": "wf/zoulang4",
     "south": "wf/dayuan",
 };
-this.set_npc(["wf/wenfangda", 1]);
+this.set_npc([["wf/wenfangda", 1]]);
