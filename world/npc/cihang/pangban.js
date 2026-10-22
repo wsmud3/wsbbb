@@ -142,3 +142,13 @@
 	        }
 	    }
 	};
+
+// 攻略第 34 节：击杀庞班后回到初始地（桃源小径/石窟）领悟即完结。
+// 庞班本身不计固定分（分数由场景分摊），击杀后按副本需求补足完成度。
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    if (killer.query_temp("cihang_done")) return;
+    killer.set_temp("cihang_done", 1, 7200000);
+    killer.add_fbscore(330);
+    killer.notify("<hig>庞班伏诛，慈航静斋这一趟算是圆满了。</hig>");
+};
