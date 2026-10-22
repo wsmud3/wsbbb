@@ -7,3 +7,6 @@ this.exits = {
     // "north": 目标「聚议厅」未知
     "west": "gm/qi_ruijin",
 };
+
+this.set_npc("gm/weiyixiao");   // 青翼蝠王 韦一笑
+this.set_npc("gm/yintianzheng");   // 白眉鹰王 殷天正

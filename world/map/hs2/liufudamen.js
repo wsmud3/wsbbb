@@ -1,5 +1,8 @@
 this.inherits(ROOM);
 this.name = "刘府大门";
-this.desc = `一座朱漆大门巍然而立，门楣上悬挂着"刘府"二字的匾额，笔力遒劲。门口站着两位家丁，神色肃穆。门内隐隐传来丝竹之声，似乎在筹备什么重要聚会。北边是来时的山路，南边通向刘府大院。`;
-this.exits = { "north": "hs2/shanlu", "south": "hs2/liufudayuan" };
-this.set_npc(["hs2/songshandizi", 2]);
+this.desc = "这里是刘府大门。刘府的主人，就是衡山派中的仅次于掌门人莫大先生的第二号人物刘正风刘老爷子。今天兴许刘府有事吧，大门紧闭，管家家丁也异样紧张。只有檐下的写着 刘府 二字的大红灯笼中的烛火忽闪晃动才显出点活人气。";
+this.exits = {
+    "south": "hs2/jiedao",
+    // "north": 目标「刘府大院」未知
+};
+this.set_npc("hs2/songshandizi");   // 嵩山弟子

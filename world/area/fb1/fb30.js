@@ -16,16 +16,16 @@ this.set({
 });
 this.map = [
     { n: "古墓入口", id: "gm2/gumurukou", p: [0, 0], exits: ["e"] },
-    { n: "后堂", id: "gm2/houtang", p: [1, 0], exits: ["w", "n", "s"] },
-    { n: "卧室", id: "gm2/woshi", p: [1, 1], exits: ["s"] },
-    { n: "寒玉床室", id: "gm2/hanyuchuang1", p: [2, 0], exits: ["w", "n"] },
-    { n: "寒玉密室", id: "gm2/hanyuchuang2", p: [2, 1], exits: ["s", "e"] },
-    { n: "寒玉密室尽头", id: "gm2/hanyumishi", p: [3, 1], exits: ["w", "s"] },
-    { n: "琴室", id: "gm2/qinshi", p: [1, -1], exits: ["n", "s", "w"] },
-    { n: "暗河", id: "gm2/anhe", p: [1, -2], exits: ["n", "s"] },
-    { n: "峭壁", id: "gm2/qiaobi", p: [1, -3], exits: ["n", "s"] },
-    { n: "平台", id: "gm2/pingtai", p: [1, -4], exits: ["n", "e"] },
-    { n: "剑冢", id: "gm2/jianzhong", p: [2, -4], exits: ["w"] }
+    { n: "寒玉密室", id: "gm2/hanyuchuang2", p: [0, 6], exits: ["s", "e"] },
+    { n: "寒玉床室", id: "gm2/hanyuchuang1", p: [0, 7], exits: ["n"] },
+    { n: "卧室", id: "gm2/woshi", p: [1, -1], exits: ["s"] },
+    { n: "后堂", id: "gm2/houtang", p: [1, 0], exits: ["n", "s", "w"] },
+    { n: "琴室", id: "gm2/qinshi", p: [1, 1], exits: ["n", "s"] },
+    { n: "暗河", id: "gm2/anhe", p: [1, 2], exits: ["n", "s"] },
+    { n: "峭壁", id: "gm2/qiaobi", p: [1, 3], exits: ["n", "s"] },
+    { n: "平台", id: "gm2/pingtai", p: [1, 4], exits: ["n", "e"] },
+    { n: "寒玉密室尽头", id: "gm2/hanyumishi", p: [1, 6], exits: ["w"] },
+    { n: "剑冢", id: "gm2/jianzhong", p: [2, 4], exits: ["w"] },
 ];
 	this.drops = [
 	    "book/bc#yunvxinjing",

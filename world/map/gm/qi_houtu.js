@@ -7,3 +7,5 @@ this.exits = {
     "east": "gm/qi_hongshui",
     "west": "gm/qi_jumu",
 };
+
+this.set_npc("gm/yanyuan");   // 厚土旗掌旗使 颜垣

@@ -1,4 +1,8 @@
 this.inherits(ROOM);
 this.name = "走廊";
-this.desc = "走廊越来越窄，越来越暗。墙壁上的石灰已经剥落，露出下面暗红色的砖块。脚下的地板有些松动，踩上去摇摇晃晃。那股药味愈发浓烈，还夹杂着一丝血腥气。你感觉这温府之中，似乎隐藏着什么不可告人的秘密。北面是来路，南面是走廊尽头。";
-this.exits = { "north": "wf/lang2", "south": "wf/lang_end" };
+this.desc = "你走在一条长长的走廊上，上面雕梁画柱，飞檐琉璃，穿行其间，心情舒畅。往东是温老四的住处。";
+this.exits = {
+    "south": "wf/lang1",
+    "northwest": "wf/lang_end",
+    "east": "wf/wen5",
+};

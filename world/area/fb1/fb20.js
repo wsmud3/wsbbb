@@ -14,16 +14,19 @@ this.set({
     room_path: "bt/",
     ss_title: "西毒"
 });
-this.map = [
-    { n: "大门", id: "bt/damen", p: [0, 0], exits: ["s"] },
-    { n: "练功房", id: "bt/liangongfang", p: [0, -1], exits: ["n", "s", "w"] },
-    { n: "门廊", id: "bt/menlang", p: [0, -2], exits: ["n", "s"] },
-    { n: "花园", id: "bt/huayuan", p: [0, -3], exits: ["n", "s"] },
-    { n: "长廊", id: "bt/changlang", p: [1, -1], exits: ["e", "w"] },
-    { n: "药房", id: "bt/yaofang", p: [2, -1], exits: ["e", "w"] },
-    { n: "草丛", id: "bt/caocong", p: [3, -1], exits: ["n", "w"] },
-    { n: "岩洞", id: "bt/yandong", p: [3, 0], exits: ["s"] },
-];
+	this.map = [
+	    { n: "草丛", id: "bt/caocong", p: [-3, -1], exits: ["w", "s", "e", "n"] },
+	    { n: "草丛", id: "bt/caocong2", p: [-3, -2], exits: ["s", "n"] },
+	    { n: "岩洞", id: "bt/yandong", p: [-3, -3], exits: ["s"] },
+	    { n: "西门", id: "bt/ximen", p: [-2, -1], exits: ["w", "e"] },
+	    { n: "长廊", id: "bt/changlang", p: [-1, -1], exits: ["s", "w", "e"] },
+	    { n: "药房", id: "bt/yaofang", p: [-1, 0], exits: ["n"] },
+	    { n: "大厅", id: "bt/dating", p: [0, -4], exits: ["s"] },
+	    { n: "花园", id: "bt/huayuan", p: [0, -3], exits: ["n", "s"] },
+	    { n: "门廊", id: "bt/menlang", p: [0, -2], exits: ["n", "s"] },
+	    { n: "练功场", id: "bt/liangong", p: [0, -1], exits: ["n", "w", "s"] },
+	    { n: "大门", id: "bt/damen", p: [0, 0], exits: ["n"] },
+	];
 this.drops = [
     "book/bc#lingshezhangfa", "book/bc#chanchubufa", "book/bc#hamagong",
     "eq/lv4/lingshezhang"

@@ -38,3 +38,12 @@
 	    me.notify("慕容博从阴影中走出，沉声道：老夫隐居多年，今日竟有人闯入此地……");
 	    this.do_kill(me);
 	};
+
+// [mech] 慕容博伏诛（燕子坞完成度）
+this.on_die = function (killer) {
+    if (killer && killer.is_player) {
+        killer.set_temp("yz2_murongbo_dead", 1);
+        killer.notify("<hio>慕容博缓缓倒下，燕国复辟的旧梦也随之散尽。</hio>");
+        killer.notify("<hig>燕子坞旧事已了，可回动作栏点「完成副本」结算。</hig>");
+    }
+};

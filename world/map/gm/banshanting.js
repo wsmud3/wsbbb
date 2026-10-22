@@ -5,3 +5,6 @@ this.exits = {
     "southeast": "gm/shanlu",
     "north": "gm/banshanyao",
 };
+
+this.set_npc("gm/lengqian");   // 五散人 冷谦
+this.set_npc("pub/menpai");   // 六大门派弟子

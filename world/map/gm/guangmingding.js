@@ -5,3 +5,5 @@ this.exits = {
     "north": "gm/qi_houtu",
     "south": "gm/xiaolu1",
 };
+
+this.set_npc("emei/miejue");   // 峨眉派掌门 灭绝

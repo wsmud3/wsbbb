@@ -1,5 +1,18 @@
 this.inherits(ROOM);
 this.name = "草丛";
-this.desc = "一片茂密的草丛，足有半人高。草丛中传来窸窸窣窣的声音，无数毒蛇潜伏其中，吐着猩红的信子，令人毛骨悚然。北面是一个幽深的岩洞。";
-this.exits = { "east": "bt/yaofang", "north": "bt/yandong" };
-this.set_npc(["bt/she", 3]);
+this.desc = "这里是乱草丛。东边是扇拱月形小敞门。其余三面都是齐腰高的蒿草，常有蛇出没。";
+this.exits = {
+    "west": "bt/caocong",
+    "south": "bt/caocong",
+    "east": "bt/ximen",
+    "north": "bt/caocong2",
+};
+
+// [mech] 草丛里的毒蛇（攻略：继续向西走到草丛有一只毒蛇，杀）
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    if (me.query_temp("bt_she1_dead")) return;
+    if (this.find_obj_bypath("bt/she")) return;
+    NPC.CREATE("bt/she", this);
+    this.refresh(me);
+};
