@@ -1,5 +1,6 @@
 this.inherits(MONSTER);
 this.set({
+    score: 22,
     name: "鳄鱼",
     desc: "一条巨大的鳄鱼，鳞甲坚硬，满口利齿。它潜伏在沼泽中，随时准备发起致命一击。",
     hp: 95000,
