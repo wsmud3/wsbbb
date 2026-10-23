@@ -14,7 +14,7 @@ this.on_leave = function (me, dir) {
     var n = (me.query_temp("kw_snow_west") || 0) + 1;
     if (n < 5) {
         me.set_temp("kw_snow_west", n, 7200000);
-        me.notify("<hiy>你在风雪里绕了一圈，又回到了原处。</hiy>");
+        me.notify("<hib>你在风雪里绕了一圈，又回到了原处。</hib>");
         return false;
     }
     me.remove_temp("kw_snow_west");
