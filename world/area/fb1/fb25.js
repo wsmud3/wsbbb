@@ -15,16 +15,16 @@ this.set({
     ss_title: "日月教主"
 });
 		this.map = [
-	    { n: "山谷", id: "hmy/shangu", p: [0, 0], exits: ["n","e","s"] },
+	    { n: "山谷", id: "hmy/shangu", p: [0, 0], exits: ["e"] },
 	    { n: "白虎堂", id: "hmy/bh_tang", p: [0, -1], exits: ["s","n"] },
-	    { n: "走廊", id: "hmy/bh_lang", p: [0, -2], exits: ["s","n"] },
+	    { n: "走廊", id: "hmy/bh_lang", p: [0, -2], exits: ["n"] },
 	    { n: "大厅", id: "hmy/bh_ting", p: [0, -3], exits: ["s"] },
 	    { n: "青龙堂", id: "hmy/ql_tang", p: [0, 1], exits: ["s","n"] },
-	    { n: "走廊", id: "hmy/ql_lang", p: [0, 2], exits: ["s","n"] },
+	    { n: "走廊", id: "hmy/ql_lang", p: [0, 2], exits: ["s"] },
 	    { n: "大厅", id: "hmy/ql_ting", p: [0, 3], exits: ["n"] },
-	    { n: "密林", id: "hmy/shulin", p: [1, 0], exits: ["n","e","w","s"] },
+	    { n: "密林", id: "hmy/shulin", p: [1, 0], exits: ["e","w","s"] },
 	    { n: "风雷堂", id: "hmy/fl_tang", p: [1, -1], exits: ["n","s"] },
-	    { n: "走廊", id: "hmy/fl_lang", p: [1, -2], exits: ["n","s"] },
+	    { n: "走廊", id: "hmy/fl_lang", p: [1, -2], exits: ["n"] },
 	    { n: "大厅", id: "hmy/fl_ting", p: [1, -3], exits: ["s"] },
 	    { n: "天香堂", id: "hmy/tx_tang", p: [1, 1], exits: ["n"] },
 	    { n: "悬崖", id: "hmy/up1", p: [2, 0], exits: ["w"] },

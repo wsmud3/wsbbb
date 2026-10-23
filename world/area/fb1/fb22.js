@@ -15,10 +15,10 @@ this.set({
     ss_title: "金毛狮王"
 });
 		this.map = [
-	    { n: "海边岩石", id: "bh/haibian", p: [0, 0], exits: ["n","w"] },
+	    { n: "海边岩石", id: "bh/haibian", p: [0, 0], exits: ["n"] },
 	    { n: "岩石路", id: "bh/yslu1", p: [-1, 0], exits: ["e","w"] },
 	    { n: "岩石路", id: "bh/yslu2", p: [-2, 0], exits: ["e","w"] },
-	    { n: "火山脚下", id: "bh/huoshanjiao", p: [-3, 0], exits: ["e","w"] },
+	    { n: "火山脚下", id: "bh/huoshanjiao", p: [-3, 0], exits: ["w"] },
 	    { n: "火山", id: "bh/huoshan1", p: [-4, 0], exits: ["e"] },
 	    { n: "丛林", id: "bh/conglin1", p: [0, -1], exits: ["n"] },
 	    { n: "丛林", id: "bh/conglin2", p: [0, -2], exits: ["n","s"] },

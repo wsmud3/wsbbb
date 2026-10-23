@@ -4,6 +4,5 @@ this.desc = "这里是曼陀罗山庄的前院, 只见一个个丫环, 卑女人
 this.exits = {
     "west": "yz2/zhuangmen",
     "south": "yz2/xiaojing",
-    "east": "yz2/wuchang",
 };
 this.set_npc([]);
