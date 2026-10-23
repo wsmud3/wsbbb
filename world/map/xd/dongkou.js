@@ -1,8 +1,8 @@
 this.inherits(ROOM);
 this.name = "洞口";
-this.desc = "一个幽暗的洞口，阴风阵阵，通往山腹深处。";
+this.desc = "山谷里积雪被拢成几个雪堆，这里时常有人扫除积雪。你前面的峭壁下隐隐约约有一个山洞。南北两旁都是崖壁，东面则是一处峭壁，非常险要。";
 this.exits = {
-    "west": "xd/xuechi3",
-    "east": "xd/xuechi1",
+    "westdown": "xd/wangyou",
+    "enter": "xd/xuedao",
 };
-this.set_npc(["xd/xuedaodizi", 2]);
+this.set_npc(["xd/xuedaodizi", 2])

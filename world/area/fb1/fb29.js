@@ -14,16 +14,14 @@ this.set({
     room_path: "xd/",
     ss_title: "血刀老祖"
 });
-this.map = [
-    { n: "雪山山口", id: "xd/shankou", p: [0, 0], exits: ["s"] },
-    { n: "雪山山谷", id: "xd/shangu", p: [0, 1], exits: ["n", "s", "e"] },
-    { n: "山洞", id: "xd/shandong", p: [0, 2], exits: [] },
-    { n: "忘忧谷", id: "xd/wangyougu", p: [1, 1], exits: ["e"] },
-    { n: "血池尽头", id: "xd/xuechi3", p: [2, -1], exits: ["s"] },
-    { n: "血池深处", id: "xd/xuechi2", p: [2, 0], exits: ["n", "s"] },
-    { n: "血池", id: "xd/xuechi1", p: [2, 1], exits: ["n", "e", "w"] },
-    { n: "洞口", id: "xd/dongkou", p: [3, 1], exits: [] },
-];
+		this.map = [
+	    { n: "雪山山口", id: "xd/shankou", p: [0, 0], exits: ["s"] },
+	    { n: "雪山山谷", id: "xd/shangu", p: [0, 1], exits: ["n","e","s"] },
+	    { n: "山洞", id: "xd/shandong", p: [1, 1], exits: ["w"] },
+	    { n: "忘忧谷", id: "xd/wangyou", p: [0, 2], exits: ["n","eu"] },
+	    { n: "洞口", id: "xd/dongkou", p: [1, 2], exits: ["wd","enter"] },
+	    { n: "山洞", id: "xd/xuedao", p: [2, 2], exits: ["out"] },
+		];
 	this.drops = [
 	    "book/bc#shenkongxing2",
 	    "book/bc#shenzhaojing",
