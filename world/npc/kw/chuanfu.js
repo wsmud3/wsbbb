@@ -20,18 +20,37 @@ this.skill_map(
     ["force", 200]);
 
 this.on_enter = function (me) {
-    me.notify("船夫吆喝道：坐船到江对面1两黄金。");
+    if (!me.is_player) return;
+    if (me.environment && me.environment.path === "kw/chuanchang")
+        me.notify("船夫吆喝道：客官要回对岸吗？要过江随时招呼我。");
+    else
+        me.notify("船夫吆喝道：江面水急，坐船到江对面 1 两黄金。");
 };
 
-// 原版：give <船夫id> 10000 money → 交钱坐船
+// 原版：give <船夫id> 10000 money → 交钱坐船。
+// 钱由 give 命令扣（回来之后再扣），这里只判断数目对不对，
+// 多给的当场退回去，然后把玩家送上去走同一段 10 秒航程。
 this.on_accept = function (me, objid, count) {
     if (objid !== "money") return false;
+    if (!me.is_player) return false;
     if (count < 10000) {
         me.notify("<red>船夫摇头：到江对面要 1 两黄金（10000 文）。</red>");
         return false;
     }
-    me.set_temp("kw_ferry_paid", 1, 600000);
-    me.notify("<hiy>船夫接过船资，撑起竹篙，渡船缓缓向对岸驶去。</hiy>");
-    me.moveto("kw/jiang");
+    if (count > 10000) me.add_money(count - 10000);   // 多给的退回，只收 1 两
+    var from = (me.environment && me.environment.path) || "";
+    if (from !== "kw/damen" && from !== "kw/chuanchang") {
+        me.notify("船夫把银子推回来：这里没水，坐什么船。");
+        return false;
+    }
+    me.notify("<hiy>船夫接过船资，撑起竹篙，渡船缓缓离岸。</hiy>");
+    me.set_temp("kw_on_boat", 1, 60000);
+    if (me.moveto("kw/jiang", me.name + "登上了渡船。", me.name + "被人扶上了渡船。") === false) {
+        me.remove_temp("kw_on_boat");
+        return true;
+    }
+    var to = (from === "kw/chuanchang") ? "kw/damen" : "kw/chuanchang";
+    if (me.environment && me.environment.start_ride)
+        me.environment.start_ride(me, to);
     return true;
 };
