@@ -6,7 +6,7 @@ this.exits = {
     "west": "kw/xuedi",
     "south": "kw/xuedi",
     "north": "kw/xuedi",
-    "east": "kw/xuedi",
+    "east": "kw/chuanchang",
 };
 this.set_npc([]);
 

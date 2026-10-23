@@ -48,23 +48,25 @@
 			release_time: 0,
 			mp: 25,
 			use: function (me, target, lv) {
+				var t = (me.query_enemy && me.query_enemy()) || target || (me.enemy && me.enemy[0]);
+				if (!t || t === me) return me.notify("你要对谁使用？");
 				var gj = Math.floor(me.gj * 110 / 100);
 				if (me.do_attack({
-					target: target,
+					target: t,
 					gj: gj,
 					mz: me.mz,
 					attack_msg: "<HIY>$N长啸一声，双掌自下而上翻卷而起——「金龙升天」！刹那间掌风呼啸，一道金色龙形气劲自$N掌中升腾而起，蜿蜒盘旋直冲云霄，$n被这股凌厉无匹的掌力笼罩其中，只觉周身大穴尽在$N掌势覆盖之下！</HIY>",
 				})) {
-					target.add_status({
+					t.add_status({
 						id: "miss",
 						name: "金蛇",
 						desc: "你被金蛇游身掌的掌力所困，无法闪避",
 						is_miss: true,
 						duration: 3000 + parseInt(lv * 5),
 						downside: true,
-					});
+					}, me);
 				}
-				me.end_attack(target);
+				me.end_attack(t);
 			},
 			query_desc: function (me, lv) {
 				return "对敌人造成你攻击力110%的伤害，命中后使敌人在8秒内无法闪避";

@@ -35,7 +35,7 @@ this.pfm = {
 		release_time: 3096,
 		mp: 25,
 		use: function (me, target, lv) {
-			var t = target || (me.enemy && me.enemy[0]);
+			var t = (me.query_enemy && me.query_enemy()) || target || (me.enemy && me.enemy[0]);
 			if (!t || t === me) return me.notify("你要对谁使用？");
 			me.send_room("<HIY>$N身形如鬼魅般一晃，施出「金蛇游身」——刹那间化作一缕青烟，整个人如金蛇蜿蜒般绕着$n飞速游走，$n只觉眼前烟影重重，分不清东南西北，仿佛被万千毒蛇缠身！</HIY>");
 			if (me.do_attack({

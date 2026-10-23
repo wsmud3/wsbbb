@@ -36,7 +36,7 @@ this.pfm = {
 		release_time: 3096,
 		mp: 25,
 		use: function (me, target, lv) {
-			var t = target || (me.enemy && me.enemy[0]);
+			var t = (me.query_enemy && me.query_enemy()) || target || (me.enemy && me.enemy[0]);
 			if (!t || t === me) return me.notify("你要对谁使用？");
 			me.send_room("<HIY>$N身形如金蛇蜿蜒——「金蛇游身」！$N整个人如蛇般绕着$n飞速游走，$n只觉眼前蛇影重重，仿佛被万千毒蛇缠身！</HIY>");
 			if (me.do_attack({
