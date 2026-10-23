@@ -31,6 +31,11 @@ this.set_drop({
     odds: 9550
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (me.gender == 2) {
+        me.notify("宫女打量了你一眼，见是同为女子，只冷冷道：此处不是你该来的地方。");
+        return;
+    }
     me.notify("宫女冷喝一声，长剑出鞘，向你刺来！");
     this.do_kill(me);
 };

@@ -6,4 +6,4 @@ this.exits = {
     "north": "ym/zhaoze4",
     "east": "ym/zhaoze3",
 };
-this.set_npc(["ym/auto_2", 1]);
+this.set_npc(["ym/eyu", 2]);

@@ -40,6 +40,6 @@ this.set_drop({
     odds: 3820
 });
 this.on_enter = function (me) {
-    me.notify("花无缺淡淡道：「既入此地，便分个高下吧。」碧血照丹青出鞘，剑光凛冽！");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("花无缺负手而立，淡淡道：你能走到这里，也算有本事。他一动不动，并无出手之意。");
 };

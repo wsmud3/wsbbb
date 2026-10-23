@@ -4,4 +4,4 @@ this.desc = "只见当前一张长桌，上面放着七盏油灯，排成天罡�
 this.exits = {
     "west": "ym/weiqiang",
 };
-this.set_npc(["ym/auto_1", 1]);
+this.set_npc(["ym/yinggu", 1]);

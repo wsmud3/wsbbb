@@ -85,7 +85,7 @@ this.on_leave = function (me, dir) {
     }
     // 11 步走完：还要朝出口方向再走一步
     if (dir === pat.exit) {
-        this.tao_move(me, "th/tao1", "<hig>眼前一亮，你终于走出了桃林迷阵。</hig>");
+        this.tao_move(me, "th/taolin", "<hig>眼前一亮，你终于走出了桃林迷阵。</hig>");
         return false;
     }
     this.tao_move(me, "th/haitan",

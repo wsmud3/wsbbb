@@ -14,10 +14,10 @@ this.set({
     room_path: "th/",
     ss_title: "东邪"
 });
-				this.map = [
-	    // 海滩→桃花林 之间是桃林迷阵 tao0（内部状态房，不占地图格）
+						this.map = [
+	    // 与原版 fb19 map 应答一致（10 节点，north = -y）：「桃花林」就是迷阵那一间
 	    { n: "海滩", id: "th/haitan", p: [0, 0], exits: ["s"] },
-	    { n: "桃花林", id: "th/tao1", p: [0, 1], exits: ["s"] },
+	    { n: "桃花林", id: "th/tao0", p: [0, 1], exits: ["s"] },
 	    { n: "桃林出口", id: "th/taolin", p: [0, 2], exits: ["s"] },
 	    { n: "小路", id: "th/road1", p: [0, 3], exits: ["s"] },
 	    { n: "试剑亭", id: "th/shijianting", p: [0, 4], exits: ["e"] },

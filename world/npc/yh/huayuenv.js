@@ -34,6 +34,11 @@ this.set_drop({
     odds: 5730
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (me.gender == 2) {
+        me.notify("花月奴看了你一眼，见你是女子，收剑退到一旁：姑娘请便。");
+        return;
+    }
     me.notify("花月奴娇叱一声，长剑如花纷落，剑光笼罩四周！");
     this.do_kill(me);
 };

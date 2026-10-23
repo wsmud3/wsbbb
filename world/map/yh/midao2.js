@@ -5,5 +5,5 @@ this.exits = {
     "east": "yh/midao",
     "west": "yh/xiaojing",
 };
-this.set_npc([]);
+this.set_npc(["yh/huawuque", 1]);
 this.set_item("xia", "宝匣", "石头上放着一个宝匣，看起来有些年头了。", []);

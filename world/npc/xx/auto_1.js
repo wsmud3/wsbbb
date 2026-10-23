@@ -1,37 +1,51 @@
 this.inherits(NPC);
 this.set({
-    name: "易直非",
-    desc: "星宿派二师兄，此人功力深厚，是三阴蜈蚣爪的传人。",
+    score: 0,
+    name: "神秘商人 易直非",
+    desc: "一位贩卖各种属性词条石的商人，据说他的石头可以镶嵌到自制装备上。他常年游走于各大副本，也收副本次数换些东西。",
+    title: "",
     gender: 1,
-    age: 31,
-    per: 7,
-    hp: 613200,
-    max_hp: 613200,
-    mp: 130400,
-    max_mp: 130400,
-    score: 160,
-    gj: 48153,
-    fy: 26762,
-    mz: 51702,
-    ds: 35117,
-    zj: 1085
+    age: 40,
+    per: 25,
+    mp: 10000, max_mp: 10000,
+    hp: 10000, max_hp: 10000,
 });
-this.skill_map(
-    ["dodge", 2409],
-    ["parry", 2332],
-    ["force", 2409],
-    ["unarmed", 2409],
-    ["sanyinwugongzhao", 2409, "unarmed"],
-    ["huagongdafa", 2458, "force"]);
-this.set_drop({
-    obj: "money/silver",
-    min: 50,
-    max: 100
-}, {
-    obj: ["book/bc#sanyinwugongzhao", "book/bc#huagongdafa"],
-    odds: 8850
+
+// 商人：不主动叫杀、打不死
+this.add_action("list", "购买词条石", function (me) {
+    me.do_command("list", this.id);
 });
-this.on_enter = function (me) {
-    me.notify("狮吼子怒吼道：想过此处，先接我一招三阴蜈蚣爪！");
-    this.do_kill(me);
+
+this.on_kill = function (me) {
+    return me.notify_fail("竖子尔敢？光天化日朗朗乾坤，竟敢如此！");
+};
+
+this.on_die = function () {
+    return false;
+};
+
+this._goodsCache = null;
+
+this.on_sell = function (me) {
+    if (this._goodsCache) return this._goodsCache;
+
+    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
+    if (!duanzao || !duanzao.PROPS) {
+        me.notify("锻造系统未加载，无法出售词条石。");
+        return [];
+    }
+
+    this._goodsCache = [];
+    for (var propKey in duanzao.PROPS) {
+        var propInfo = duanzao.PROPS[propKey];
+        if (!propInfo || !propInfo.name) continue;
+
+        var stone = OBJ.CREATE("st/p#" + propKey);
+        if (!stone) continue;
+
+        stone.count = -1;   // 充足库存
+        stone.value = 50000; // 单价 5 两黄金（5万铜板）
+        this._goodsCache.push(stone);
+    }
+    return this._goodsCache;
 };

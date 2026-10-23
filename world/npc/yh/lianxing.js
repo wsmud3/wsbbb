@@ -38,6 +38,11 @@ this.set_drop({
     odds: 5730
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (me.gender == 2) {
+        me.notify("涟星宫主柔声道：是个姑娘，倒是难得的客人。");
+        return;
+    }
     me.notify("涟星宫主微微一笑，剑光如涟如星，霎时笼罩四周！");
     this.do_kill(me);
 };

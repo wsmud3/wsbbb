@@ -41,6 +41,11 @@ this.set_drop({
     odds: 5730
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (me.gender == 2) {
+        me.notify("邀月宫主淡淡道：同为女子，我不为难你。说着别过脸去。");
+        return;
+    }
     me.notify("邀月宫主冷若冰霜地注视着你，明玉功真气四溢，寒意刺骨！");
     this.do_kill(me);
 };

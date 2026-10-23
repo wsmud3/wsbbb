@@ -2,7 +2,7 @@ this.inherits(ROOM);
 this.name = "暗道";
 this.desc = "一条幽暗的密道，火折子的微光照亮了前方的路。墙上挂着一只小匣子。";
 this.exits = { "up": "yh/woshi" };
-this.set_npc(["yh/huawuque", 1]);
+this.set_npc([]);
 
 // 原版机制：到暗道使用火折子（没火折子只能退出去重进），点亮后才出现下一个暗道。
 this.on_enter = function (me) {
@@ -20,6 +20,7 @@ this.on_enter = function (me) {
     }
     me.set_temp("yh_andao_light", 1, 7200000);
     me.send_room("$N擦亮火折子，暗道里顿时亮了起来。");
+    me.send_commands("fire", "点火");
 };
 
 // [原版实测] 密道里输入 fire（动作栏「点火」）：

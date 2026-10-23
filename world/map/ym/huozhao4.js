@@ -4,4 +4,4 @@ this.desc = "你站在齐腰深的水里，周围是烧得乌黑的古树和芦�
 this.exits = {
     "south": "ym/huozhao3",
 };
-this.set_npc([]);
+this.set_npc(["ym/huolongwang", 1]);

@@ -16,17 +16,21 @@ const STEP_NEED = 14;
 
 this.on_leave = function (me, dir) {
     if (!me.is_player) return true;
+    if (!dir) return true;                                  // cr over 等非方向移动，放行
+    if (me.query_temp("yh_huajing_leave")) return true;     // 我们自己放行的那一次
     if (dir === "south") {
         var n = (me.query_temp("yh_huajing_step") || 0) + 1;
         if (n >= STEP_NEED) {
             me.remove_temp("yh_huajing_step");
             me.send_room("你走了半天，终于走出了花径。");
+            me.set_temp("yh_huajing_leave", 1, 10000);
             me.moveto("yh/yihua1");
+            me.remove_temp("yh_huajing_leave");
             return false;
         }
         me.set_temp("yh_huajing_step", n, 7200000);
         me.notify("<hiy>你沿着花径往南走（" + n + "/" + STEP_NEED + "）。</hiy>");
-        return true;
+        return false;                                       // 关键：不真的移动出去
     }
     if (me.query_temp("yh_huajing_step")) {
         me.remove_temp("yh_huajing_step");
