@@ -15,19 +15,21 @@
 		    ss_title: "娜美鲁多"
 		});
 		this.map = [
-	    { n: "衡阳城", id: "hs2/hengyang", p: [0, 0], exits: ["w","e"] },
-	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n","e"] },
-	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["s","n"] },
-	    { n: "刘府大院", id: "hs2/liufudayuan", p: [-1, -2], exits: ["n","s"] },
-	    { n: "刘府大厅", id: "hs2/liufudating", p: [-1, -3], exits: ["n","s"] },
-	    { n: "东厢房", id: "hs2/liufudating", p: [0, -3], exits: ["n","s"] },
-	    { n: "西厢房", id: "hs2/liufudating", p: [-2, -3], exits: ["n","s"] },
-	    { n: "山路", id: "hs2/shanlu", p: [1, 0], exits: ["w","se"] },
-	    { n: "南天门", id: "hs2/nantianmen", p: [2, 1], exits: ["nw","s"] },
-	    { n: "狮子岩", id: "hs2/shiziyan", p: [2, 2], exits: ["e","n"] },
-	    { n: "望日台", id: "hs2/wangritai", p: [3, 2], exits: ["s","w"] },
-	    { n: "祝融殿", id: "hs2/zhurongdian", p: [3, 3], exits: ["n","s"] },
-	    { n: "祝融峰", id: "hs2/zhurongfeng", p: [3, 4], exits: ["n"] },
+	    // 与 fb15 原版 map 应答一一对应（13 个节点）。原版里「东厢房/西厢房」和「刘府大厅」
+	    // 共用同一个 id，这里拆成三间真实房间，坐标仍按原版 p。
+	    { n: "衡阳城", id: "hs2/hengyang", p: [0, 0], exits: ["e","w"] },
+	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n"] },
+	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["n"] },
+	    { n: "刘府大院", id: "hs2/liufudayuan", p: [-1, -2], exits: ["n"] },
+	    { n: "刘府大厅", id: "hs2/liufudating", p: [-1, -3], exits: ["e","w"] },
+	    { n: "东厢房", id: "hs2/dongxiang", p: [0, -3], exits: [] },
+	    { n: "西厢房", id: "hs2/xixiang", p: [-2, -3], exits: [] },
+	    { n: "山路", id: "hs2/shanlu", p: [1, 0], exits: ["se"] },
+	    { n: "南天门", id: "hs2/nantianmen", p: [2, 1], exits: ["s"] },
+	    { n: "狮子岩", id: "hs2/shiziyan", p: [2, 2], exits: ["e"] },
+	    { n: "望日台", id: "hs2/wangritai", p: [3, 2], exits: ["s"] },
+	    { n: "祝融殿", id: "hs2/zhurongdian", p: [3, 3], exits: ["s"] },
+	    { n: "祝融峰", id: "hs2/zhurongfeng", p: [3, 4], exits: [] },
 		];
 		this.drops = [
 		    "book/bc#chuanyunzong",
