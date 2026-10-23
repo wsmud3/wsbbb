@@ -33,7 +33,12 @@ this.set({
 	    { n: "练武场", id: "gm/lianwu", p: [0, -2], exits: ["s","e","n"] },
 	    { n: "山崖", id: "gm/shanya", p: [2, -1], exits: ["w"] },
 	    { n: "断崖", id: "gm/duanya", p: [2, -2], exits: ["e"] },
+	    { n: "聚议厅", id: "gm/juyiting", p: [0, -3], exits: ["s","n"] },
 	    { n: "圣火堂", id: "gm/shenghuotang", p: [0, -4], exits: ["s"] },
+	    { n: "小厅", id: "gm/xiaoting", p: [-1, -4], exits: ["e","n"] },
+	    { n: "后院", id: "gm/houyuan", p: [-1, -5], exits: ["n","w","s"] },
+	    { n: "西厢", id: "gm/xixiang", p: [-2, -5], exits: ["e"] },
+	    { n: "北厢", id: "gm/beixiang", p: [-1, -6], exits: ["s"] },
 		];
 	this.drops = [
 	    "book/bc#shenghuoshengong",
