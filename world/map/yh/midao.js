@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "暗道";
 this.desc = "一条幽暗的密道，火折子的微光照亮了前方的路。墙上挂着一只小匣子。";
-this.exits = { "north": "yh/woshi" };
+this.exits = { "up": "yh/woshi" };
 this.set_npc(["yh/huawuque", 1]);
 
 // 原版机制：到暗道使用火折子（没火折子只能退出去重进），点亮后才出现下一个暗道。
