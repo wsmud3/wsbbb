@@ -50,8 +50,8 @@ this.set_drop({
 
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
-    if (this._wf_awarded) return;
-    this._wf_awarded = true;
+    if (killer.query_temp("wf_aw_xs")) return;
+    killer.set_temp("wf_aw_xs", 1, 7200000);
     killer.add_fbscore(20);
     killer.set_temp("wf_jinshe_dead", 1, 7200000);
 };

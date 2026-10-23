@@ -54,10 +54,10 @@ this.on_enter = function (me) {
 };
 
 // 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算
+
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
-    if (this._wf_awarded) return;
-    this._wf_awarded = true;
+    if (killer.query_temp("wf_aw_wenfangshi")) return;
+    killer.set_temp("wf_aw_wenfangshi", 1, 7200000);
     killer.add_fbscore(16);
-    
 };

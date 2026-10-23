@@ -23,7 +23,7 @@ this.on_leave = function (me, dir) {
 // 进入温府（大门）时清空上一趟残留的 wf_ 标记，保证每次都是全新一趟
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    var keys = ["wf_jinshe_dead", "wf_fangda_dead", "wf_wenlaoda", "wf_zhen_start", "wf_zhen_done", "wf_entered",
+    var keys = ["wf_aw_da", "wf_aw_xs", "wf_aw_wenfangyi", "wf_aw_wenfangshan", "wf_aw_wenfangshi", "wf_aw_wenfangnan", "wf_jinshe_dead", "wf_fangda_dead", "wf_wenlaoda", "wf_zhen_start", "wf_zhen_done", "wf_entered",
         "wf_zhuang_spawned", "wf_zhuang_clear", "wf_jinshe_spawned",
         "wf_jinshe_done", "wf_tingzi_spawned", "wf_tingzi_done",
         "wf_wufangda_dead", "wf_zhen_full", "wf_zhen_awarded", "wf_jinshe_award"];

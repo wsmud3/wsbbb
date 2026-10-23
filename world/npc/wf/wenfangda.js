@@ -56,12 +56,13 @@ this.on_enter = function (me) {
 // 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算
 
 // 温方达：在木桩阵法里被杀给 16 分；在大厅先被杀只给 15 分 —— 因此先杀他最多 99%。
+
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
-    if (this._wf_awarded) return;
-    this._wf_awarded = true;
+    if (killer.query_temp("wf_aw_da")) return;
+    killer.set_temp("wf_aw_da", 1, 7200000);
     var inZhen = killer.query_temp("wf_zhuang_spawned");
     killer.add_fbscore(inZhen ? 16 : 15);
     killer.set_temp("wf_fangda_dead", 1, 7200000);
-    if (!inZhen) killer.notify("<hir>温方达死于阵外——温家五老阵法不完整，这一趟最多 99%。</hir>");
+    if (!inZhen) killer.notify("<hir>温方达死于阵外——这一趟最多 99%。</hir>");
 };

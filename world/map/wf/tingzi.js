@@ -58,6 +58,18 @@ this.pull_brothers = function (me) {
         var np = NPC.CREATE(WF_SPAWN[j], this);
         if (np) { np.do_kill(me); moved++; }
     }
+    // 兜底点名：五兄弟逐个检查，缺谁补谁（温方达若已死则不补）
+    var ALL = ["wf/wenfangda", "wf/wenfangyi", "wf/wenfangshan", "wf/wenfangshi", "wf/wenfangnan"];
+    for (var q = 0; q < ALL.length; q++) {
+        var np = ALL[q], has = false;
+        for (var w = 0; w < this.items.length; w++) {
+            if (this.items[w] && this.items[w].path === np && this.items[w].hp > 0) { has = true; break; }
+        }
+        if (has) continue;
+        if (np === "wf/wenfangda" && me.query_temp("wf_fangda_dead")) continue;
+        var made2 = NPC.CREATE(np, this);
+        if (made2) { made2.do_kill(me); moved++; }
+    }
     return moved;
 };
 
