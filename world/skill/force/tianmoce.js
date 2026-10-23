@@ -34,6 +34,16 @@ this.learn_condition = {
 	desc: "武神"
 };
 
+// 原版门槛：需「武神」境界（me.level === 6）才能参悟
+this.do_learn = function (me) {
+    if ((me.level || 0) < 6) {
+        me.notify("只有踏入「<ord>武神</ord>」境界之人，才能参悟" + this.color_name + "。");
+        return false;
+    }
+    return true;
+};
+
+
 this.query_enable_prop = function (lv) {
 		return {
 		force: {
