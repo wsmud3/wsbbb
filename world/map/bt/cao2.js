@@ -2,8 +2,8 @@ this.inherits(ROOM);
 this.name = "草丛";
 this.desc = "再往北走，蒿草更深，几乎没到胸口。草叶上凝着露水，脚下一阵阵发凉，草丛深处有鳞片擦过枯枝的细响。";
 this.exits = {
-    "south": "bt/caocong",
-    "north": "bt/yandong"
+    "south": "bt/cao1",
+    "north": "bt/dong"
 };
 
 // [mech] 北面草丛又有一条毒蛇，再往北走到底便是岩洞（攻略原文）
