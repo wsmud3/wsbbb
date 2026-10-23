@@ -15,13 +15,7 @@ this.set({
     ss_title: "中神通"
 });
 		this.map = [
-	    { n: "西峰", id: "hslj/west", p: [-2, -1], exits: ["e"] },
-	    { n: "绝壁", id: "hslj/juebi", p: [-2, 2], exits: [] },
-	    { n: "北峰", id: "hslj/north", p: [-1, -2], exits: ["s"] },
-	    { n: "论剑台", id: "hslj/tai", p: [-1, -1], exits: ["n", "s", "e", "w"] },
-	    { n: "南峰", id: "hslj/south", p: [-1, 0], exits: ["n"] },
-	    { n: "东峰", id: "hslj/east", p: [0, -1], exits: ["w"] },
-	    { n: "论剑台下", id: "hslj/leitaixia", p: [0, 0], exits: [] },
+	    { n: "论剑台", id: "hslj/tai", p: [0, 0], exits: ["w","e","s","n"] },
 		];
 		this.drops = [
 	    "book/bc#duanjiajian",
