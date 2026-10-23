@@ -1,7 +1,7 @@
 this.inherits(NPC);
 this.set({
     name: "田伯光",
-    desc: "一个身形消瘦的男子，手持一柄快刀，双目如鹰，嘴角带着一丝淫邪的笑意。他便是臭名昭著的采花大盗田伯光，一身狂风刀法快如闪电，轻功更是出神入化。此人极难对付，据说要连杀四次才能真正将他置于死地。",
+    desc: "一个身形消瘦的男子，手持一柄快刀，双目如鹰，嘴角带着一丝淫邪的笑意。他便是臭名昭著的采花大盗田伯光，一身狂风刀法快如闪电，轻功更是出神入化。此人极难对付，据说要连杀三次才能真正将他置于死地。",
     title: "<hri>万里独行</hri>",
     gender: 1,
     age: 35,
@@ -9,7 +9,7 @@ this.set({
     max_hp: 272000,
     mp: 94600,
     max_mp: 94600,
-    score: 55,
+    score: 0,
     gj: 19632,
     fy: 13348,
     mz: 17168,
@@ -48,29 +48,52 @@ this.on_enter = function (me) {
     this.do_kill(me);
 };
 
-// 原版机制（攻略第 13 节）：杀死四次田伯光达成 100% 完成度。
-// 前三次他会随机逃跑到恒山某个房间，每次 30%；最后一次 10%。
-// 注意三定会主动叫杀，尽量避开；田伯光有时会跑到三定那里。
-var TBG_ROOMS = ["hs/daziling", "hs/guolaoling", "hs/hufengkou", "hs/tongyuangu",
-    "hs/xilang", "hs/donglang", "hs/zaitang", "hs/liangongfang", "hs/baiyunan"];
-this.on_die = function (me) {
-    if (!me) return true;
-    var cnt = me.query_temp("hs_tbg") || 0;
-    if (cnt < 3) {
-        me.set_temp("hs_tbg", cnt + 1, 7200000);
-        me.add_fbscore(30);
-        me.notify("<hiy>田伯光中了你一刀，却怪笑一声翻身掠走——这已经是第 " + (cnt + 1) + " 次让他跑了！</hiy>");
-        // 逃到随机的恒山房间
-        var path = TBG_ROOMS[Math.floor(Math.random() * TBG_ROOMS.length)];
-        var room = ROOM.Get(path);
-        if (room && this.environment) {
-            this.send_room("$N身形一晃，已经不知去向。");
-            this.environment.item_changed(this, false);
-            room.item_changed(this, true);
-        }
-        return false;   // 不死，hp 会被重置为 1
+// ────────────────────────────────────────────────────────────
+// 原版机制（攻略第 13 节）：
+//   杀田伯光拿完成度——前三次他挨一刀就怪笑着逃走、随机落到恒山另一间房，
+//   第三次（最后一刀）才真的死在刀下；三次合计 30 + 30 + 40 = 100%。
+//
+// 注意两个坑：
+//   1) die() 里 on_die 返回 false 之后引擎会把 hp 置成 1，
+//      所以这里必须趁他换房间再把血补满，否则下一照面又秒。
+//   2) 之前用 ROOM.Get(path) 直接塞房间，塞进的是**模板房**而不是玩家这局的副本，
+//      人等于凭空消失；必须用本队副本实例（query_copy）。
+// ────────────────────────────────────────────────────────────
+this.tbg_killed = 0;
+
+this.tbg_escape = function (killer) {
+    var here = this.environment;
+    if (!here || !here.parent) return;
+    var area = here.parent;
+    var team = killer && killer.query_teamid ? killer.query_teamid() : here.owner;
+    if (!area.rooms) return;
+    var cands = [];
+    for (var i = 0; i < area.rooms.length; i++) {
+        var cp = area.rooms[i].query_copy(team);
+        if (!cp || cp === here) continue;      // 排除他现在待的这间
+        cands.push(cp);
     }
-    me.remove_temp("hs_tbg");
-    me.notify("<hig>田伯光再也逃不动了，这一次他终于倒在你刀下。</hig>");
+    if (!cands.length) return;
+    var dest = cands[Math.floor(Math.random() * cands.length)];
+    this.moveto(dest, this.name + "身形一晃，已经不知去向。", this.name + "怪笑着从窗外翻进来，落地无声。");
+};
+
+this.on_die = function (me) {
+    if (!me || !me.is_player) return true;
+    if (this.tbg_killed < 2) {
+        this.tbg_killed++;
+        me.add_fbscore(30);
+        me.notify("田伯光中了你一刀，却怪笑一声翻身掠走");
+        this.tbg_escape(me);
+        // die() 之后会把 hp 压到 1，趁他换房间补满，等下次照面再正经打一场
+        this.call_out(function () {
+            this.hp = this.max_hp;
+            this.mp = this.max_mp;
+            this.clear_status && this.clear_status();
+        }, 200);
+        return false;   // 不死
+    }
+    me.add_fbscore(40);
+    me.notify("<hig>田伯光第三次中刀，怪笑声戛然而止，终于倒在你刀下。</hig>");
     return true;
 };
