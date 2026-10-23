@@ -79,8 +79,24 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
             this.pull_brothers(me);
             return true;
         }
-        // 金蛇郎君已死 → 木桩后没人了；否则可以反复跳回小院
-        if (me.query_temp("wf_jinshe_dead")) {
+        // 直接扫本副本所有房间：只要曾经生成过金蛇郎君、且现在没有活着的，就不让再跳
+        var area = me.environment && me.environment.parent;
+        var ownerNow = me.environment && me.environment.owner;
+        var xsSeen = false, xsAlive = false;
+        if (area && area.rooms) {
+            for (var ai = 0; ai < area.rooms.length; ai++) {
+                var ar = area.rooms[ai];
+                if (!ar || ar.owner !== ownerNow || !ar.items) continue;
+                for (var aj = 0; aj < ar.items.length; aj++) {
+                    var ao = ar.items[aj];
+                    if (ao && ao.path === "wf/jinshelangjun") {
+                        xsSeen = true;
+                        if (ao.hp > 0) xsAlive = true;
+                    }
+                }
+            }
+        }
+        if (xsSeen && !xsAlive) {
             me.notify("<hiy>木桩后已经没人了。</hiy>");
             return true;
         }
