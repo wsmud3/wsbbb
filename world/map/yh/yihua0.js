@@ -2,8 +2,8 @@ this.inherits(ROOM);
 this.name = "花径";
 this.desc = "这是一片谷底的小路。四周一望无际，全是盛开的鲜花。微风拂过，蜜蜂到飞舞。香气逼人。往北是一片玫瑰花，往南则是一个大门。";
 this.exits = {
-    "north": "yh/yihua0",
-    "south": "yh/yihua0",
+    "north": "yh/shandao",
+    "south": "yh/yihua1",
     "east": "yh/yihua0",
     "west": "yh/yihua0",
 };
@@ -21,7 +21,7 @@ this.on_leave = function (me, dir) {
         if (n >= STEP_NEED) {
             me.remove_temp("yh_huajing_step");
             me.send_room("你走了半天，终于走出了花径。");
-            me.moveto("yh/damen");
+            me.moveto("yh/yihua1");
             return false;
         }
         me.set_temp("yh_huajing_step", n, 7200000);

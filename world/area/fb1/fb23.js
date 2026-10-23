@@ -5,7 +5,7 @@ this.set({
     desc: "移花宫深藏山谷之中，繁花似锦，美不胜收。邀月怜星二位宫主武功高绝，明玉功震慑武林，宫中暗藏通往外界的地道。",
     score: 220,
     is_show: true,
-    first: "yh/damen",
+    first: "yh/shandao",
     is_copy: true,
     expend: 10,
     is_multi: true,
@@ -14,20 +14,22 @@ this.set({
     room_path: "yh/",
     ss_title: "移花宫主"
 });
-		this.map = [
+				this.map = [
+	    // 15 个节点与原版 fb23 map 应答一一对应；每条连线只从一侧写一次（north = -y）
 	    { n: "山道", id: "yh/shandao", p: [0, 0], exits: ["s"] },
-	    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: ["n","s","e","w"] },
+	    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: ["s"] },
+	    { n: "花径", id: "yh/yihua1", p: [0, 2], exits: ["s"] },
 	    { n: "大门", id: "yh/damen", p: [0, 3], exits: ["s"] },
-	    { n: "移花阁", id: "yh/yihuage", p: [0, 4], exits: ["n","s"] },
-	    { n: "桂花廊", id: "yh/changlang", p: [0, 5], exits: ["n","s"] },
-	    { n: "玫瑰廊", id: "yh/changlang1", p: [0, 6], exits: ["n","sw","se"] },
-	    { n: "邀月宫", id: "yh/yaoyuegong", p: [-1, 7], exits: ["se","ne"] },
-	    { n: "涟星宫", id: "yh/lianxinggong", p: [1, 7], exits: ["sw","nw"] },
+	    { n: "移花阁", id: "yh/yihuage", p: [0, 4], exits: ["s"] },
+	    { n: "桂花廊", id: "yh/changlang", p: [0, 5], exits: ["s"] },
+	    { n: "玫瑰廊", id: "yh/changlang1", p: [0, 6], exits: ["sw","se"] },
+	    { n: "邀月宫", id: "yh/yaoyuegong", p: [-1, 7], exits: [] },
+	    { n: "涟星宫", id: "yh/lianxinggong", p: [1, 7], exits: [] },
 	    { n: "卧室", id: "yh/woshi", p: [0, 8], exits: ["nw","ne"] },
-	    { n: "暗道", id: "yh/midao", p: [0, 9], exits: ["u"] },
-	    { n: "密室", id: "yh/midao2", p: [-1, 9], exits: ["e","w"] },
+	    { n: "暗道", id: "yh/midao", p: [0, 9], exits: [] },
+	    { n: "密室", id: "yh/midao2", p: [-1, 9], exits: ["e"] },
 	    { n: "小径", id: "yh/xiaojing", p: [-2, 9], exits: ["e","w"] },
-	    { n: "莲花池", id: "yh/lianhuachi", p: [-3, 9], exits: ["s","n"] },
+	    { n: "莲花池", id: "yh/lianhuachi", p: [-3, 9], exits: [] },
 		];
 this.drops = [
     "book/bc#mingyugong", "book/bc#yihuajiemu", "book/bc#yifengjianfa",
