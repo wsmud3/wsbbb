@@ -30,6 +30,7 @@ this.on_accept = function (me, objid, count) {
         me.notify("<red>船夫摇头：到江对面要 1 两黄金（10000 文）。</red>");
         return false;
     }
+    me.set_temp("kw_ferry_paid", 1, 600000);
     me.notify("<hiy>船夫接过船资，撑起竹篙，渡船缓缓向对岸驶去。</hiy>");
     me.moveto("kw/jiang");
     return true;

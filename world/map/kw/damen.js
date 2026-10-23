@@ -26,6 +26,7 @@ this.set_item("duchuan", "渡船", "一条不大的渡船系在岸边，船夫�
             return true;
         }
         me.money -= 10000;
+        me.set_temp("kw_ferry_paid", 1, 600000);
         me.notify("<hiy>船夫接过船资，撑起竹篙，渡船缓缓向对岸驶去。</hiy>");
         me.moveto("kw/jiang");
         return true;

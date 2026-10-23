@@ -29,6 +29,9 @@ this.skill_map(
     ["sixiangbu", 1364, "dodge"],
     ["lengyueshengong", 1344, "force"]);
 this.set_drop({
+    obj: "sp/kw/yanjitoulu",
+    odds: 5000
+}, {
     obj: "money/silver",
     min: 50,
     max: 100
