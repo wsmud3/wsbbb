@@ -47,10 +47,11 @@ this.set_drop({
 });
 
 // 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算
+
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
     if (this._wf_awarded) return;
     this._wf_awarded = true;
     killer.add_fbscore(20);
-    
+    killer.set_temp("wf_jinshe_dead", 1, 7200000);
 };

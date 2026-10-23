@@ -79,20 +79,8 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
             this.pull_brothers(me);
             return true;
         }
-        // 小院里金蛇郎君还活着 → 可以反复跳回去；他死了才提示没人
-        var tpl0 = ROOM.Get("wf/xiaoyuan");
-        if (!tpl0) return true;
-        var cur0 = me.environment;
-        var owner0 = cur0 && cur0.owner;
-        var xy0 = owner0 ? tpl0.query_copy(owner0) : null;
-        var xsAlive = false;
-        if (xy0 && xy0.items) {
-            for (var q0 = 0; q0 < xy0.items.length; q0++) {
-                var t0 = xy0.items[q0];
-                if (t0 && t0.path === "wf/jinshelangjun" && t0.hp > 0) { xsAlive = true; break; }
-            }
-        }
-        if (!xsAlive && me.query_temp("wf_jinshe_spawned")) {
+        // 金蛇郎君已死 → 木桩后没人了；否则可以反复跳回小院
+        if (me.query_temp("wf_jinshe_dead")) {
             me.notify("<hiy>木桩后已经没人了。</hiy>");
             return true;
         }
