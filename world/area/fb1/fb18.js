@@ -14,17 +14,18 @@
 	    room_path: "ym/",
 	    ss_title: "黑沼之主"
 	});
-		this.map = [
+				this.map = [
+	    // 云梦沼泽4→洪荒古泽1 的路是砍开芦苇动态开的，故不画静态连线
 	    { n: "森林", id: "ym/senlin", p: [0, 0], exits: ["e"] },
-	    { n: "云梦沼泽", id: "ym/zhaoze1", p: [1, 0], exits: ["w","n"] },
-	    { n: "云梦沼泽", id: "ym/zhaoze2", p: [1, -1], exits: ["s","n"] },
-	    { n: "云梦沼泽", id: "ym/zhaoze3", p: [2, -1], exits: [] },
+	    { n: "云梦沼泽", id: "ym/zhaoze1", p: [1, 0], exits: ["n"] },
+	    { n: "云梦沼泽", id: "ym/zhaoze2", p: [1, -1], exits: ["n","e"] },
+	    { n: "云梦沼泽", id: "ym/zhaoze3", p: [2, -1], exits: ["n"] },
 	    { n: "云梦沼泽", id: "ym/zhaoze4", p: [1, -2], exits: [] },
 	    { n: "洪荒古泽", id: "ym/huozhao1", p: [1, -3], exits: ["n"] },
-	    { n: "洪荒古泽", id: "ym/huozhao2", p: [1, -4], exits: ["n","s"] },
-	    { n: "洪荒古泽", id: "ym/huozhao3", p: [1, -5], exits: ["n","s"] },
-	    { n: "洪荒古泽", id: "ym/huozhao4", p: [1, -6], exits: ["s"] },
-	    { n: "围墙", id: "ym/weiqiang", p: [2, -2], exits: [] },
+	    { n: "洪荒古泽", id: "ym/huozhao2", p: [1, -4], exits: ["n"] },
+	    { n: "洪荒古泽", id: "ym/huozhao3", p: [1, -5], exits: ["n"] },
+	    { n: "洪荒古泽", id: "ym/huozhao4", p: [1, -6], exits: [] },
+	    { n: "围墙", id: "ym/weiqiang", p: [2, -2], exits: ["e"] },
 	    { n: "茅屋", id: "ym/maowu", p: [3, -2], exits: [] },
 		];
 	this.drops = [

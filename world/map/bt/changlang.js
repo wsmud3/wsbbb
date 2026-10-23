@@ -4,5 +4,6 @@ this.desc = "这里是非常气派的长廊。北边是间休息室。南边有�
 this.exits = {
     "south": "bt/yaofang",
     "west": "bt/ximen",
+    "east": "bt/liangong",
 };
 this.set_npc([]);

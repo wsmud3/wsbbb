@@ -14,17 +14,18 @@ this.set({
     room_path: "th/",
     ss_title: "东邪"
 });
-		this.map = [
+				this.map = [
+	    // 海滩→桃花林 之间是桃林迷阵 tao0（内部状态房，不占地图格）
 	    { n: "海滩", id: "th/haitan", p: [0, 0], exits: ["s"] },
-	    { n: "桃花林", id: "th/tao1", p: [0, 1], exits: ["s","n"] },
-	    { n: "桃林出口", id: "th/taolin", p: [0, 2], exits: ["n","s"] },
-	    { n: "小路", id: "th/road1", p: [0, 3], exits: ["s","n"] },
-	    { n: "试剑亭", id: "th/shijianting", p: [0, 4], exits: ["e","n"] },
-	    { n: "大门", id: "th/damen", p: [1, 4], exits: ["e","w"] },
-	    { n: "前院", id: "th/qianyuan", p: [2, 4], exits: ["e","w"] },
-	    { n: "大厅", id: "th/dating", p: [3, 4], exits: ["e","w"] },
-	    { n: "书房", id: "th/shufang", p: [4, 4], exits: ["w"] },
-	    { n: "卧室", id: "th/woshi", p: [3, 3], exits: ["s"] },
+	    { n: "桃花林", id: "th/tao1", p: [0, 1], exits: ["s"] },
+	    { n: "桃林出口", id: "th/taolin", p: [0, 2], exits: ["s"] },
+	    { n: "小路", id: "th/road1", p: [0, 3], exits: ["s"] },
+	    { n: "试剑亭", id: "th/shijianting", p: [0, 4], exits: ["e"] },
+	    { n: "大门", id: "th/damen", p: [1, 4], exits: ["e"] },
+	    { n: "前院", id: "th/qianyuan", p: [2, 4], exits: ["e"] },
+	    { n: "大厅", id: "th/dating", p: [3, 4], exits: ["e","n"] },
+	    { n: "书房", id: "th/shufang", p: [4, 4], exits: [] },
+	    { n: "卧室", id: "th/woshi", p: [3, 3], exits: [] },
 		];
 this.drops = [
     "book/bc#jinyangong","book/bc#anyingfuxiang",

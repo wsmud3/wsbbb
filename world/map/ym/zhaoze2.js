@@ -4,5 +4,6 @@ this.desc = "你眼前是一片一望无际的芦苇荡。眺望远处，芦苇�
 this.exits = {
     "south": "ym/zhaoze1",
     "north": "ym/zhaoze4",
+    "east": "ym/zhaoze3",
 };
 this.set_npc(["ym/auto_2", 1]);

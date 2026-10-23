@@ -14,19 +14,20 @@ this.set({
     room_path: "bt/",
     ss_title: "西毒"
 });
-		this.map = [
+				this.map = [
+	    // 坐标取自原版 map 应答（north = -y）；每条连线只从一侧写一次
 	    { n: "大门", id: "bt/damen", p: [0, 0], exits: ["n"] },
-	    { n: "练武场", id: "bt/liangong", p: [0, -1], exits: ["n","w","s"] },
-	    { n: "长廊", id: "bt/changlang", p: [-1, -1], exits: ["s","w"] },
-	    { n: "药房", id: "bt/yaofang", p: [-1, 0], exits: ["n"] },
-	    { n: "西门", id: "bt/ximen", p: [-2, -1], exits: ["w","e"] },
-	    { n: "草丛", id: "bt/cao1", p: [-3, -1], exits: ["e"] },
-	    { n: "草丛", id: "bt/cao2", p: [-3, -2], exits: ["s","n"] },
-	    { n: "竹林", id: "bt/zhulin", p: [-3, -3], exits: ["n","s","e"] },
-	    { n: "石洞", id: "bt/dong", p: [-3, -4], exits: ["s"] },
-	    { n: "门廊", id: "bt/menlang", p: [0, -2], exits: ["n","s"] },
-	    { n: "花园", id: "bt/huayuan", p: [0, -3], exits: ["n","s"] },
-	    { n: "大厅", id: "bt/dating", p: [0, -4], exits: ["s"] },
+	    { n: "练武场", id: "bt/liangong", p: [0, -1], exits: ["w","n"] },
+	    { n: "长廊", id: "bt/changlang", p: [-1, -1], exits: ["w","s"] },
+	    { n: "药房", id: "bt/yaofang", p: [-1, 0], exits: [] },
+	    { n: "西门", id: "bt/ximen", p: [-2, -1], exits: ["w"] },
+	    { n: "草丛", id: "bt/cao1", p: [-3, -1], exits: ["n"] },
+	    { n: "草丛", id: "bt/cao2", p: [-3, -2], exits: ["n"] },
+	    { n: "竹林", id: "bt/zhulin", p: [-3, -3], exits: ["n"] },
+	    { n: "石洞", id: "bt/dong", p: [-3, -4], exits: [] },
+	    { n: "门廊", id: "bt/menlang", p: [0, -2], exits: ["n"] },
+	    { n: "花园", id: "bt/huayuan", p: [0, -3], exits: ["n"] },
+	    { n: "大厅", id: "bt/dating", p: [0, -4], exits: [] },
 		];
 this.drops = [
     "book/bc#lingshezhangfa", "book/bc#chanchubufa", "book/bc#hamagong",
