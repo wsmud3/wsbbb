@@ -21,3 +21,24 @@ this.on_enter = function (me) {
     me.set_temp("yh_andao_light", 1, 7200000);
     me.send_room("$N擦亮火折子，暗道里顿时亮了起来。");
 };
+
+// [原版实测] 密道里输入 fire（动作栏「点火」）：
+//   fire → 「你点燃了火折，发现密道中似乎有一条路可以走过去。」
+//   之后密道出口变成 up→卧室 和 west→密室(midao2)
+this.add_action("fire", null, function (me) {
+    if (!me.is_player) return true;
+    var has = null;
+    if (me.items) {
+        for (var i = 0; i < me.items.length; i++) {
+            if (me.items[i] && me.items[i].path === "res/huozhezi") { has = me.items[i]; break; }
+        }
+    }
+    if (!has) {
+        me.notify("<red>你身上没有火折，点不着火。</red>");
+        return true;
+    }
+    me.send_room("$N点燃了火折，发现密道中似乎有一条路可以走过去。");
+    this.add_exit("west", "yh/midao2");
+    me.notify("<hig>西面出现了一条通路。</hig>");
+    return true;
+});

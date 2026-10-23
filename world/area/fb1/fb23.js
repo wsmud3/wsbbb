@@ -25,6 +25,9 @@ this.set({
 	    { n: "涟星宫", id: "yh/lianxinggong", p: [1, 7], exits: ["sw","nw"] },
 	    { n: "卧室", id: "yh/woshi", p: [0, 8], exits: ["nw","ne"] },
 	    { n: "暗道", id: "yh/midao", p: [0, 9], exits: ["u"] },
+	    { n: "密室", id: "yh/midao2", p: [-1, 9], exits: ["e","w"] },
+	    { n: "小径", id: "yh/xiaojing", p: [-2, 9], exits: ["e","w"] },
+	    { n: "莲花池", id: "yh/lianhuachi", p: [-3, 9], exits: ["s","n"] },
 		];
 this.drops = [
     "book/bc#mingyugong", "book/bc#yihuajiemu", "book/bc#yifengjianfa",
