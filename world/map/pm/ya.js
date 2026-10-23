@@ -6,3 +6,19 @@ this.exits = {
     "southdown": "pm/shanjiao"
 };
 this.set_npc(["pm/auto_1", 1], ["pm/bupingdaoren", 1], ["pm/auto_3", 1]);
+
+// 原版机制（攻略第 26 节）：杀完乌老大/不平道人后，过铁索桥去李秋水那边。
+// 目标房间 id 已按原版改为 pm/xianchou。
+this.set_item("tiesuo", "铁索桥", "一条横跨深涧的铁索，山风一吹便晃晃悠悠。", [
+    ["guoqiao", "过铁索桥", function (me) {
+        if (!me.is_player) return true;
+        var ds = me.query_prop ? (me.query_prop("ds") || 0) : 0;
+        if (ds < 10000) {
+            me.notify("<red>铁索在风里晃得厉害，你的闪避（" + ds + "）不足 10000，踏上去就要掉下去。</red>");
+            return true;
+        }
+        me.moveto("pm/xianchou", me.name + "踏索而过。", me.name + "从铁索桥上落了地。");
+        me.notify("<hig>你稳稳当当走过了铁索桥。</hig>");
+        return true;
+    }]
+]);
