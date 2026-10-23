@@ -18,9 +18,9 @@ this.desc = "以阴阳八卦为基础创造出来的一式拳法";
 //<$1>$2</$1>
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { unarmed: 200 }
-	};
+	max_mp: 200,
+	skill: { unarmed: 300 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

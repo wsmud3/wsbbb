@@ -22,8 +22,8 @@ this.parry_actions = [
 this.desc = "大理段氏所藏有的超强剑气绝学，能够以指尖激荡出破体剑气伤人于无形";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 12000,
-	skill: { unarmed: 1200 }
+	max_mp: 50000,
+	skill: { unarmed: 1000 }
 };
 
 this.on_attack_over = function (me, target, par, sh) {

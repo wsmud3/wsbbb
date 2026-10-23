@@ -21,8 +21,9 @@
     this.desc = "玄铁剑法，重剑无锋，大巧不工，越是平平无奇的剑招，对方越难抗御。如挺剑直刺，只要劲力强猛，威力远比变幻奇妙的剑招威力更大";
     this.can_enables = ["sword", "parry"];
     this.learn_condition = {
-        max_mp: 8000,
-        skill: { sword: 800 }
+    	max_mp: 50000,
+    	str: 50,
+    	skill: { sword: 1000 }
     };
 
     this.on_before_attack = function (me, target, par) {

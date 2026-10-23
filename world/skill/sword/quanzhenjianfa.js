@@ -22,9 +22,9 @@
 	this.desc = "全真教正宗剑法，中正平和";
 	this.can_enables = ["sword", "parry"];
 	this.learn_condition = {
-		max_mp: 3000,
-		skill: { sword: 300 }
-		};
+		max_mp: 5600,
+		skill: { sword: 400 }
+	};
 
 	this.query_enable_prop = function (lv) {
 		return {

@@ -22,8 +22,8 @@
 			"$n步法灵动，以暗器封住周身要害，$N的攻势尽被截在半途"
 		];
 		this.learn_condition = {
-			max_mp: 2000,
-			skill: { throwing: 200 }
+			max_mp: 200,
+			skill: { throwing: 300 }
 		};
 		this.query_enable_prop = function (lv) {
 			return {

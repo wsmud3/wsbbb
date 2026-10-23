@@ -22,8 +22,9 @@ this.parry_actions = [
 this.desc = "周伯通自创的拳法，以虚御实，空明灵动";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 4000,
-	skill: { unarmed: 400 }
+	max_mp: 10000,
+	int1: 40,
+	skill: { unarmed: 800 }
 };
 
 this.query_enable_prop = function (lv) {

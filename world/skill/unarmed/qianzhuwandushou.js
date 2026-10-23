@@ -25,9 +25,9 @@ this.desc = "五毒教的千蛛万毒手";
 //<$1>$2</$1>
 this.can_enables = ["unarmed", "parry"];
 this.learn_condition = {
-	max_mp: 3000,
-	skill: { unarmed: 300 }
-	};
+	max_mp: 8000,
+	skill: { unarmed: 300, wudushengong: 300 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

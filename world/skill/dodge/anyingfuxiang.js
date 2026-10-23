@@ -5,9 +5,9 @@ this.grade = 3;
 this.desc = "身法如暗影浮动，暗香飘渺，令人难以捉摸";
 this.can_enables = ["dodge"];
 this.learn_condition = {
-		max_mp: 3000,
-		skill: { dodge: 300 }
-	};
+	max_mp: 2000,
+	skill: { dodge: 200 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

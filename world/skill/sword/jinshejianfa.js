@@ -22,8 +22,9 @@
 	this.desc = "金蛇郎君所创的诡异剑法，剑走偏锋";
 	this.can_enables = ["sword"];
 	this.learn_condition = {
-		skill: { sword: 300 }
-		};
+		max_mp: 8000,
+		skill: { sword: 400 }
+	};
 
 	this.query_enable_prop = function (lv) {
 		return {

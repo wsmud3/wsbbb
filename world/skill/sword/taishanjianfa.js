@@ -27,9 +27,9 @@
 	//<$1>$2</$1>
 	this.can_enables = ["sword", "parry"];
 	this.learn_condition = {
-		max_mp: 3000,
-		skill: { sword: 300 }
-		};
+		max_mp: 2000,
+		skill: { sword: 200 }
+	};
 
 	this.query_enable_prop = function (lv) {
 		return {

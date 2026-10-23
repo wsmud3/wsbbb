@@ -24,8 +24,9 @@
     this.can_enables = ["sword", "parry"];
 
     this.learn_condition = {
-        max_mp: 5000,
-        skill: { sword: 500 }
+    	max_mp: 50000,
+    	skill: { sword: 4000 },
+    	desc: "武神"
     };
 
     // 属性加成（按最新公式）

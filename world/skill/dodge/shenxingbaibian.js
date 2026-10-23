@@ -20,9 +20,11 @@ this.desc = "神行百变是铁剑门木桑道长所传下来的轻功绝技，�
 //<$1>$2</$1>
 this.can_enables = ["dodge"];
 this.learn_condition = {
-	max_mp: 2000,
+	max_mp: 1000,
+	dex1: 20,
+	int1: 20,
 	skill: { dodge: 200 }
-	};
+};
 
 this.query_enable_prop = function (lv) {
 	return {

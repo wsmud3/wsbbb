@@ -17,9 +17,9 @@ this.desc = "蛇岛神龙教绝技，以掌为主，运转舒展，动作连绵�
 
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { unarmed: 200 }
-	};
+	max_mp: 1000,
+	skill: { unarmed: 100 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

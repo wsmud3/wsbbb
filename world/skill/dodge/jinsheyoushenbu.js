@@ -5,7 +5,8 @@
 	this.desc = "金蛇游身步";
 	this.can_enables = ["dodge"];
 	this.learn_condition = {
-		skill: { dodge: 300 }
+		max_mp: 10000,
+		skill: { dodge: 500 }
 	};
 	this.query_enable_prop = function (lv) {
 		return {

@@ -22,9 +22,9 @@ this.parry_actions = [
 this.desc = "移花宫绝学掌法，出手无情";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-		max_mp: 2000,
-		skill: { unarmed: 200 }
-	};
+	max_mp: 1000,
+	skill: { unarmed: 100 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

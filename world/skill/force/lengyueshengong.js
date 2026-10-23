@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "冷月神功";
 this.id = "lengyueshengong";
+this.learn_condition = {
+	max_mp: 200,
+	skill: { force: 50 }
+};
 this.grade = 1;
 this.force_rad = 0.6;
 this.desc = "关外胡家的内功心法";

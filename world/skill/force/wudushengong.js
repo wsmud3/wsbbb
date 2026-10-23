@@ -6,9 +6,8 @@ this.force_rad = 0.7;
 this.desc = "五毒教独门内功，以毒练功，一身是毒";
 this.can_enables = ["force"];
 this.learn_condition = {
-		max_mp: 2000,
-		skill: { force: 200 }
-	};
+	skill: { force: 350 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

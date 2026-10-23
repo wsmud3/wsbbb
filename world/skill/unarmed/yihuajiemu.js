@@ -16,9 +16,11 @@ this.desc = "移花宫绝世武学，以柔克刚，借力打力，可将对方�
 this.can_enables = ["parry"];
 
 this.learn_condition = {
-				max_mp: 4000,
-				skill: { parry: 400 }
-	};
+	max_mp: 20000,
+	con1: 20,
+	dex1: 20,
+	skill: { unarmed: 500, parry: 500 }
+};
 
 this.query_enable_prop = function (lv) {
 				return {

@@ -4,8 +4,8 @@
 	this.grade = 2;
 	this.can_enables = ["staff", "parry"];
 	this.learn_condition = {
-		max_mp: 2000,
-		skill: { staff: 200 }
+		max_mp: 300,
+		skill: { force: 200, shenlongxinfa: 200 }
 	};
 	this.attack_actions = [
 		"$N使一招「<HIC>仙鹤梳翎</HIC>」手中$w一提，插向$n的$l",

@@ -22,8 +22,8 @@ this.parry_actions = [
 	"$n踏步向前，泰山拳法守招「泰山石敢当」硬桥硬马，$N的奋力一击被震回"
 ];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { unarmed: 200 }
+	max_mp: 5000,
+	skill: { unarmed: 500 }
 };
 this.query_enable_prop = function (lv) {
 	return {

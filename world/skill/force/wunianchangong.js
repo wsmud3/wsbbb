@@ -6,7 +6,8 @@ this.force_rad = 1.0;
 this.desc = "净念禅宗的内功心法，以无念无想之境臻至佛门禅定，防御无双。\n唯一：将你内力的100%转化为气血";
 this.can_enables = ["force"];
 this.learn_condition = {
-	skill: { force: 800 }
+	max_mp: 1000,
+	skill: { force: 500 }
 };
 this.query_enable_prop = function (lv) {
 	return {

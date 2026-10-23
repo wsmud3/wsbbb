@@ -5,9 +5,9 @@ this.grade = 2;
 this.desc = "大理段氏独门步法，灵巧多变";
 this.can_enables = ["dodge"];
 this.learn_condition = {
-		max_mp: 2000,
-		skill: { dodge: 200 }
-	};
+	max_mp: 1000,
+	skill: { dodge: 200 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

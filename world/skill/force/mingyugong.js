@@ -6,9 +6,12 @@ this.force_rad = 0.7;
 this.desc = "移花宫的绝世内功心法，修至大成可内力生生不息，同时身法轻盈如明玉映光";
 this.can_enables = ["force", "dodge"];
 this.learn_condition = {
-		max_mp: 4000,
-		skill: { force: 400 }
-	};
+	max_mp: 50000,
+	gender: 2,
+	dex1: 30,
+	int1: 30,
+	skill: { force: 800 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

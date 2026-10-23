@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "猴拳";
 this.id = "houquan";
+this.learn_condition = {
+	max_mp: 500,
+	skill: { unarmed: 50 }
+};
 this.grade = 1;
 
 this.attack_actions = [

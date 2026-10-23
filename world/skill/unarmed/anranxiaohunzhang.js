@@ -15,7 +15,7 @@ this.attack_actions = [
 this.desc = "神雕大侠杨过和小龙女分开后，因为刻骨思念之情而创出的一路掌法，黯然销魂者，唯别而已矣";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 10000,
+	max_mp: 200,
 	skill: { unarmed: 1000 }
 };
 

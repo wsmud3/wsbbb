@@ -6,8 +6,11 @@ this.force_rad = 0.8;
 this.desc = "侠客岛上石刻所载的玄妙内功，融汇天地至理，修至大成可返璞归真";
 this.can_enables = ["force"];
 this.learn_condition = {
-	max_mp: 5000,
-	skill: { force: 500 }
+	max_mp: 50000,
+	dex1: 30,
+	str1: 30,
+	int1: 30,
+	skill: { force: 1000 }
 };
 
 // 白首太玄期间：附加伤害加倍 + 命中后恢复攻击力40%气血

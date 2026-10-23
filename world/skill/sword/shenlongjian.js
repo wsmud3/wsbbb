@@ -1,6 +1,10 @@
 	this.inherits(SKILL);
 	this.name = "神龙剑";
 	this.id = "shenlongjian";
+	this.learn_condition = {
+		max_mp: 100,
+		skill: { sword: 100 }
+	};
 	this.grade = 1;
 
 	this.attack_actions = [

@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "密宗心法";
 this.id = "mizongxinfa";
+this.learn_condition = {
+	max_mp: 200,
+	skill: { force: 100 }
+};
 this.grade = 1;
 this.force_rad = 0.6;
 this.desc = "密宗的入门心法";

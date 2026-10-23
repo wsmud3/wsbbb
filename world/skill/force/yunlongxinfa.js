@@ -1,6 +1,9 @@
 this.inherits(SKILL);
 this.name = "云龙心法";
 this.id = "yunlongxinfa";
+this.learn_condition = {
+	skill: { force: 50 }
+};
 this.grade = 1;
 this.force_rad = 0.55;
 this.desc = "天地会的内功心法，入会便能修炼";

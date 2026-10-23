@@ -20,9 +20,9 @@ this.desc = "白驼山的轻功步法。";
 //<$1>$2</$1>
 this.can_enables = ["dodge"];
 this.learn_condition = {
-					max_mp: 2000,
-					skill: { dodge: 200 }
-	};
+	max_mp: 1000,
+	skill: { dodge: 200 }
+};
 
 this.query_enable_prop = function (lv) {
 					return {

@@ -31,8 +31,7 @@ this.parry_actions = [
 		"$n不退反进，魔气护体之下$N的攻势如撞山岳，震得手臂发麻",
 ];
 this.learn_condition = {
-		max_mp: 50000,
-		skill: { force: 1500, dodge: 1500, parry: 1500, unarmed: 1500 }
+	desc: "武神"
 };
 
 this.query_enable_prop = function (lv) {

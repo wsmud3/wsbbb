@@ -15,8 +15,8 @@ this.attack_actions = [
 this.can_enables = ["blade"];
 
 this.learn_condition = {
-    max_mp: 5000,
-    skill: { blade: 500 }
+	max_mp: 8500000,
+	skill: { blade: 3000 }
 };
 
 this.query_enable_prop = function (lv) {

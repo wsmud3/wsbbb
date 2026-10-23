@@ -10,7 +10,8 @@
 	this.desc = "血刀门邪功刀法，以血祭刀，凶残无比";
 	this.can_enables = ["blade"];
 	this.learn_condition = {
-		skill: { blade: 500 }
+		max_mp: 50000,
+		skill: { blade: 1000 }
 	};
 
 	this.on_beginfight = function (me, target) {

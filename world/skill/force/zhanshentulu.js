@@ -7,7 +7,9 @@ this.is_public = true;
 this.desc = "上古四大奇书之首，传为远古战神所留。修炼者可得战神附体之力，臂力、身法、根骨、悟性皆大幅提升。传说此功共有九幅图录，每一幅皆蕴含天地至理，尽悟者可破碎九重天，证得无上武道。";
 this.can_enables = ["force"];
 this.learn_condition = {
-    skill: { force: 800 }
+	max_mp: 2500000,
+	str1: 59,
+	skill: { force: 3000 }
 };
 
 this.query_enable_prop = function (lv) {

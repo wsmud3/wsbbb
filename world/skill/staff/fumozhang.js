@@ -22,8 +22,8 @@
 		"$n口中默诵经文，$w杖影重重，化作一尊不动明王虚影，$N的杀招撞上虚影便烟消云散"
 	];
 	this.learn_condition = {
-		max_mp: 8000,
-		skill: { staff: 800 }
+		max_mp: 300,
+		skill: { staff: 900 }
 	};
 	this.query_enable_prop = function (lv) {
 		return {

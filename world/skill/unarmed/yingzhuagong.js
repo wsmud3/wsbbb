@@ -18,9 +18,9 @@ this.desc = "明教的拳脚功夫";
 //<$1>$2</$1>
 this.can_enables = ["unarmed", "parry"];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { unarmed: 200 }
-	};
+	max_mp: 1000,
+	skill: { unarmed: 100 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

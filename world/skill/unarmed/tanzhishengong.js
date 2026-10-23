@@ -23,9 +23,9 @@ this.parry_actions = [
 this.desc = "东海桃花岛主黄药师的独门绝技，屈指弹出可碎石断金，精妙无比";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-		max_mp: 4000,
-		skill: { unarmed: 400 }
-	};
+	max_mp: 20000,
+	skill: { unarmed: 800 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

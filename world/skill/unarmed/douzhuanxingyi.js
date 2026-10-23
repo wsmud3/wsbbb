@@ -21,8 +21,8 @@ this.parry_actions = [
 this.desc = "姑苏慕容家传绝学，可反弹对手的攻击";
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 5000,
-	skill: { unarmed: 500 }
+	max_mp: 20000,
+	skill: { unarmed: 1000, parry: 1000 }
 };
 
 this.query_enable_prop = function (lv) {

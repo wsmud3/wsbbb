@@ -6,8 +6,10 @@ this.force_rad = 1.0;
 this.desc = "斗酒神僧所创的绝世内功，至刚至阳，练成后内力雄浑无比，百毒不侵";
 this.can_enables = ["force"];
 this.learn_condition = {
-	max_mp: 5000,
-	skill: { force: 500 }
+	max_mp: 100000,
+	con1: 40,
+	str1: 30,
+	skill: { force: 1000, unarmed: 800 }
 };
 
 // 被动反震：被命中后对敌人造成反震伤害（1000级≈5333），九阳护体期间翻倍

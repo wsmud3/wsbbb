@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "绝门棍";
 this.id = "juemengun";
+this.learn_condition = {
+	max_mp: 800,
+	skill: { club: 50 }
+};
 this.grade = 1;
 this.dodge_actions = [
     "$n右脚轻轻一点跃开躲过了$N的攻击。",

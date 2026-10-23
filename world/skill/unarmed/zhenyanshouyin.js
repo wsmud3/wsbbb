@@ -22,7 +22,7 @@ this.parry_actions = [
 ];
 this.learn_condition = {
 	max_mp: 8000,
-	skill: { unarmed: 800 }
+	skill: { unarmed: 3000 }
 };
 this.query_enable_prop = function (lv) {
 	return {

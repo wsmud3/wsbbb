@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "云龙身法";
 this.id = "yunlongshenfa";
+this.learn_condition = {
+	max_mp: 600,
+	skill: { dodge: 50 }
+};
 this.grade = 1;
 
 this.dodge_actions = [

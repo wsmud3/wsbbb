@@ -6,8 +6,10 @@ this.force_rad = 0.9;
 this.desc = "黄裳所创的道家无上内功心法，记载于九阴真经，包罗万象，天下武学总纲";
 this.can_enables = ["force"];
 this.learn_condition = {
-	max_mp: 5000,
-	skill: { force: 500 }
+	max_mp: 50000,
+	dex1: 35,
+	str1: 35,
+	skill: { force: 1000 }
 };
 
 // 九阴劲气被动：命中后叠加debuff（通过on_force_over确保每次攻击都触发）

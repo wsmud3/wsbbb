@@ -16,8 +16,8 @@ this.parry_actions = [
 this.desc = "明教无上心法，可牵引挪移敌方攻击，积攒乾坤之力反击敌人。乾坤者，天地之定位也，挪移者，阴阳之变化也。";
 this.can_enables = ["parry"];
 this.learn_condition = {
-	max_mp: 10000,
-	skill: { parry: 1000 }
+	max_mp: 20000,
+	skill: { unarmed: 500, parry: 500 }
 };
 
 var _this = this;

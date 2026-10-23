@@ -21,8 +21,8 @@ this.parry_actions = [
 	"$n端坐如佛，周身金光大放，梵音缭绕之中$N的招式竟无法近身分毫"
 ];
 this.learn_condition = {
-	max_mp: 8000,
-	skill: { unarmed: 800 }
+	max_mp: 500,
+	skill: { unarmed: 50 }
 };
 this.query_enable_prop = function (lv) {
 	return {

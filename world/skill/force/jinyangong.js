@@ -1,6 +1,10 @@
 this.inherits(SKILL);
 this.name = "金雁功";
 this.id = "jinyangong";
+this.learn_condition = {
+	max_mp: 300,
+	skill: { dodge: 50 }
+};
 this.grade = 1;
 this.desc = "全真教内功心法，以轻灵飘逸见长，内力与轻功并重";
 this.can_enables = ["dodge"];

@@ -15,7 +15,10 @@ this.dodge_actions = [
     "$n如云中飞燕，身形轻盈地掠出数丈，$N的攻击差之毫厘",
 ];
 this.can_enables = ["dodge"];
-this.learn_condition = { skill: { dodge: 200 } };
+this.learn_condition = {
+	max_mp: 2000,
+	skill: { dodge: 200 }
+};
 this.query_enable_prop = function (lv) {
     return {
         dodge: {

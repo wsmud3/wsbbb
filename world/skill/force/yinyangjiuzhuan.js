@@ -7,7 +7,9 @@ this.is_public = true;
 this.desc = "上古奇功，以阴阳二气为根基，可在九烛与九幽两种状态间转换。九烛主守，气血如烛火不灭；九幽主攻，杀伐如幽冥无际。传说此功源自天地初开时的阴阳流转，修炼至大成者可一念定乾坤，一掌镇天地。";
 this.can_enables = ["force"];
 this.learn_condition = {
-    skill: { force: 800 }
+	max_mp: 2500000,
+	con1: 59,
+	skill: { force: 3000, jiuyangshengong: 3000, jiuyinshengong: 3000 }
 };
 
 this.query_enable_prop = function (lv) {

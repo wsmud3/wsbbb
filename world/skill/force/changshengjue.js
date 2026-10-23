@@ -6,7 +6,9 @@ this.force_rad = 1.5;
 this.desc = "上古四大奇书之一，修炼后可大幅提升生命力和内力上限，传说修炼至大成可长生不死。";
 this.can_enables = ["force"];
 this.learn_condition = {
-				skill: { force: 800 }
+	con1: 59,
+	max_mp: 2500000,
+	skill: { force: 3000, bulaochangchungong: 3000, wunianchangong: 3000 }
 };
 
 this.query_enable_prop = function (lv) {

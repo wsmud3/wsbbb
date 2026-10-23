@@ -19,9 +19,9 @@ this.desc = "关外胡家赖以成名的刀法，为胡家始祖飞天狐狸所�
 //<$1>$2</$1>
 this.can_enables = ["blade", "parry"];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { blade: 200 }
-	};
+	max_mp: 1000,
+	skill: { blade: 300 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

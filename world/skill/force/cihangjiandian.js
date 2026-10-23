@@ -6,7 +6,9 @@ this.force_rad = 1.5;
 this.desc = "上古四大奇书之一，慈航静斋的镇派绝学。传说可通明剑心，臻至无上剑道。";
 this.can_enables = ["force"];
 this.learn_condition = {
-	skill: { force: 800 }
+	max_mp: 2500000,
+	int1: 59,
+	skill: { sword: 3000, force: 3000, taixuangong: 3000 }
 };
 
 this.query_enable_prop = function (lv) {

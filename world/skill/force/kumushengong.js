@@ -6,9 +6,8 @@ this.force_rad = 0.8;
 this.desc = "大理枯荣禅寺绝学，内力如枯木般深沉内敛";
 this.can_enables = ["force"];
 this.learn_condition = {
-		max_mp: 3000,
-		skill: { force: 300 }
-	};
+	skill: { force: 450 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

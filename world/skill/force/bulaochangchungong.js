@@ -7,8 +7,9 @@ this.force_rad = 1.5;
 this.desc = "天长地久不老长春功，又名八荒六合唯我独尊，是灵鹫宫天山童姥的绝学。";
 this.can_enables = ["force"];
 this.learn_condition = {
-    max_mp: 10000,
-    skill: { force: 1000 }
+	max_mp: 100000,
+	con1: 40,
+	skill: { force: 1000 }
 };
 
 this.query_prop = function (lv, me) {

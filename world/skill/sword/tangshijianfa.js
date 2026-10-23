@@ -31,10 +31,8 @@
         };
     }
     this.learn_condition = {
-        max_mp: 15,
-        skill: {
-            sword: 100
-        }
+    	max_mp: 100,
+    	skill: { sword: 100 }
     };
     this.slots = [
 

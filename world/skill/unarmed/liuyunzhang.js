@@ -18,9 +18,9 @@ this.desc = "流云掌法的绝招，乃是以快速的身法及掌法连出虚�
 //<$1>$2</$1>
 this.can_enables = ["unarmed"];
 this.learn_condition = {
-	max_mp: 2000,
-	skill: { unarmed: 200 }
-	};
+	max_mp: 500,
+	skill: { unarmed: 50 }
+};
 
 this.query_enable_prop = function (lv) {
 	return {

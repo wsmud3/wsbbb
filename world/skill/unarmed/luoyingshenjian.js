@@ -22,9 +22,9 @@ this.parry_actions = [
 this.desc = "桃花岛黄药师所创，以掌代剑，落英缤纷";
 this.can_enables = ["sword"];
 this.learn_condition = {
-		max_mp: 3000,
-		skill: { sword: 300 }
-	};
+	max_mp: 8000,
+	skill: { sword: 400 }
+};
 
 this.query_enable_prop = function (lv) {
 		return {

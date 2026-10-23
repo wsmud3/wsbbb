@@ -23,8 +23,8 @@
 	this.desc = "温府的一套棍法，以八卦方位演化，招招连环，防不胜防";
 	this.can_enables = ["staff", "parry"];
 	this.learn_condition = {
-		max_mp: 2000,
-		skill: { staff: 200 }
+		max_mp: 800,
+		skill: { club: 250 }
 	};
 
 	this.query_enable_prop = function (lv) {

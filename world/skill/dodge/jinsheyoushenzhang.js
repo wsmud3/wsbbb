@@ -27,8 +27,8 @@
 	this.desc = "金蛇郎君所创的一门掌法，形如金蛇游走，令人难以捉摸";
 	this.can_enables = ["unarmed"];
 	this.learn_condition = {
-		max_mp: 3000,
-		skill: { unarmed: 300 }
+		max_mp: 10000,
+		skill: { unarmed: 400 }
 	};
 
 	this.query_enable_prop = function (lv) {
