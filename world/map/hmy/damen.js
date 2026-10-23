@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "大门";
 this.desc = "日月神教的大门，杨莲亭在此拦路。";
-this.exits = { "west": "hmy/xuanya", "east": "hmy/houting" };
+this.exits = { "west": "hmy/up1", "east": "hmy/chengdedian" };
 this.set_npc(["hmy/yanglianting", 1]);
 
 // [mech] 困难模式：三令上崖后，三位堂主一起出战（攻略：困难需三个令牌上崖后才见到3位堂主，然后1v3）

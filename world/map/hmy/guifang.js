@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "闺房";
 this.desc = "东方不败的闺房，绣帷低垂，暗藏杀机。";
-this.exits = { "west": "hmy/xiaohuayuan" };
+this.exits = { "west": "hmy/huayuan" };
 
 // [mech] 进入闺房即被叫杀（攻略：进入闺房后杨莲亭和东方不败会主动叫杀，你会优先击杀杨莲亭）
 this.set_npc(["hmy/dongfangbubai", 1]);

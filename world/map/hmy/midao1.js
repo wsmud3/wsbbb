@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "密道";
 this.desc = "一条黑暗的密道，伸手不见五指。石壁上湿漉漉的，脚下是粗糙的石阶，不知通向何处。";
-this.exits = { "north": "hmy/houting" };
+this.exits = { "south": "hmy/houdian" };
 
 // [mech] 密道：火折子点亮 → 找到铁环 → 拉动打开小花园（攻略原文）
 this.midao_lit = false;
@@ -52,7 +52,7 @@ this.add_action("la", null, function (me, arg) {
         return true;
     }
     this.gate_open = true;
-    this.add_exit("east", "hmy/xiaohuayuan");
+    this.add_exit("east", "hmy/huayuan");
     me.send_room("$N用力一拉铁环，石壁深处传来沉闷的轧轧声，一道石门缓缓移开。");
     me.notify("<hig>铁环拉动，石门开启——东边便是小花园，东方不败的闺房就在花园之东。</hig>");
     this.exits_changed();
@@ -68,7 +68,7 @@ this.on_enter = function (me) {
         return;
     }
     if (this.gate_open && !this.query_exits("east")) {
-        this.add_exit("east", "hmy/xiaohuayuan");
+        this.add_exit("east", "hmy/huayuan");
     }
     if (!this.gate_open) me.send_commands("la 1", "拉动铁环");
 };

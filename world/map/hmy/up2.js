@@ -1,14 +1,14 @@
 this.inherits(ROOM);
 this.name = "悬崖";
 this.desc = "吊篮升到崖腰，脚下云雾翻涌，一条更窄的石径贴着岩壁向上。岩壁另一侧又嵌着一个<cmd cmd='look xiazi'>匣子</cmd>，凹槽里刻的是一条盘旋的青龙。";
-this.exits = { "west": "hmy/xuanya" };
+this.exits = { "west": "hmy/up1" };
 
 // [mech] 第二处悬崖：插入青龙令续上吊篮（攻略：依次插入青龙堂令牌、风雷堂令牌后来到大门）
 this.set_item("xiazi", "匣子", "岩壁上的铜匣，匣面凹槽刻着青龙纹样。", [
     ["charu", "插入青龙令", null]
 ]);
 this.lan_ready = false;
-this.lan_target = "hmy/xuanya3";
+this.lan_target = "hmy/up13";
 
 this.hmy_have = function (me, p) {
     if (!me.items) return null;

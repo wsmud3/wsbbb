@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "悬崖";
 this.desc = "最后一处悬崖。崖顶隐约可见一座门户森严的建筑，门前旗幡上写着「日月神教」四个大字。崖壁上还嵌着最后一个<cmd cmd='look xiazi'>匣子</cmd>，凹槽刻着风雷纹样。";
-this.exits = { "south": "hmy/xuanya2" };
+this.exits = { "south": "hmy/up12" };
 
 // [mech] 最后一处悬崖：插入风雷令后吊篮直达大门（攻略：依次插入风雷堂令牌后来到大门）
 this.set_item("xiazi", "匣子", "崖壁上的铜匣，匣面凹槽刻着风雷纹样。", [
