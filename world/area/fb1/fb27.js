@@ -38,7 +38,6 @@ this.set({
 	    { n: "小厅", id: "gm/xiaoting", p: [-1, -4], exits: ["e","n"] },
 	    { n: "后院", id: "gm/houyuan", p: [-1, -5], exits: ["n","w","s"] },
 	    { n: "西厢", id: "gm/xixiang", p: [-2, -5], exits: ["e"] },
-	    { n: "北厢", id: "gm/beixiang", p: [-1, -6], exits: ["s"] },
 		];
 	this.drops = [
 	    "book/bc#shenghuoshengong",
