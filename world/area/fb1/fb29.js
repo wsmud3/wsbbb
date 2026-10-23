@@ -15,8 +15,8 @@ this.set({
     ss_title: "血刀老祖"
 });
 		this.map = [
-	    { n: "雪山山口", id: "xd/shankou", p: [0, 0], exits: ["s"] },
-	    { n: "雪山山谷", id: "xd/shangu", p: [0, 1], exits: ["n","e","s"] },
+	    { n: "山口", id: "xd/shankou", p: [0, 0], exits: ["s"] },
+	    { n: "山谷", id: "xd/shangu", p: [0, 1], exits: ["n","e","s"] },
 	    { n: "山洞", id: "xd/shandong", p: [1, 1], exits: ["w"] },
 	    { n: "忘忧谷", id: "xd/wangyou", p: [0, 2], exits: ["n","eu"] },
 	    { n: "洞口", id: "xd/dongkou", p: [1, 2], exits: ["wd","enter"] },

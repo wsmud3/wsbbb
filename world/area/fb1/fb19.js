@@ -16,7 +16,7 @@ this.set({
 });
 		this.map = [
 	    { n: "海滩", id: "th/haitan", p: [0, 0], exits: ["s"] },
-	    { n: "桃花林", id: "th/tao0", p: [0, 1], exits: ["e"] },
+	    { n: "桃花林", id: "th/tao1", p: [0, 1], exits: ["s","n"] },
 	    { n: "桃林出口", id: "th/taolin", p: [0, 2], exits: ["n","s"] },
 	    { n: "小路", id: "th/road1", p: [0, 3], exits: ["s","n"] },
 	    { n: "试剑亭", id: "th/shijianting", p: [0, 4], exits: ["e","n"] },
