@@ -16,7 +16,7 @@
 		this.map = [
 	    // 每条连线只从一侧写一次，且必须落在真有房间的格子上——画出来的线就是能走的路。
 	    // 松花江上 与两岸不是步行相连（要坐船），所以它不跟任何房间连线。
-	    { n: "大门坎子", id: "kw/damen", p: [0, 0], exits: ["ne"] },
+	    { n: "大门坎子", id: "kw/damen", p: [0, 0], exits: ["ne","n"] },
 	    { n: "松花江上", id: "kw/jiang", p: [0, -1], exits: [] },
 	    { n: "二门坎子", id: "kw/ermenkan", p: [1, -1], exits: ["e"] },
 	    { n: "满天星", id: "kw/mantianxing", p: [2, -1], exits: ["se"] },
@@ -31,7 +31,7 @@
 	    { n: "瀑布", id: "kw/pubu", p: [9, 1], exits: [] },
 	    { n: "瀑布下", id: "kw/xiaotianchi", p: [9, 0], exits: [] },
 	    { n: "大清龙脉", id: "kw/xiaotianchi", p: [9, -1], exits: [] },
-	    { n: "船厂", id: "kw/chuanchang", p: [-1, -1], exits: ["n"] },
+	    { n: "船厂", id: "kw/chuanchang", p: [-1, -1], exits: ["n","e"] },
 	    { n: "雪地", id: "kw/xuedi", p: [-1, -2], exits: ["w"] },
 	    { n: "荒地", id: "kw/huangdi", p: [-2, -2], exits: ["n"] },
 	    { n: "山神庙", id: "kw/shanshenmiao", p: [-2, -3], exits: [] },
