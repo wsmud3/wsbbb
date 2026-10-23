@@ -9,7 +9,7 @@ this.set({
     max_hp: 189280,
     mp: 772000,
     max_mp: 772000,
-    score: 20,
+    score: 0,
     gj: 3178,
     fy: 1677,
     mz: 3022,
@@ -45,3 +45,12 @@ this.set_drop({
     obj: ["eq/lv3/js_pifeng"],
     odds: 6400
 });
+
+// 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    if (this._wf_awarded) return;
+    this._wf_awarded = true;
+    killer.add_fbscore(20);
+    
+};

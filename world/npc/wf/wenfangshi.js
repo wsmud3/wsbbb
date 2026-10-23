@@ -10,7 +10,7 @@ this.set({
     max_hp: 66500,
     mp: 38500,
     max_mp: 38500,
-    score: 16,
+    score: 0,
     gj: 7770,
     fy: 5069,
     mz: 8316,
@@ -53,3 +53,11 @@ this.on_enter = function (me) {
     this.do_kill(me);
 };
 
+// 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算
+this.on_died = function (killer, corpse) {
+    if (!killer || !killer.is_player) return;
+    if (this._wf_awarded) return;
+    this._wf_awarded = true;
+    killer.add_fbscore(16);
+    
+};
