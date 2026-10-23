@@ -20,6 +20,8 @@
 	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["s","n"] },
 	    { n: "刘府大院", id: "hs2/liufudayuan", p: [-1, -2], exits: ["n","s"] },
 	    { n: "刘府大厅", id: "hs2/liufudating", p: [-1, -3], exits: ["n","s"] },
+	    { n: "东厢房", id: "hs2/liufudating", p: [0, -3], exits: ["n","s"] },
+	    { n: "西厢房", id: "hs2/liufudating", p: [-2, -3], exits: ["n","s"] },
 	    { n: "山路", id: "hs2/shanlu", p: [1, 0], exits: ["w","se"] },
 	    { n: "南天门", id: "hs2/nantianmen", p: [2, 1], exits: ["nw","s"] },
 	    { n: "狮子岩", id: "hs2/shiziyan", p: [2, 2], exits: ["e","n"] },

@@ -17,7 +17,7 @@ this.set({
 		this.map = [
 	    { n: "山道", id: "yh/shandao", p: [0, 0], exits: ["s"] },
 	    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: [] },
-	    { n: "花径", id: "yh/huajing2", p: [0, 2], exits: ["n","s","e","w"] },
+	    { n: "花径", id: "yh/huajing4", p: [0, 2], exits: ["n","s","e","w"] },
 	    { n: "大门", id: "yh/damen", p: [0, 3], exits: ["s"] },
 	    { n: "移花阁", id: "yh/yihuage", p: [0, 4], exits: ["s","n"] },
 	    { n: "桂花廊", id: "yh/changlang", p: [0, 5], exits: ["s","n"] },

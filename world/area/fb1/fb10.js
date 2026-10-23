@@ -31,6 +31,8 @@
 	    { n: "黑风口", id: "kw/heifengkou", p: [7, 1], exits: ["e","w"] },
 	    { n: "小天池", id: "kw/xiaotianchi", p: [8, 1], exits: ["e","w"] },
 	    { n: "瀑布", id: "kw/pubu", p: [9, 1], exits: ["w"] },
+	    { n: "瀑布下", id: "kw/xiaotianchi", p: [9, 0], exits: ["e","w"] },
+	    { n: "大清龙脉", id: "kw/xiaotianchi", p: [9, -1], exits: ["e","w"] },
 		];
 	this.drops = [
 	    "book/bc#lengyueshengong", "book/bc#hujiadaofa", "book/book#sixiangbu",
