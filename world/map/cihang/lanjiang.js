@@ -1,7 +1,7 @@
 this.inherits(ROOM);
 this.name = "拦江岛";
 this.desc = "一座孤悬于怒江之中的小岛，四面江水奔腾咆哮，浊浪滔天。岛上寸草不生，唯有嶙峋的黑石和终年不散的阴云。此地便是浪翻云与庞斑约战之地——拦江岛。空气中弥漫着浓烈的杀意，仿佛连天地都在等待着这绝世一战。";
-this.exits = { "south": "cihang/shangyuting" };
+this.exits = { "south": "cihang/shangyu" };
 this.set_npc([]);
 this.boss_spawned = false;
 this.boss_kill_count = 0;
@@ -10,7 +10,7 @@ this.on_enter = function (me) {
     if (!me.is_player) return;
     if (!me.query_temp("cihang_spar_win")) {
         me.notify("<red>你尚未通过赐教，拦江岛上的禁制将你挡了回去。</red>");
-        me.moveto("cihang/shangyuting");
+        me.moveto("cihang/shangyu");
         return;
     }
     if (me.query_temp("cihang_lanjiang_done")) {
