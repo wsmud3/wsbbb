@@ -16,16 +16,15 @@ this.set({
 });
 		this.map = [
 	    { n: "山道", id: "yh/shandao", p: [0, 0], exits: ["s"] },
-	    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: [] },
-	    { n: "花径", id: "yh/huajing4", p: [0, 2], exits: ["n","s","e","w"] },
+	    { n: "花径", id: "yh/yihua0", p: [0, 1], exits: ["n","s","e","w"] },
 	    { n: "大门", id: "yh/damen", p: [0, 3], exits: ["s"] },
-	    { n: "移花阁", id: "yh/yihuage", p: [0, 4], exits: ["s","n"] },
-	    { n: "桂花廊", id: "yh/changlang", p: [0, 5], exits: ["s","n"] },
+	    { n: "移花阁", id: "yh/yihuage", p: [0, 4], exits: ["n","s"] },
+	    { n: "桂花廊", id: "yh/changlang", p: [0, 5], exits: ["n","s"] },
 	    { n: "玫瑰廊", id: "yh/changlang1", p: [0, 6], exits: ["n","sw","se"] },
 	    { n: "邀月宫", id: "yh/yaoyuegong", p: [-1, 7], exits: ["se","ne"] },
 	    { n: "涟星宫", id: "yh/lianxinggong", p: [1, 7], exits: ["sw","nw"] },
 	    { n: "卧室", id: "yh/woshi", p: [0, 8], exits: ["nw","ne"] },
-	    { n: "暗道", id: "yh/andao", p: [0, 9], exits: ["n"] },
+	    { n: "暗道", id: "yh/midao", p: [0, 9], exits: ["u"] },
 		];
 this.drops = [
     "book/bc#mingyugong", "book/bc#yihuajiemu", "book/bc#yifengjianfa",
