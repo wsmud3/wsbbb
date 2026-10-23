@@ -14,27 +14,16 @@ this.set({
     room_path: "jncz/",
     record_0: true
 });
-this.map = [
-    { n: "戒律院", id: "jncz/jielvyuan", p: [-1, -4], exits: ["s"] },
-    { n: "禅院", id: "jncz/chanyuan", p: [-1, -3], exits: ["n", "e"] },
-    { n: "放生池", id: "jncz/fangshengchi", p: [-1, -2], exits: [] },
-    { n: "邪王石窟", id: "jncz/xiewangshiku", p: [-1, 2], exits: [] },
-    { n: "天僧禅房", id: "jncz/tiansengchanfang", p: [0, -7], exits: ["s"] },
-    { n: "后山崖", id: "jncz/houshanya", p: [0, -6], exits: ["n", "s", "e"] },
-    { n: "观音殿", id: "jncz/guanyindian", p: [0, -5], exits: ["n", "s"] },
-    { n: "大雄宝殿", id: "jncz/daxiongbaodian", p: [0, -4], exits: ["n", "s"] },
-    { n: "前院", id: "jncz/qianyuan", p: [0, -3], exits: ["n", "e", "w"] },
-    { n: "大门", id: "jncz/dianmen", p: [0, -2], exits: ["n", "s"] },
-    { n: "石阶", id: "jncz/shijie", p: [0, -1], exits: ["n", "s"] },
-    { n: "山门", id: "jncz/shanmen", p: [0, 0], exits: ["n", "ne"] },
-    { n: "往生径", id: "jncz/wangshengjing", p: [1, -6], exits: ["e", "w"] },
-    { n: "密室", id: "jncz/mishi", p: [1, -4], exits: ["s"] },
-    { n: "藏经阁", id: "jncz/cangjingge", p: [1, -3], exits: ["n", "w"] },
-    { n: "崖底", id: "jncz/yadi", p: [1, -2], exits: ["s"] },
-    { n: "山路", id: "jncz/xiaolu", p: [1, -1], exits: ["n", "sw"] },
-    { n: "问心台", id: "jncz/wenxintai", p: [2, -6], exits: ["e", "w"] },
-    { n: "生门", id: "jncz/shengmen", p: [3, -6], exits: ["w"] },
-];
+		this.map = [
+	    { n: "山门", id: "jncz/shanmen", p: [0, 0], exits: ["n","ne"] },
+	    { n: "石阶", id: "jncz/shijie", p: [0, -1], exits: ["s","n"] },
+	    { n: "殿门", id: "jncz/dianmen", p: [0, -2], exits: ["s","n"] },
+	    { n: "钟楼", id: "jncz/zhonglou", p: [-1, -7], exits: ["e","n"] },
+	    { n: "铜殿", id: "jncz/tongdian", p: [0, -8], exits: ["s"] },
+	    { n: "山路", id: "jncz/xiaolu", p: [1, -1], exits: ["sw","n"] },
+	    { n: "崖底", id: "jncz/yadi", p: [3, -4], exits: ["s"] },
+	    { n: "长生门", id: "jncz/changshengmen", p: [0, -10], exits: [] },
+		];
 this.drops = [
     "eq/lv5/wushen/xiedisheli",
     "eq/lv5/wushen/jingangfumozhang",

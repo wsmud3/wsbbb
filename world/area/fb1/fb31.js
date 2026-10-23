@@ -16,6 +16,10 @@ this.set({
 });
 		this.map = [
 	    { n: "论剑台", id: "hslj/tai", p: [0, 0], exits: ["w","e","s","n"] },
+	    { n: "东峰", id: "hslj/east", p: [1, 0], exits: ["w"] },
+	    { n: "西峰", id: "hslj/west", p: [-1, 0], exits: ["e"] },
+	    { n: "北峰", id: "hslj/north", p: [0, -1], exits: ["s"] },
+	    { n: "南峰", id: "hslj/south", p: [0, 1], exits: ["n"] },
 		];
 		this.drops = [
 	    "book/bc#duanjiajian",

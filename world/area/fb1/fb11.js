@@ -14,21 +14,23 @@ this.set({
     room_path: "wf/",
     ss_title: "金蛇郎君"
 });
-	this.map = [
-	    { n: "侧房", id: "wf/wen3", p: [-2, -3], exits: ["e"] },
-	    { n: "侧房", id: "wf/wen2", p: [-2, -2], exits: ["e"] },
-	    { n: "走廊", id: "wf/zoulang2", p: [-1, -3], exits: ["s", "w", "ne"] },
-	    { n: "走廊", id: "wf/zoulang1", p: [-1, -2], exits: ["n", "w", "se"] },
-	    { n: "亭子", id: "wf/tingzi", p: [0, -5], exits: ["s"] },
-	    { n: "走廊尽头", id: "wf/zoulangtou", p: [0, -4], exits: ["n", "se", "sw"] },
-	    { n: "大院", id: "wf/dayuan", p: [0, -2], exits: [] },
-	    { n: "大厅", id: "wf/dating", p: [0, -1], exits: ["ne", "nw"] },
-	    { n: "大门", id: "wf/damen", p: [0, 0], exits: ["n"] },
-	    { n: "走廊", id: "wf/zoulang3", p: [1, -3], exits: ["s", "e", "nw"] },
-	    { n: "走廊", id: "wf/zoulang4", p: [1, -2], exits: ["n", "e", "sw"] },
-	    { n: "侧房", id: "wf/wen4", p: [2, -3], exits: ["w"] },
-	    { n: "侧房", id: "wf/wen5", p: [2, -2], exits: ["w"] },
-	];
+		this.map = [
+	    { n: "大门", id: "wf/damen", p: [0, 2], exits: ["n"] },
+	    { n: "大院", id: "wf/dayuan", p: [0, 1], exits: ["n"] },
+	    { n: "大厅", id: "wf/dating", p: [0, 0], exits: ["nw","ne","s"] },
+	    { n: "走廊", id: "wf/zoulang1", p: [-1, -1], exits: ["n","w","se"] },
+	    { n: "走廊", id: "wf/zoulang2", p: [-1, -2], exits: ["ne","w","s"] },
+	    { n: "走廊尽头", id: "wf/zoulangtou", p: [0, -3], exits: ["sw","se","n"] },
+	    { n: "走廊", id: "wf/zoulang3", p: [1, -2], exits: ["s","nw","e"] },
+	    { n: "走廊", id: "wf/zoulang4", p: [1, -1], exits: ["sw","n","e"] },
+	    { n: "亭子", id: "wf/tingzi", p: [0, -4], exits: ["s"] },
+	    { n: "小院", id: "wf/xiaoyuan", p: [0, -5], exits: ["n"] },
+	    { n: "小楼", id: "wf/xiaolou", p: [0, -6], exits: ["s"] },
+	    { n: "侧房", id: "wf/wen2", p: [-2, -1], exits: ["e"] },
+	    { n: "侧房", id: "wf/wen3", p: [-2, -2], exits: ["e"] },
+	    { n: "侧房", id: "wf/wen4", p: [2, -2], exits: ["w"] },
+	    { n: "侧房", id: "wf/wen5", p: [2, -1], exits: ["w"] },
+		];
 	this.drops = [
 	    "book/bc#jinshejianfa",
 	    "book/bc#jinsheyoushenbu",

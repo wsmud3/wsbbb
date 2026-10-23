@@ -13,17 +13,17 @@
 		    room_path: "ss/",
 		    ss_title: "五岳盟主"
 		});
-			this.map = [
+		this.map = [
 	    { n: "太室阙", id: "ss/taishi", p: [0, 0], exits: ["n"] },
 	    { n: "天中阁", id: "ss/tianzhongge", p: [0, -1], exits: ["n","s"] },
-	    { n: "中岳大殿", id: "ss/dadian", p: [0, -2], exits: ["s"] },
-	    { n: "险峻山道", id: "ss/shandao", p: [0, -3], exits: ["ne"] },
-	    { n: "铁梁峡", id: "ss/tieliang", p: [1, -4], exits: ["sw"] },
-	    { n: "朝天门", id: "ss/chaotianmen", p: [1, -5], exits: [] },
-	    { n: "峻极山门", id: "ss/shanmen", p: [1, -5], exits: [] },
+	    { n: "中岳大殿", id: "ss/dadian", p: [0, -2], exits: ["nu","s"] },
+	    { n: "险峻山道", id: "ss/shandao", p: [0, -3], exits: ["ne","sd"] },
+	    { n: "铁梁峡", id: "ss/tieliang", p: [1, -4], exits: ["nu","sw"] },
+	    { n: "朝天门", id: "ss/chaotianmen", p: [1, -5], exits: ["nu","sd"] },
+	    { n: "峻极山门", id: "ss/shanmen", p: [1, -5], exits: ["nu","sd"] },
 	    { n: "极顶山道", id: "ss/shandao2", p: [0, -5], exits: [] },
 	    { n: "封禅台", id: "ss/fengshantai", p: [-1, -5], exits: [] },
-	    { n: "前庭", id: "ss/qianting", p: [1, -6], exits: ["n"] },
+	    { n: "前庭", id: "ss/qianting", p: [1, -6], exits: ["sd","n"] },
 	    { n: "峻极禅院", id: "ss/chanyuan", p: [1, -7], exits: ["s","n"] },
 	    { n: "中门", id: "ss/zhongmen", p: [1, -8], exits: ["n","s"] },
 	    { n: "会盟堂", id: "ss/huimengtang", p: [1, -9], exits: ["n","s","e","w"] },

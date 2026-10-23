@@ -14,32 +14,14 @@ this.set({
     room_path: "th/",
     ss_title: "东邪"
 });
-this.map = [
-    { n: "桃林入口", id: "th/taolin", p: [-2, 3], exits: [] },
-    { n: "弹指峰", id: "th/tanzhifeng", p: [-2, 4], exits: ["s"] },
-    { n: "清啸亭", id: "th/qingxiaoting", p: [-2, 5], exits: ["n"] },
-    { n: "练功房", id: "th/liangongfang", p: [-2, 6], exits: ["s"] },
-    { n: "门廊", id: "th/menlang", p: [-2, 7], exits: ["n"] },
-    { n: "卧室", id: "th/woshi", p: [-2, 9], exits: [] },
-    { n: "黄药师居", id: "th/huangyaoshiju", p: [-2, 11], exits: [] },
-    { n: "桃花林", id: "th/tao0", p: [-1, -3], exits: ["e"] },
-    { n: "桃花林", id: "th/tao1", p: [-1, -2], exits: ["n", "s"] },
-    { n: "小路", id: "th/road1", p: [-1, -1], exits: ["n", "s"] },
-    { n: "试剑亭", id: "th/shijianting", p: [-1, 0], exits: ["n", "e"] },
-    { n: "桃林迷阵", id: "th/mizhen2", p: [-1, 1], exits: [] },
-    { n: "桃林迷阵", id: "th/mizhen1", p: [-1, 2], exits: ["n", "s"] },
-    { n: "桃林迷阵", id: "th/mizhen3", p: [-1, 3], exits: ["n", "e"] },
-    { n: "桃林深处", id: "th/taolinshendi", p: [-1, 4], exits: [] },
-    { n: "后山", id: "th/houshan", p: [-1, 5], exits: ["n", "e", "w"] },
-    { n: "海滩", id: "th/haitan", p: [0, -3], exits: [] },
-    { n: "山庄正门", id: "th/damen", p: [0, 0], exits: ["e", "w"] },
-    { n: "桃林迷阵", id: "th/mizhen4", p: [0, 3], exits: ["w"] },
-    { n: "山洞", id: "th/shandong", p: [0, 5], exits: ["w"] },
-    { n: "山庄前院", id: "th/qianyuan", p: [1, 0], exits: ["e", "w"] },
-    { n: "卧房", id: "th/wofang", p: [2, -1], exits: ["s"] },
-    { n: "山庄正厅", id: "th/dating", p: [2, 0], exits: ["n", "e", "w"] },
-    { n: "书房", id: "th/shufang", p: [3, 0], exits: ["w"] },
-];
+		this.map = [
+	    { n: "海滩", id: "th/haitan", p: [0, 0], exits: ["s"] },
+	    { n: "桃花林", id: "th/tao1", p: [0, 1], exits: ["s","n"] },
+	    { n: "小路", id: "th/road1", p: [0, 3], exits: ["s","n"] },
+	    { n: "试剑亭", id: "th/shijianting", p: [0, 4], exits: ["e","n"] },
+	    { n: "书房", id: "th/shufang", p: [4, 4], exits: ["w"] },
+	    { n: "卧室", id: "th/woshi", p: [3, 3], exits: ["s"] },
+		];
 this.drops = [
     "book/bc#jinyangong","book/bc#anyingfuxiang",
     "book/bc#luoyingshenjian", "book/bc#tanzhishengong", "book/bc#kongmingquan",

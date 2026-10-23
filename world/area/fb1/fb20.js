@@ -23,7 +23,7 @@ this.set({
 	    { n: "草丛", id: "bt/cao1", p: [-3, -1], exits: ["e","n"] },
 	    { n: "草丛", id: "bt/cao2", p: [-3, -2], exits: ["s","n"] },
 	    { n: "竹林", id: "bt/zhulin", p: [-3, -3], exits: ["n","s","e"] },
-	    { n: "岩洞", id: "bt/dong", p: [-3, -4], exits: ["s"] },
+	    { n: "石洞", id: "bt/dong", p: [-3, -4], exits: ["s"] },
 	    { n: "门廊", id: "bt/menlang", p: [0, -2], exits: ["n","s"] },
 	    { n: "花园", id: "bt/huayuan", p: [0, -3], exits: ["n","s"] },
 	    { n: "大厅", id: "bt/dating", p: [0, -4], exits: ["s"] },

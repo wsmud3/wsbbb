@@ -18,24 +18,22 @@ this.set({
     drop_npcs0: ["cihang/fanqinghui"],
     drop_npcs1: ["cihang/fanqinghui"]
 });
-	this.map = [
-	    { n: "赏雨亭", id: "cihang/shangyu", p: [-2, 3], exits: ["e"] },
-	    { n: "赏雨亭", id: "cihang/shangyuting", p: [-2, 7], exits: [] },
-	    { n: "听雨亭", id: "cihang/tingyuting", p: [-2, 9], exits: [] },
-	    { n: "拦江岛", id: "cihang/lanjiangdao", p: [-2, 11], exits: [] },
-	    { n: "碎石小路", id: "cihang/xiaolu2", p: [-1, 3], exits: ["e", "w"] },
-	    { n: "帝踏峰", id: "cihang/shanmen", p: [0, 0], exits: ["s"] },
+		this.map = [
+	    { n: "帝塔峰", id: "cihang/shanmen", p: [0, 0], exits: ["s"] },
 	    { n: "山门", id: "cihang/shanyao", p: [0, 1], exits: ["s"] },
 	    { n: "七重门", id: "cihang/qichongmen", p: [0, 2], exits: ["s"] },
-	    { n: "广场", id: "cihang/guangchang", p: [0, 3], exits: ["n", "s", "e", "w"] },
+	    { n: "广场", id: "cihang/guangchang", p: [0, 3], exits: ["s","n","w","e"] },
 	    { n: "慈航殿", id: "cihang/zhudian", p: [0, 4], exits: ["n"] },
-	    { n: "碎石小路", id: "cihang/xiaolu1", p: [1, 3], exits: ["s", "e", "w"] },
-	    { n: "碎石小路", id: "cihang/xiaolu3", p: [1, 4], exits: ["n", "s"] },
-	    { n: "茶园", id: "cihang/chayuan", p: [1, 5], exits: ["n"] },
-	    { n: "听雨亭", id: "cihang/tingyu", p: [2, 3], exits: ["s", "w"] },
+	    { n: "碎石小路", id: "cihang/xiaolu2", p: [-1, 3], exits: ["e","w"] },
+	    { n: "赏雨亭", id: "cihang/shangyu", p: [-2, 3], exits: ["e"] },
+	    { n: "碎石小路", id: "cihang/xiaolu1", p: [1, 3], exits: ["s","w","e"] },
+	    { n: "听雨亭", id: "cihang/tingyu", p: [2, 3], exits: ["w","s"] },
 	    { n: "典藏塔", id: "cihang/diancangta", p: [2, 4], exits: ["n"] },
-	    { n: "石窟", id: "cihang/shiku", p: [2, 5], exits: [] },
-	];
+	    { n: "碎石小路", id: "cihang/xiaolu3", p: [1, 4], exits: ["n","s"] },
+	    { n: "茶园", id: "cihang/chayuan", p: [1, 6], exits: ["enter","n"] },
+	    { n: "石窟", id: "cihang/shiku", p: [1, 7], exits: ["out"] },
+	    { n: "拦江岛", id: "cihang/lanjiang", p: [-2, 7], exits: ["s"] },
+		];
 this.drops = [
     "book/bc#fuyujianfa",
     "book/bc#bianjiushi",

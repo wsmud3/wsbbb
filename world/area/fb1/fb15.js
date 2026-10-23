@@ -14,7 +14,7 @@
 		    room_path: "hs2/",
 		    ss_title: "娜美鲁多"
 		});
-			this.map = [
+		this.map = [
 	    { n: "衡阳城", id: "hs2/hengyang", p: [0, 0], exits: ["w","e"] },
 	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n","e","w"] },
 	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["s","n"] },

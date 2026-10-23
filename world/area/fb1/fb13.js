@@ -15,19 +15,19 @@
 	    ss_title: "采花大盗"
 	});
 		this.map = [
-	    { n: "见性峰", id: "hs/jianxingfeng", p: [0, 0], exits: ["n"] },
+	    { n: "见性峰", id: "hs/jianxingfeng", p: [0, 0], exits: ["n","sd"] },
 	    { n: "白云庵", id: "hs/baiyunan", p: [0, -1], exits: ["n","s","e","w"] },
 	    { n: "后殿", id: "hs/houdian", p: [0, -2], exits: ["s"] },
 	    { n: "东廊", id: "hs/donglang", p: [1, -1], exits: ["n","w"] },
 	    { n: "西廊", id: "hs/xilang", p: [-1, -1], exits: ["n","e"] },
 	    { n: "练功房", id: "hs/liangongfang", p: [1, -2], exits: ["s"] },
 	    { n: "斋堂", id: "hs/zaitang", p: [-1, -2], exits: ["s"] },
-	    { n: "北岳殿", id: "hs/beiyuedian", p: [-1, 0], exits: ["e"] },
-	    { n: "山道", id: "hs/shandao", p: [-1, 1], exits: ["se"] },
-	    { n: "果老岭", id: "hs/guolaoling", p: [0, 2], exits: ["se","nw"] },
-	    { n: "通元谷", id: "hs/tongyuangu", p: [0, 1], exits: [] },
-	    { n: "虎风口", id: "hs/hufengkou", p: [1, 3], exits: ["nw"] },
-	    { n: "大字岭", id: "hs/daziling", p: [1, 4], exits: [] },
+	    { n: "北岳殿", id: "hs/beiyuedian", p: [-1, 0], exits: ["nu","e"] },
+	    { n: "山道", id: "hs/shandao", p: [-1, 1], exits: ["nu","se"] },
+	    { n: "果老岭", id: "hs/guolaoling", p: [0, 2], exits: ["se","nw","nu"] },
+	    { n: "通元谷", id: "hs/tongyuangu", p: [0, 1], exits: ["sd"] },
+	    { n: "虎风口", id: "hs/hufengkou", p: [1, 3], exits: ["nw","sd"] },
+	    { n: "大字岭", id: "hs/daziling", p: [1, 4], exits: ["nu"] },
 		];
 	this.drops = [
 	    "book/bc#baiyunxinfa", "book/bc#hengshanjianfa",
