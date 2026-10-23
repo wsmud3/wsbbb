@@ -5,7 +5,7 @@ this.set({
     desc: "星宿海位于青海荒漠之中，地势险恶，毒雾弥漫。丁春秋在此创立星宿派，门人善使毒功，以化功大法威震江湖。",
     score: 200,
     is_show: true,
-    first: "xx/rukou",
+    first: "xx/xxh6",
     is_copy: true,
     expend: 10,
     exp: 26000,

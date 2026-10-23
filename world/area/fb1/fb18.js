@@ -5,7 +5,7 @@
 	    desc: "云梦沼泽终年浓雾弥漫，泥泞难行，毒虫猛兽出没其间。传闻洪荒古泽深处有火龙盘踞，其鳞甲可炼制神兵宝甲。",
 	    score: 170,
 	    is_show: true,
-	    first: "ym/rukou",
+	    first: "ym/senlin",
 	    is_copy: true,
 	    expend: 10,
 	    is_multi: true,

@@ -14,7 +14,7 @@ this.set_item("xiazi", "匣子", "悬崖的墙上嵌着一个铜匣，匣面有�
     ["charu", "插入白虎令", null]
 ]);
 this.lan_ready = false;
-this.lan_target = "hmy/up12";
+this.lan_target = "hmy/up2";
 
 this.hmy_have = function (me, p) {
     if (!me.items) return null;

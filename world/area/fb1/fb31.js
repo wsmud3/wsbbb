@@ -5,7 +5,7 @@ this.set({
     desc: "五绝论剑，华山之巅。东邪西毒南帝北丐中神通，天下五绝齐聚华山，争夺天下第一之名号。此乃武林至高荣耀之战。",
     score: 300,
     is_show: true,
-    first: "hslj/leitaixia",
+    first: "hslj/tai",
     is_copy: true,
     expend: 10,
     is_multi: false,

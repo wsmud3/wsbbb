@@ -5,7 +5,7 @@ this.set({
     desc: "终南山活死人墓，古墓派世代隐居于此。林朝英所创武功精妙绝伦，玉女心经冠绝天下，墓中机关重重，暗藏玄机。",
     score: 290,
     is_show: true,
-    first: "gm2/gumurukou",
+    first: "gm2/gumukou",
     is_copy: true,
     expend: 10,
     is_multi: false,

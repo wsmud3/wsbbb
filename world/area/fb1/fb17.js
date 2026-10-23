@@ -4,7 +4,7 @@
 		    name: "嵩山",
 		    desc: "中岳嵩山，气势磅礴，胜观峰上的峻极禅院乃是五岳剑派嵩山派的总舵。左冷禅在此网罗高手，图谋吞并五岳，会盟堂中暗藏杀机。",
 		    score: 140,
-		    first: "ss/taishique",
+		    first: "ss/taishi",
 		    is_show: true,
 		    is_copy: true,
 		    expend: 10,

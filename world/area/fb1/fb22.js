@@ -5,7 +5,7 @@ this.set({
     desc: "北海冰火岛，一半冰川一半火山，极寒与极热并存。金毛狮王谢逊与屠龙刀曾藏于此，岛上火山熔岩中蕴藏着绝世宝物。",
     score: 210,
     is_show: true,
-    first: "bh/haiyanshi",
+    first: "bh/haibian",
     is_copy: true,
     expend: 10,
     is_multi: true,
@@ -29,8 +29,8 @@ this.set({
 		];
 
 // 冰火岛区域buff
-this.ice_rooms = { 'bh/binggu1': 1, 'bh/binggu2': 1, 'bh/binggu3': 1, 'bh/conglin1': 1, 'bh/conglin2': 1 };
-this.fire_rooms = { 'bh/huoshanlu1': 1, 'bh/huoshanlu2': 1, 'bh/huoshanjiaoxia': 1, 'bh/huoshan': 1, 'bh/rongyandong1': 1, 'bh/rongyandong2': 1, 'bh/rongyandong3': 1 };
+this.ice_rooms = { 'bh/conglin1': 1, 'bh/conglin2': 1 };
+this.fire_rooms = { 'bh/yslu1': 1, 'bh/yslu2': 1, 'bh/huoshanjiao': 1, 'bh/huoshan1': 1 };
 this.on_enterd = function(me) {
     me.set_temp('bh_clear', 0);
 };
