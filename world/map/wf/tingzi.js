@@ -6,9 +6,11 @@ this.exits = {
 };
 this.set_npc([]);
 
-// 原版机制：五兄弟平时各自待在自己房间，跳上木桩时被【挪到当前房间】一起出战；
-// 温方义 / 温方山 没有单独房间，是在木桩处出现的。
-// 注意：这里必须用「NPC 路径 → 所在房间路径」的映射，不能拿 NPC 路径去 ROOM.Get。
+// 原版机制：
+//   五兄弟平时各自待在自己房间，跳上木桩时被【挪到当前房间】一起出战；
+//   温方义 / 温方山 没有单独房间，直接在木桩处出现。
+// 为避免同一个人被生成两次（大厅里还留着一个、尸体占分），
+// 这里先打 wf_zhuang_spawned 标记，让各房间不再自行生成；然后能挪的挪、挪不到的才生成。
 var WF_PULL = [
     ["wf/wenfangda", "wf/dating"],
     ["wf/wenfangshi", "wf/wen4"],
@@ -16,50 +18,46 @@ var WF_PULL = [
 ];
 var WF_SPAWN = ["wf/wenfangyi", "wf/wenfangshan"];
 
+this.grab_from_room = function (npcPath, roomPath, me) {
+    var tpl = ROOM.Get(roomPath);
+    if (!tpl) return false;
+    var rooms = [];
+    if (tpl.copy_rooms) { for (var k in tpl.copy_rooms) rooms.push(tpl.copy_rooms[k]); }
+    rooms.push(tpl);
+    for (var r = 0; r < rooms.length; r++) {
+        var room = rooms[r];
+        if (!room || !room.items || room === this) continue;
+        for (var i = 0; i < room.items.length; i++) {
+            var o = room.items[i];
+            if (o && o.path === npcPath && o.hp > 0) {
+                o.moveto(this);
+                o.do_kill(me);
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
 this.pull_brothers = function (me) {
     var moved = 0;
-    var log = [];
     for (var k = 0; k < WF_PULL.length; k++) {
-        var npcPath = WF_PULL[k][0];
-        var roomPath = WF_PULL[k][1];
-        var tpl = ROOM.Get(roomPath);
-        if (!tpl) { log.push(npcPath + ":房间模板缺失"); continue; }
-        var owner = null;
-        if (tpl.parent && tpl.parent.query_owner) owner = tpl.parent.query_owner(me);
-        var copy = null;
-        if (owner && tpl.query_copy) copy = tpl.query_copy(owner);
-        if (copy && copy.items) {
-            var found = null;
-            for (var i = 0; i < copy.items.length; i++) {
-                var o = copy.items[i];
-                if (o && o.path === npcPath && o.hp > 0) { found = o; break; }
-            }
-            if (found) {
-                if (copy !== this) found.moveto(this);
-                found.do_kill(me);
-                moved++;
-                log.push(npcPath + ":挪来");
-            } else {
-                log.push(npcPath + ":该房间副本内已无存活");
-            }
-        } else {
-            // 玩家还没进过那间房（副本房间懒创建）→ 视为他本来就在那间，直接放到木桩
-            var n = NPC.CREATE(npcPath, this);
-            if (n) { n.do_kill(me); moved++; log.push(npcPath + ":房间未创建→生成"); }
-            else log.push(npcPath + ":生成失败");
-        }
+        var npcPath = WF_PULL[k][0], roomPath = WF_PULL[k][1];
+        if (this.grab_from_room(npcPath, roomPath, me)) { moved++; continue; }
+        // 已经死过的兄弟不再补，避免重复计分（温方达可能在大厅已被杀）
+        if (npcPath === "wf/wenfangda" && me.query_temp("wf_fangda_dead")) continue;
+        var n = NPC.CREATE(npcPath, this);
+        if (n) { n.do_kill(me); moved++; }
     }
     for (var j = 0; j < WF_SPAWN.length; j++) {
         var exist = false;
         for (var m = 0; m < this.items.length; m++) {
             if (this.items[m] && this.items[m].path === WF_SPAWN[j] && this.items[m].hp > 0) { exist = true; break; }
         }
-        if (exist) { log.push(WF_SPAWN[j] + ":已在场"); continue; }
+        if (exist) continue;
         var np = NPC.CREATE(WF_SPAWN[j], this);
-        if (np) { np.do_kill(me); moved++; log.push(WF_SPAWN[j] + ":生成"); }
-        else log.push(WF_SPAWN[j] + ":生成失败");
+        if (np) { np.do_kill(me); moved++; }
     }
-    me.notify("<hic>[调试] moved=" + moved + " | " + log.join(" ; ") + "</hic>");
     return moved;
 };
 
@@ -86,8 +84,8 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
             return true;
         }
         me.set_temp("wf_jinshe_spawned", 1, 7200000);
-        // 副本里跨房间传送：目标房间的副本实例不存在时必须先创建（与 go.js 一致），
-        // 否则 me.moveto("路径") 会静默失败（下一跳反而落回本房间）。
+        // 副本内跨房间传送：目标房间副本不存在时必须先创建（同 go.js），
+        // 否则 me.moveto("路径") 会静默失败。
         var tpl = ROOM.Get("wf/xiaoyuan");
         if (!tpl) return true;
         var cur = me.environment;
@@ -107,7 +105,6 @@ this.set_item("zhuang", "木桩", "这是几根分布得怪里怪气的木桩，
         }
         me.send_room("$N再次纵身跳上木桩，眼前一花——竟已落在府后的小院里。");
         me.moveto(dest, null, "你落在小院中，院里站着两个人。");
-        // 金蛇郎君不主动叫杀，由玩家自己动手。
         return true;
     }]
 ]);

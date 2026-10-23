@@ -52,3 +52,7 @@ this.on_enter = function (me) {
     me.notify("温方达喝道：来者何人！留下命来！");
     this.do_kill(me);
 };
+
+this.on_died = function (killer, corpse) {
+    if (killer && killer.is_player) killer.set_temp("wf_fangda_dead", 1, 7200000);
+};

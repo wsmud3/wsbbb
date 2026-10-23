@@ -45,8 +45,3 @@ this.set_drop({
     obj: ["eq/lv3/js_pifeng"],
     odds: 6400
 });
-this.on_enter = function (me) {
-    me.notify("金蛇郎君缓缓抬起头，眼中寒光一闪：既然来了，就不要走了。");
-    this.do_kill(me);
-};
-
