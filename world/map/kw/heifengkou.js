@@ -1,7 +1,10 @@
 this.inherits(ROOM);
 this.name = "黑风口";
 this.desc = "关外的黑风口，狂风夹杂着雪粒呼啸而过，这里常有黑熊出没。";
-this.exits = { "east": "kw/xiaotianchi", "west": "kw/milin3" };
+this.exits = {
+    "east": "kw/xiaotianchi",
+    "west": "kw/milin3",
+};
 this.set_npc([]);
 
 // 副本实例里 set_npc 不生成，改为进入时按实例创建（每个实例一只）

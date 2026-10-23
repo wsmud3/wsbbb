@@ -1,7 +1,9 @@
 this.inherits(ROOM);
 this.name = "瀑布";
 this.desc = "一道瀑布从悬崖上飞流直下，水声轰鸣。此处山势险峻，据说瀑布之后别有洞天。";
-this.exits = { "west": "kw/xiaotianchi" };
+this.exits = {
+    "west": "kw/xiaotianchi",
+};
 
 // [mech] 大清龙脉（攻略：地图的最东方可以挖大清龙脉，需集齐 8 本四十二章经、基础轻功 300）
 this.set_item("longmai", "龙脉", "瀑布后方的岩壁裂开一道缝隙，缝口凿着八道锁扣，缝内隐隐有龙气透出。", [
