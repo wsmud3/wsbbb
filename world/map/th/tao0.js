@@ -45,14 +45,14 @@ this.desc = "这是一片桃花的海洋，四周栽了一些桃树，全是盛�
 
 // 八个方向先都挂上（真正能不能走由 on_leave 判），走错统一弹回海滩
 this.exits = {
-    "north": "th/haitan",
-    "south": "th/haitan",
-    "east": "th/haitan",
-    "west": "th/haitan",
-    "northeast": "th/haitan",
-    "northwest": "th/haitan",
-    "southeast": "th/haitan",
-    "southwest": "th/haitan",
+    "north": "th/tao0",
+    "south": "th/tao0",
+    "east": "th/tao0",
+    "west": "th/tao0",
+    "northeast": "th/tao0",
+    "northwest": "th/tao0",
+    "southeast": "th/tao0",
+    "southwest": "th/tao0",
 };
 this.set_npc([]);
 

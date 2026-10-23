@@ -2,8 +2,8 @@ this.inherits(ROOM);
 this.name = "花径";
 this.desc = "这是一片谷底的小路。四周一望无际，全是盛开的鲜花。微风拂过，蜜蜂到飞舞。香气逼人。往北是一片玫瑰花，往南则是一个大门。";
 this.exits = {
-    "north": "yh/shandao",
-    "south": "yh/yihua1",
+    "north": "yh/yihua0",
+    "south": "yh/yihua0",
     "east": "yh/yihua0",
     "west": "yh/yihua0",
 };
@@ -29,7 +29,8 @@ this.on_leave = function (me, dir) {
             return false;
         }
         me.set_temp("yh_huajing_step", n, 7200000);
-        me.notify("<hiy>你沿着花径往南走（" + n + "/" + STEP_NEED + "）。</hiy>");
+        // 原版：花径每走一步都要掉血
+        if (me.damage2) me.damage2(Math.floor(me.max_hp * 0.05));
         return false;                                       // 关键：不真的移动出去
     }
     if (me.query_temp("yh_huajing_step")) {

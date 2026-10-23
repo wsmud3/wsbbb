@@ -5,7 +5,7 @@ this.set({
     desc: "东海桃花岛，四季如春，桃花烂漫。岛主黄药师精通奇门遁甲、琴棋书画，岛上遍布桃花迷阵，外人难入。",
     score: 180,
     is_show: true,
-    first: "th/damen",
+    first: "th/haitan",
     is_copy: true,
     expend: 10,
     is_multi: false,

@@ -6,3 +6,10 @@ this.exits = {
     "northup": "ts/shiba1",
 };
 this.set_npc(["ts/ertian_1", 1]);
+
+// 每往上走一步都要验轻功（规则见 ts/daizong.js 的 WORLD.ts_climb）
+this.on_leave = function (me, dir) {
+    if (!me.is_player) return true;
+    if (!dir || dir.indexOf("up") < 0) return true;
+    return WORLD.ts_climb(me);
+};

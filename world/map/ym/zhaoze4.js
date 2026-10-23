@@ -15,4 +15,3 @@ this.set_item("lu", "芦苇", "这是一片看上去无边无际的芦苇荡，�
     }]
 ]);
 this.set_npc(["ym/eyu", 2]);
-this.set_npc(["ym/auto_2", 1]);

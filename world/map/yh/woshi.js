@@ -14,6 +14,7 @@ this.set_npc([]);
 this.set_item("bed", "床(bed)", "一张华丽的花床，但是你仔细的看了一下，似乎能移动。", [
     ["pushleft", "向左移动", function (me) {
         if (!me.is_player) return true;
+        if (!this.yh_can_push(me)) return true;
         var n = (me.query_temp("yh_push_left") || 0) + 1;
         me.set_temp("yh_push_left", n, 7200000);
         me.send_room("$N将床板往左移...，忽然轧轧几声，床板又移回原位。");
@@ -21,6 +22,7 @@ this.set_item("bed", "床(bed)", "一张华丽的花床，但是你仔细的看�
     }],
     ["pushright", "向右移动", function (me) {
         if (!me.is_player) return true;
+        if (!this.yh_can_push(me)) return true;
         var n = (me.query_temp("yh_push_right") || 0) + 1;
         me.set_temp("yh_push_right", n, 7200000);
         me.send_room("$N将床板往右移...，忽然轧轧几声，床板又移回原位。");
@@ -55,4 +57,29 @@ this.on_enter = function (me) {
         var r = me.query_temp("yh_push_right") || 0;
         if (l === me.query_temp("yh_hua_yue") && r === me.query_temp("yh_hua_xing")) this.add_exit("down", "yh/midao");
     }
+};
+
+// 两位宫主是否都已伏诛（没杀完谁都别想进卧室、也别想推床）
+this.yh_both_dead = function (me) {
+    var area = this.environment && this.environment.parent;
+    if (!area || !area.rooms) return false;
+    var team = me && me.query_teamid ? me.query_teamid() : null;
+    var yue = false, xing = false;
+    for (var i = 0; i < area.rooms.length; i++) {
+        var cp = area.rooms[i].query_copy(team);
+        if (!cp || !cp.items) continue;
+        for (var j = 0; j < cp.items.length; j++) {
+            var o = cp.items[j];
+            if (!o || o.is_player) continue;
+            if (o.path === "yh/yaoyue" && o.hp > 0) yue = true;
+            if (o.path === "yh/lianxing" && o.hp > 0) xing = true;
+        }
+    }
+    return !yue && !xing;
+};
+
+this.yh_can_push = function (me) {
+    if (this.yh_both_dead(me)) return true;
+    me.notify("<red>床板纹丝不动——两位宫主都还在，这床不会开。</red>");
+    return false;
 };

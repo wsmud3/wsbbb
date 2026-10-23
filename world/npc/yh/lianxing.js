@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "涟星",
     desc: "移花宫二宫主，温柔似水，但武功丝毫不逊于邀月。",
-    title: "<hiy>移花宫主·涟星</hiy>",
+    title: "<hiy>移花二宫主</hiy>",
     gender: 0,
     age: 32,
     per: 22,

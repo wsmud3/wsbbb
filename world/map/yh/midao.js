@@ -18,8 +18,7 @@ this.on_enter = function (me) {
         me.notify("<hiy>（出去重进一次吧，记得先去弄个火折子。）</hiy>");
         return;
     }
-    me.set_temp("yh_andao_light", 1, 7200000);
-    me.send_room("$N擦亮火折子，暗道里顿时亮了起来。");
+    // 只是提示可以点火，灯亮不亮要等玩家真的点火
     me.send_commands("fire", "点火");
 };
 

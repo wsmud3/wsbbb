@@ -16,3 +16,30 @@ this.set_item("hua", "花丛", "宫墙边一片花丛，花开得正盛。", [
         return true;
     }]
 ]);
+
+// 两位宫主是否都已伏诛（没杀完谁都别想进卧室、也别想推床）
+this.yh_both_dead = function (me) {
+    var area = this.environment && this.environment.parent;
+    if (!area || !area.rooms) return false;
+    var team = me && me.query_teamid ? me.query_teamid() : null;
+    var yue = false, xing = false;
+    for (var i = 0; i < area.rooms.length; i++) {
+        var cp = area.rooms[i].query_copy(team);
+        if (!cp || !cp.items) continue;
+        for (var j = 0; j < cp.items.length; j++) {
+            var o = cp.items[j];
+            if (!o || o.is_player) continue;
+            if (o.path === "yh/yaoyue" && o.hp > 0) yue = true;
+            if (o.path === "yh/lianxing" && o.hp > 0) xing = true;
+        }
+    }
+    return !yue && !xing;
+};
+
+this.on_leave = function (me, dir) {
+    if (!me.is_player) return true;
+    if (!dir) return true;
+    if (this.yh_both_dead(me)) return true;
+    me.notify("<red>两宫之主尚未伏诛，你过不去。</red>");
+    return false;
+};
