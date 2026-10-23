@@ -29,8 +29,22 @@ this.on_leave = function (me, dir) {
             return false;
         }
         me.set_temp("yh_huajing_step", n, 7200000);
-        // 原版：花径每走一步都要掉血
-        if (me.damage2) me.damage2(Math.floor(me.max_hp * 0.05));
+        // 原版：每走一步一阵奇香袭来，掉 5% 最大气血；
+        // 这一步的伤害走「命中/闪避/招架」判定——奇香按 10 万命中算，
+        // 闪避或招架过了 10 万就能闪掉/架开。
+        me.notify("<hir>突然一阵奇香向你袭来,你不由得开始奇想！</hir>");
+        var ds = me.ds || 0, zj = me.zj || 0;
+        if (!ds || !zj) {
+            if (me.recount) me.recount();
+            ds = me.ds || 0; zj = me.zj || 0;
+        }
+        var MZ = 100000;
+        var dodged = Math.random() * (ds / 2) + ds / 2 > MZ;
+        var parried = false;
+        if (!dodged && !me.is_busy) parried = Math.random() * (zj / 2) + zj / 2 > MZ;
+        if (dodged) me.notify("<hiy>你身随意动，堪堪避开了那股奇香。</hiy>");
+        else if (parried) me.notify("<hiy>你抬手一格，把那股奇香架了开去。</hiy>");
+        else if (me.damage2) me.damage2(Math.floor(me.max_hp * 0.05));
         return false;                                       // 关键：不真的移动出去
     }
     if (me.query_temp("yh_huajing_step")) {

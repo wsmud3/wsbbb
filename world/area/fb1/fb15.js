@@ -14,11 +14,12 @@
 		    room_path: "hs2/",
 		    ss_title: "娜美鲁多"
 		});
-		this.map = [
-	    // 与 fb15 原版 map 应答一一对应（13 个节点）。原版里「东厢房/西厢房」和「刘府大厅」
-	    // 共用同一个 id，这里拆成三间真实房间，坐标仍按原版 p。
+				this.map = [
+	    // 与原版 fb15 map 应答一致；2026-10-23 实测补回「林间小道 / 山涧」两间
 	    { n: "衡阳城", id: "hs2/hengyang", p: [0, 0], exits: ["e","w"] },
-	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n"] },
+	    { n: "衡阳西街", id: "hs2/jiedao", p: [-1, 0], exits: ["n","w"] },
+	    { n: "林间小道", id: "hs2/xiaolu", p: [-2, 0], exits: ["w"] },
+	    { n: "山涧", id: "hs2/shanjian", p: [-3, 0], exits: [] },
 	    { n: "刘府大门", id: "hs2/liufumen", p: [-1, -1], exits: ["n"] },
 	    { n: "刘府大院", id: "hs2/liufudayuan", p: [-1, -2], exits: ["n"] },
 	    { n: "刘府大厅", id: "hs2/liufudating", p: [-1, -3], exits: ["e","w"] },

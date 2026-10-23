@@ -4,5 +4,6 @@ this.desc = "你走在碎石铺就的狭小街道上。街上时常有人持剑�
 this.exits = {
     "north": "hs2/liufumen",
     "east": "hs2/hengyang",
+    "west": "hs2/xiaolu",
 };
 this.set_npc([]);
