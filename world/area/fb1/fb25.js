@@ -32,7 +32,7 @@ this.set({
 	    { n: "悬崖", id: "hmy/up3", p: [2, -2], exits: ["s"] },
 	    { n: "大门", id: "hmy/damen", p: [3, -2], exits: ["w","e"] },
 	    { n: "承德殿", id: "hmy/chengdedian", p: [4, -2], exits: ["w","e"] },
-	    { n: "后厅", id: "hmy/houdian", p: [5, -2], exits: ["w","n"] },
+	    { n: "后殿", id: "hmy/houdian", p: [5, -2], exits: ["w","n"] },
 	    { n: "密道", id: "hmy/midao1", p: [5, -1], exits: ["s"] },
 	    { n: "小花园", id: "hmy/huayuan", p: [5, 0], exits: ["w","e"] },
 	    { n: "闺房", id: "hmy/guifang", p: [6, 0], exits: ["w"] },
