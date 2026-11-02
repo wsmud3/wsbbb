@@ -4,4 +4,4 @@ this.desc = "这是一座宽广的大殿，正面有一座高约二十余尺的�
 this.exits = {
     "north": "tl/ta",
 };
-this.set_npc(["tl/auto_1", 1]);
+this.set_npc(["tl/benyin", 1]);

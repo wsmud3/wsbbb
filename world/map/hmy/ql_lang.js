@@ -4,4 +4,4 @@ this.desc = "这里是非常气派的长廊。两边站着数十个刀斧手,警
 this.exits = {
     "south": "hmy/ql_ting",
 };
-this.set_npc(["hmy/auto_1", 1]);
+this.set_npc(["hmy/jiaotu", 1]);

@@ -4,4 +4,4 @@ this.desc = "这是『日月神教』下第二大堂：白虎堂的走廊，周�
 this.exits = {
     "north": "hmy/bh_ting",
 };
-this.set_npc(["hmy/auto_1", 1]);
+this.set_npc(["hmy/jiaotu", 1]);

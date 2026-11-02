@@ -4,7 +4,7 @@ this.desc = "这是高僧们的静修之处。整堂全以松木制成，板门�
 this.exits = {
     "north": "tl/banruo",
 };
-this.set_npc(["tl/kurongdashi", 1], ["tl/auto_2", 1]);
+this.set_npc(["tl/kurongdashi", 1], ["tl/duanyu", 1]);
 
 // 原版机制（攻略第 28 节，普通）：
 //   牟尼堂里有枯荣大师和段誉。先比试枯荣、把他血量打低，再抓段誉（背负 debuff），

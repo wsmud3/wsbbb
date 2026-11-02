@@ -5,4 +5,4 @@ this.exits = {
     "north": "qc/zhongmen",
     "southdown": "qc/shangqing",
 };
-this.set_npc(["qc/auto_3", 1]);
+this.set_npc(["qc/hongrenxiong", 1]);

@@ -4,4 +4,4 @@ this.desc = "殿中陈设奢华，显见青城派财力不菲。正中的三清�
 this.exits = {
     "south": "qc/caochang",
 };
-this.set_npc(["qc/auto_2", 1], ["qc/auto_4", 1]);
+this.set_npc(["qc/hourenying", 1], ["qc/luorenjie", 1]);

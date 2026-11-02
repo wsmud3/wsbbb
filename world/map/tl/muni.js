@@ -4,4 +4,4 @@ this.desc = "这是高僧们的静修之处。整堂全以松木制成，板门�
 this.exits = {
     "north": "tl/banruo",
 };
-this.set_npc(["tl/kurongdashi", 1], ["tl/auto_2", 1]);
+this.set_npc(["tl/kurongdashi", 1], ["tl/duanyu", 1]);

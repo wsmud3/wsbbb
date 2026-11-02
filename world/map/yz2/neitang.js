@@ -4,4 +4,4 @@ this.desc = "这里是燕子坞的内堂，里面是平时慕容家眷呆的地�
 this.exits = {
     "west": "yz2/houting",
 };
-this.set_npc(["yz2/auto_3", 1]);
+this.set_npc(["yz2/azhu", 1]);

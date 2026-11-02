@@ -4,4 +4,4 @@ this.desc = "这是『日月神教』下第一大堂：风雷堂的内部，一�
 this.exits = {
     "north": "hmy/fl_ting",
 };
-this.set_npc(["hmy/auto_1", 1]);
+this.set_npc(["hmy/jiaotu", 1]);

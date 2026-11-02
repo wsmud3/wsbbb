@@ -5,7 +5,7 @@ this.exits = {
     "northup": "pm/yan",
     "southdown": "pm/shanjiao"
 };
-this.set_npc(["pm/auto_1", 1], ["pm/bupingdaoren", 1], ["pm/auto_3", 1]);
+this.set_npc(["pm/wudaolaoda", 1], ["pm/bupingdaoren", 1], ["pm/tianshantonglao", 1]);
 
 // 原版机制（攻略第 26 节）：杀完乌老大/不平道人后，过铁索桥去李秋水那边。
 // 目标房间 id 已按原版改为 pm/xianchou。

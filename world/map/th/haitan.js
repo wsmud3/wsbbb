@@ -4,4 +4,4 @@ this.desc = "这是桃花岛前的海滩。往北是一望无际的大海；往�
 this.exits = {
     "south": "th/tao0",
 };
-this.set_npc(["th/auto_1", 1]);
+this.set_npc(["th/yufu", 1]);
