@@ -4,5 +4,6 @@ this.desc = "大厅中陈设简朴, 无什摆设, 正堂上挂着许多人物字
 this.exits = {
     "east": "yz2/shufang",
     "north": "yz2/houting",
+    "west": "yz2/wuchang",
 };
 this.set_npc([]);
