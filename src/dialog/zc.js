@@ -69,23 +69,28 @@ export default {
 
     init_element: function () {
         if (!this._eventsBound) {
-            // 绑定事件到dialog-content，因为渲染直接写入contentElement
+            // 绑定到 document 而不是 Dialog.contentElement：
+            // 自创面板除了渲染进对话框，还会整块搬进浮窗（floatdialog 挂在
+            // document.body 上，不在 .container 里，拿不到全局的 [cmd] 分发）。
+            // 词条/招式/确认按钮都没有 cmd 属性，只靠这里的委托生效，
+            // 绑在 contentElement 上时浮窗里就完全点不动。
+            // 用 .zc-* 类名做委托，作用域足够窄，不会误伤其它面板。
             var self = this;
-            Dialog.contentElement.on("click", ".zc-word-item", function () {
+            $(document).on("click.zc", ".zc-word-item", function () {
                 var index = parseInt($(this).attr("data-word"));
                 if (!isNaN(index)) self.toggleWord(index);
             });
-            Dialog.contentElement.on("click", ".zc-pfm-item", function () {
+            $(document).on("click.zc", ".zc-pfm-item", function () {
                 var pfmId = $(this).attr("data-pfm");
                 if (pfmId) self.togglePfm(pfmId);
             });
-            Dialog.contentElement.on("click", ".zc-confirm-btn", function () {
+            $(document).on("click.zc", ".zc-confirm-btn", function () {
                 self.confirmSelection();
             });
-            Dialog.contentElement.on("click", ".zc-lvl-confirm", function () {
+            $(document).on("click.zc", ".zc-lvl-confirm", function () {
                 self.confirmLevelset();
             });
-            Dialog.contentElement.on("keydown", ".zc-level-input", function (e) {
+            $(document).on("keydown.zc", ".zc-level-input", function (e) {
                 if (e.keyCode === 13) self.confirmLevelset();
             });
             this._eventsBound = true;

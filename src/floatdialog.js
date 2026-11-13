@@ -16,14 +16,26 @@ const float_css = `
     position: fixed;
     z-index: 100;
     width: 24em;
+    /* 手机视口窄/矮：宽度跟着视口收；高度超过视口时窗口自己滚动。
+       原来的 overflow:hidden + 无 max-height 会把底部按钮裁到屏幕外
+       （位置看着在，其实点不到），这是手机端「浮窗看不见/点不动」的直接原因之一。 */
+    max-width: calc(100vw - 8px);
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     background: black;
     border-radius: 6px;
     border: 1px solid #343434;
     box-shadow: 0 0 40px rgba(0,0,0,0.7);
     user-select: none;
-    overflow: hidden;
 }
 .float-dialog>.float-dialog-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     height: 1.6em;
     line-height: 1.6em;
     background: #222;
@@ -386,21 +398,34 @@ const FloatDialog = {
         // 先入文档，才能量出宽度用于定位
         document.body.appendChild(el);
 
-        let ww = window.innerWidth;
-        let wh = window.innerHeight;
+        // 手机端：软键盘弹出/横竖屏切换时 innerHeight、innerWidth 会变，
+        // 只按创建那一刻的视口定位会把窗口留在看不到的地方；这里改为
+        // 用 visualViewport（有的话）取真实可视区，并挂上变化监听。
+        this._bindViewport();
+
+        let vp = FloatDialog._viewport();
+        let ww = vp.w;
+        let wh = vp.h;
         let ew = el.offsetWidth;
 
-        // 位置夹取：保证整个浮窗始终在视口内（手机端尤其重要，避免拖出屏幕外点不到）
+        // 位置夹取：保证整个浮窗始终在可视区内（手机端尤其重要，避免跑到屏幕外点不到）
         let eh = el.offsetHeight;
-        let clampLeft = (v) => Math.max(4, Math.min(v, Math.max(4, ww - ew - 4)));
-        let clampTop = (v) => Math.max(4, Math.min(v, Math.max(4, wh - eh - 4)));
+        let clampLeft = (v) => Math.max(vp.left + 4, Math.min(v, Math.max(vp.left + 4, vp.left + ww - ew - 4)));
+        let clampTop = (v) => Math.max(vp.top + 4, Math.min(v, Math.max(vp.top + 4, vp.top + wh - eh - 4)));
         // 有记住的位置就用记住的，否则居中
         if (FloatDialog.savedLeft !== null && FloatDialog.savedTop !== null) {
             el.style.left = clampLeft(FloatDialog.savedLeft) + 'px';
             el.style.top = clampTop(FloatDialog.savedTop) + 'px';
         } else {
-            el.style.left = clampLeft((ww - ew) / 2) + 'px';
-            el.style.top = clampTop((wh - eh) / 2 - 40) + 'px';
+            el.style.left = clampLeft(vp.left + (ww - ew) / 2) + 'px';
+            el.style.top = clampTop(vp.top + (wh - eh) / 2 - 40) + 'px';
+        }
+        // 兜底：算完仍在可视区之外（极端窄屏 / 视口为 0）就拉回正中
+        let rect = el.getBoundingClientRect();
+        if (rect.right < vp.left + 4 || rect.bottom < vp.top + 4 ||
+            rect.left > vp.left + ww - 4 || rect.top > vp.top + wh - 4) {
+            el.style.left = (vp.left + Math.max(4, (ww - ew) / 2)) + 'px';
+            el.style.top = (vp.top + Math.max(4, (wh - eh) / 2)) + 'px';
         }
 
         // 「替换」折叠：与主消息栏里的行为一致——
@@ -477,14 +502,40 @@ const FloatDialog = {
         else el.classList.remove('float-size-lg');
     },
 
-    /** 视口变化时把浮窗拉回可视区域（横竖屏切换、手机地址栏收起等） */
+    /**
+     * 当前可视区。手机端的 innerHeight 是「布局视口」高度，
+     * 软键盘弹出、地址栏收起时不会跟着变，而 visualViewport 会，
+     * 所以优先用它——否则浮窗会被放到键盘挡住或滚出屏幕的位置。
+     */
+    _viewport() {
+        let vv = (typeof window !== 'undefined' && window.visualViewport) ? window.visualViewport : null;
+        if (vv && vv.width > 0 && vv.height > 0) {
+            return { left: vv.offsetLeft || 0, top: vv.offsetTop || 0, w: vv.width, h: vv.height };
+        }
+        return { left: 0, top: 0, w: window.innerWidth, h: window.innerHeight };
+    },
+
+    /** 只挂一次：视口/横竖屏/软键盘变化时把浮窗拉回可视区 */
+    _bindViewport() {
+        if (this._viewportBound) return;
+        this._viewportBound = true;
+        let fn = () => { if (FloatDialog.currentFloat) FloatDialog._handleResize(); };
+        window.addEventListener('resize', fn);
+        window.addEventListener('orientationchange', fn);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', fn);
+            window.visualViewport.addEventListener('scroll', fn);
+        }
+    },
+
+    /** 视口变化时把浮窗拉回可视区域（横竖屏切换、手机地址栏收起、软键盘弹出等） */
     _handleResize() {
         let el = this.currentFloat;
         if (!el) return;
-        let ww = window.innerWidth, wh = window.innerHeight;
+        let vp = FloatDialog._viewport();
         let ew = el.offsetWidth, eh = el.offsetHeight;
-        el.style.left = Math.max(4, Math.min(parseFloat(el.style.left) || 4, Math.max(4, ww - ew - 4))) + 'px';
-        el.style.top = Math.max(4, Math.min(parseFloat(el.style.top) || 4, Math.max(4, wh - eh - 4))) + 'px';
+        el.style.left = Math.max(vp.left + 4, Math.min(parseFloat(el.style.left) || (vp.left + 4), Math.max(vp.left + 4, vp.left + vp.w - ew - 4))) + 'px';
+        el.style.top = Math.max(vp.top + 4, Math.min(parseFloat(el.style.top) || (vp.top + 4), Math.max(vp.top + 4, vp.top + vp.h - eh - 4))) + 'px';
     },
 
     _setupDrag(el) {
@@ -492,7 +543,9 @@ const FloatDialog = {
         if (!header) return;
 
         header.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
+            // 注意：这里**不要**调用 e.preventDefault()。
+            // iOS Safari 会因此取消该指针序列的兼容鼠标事件（含 click），
+            // 表现为「按了没反应」。防滚动由 CSS 的 touch-action: none 负责。
             header.setPointerCapture(e.pointerId);
 
             let sx = e.clientX;

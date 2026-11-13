@@ -43,7 +43,9 @@ const Setting = {
     top_safe_distance: 0,
     bottom_safe_distance: 0,
     // 对话改用可拖拽浮窗显示，避免盖住房间与战斗区域
-    float_dialog: 0,
+    // 默认开启：这个开关只存本地（每台设备各自独立），手机上没手动开过就一直是关的，
+    // 于是同一账号在电脑上有浮窗、在手机上却没有。想要老样子可在设置里关掉。
+    float_dialog: 1,
     // 浮窗模式下把已搬进浮窗的文字从主消息流撤掉（避免重复显示）
     float_archive: 0,
     no_load: true,
@@ -62,6 +64,11 @@ const Setting = {
             }
         }
         this.loadLocal();
+        // 本地偏好里没存过的键不会走 set_prop，这里按当前默认值补一次，
+        // 保证依赖它们的界面状态（如 float_archive 行是否显示）一开始就是对的。
+        if (localStorage.getItem("ui_float_dialog") === null) {
+            this.set_prop("float_dialog", this.float_dialog);
+        }
     },
     // 纯前端的界面偏好存在 localStorage，不必为每次切换往返服务器，
     // 也不占用服务端存档字段。
