@@ -21,7 +21,8 @@ this.enter = function (me, arg) {
         if (arg == "none") return me.notify('{"type":"dialog","dialog":"pack","money":' + me.money + "}");
 
         // Check if arg is a page number
-        var pageNum = parseInt(arg);
+        // 只有纯数字才是页码（随从 id 可能以数字开头，如 3abc...）
+        var pageNum = /^\d+$/.test(arg) ? parseInt(arg) : NaN;
         if (!isNaN(pageNum) && pageNum >= 0) {
             page = pageNum;
             paginate = true;

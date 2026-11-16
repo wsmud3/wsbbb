@@ -421,7 +421,10 @@ this.get_total_words = function () {
 this.get_quality_grade = function () {
     var max = 0;
     if (!this.zc_words) return 0;
+    var done = Array.isArray(this.zc_positions) ? this.zc_positions : [];
     for (var pos in this.zc_words) {
+        // 只算已完成（已付费）的部位；推演中的部位不提前拉高品阶
+        if (done.indexOf(pos) < 0) continue;
         var count = Array.isArray(this.zc_words[pos]) ? this.zc_words[pos].length : 0;
         if (count > max) max = count;
     }

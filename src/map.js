@@ -504,19 +504,41 @@ export default {
         for (var i = 0; i < rooms.length; i++) if (rooms[i].id === id) return rooms[i].n;
         return "";
     },
+    /** 停止自动寻路（断线、重新登录时调用，防止残留的 Walk 被之后的手动移动误判）。 */
+    CancelWalk: function () {
+        if (this.WalkTimer) {
+            clearTimeout(this.WalkTimer);
+            this.WalkTimer = null;
+        }
+        this.Walk = null;
+    },
     WalkStep: function () {
         if (!this.Walk) return;
         var w = this.Walk;
-        if (w.index >= w.plan.length) { this.Walk = null; return; }
+        if (w.index >= w.plan.length) { this.CancelWalk(); return; }
         var step = w.plan[w.index];
         w.expect = step.to;
         w.index++;
         w.time = Date.now();
+        // 被 NPC 拦住 / 方向走不通时服务端不会换房间，SetRoom 不会回调 WalkArrived；
+        // 每一步挂一个超时，到点仍停在这一步就主动结束寻路。
+        if (this.WalkTimer) clearTimeout(this.WalkTimer);
+        var self = this, stepIndex = w.index;
+        this.WalkTimer = setTimeout(function () {
+            self.WalkTimer = null;
+            if (self.Walk !== w || w.index !== stepIndex) return;
+            self.Walk = null;
+            ReceiveMessage("<yel>自动寻路中断了（路上有阻挡或机关）。</yel>");
+        }, 5000);
         SendCommand("go " + (this.NAV_DIRS[step.dir] || step.dir));
     },
     /** 由 SetRoom 在「真的换了房间」时调用，核对路线。 */
     WalkArrived: function (path) {
         if (!this.Walk) return;
+        if (this.WalkTimer) {
+            clearTimeout(this.WalkTimer);
+            this.WalkTimer = null;
+        }
         var w = this.Walk;
         if (w.time && Date.now() - w.time > 5000) {
             this.Walk = null;

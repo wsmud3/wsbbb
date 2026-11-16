@@ -32,6 +32,9 @@ export function connectServer(server, pid) {
     }
     console.log("重新连接", GameClient == null ? "未连接" : "已连接");
     closeServer();
+    // 旧连接已被 Destroy（onclose=null），跨服标志对新连接无意义；不清掉会让
+    // 新连接之后第一次真正断线被当成「主动换服」吞掉
+    ChangeServer = false;
 
     // 重连超时保护：N秒内没收到 login 响应则强制刷新页面
     if (ReconnectTimer) clearTimeout(ReconnectTimer);
@@ -70,7 +73,7 @@ export function connectServer(server, pid) {
             SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken) + " " + LastPlayerId);
         } else {
             if (pid) {
-                SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken) + " " + pid + " " + server.ID);
+                SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken) + " " + pid + " " + (server.id != null ? server.id : server.ID));
             } else {
                 SendCommand(Util.GetUserCookie(SessionKey) + " " + Util.GetUserCookie(SessionToken) + " " + Process.player);
             }
@@ -148,6 +151,52 @@ export function SendCommand(cmd) {
     GameClient.Send(cmd);
 }
 window.SendCommand = SendCommand;
+
+// 首次连接时服务端只回 roles（等玩家选角），或回不断开 socket 的 loginerror，
+// 这两种情况都说明连接已正常应答，必须撤掉「15 秒没收到 login 就刷新」的保护定时器。
+export function clearReconnectTimer() {
+    if (ReconnectTimer) {
+        clearTimeout(ReconnectTimer);
+        ReconnectTimer = null;
+    }
+}
+
+// 跨服时主动关闭旧连接，OnClose 不应把它当成断线处理
+export function setChangeServer(v) {
+    ChangeServer = !!v;
+}
+
+// 返回服务器列表 / 重新登录 / 换服 / 登录失败时，丢弃断线前保存的角色，
+// 否则下一次连接会直接用旧角色自动登录，玩家没有机会选角。
+export function clearLastPlayer() {
+    LastPlayerId = null;
+}
+
+// 「重新登录」：断开当前连接、丢弃断线前角色和登录凭证，回到账号登录页。
+// 服务端 loginerror 里的 <CMD onclick='HideAndShow("#login_panel")'> 也走这里。
+export function resetToLogin() {
+    clearReconnectTimer();
+    if (ServerListTimer) {
+        clearTimeout(ServerListTimer);
+        ServerListTimer = null;
+    }
+    LastPlayerId = null;
+    LastCommand = null;
+    closeServer();
+    IsConnecting = false;
+    var expired = new Date();
+    expired.setTime(-1000);
+    [SessionKey, SessionToken].forEach(function (name) {
+        document.cookie = name + "=''; expires=" + expired.toGMTString();
+    });
+    $(".container").hide();
+    $(".login-content").show();
+    hide2show($("#login_panel"));
+}
+window.HideAndShow = function (elem) {
+    if (elem === "#login_panel") return resetToLogin();
+    hide2show($(elem));
+};
 
 export function onLogin() {
     // 清除重连超时定时器

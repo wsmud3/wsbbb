@@ -166,6 +166,7 @@ STATS.updateScoreItem = function (me, ary) {
     let new_index = -1;
     for (let i = ary.length - 1; i >= 0; i--) {
         let item = ary[i];
+        if (!item) continue;
         if (item.id === me.id) {
             cur_index = i;
         }

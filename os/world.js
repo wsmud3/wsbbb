@@ -79,6 +79,15 @@ WORLD = {
         if (!user) {
             return;
         }
+        // 计数只在 USER.heart_beat 里清零；尚未进入游戏的连接不在心跳名单里，按时间窗口自行清零，
+        // 否则选角阶段发满 21 条后会被永久限流。
+        if (!user.id) {
+            var nowRq = Date.now();
+            if (!user._rq_window || nowRq - user._rq_window >= (__CONFIG.HEARTBEAT || 5000)) {
+                user._rq_window = nowRq;
+                user.request_count = 0;
+            }
+        }
         if (user.request_count > 20) {
             return user.send("不要急，慢慢来。");
         }

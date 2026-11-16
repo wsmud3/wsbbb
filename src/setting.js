@@ -1,5 +1,14 @@
 
 
+// 站点存储被禁用/隐私模式下 localStorage 访问会抛错；界面偏好丢了无所谓，
+// 但不能让异常中断 login 处理（否则 onLogin 被跳过、15 秒后页面刷新）。
+function lsGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function lsSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { console.error("[setting] 本地存储不可用", e); }
+}
+
 const Setting = {
     keep_msg: 0,
     show_hpnum: 0,
@@ -66,7 +75,7 @@ const Setting = {
         this.loadLocal();
         // 本地偏好里没存过的键不会走 set_prop，这里按当前默认值补一次，
         // 保证依赖它们的界面状态（如 float_archive 行是否显示）一开始就是对的。
-        if (localStorage.getItem("ui_float_dialog") === null) {
+        if (lsGet("ui_float_dialog") === null) {
             this.set_prop("float_dialog", this.float_dialog);
         }
     },
@@ -75,7 +84,7 @@ const Setting = {
     loadLocal: function () {
         var keys = Setting.localKeys;
         for (var i = 0; i < keys.length; i++) {
-            var val = localStorage.getItem("ui_" + keys[i]);
+            var val = lsGet("ui_" + keys[i]);
             if (val === null || val === undefined) continue;
             if (typeof this[keys[i]] === "number") {
                 val = Number(val);
@@ -214,7 +223,7 @@ const Setting = {
         this.set_prop(key, value);
         // 界面偏好只存本地，不下发服务器（服务端不认识这些键）
         if (Setting.localKeys.indexOf(key) >= 0) {
-            localStorage.setItem("ui_" + key, value);
+            lsSet("ui_" + key, value);
         } else {
             SendCommand("setting " + key + " " + value);
         }

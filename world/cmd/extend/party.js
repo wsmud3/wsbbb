@@ -39,6 +39,11 @@
 	    var pt = WORLD.DATA.parties.get(ptId);
 	    if (!pt) { user.remove_temp("pt"); user.remove_temp("pt_lv"); return; }
 	    var role = pt.get_role(user.id);
+	    if (!role) {
+	        // 离线期间被开除：清掉残留的帮派状态，否则既进不了别的帮派、还能在原帮派频道发言
+	        if (online) { user.remove_temp("pt"); user.remove_temp("pt_lv"); }
+	        return;
+	    }
 	    if (role) {
 	        role.online = online;
 	        if (online) {
@@ -92,7 +97,7 @@
 	            return this.xiangyang(me);
 	        case "lvliu":
 	        case "lvliu_stop":
-	            return this.lvliu_stop(me);
+	            // 原来调用的 this.lvliu_stop 并不存在（必抛错）；绿柳活动由帮会管理员处开启
 	            return me.notify("请通过帮会管理员的活跃度查询开启绿柳山庄活动。");
 	        default:
 	            break;
@@ -115,7 +120,7 @@
 
 	// 创建帮派
 	this.create2 = function (me, name) {
-	    if (me.query_temp("pt")) {
+	    if (me.query_party()) {
 	        return me.notify("你已经加入了一个帮派，需要先退出才能创建。");
 	    }
 	    if (!name || name.length < 2 || name.length > 5) {
@@ -147,7 +152,7 @@
 
 	// 加入帮派
 	this.join = function (me, name) {
-	    if (me.query_temp("pt")) {
+	    if (me.query_party()) {
 	        return me.notify("你已经加入了一个帮派，需要先退出才能加入其他帮派。");
 	    }
 	    if (!name) return me.notify("请输入要加入的帮派名称。");
@@ -232,8 +237,10 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
+	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
 	    if (!targetRole) return me.notify("找不到该成员。");
-	    if (targetRole.level <= 1) return me.notify("该成员已是最高职位。");
+	    // 帮主只能有一个：副帮主不能再往上提，换帮主走 trans
+	    if (targetRole.level <= 2) return me.notify("该成员已是最高职位，转让帮主请使用转让功能。");
 	    if (myRole.level >= targetRole.level) return me.notify("你的职位不够高，无法提升该成员。");
 
 	    targetRole.level--;
@@ -255,6 +262,7 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
+	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
 	    if (!targetRole) return me.notify("找不到该成员。");
 	    if (targetRole.level >= 5) return me.notify("该成员已是最低职位。");
 	    if (myRole.level >= targetRole.level) return me.notify("你的职位不够高，无法降级该成员。");
@@ -278,6 +286,7 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
+	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
 	    if (!targetRole) return me.notify("找不到该成员。");
 	    if (myRole.level >= targetRole.level) return me.notify("你的职位不够高，无法开除该成员。");
 	    if (targetRole.level === 1) return me.notify("无法开除帮主。");
@@ -335,6 +344,9 @@
 	        };
 	        return me.notify("当前帮派设置：\n权限等级:" + settings.power + "\n加入方式:" + (settings.join ? "需要审批" : "自由加入") + "\n活动开关:" + (settings.open_sc ? "开启" : "关闭") + "\n分配方式:" + (settings.alloc ? "按活跃度" : "随机"));
 	    }
+	    // 只允许切换这几项开关；temp 里还存着设施等级、活跃度(sc1..sc6)等，不能被任意改
+	    if (["power", "join", "open_sc", "alloc"].indexOf(type) < 0)
+	        return me.notify("没有这项帮派设置。");
 	    // 切换对应设置
 	    var current = pt.query_temp(type, 0);
 	    pt.set_temp(type, current ? 0 : 1);
@@ -370,14 +382,14 @@
 	        var lv = pt.query_temp("liangong", 0);
 	        var cost = (lv + 1) * 100;
 	        var score = pt.query_score();
-	        if (score < cost) return me.notify("帮派活跃度不足，升级练功房需要" + cost + "点活跃度，当前仅有" + score + "点。");
+	        if (score < cost || !pt.spend_score(cost)) return me.notify("帮派活跃度不足，升级练功房需要" + cost + "点活跃度，当前仅有" + score + "点。");
 	        pt.set_temp("liangong", lv + 1);
 	        me.notify("练功房已升级到" + (lv + 1) + "级！");
 	    } else if (facility === "lianyao") {
 	        var lv = pt.query_temp("lianyao", 0);
 	        var cost = (lv + 1) * 100;
 	        var score = pt.query_score();
-	        if (score < cost) return me.notify("帮派活跃度不足，升级炼药房需要" + cost + "点活跃度，当前仅有" + score + "点。");
+	        if (score < cost || !pt.spend_score(cost)) return me.notify("帮派活跃度不足，升级炼药房需要" + cost + "点活跃度，当前仅有" + score + "点。");
 	        pt.set_temp("lianyao", lv + 1);
 	        me.notify("炼药房已升级到" + (lv + 1) + "级！");
 	    } else {

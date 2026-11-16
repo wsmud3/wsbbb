@@ -55,6 +55,9 @@ export default {
     createElement: function (data, isTop) {
         var color = "hic";
         var name = "";
+        // 是否玩家发言要按置空前的 uid 判断：es 会把 uid 置空（不给 look3 按钮），
+        // 但它仍是玩家内容，必须走 chatText 过滤，不能当系统消息原样写进 innerHTML
+        var fromPlayer = !!(data.uid && data.uid !== 'system');
         switch (data.ch) {
             case "tm":
                 color = "hig";
@@ -62,7 +65,7 @@ export default {
                 break;
             case "fam":
                 color = "hiy";
-                name = data.fam || "门派";
+                name = data.fam ? chatText(data.fam) : "门派";
                 break;
             case "rumor":
                 color = "him";
@@ -76,7 +79,7 @@ export default {
                 break;
             case "es":
                 color = "hio";
-                name = data.server;
+                name = chatText(data.server);
                 data.uid = null;
                 break;
             case "pty":
@@ -100,7 +103,7 @@ export default {
             html.push(escapeText(data.name));
             html.push("</span>：");
         }
-        html.push(data.uid && data.uid !== 'system' ? chatText(data.content) : data.content);
+        html.push(fromPlayer ? chatText(data.content) : data.content);
         // if (isTop) {
         //     html.push("\n");
         // }

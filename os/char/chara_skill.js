@@ -44,14 +44,16 @@ CHARACTER.prototype.remove_skill = function (skillid) {
             if (!old_skill || !this.skills[skill.enable_skill]) {
                 return false;
             }
-            old_skill.disenable(this, skillid);
+            // 先清启用标志再 disenable（与 enable_skill 的顺序一致）：disenable 依据
+            // is_enable 判断是否撤销进阶属性，标志未清时会漏撤。
             this.skills[skill.enable_skill][skillid] = false;
+            old_skill.disenable(this, skillid);
         }
     } else {
         for (var key in this.skills) {
             if (this.skills[key].enable_skill == skillid) {
-                baseskill.disenable(this, key);
                 this.skills[skillid][key] = false;
+                baseskill.disenable(this, key);
                 this.skills[key].enable_skill = null;
             }
         }
@@ -247,10 +249,13 @@ CHARACTER.prototype.add_status = function (buff, from) {
                 this.status_changed(item, "remove");
                 // 防呆处理，先清除旧定时器
                 item.handler && clearTimeout(item.handler);
-                // 撤销旧prop
+                // 撤销旧prop（与 change_buff 记账一致：change_prop 与 add_buff_prop 成对）
                 if (item.prop) {
                     for (var j = 0; j < item.count; j++) {
                         this.change_prop(item.prop, false);
+                        for (var pk in item.prop) {
+                            if (pk !== "desc" && pk !== "skill") this.add_buff_prop(pk, -item.prop[pk]);
+                        }
                     }
                 }
                 // 更新属性（包含控制标志、消息、回调等）
@@ -282,10 +287,15 @@ CHARACTER.prototype.add_status = function (buff, from) {
                 if (item.prop) {
                     for (var k = 0; k < item.count; k++) {
                         this.change_prop(item.prop, true);
+                        for (var nk in item.prop) {
+                            if (nk !== "desc" && nk !== "skill") this.add_buff_prop(nk, item.prop[nk]);
+                        }
                     }
                 }
                 this.recount();
                 this.notify_hp();
+                // 旧 buff 的控制标志（如 is_busy）可能新 buff 没有：按当前 status 重算后再叠加新标志
+                this._recalc_ctrl_flags();
                 // 应用新控制标志
                 if (buff.is_busy) this.is_busy = buff.duration;
                 if (buff.is_miss) this.is_miss = buff.duration;

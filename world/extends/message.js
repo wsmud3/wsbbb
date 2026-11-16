@@ -112,35 +112,36 @@ MESSAGE.save = function () {
     let diff_time = 24 * 3600000 * 30;
     this.stores.forEach((x, uid) => {
         if (str.length > 1) str.push(",");
-        str.push("{id:\"");
-        str.push(uid);
-        str.push("\",items:[");
+        // 字符串字段一律 JSON.stringify：发件人名/附件名里带 " 或换行会把世界存档写坏
+        str.push("{id:");
+        str.push(JSON.stringify(String(uid)));
+        str.push(",items:[");
         let isReceive = false;
         x.forEach((st, from) => {
             if (isReceive) str.push(",");
-            str.push("{uid:\"");
-            str.push(from);
-            str.push("\",name:\"");
-            str.push(st.name);
-            str.push("\",items:[");
+            str.push("{uid:");
+            str.push(JSON.stringify(String(from)));
+            str.push(",name:");
+            str.push(JSON.stringify(st.name == null ? "" : String(st.name)));
+            str.push(",items:[");
             let ishasmsg = false;
             for (let i = 0; i < st.items.length; i++) {
                 let item = st.items[i];
                 if (now - item.time < diff_time) {
                     if (ishasmsg) str.push(",");
                     str.push("{time:");
-                    str.push(item.time);
+                    str.push(Number(item.time) || 0);
                     str.push(",content:");
                     str.push(JSON.stringify(item.content));
                     if (item.attach) {
                         str.push(",attach:[");
                         for (let j = 0; j < item.attach.length; j++) {
-                            str.push("{name:\"");
-                            str.push(item.attach[j].name);
-                            str.push("\",obj:\"");
-                            str.push(item.attach[j].obj);
-                            str.push("\",count:");
-                            str.push(item.attach[j].count || 1);
+                            str.push("{name:");
+                            str.push(JSON.stringify(item.attach[j].name == null ? "" : String(item.attach[j].name)));
+                            str.push(",obj:");
+                            str.push(JSON.stringify(item.attach[j].obj == null ? "" : String(item.attach[j].obj)));
+                            str.push(",count:");
+                            str.push(Number(item.attach[j].count) || 1);
                             str.push("}");
                             if (j !== item.attach.length - 1) {
                                 str.push(",");

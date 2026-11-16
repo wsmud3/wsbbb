@@ -12,7 +12,8 @@ this.enter = function (me, skillid, sid) {
     if (skill_base.grade < 1 || skill_base.type === SKILL_TYPES.KNOWLEDGE) {
         return me.notify("基础和知识技能不能遗忘。");
     }
-    if (!sid) {
+    // 「直接遗忘」(ok) 同样要求先取消融合/进阶：确认按钮发的就是 fangqi <id> ok
+    if (!sid || sid === 'ok') {
         if (skill.ref) {
             return me.notify("你需要先取消融合才可以遗忘技能。");
         }

@@ -826,8 +826,7 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
     if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
     book.zc_words[position_key].push(word_index);
     set_wl(book.zc_word_levels, word_index, 0, position_key);
-    book.update_grade();
-    sync_skill_grade(book, me);
+    // 推演中的词条尚未付费，不计入品阶（付费成功后在 addword_done / confirm 里再同步）
     me.items_changed(book);
 
     var current = book.zc_words[position_key];
@@ -876,7 +875,7 @@ this.cmd_addword_done = function (me, book_id) {
         self.create_or_update_skill(book, me);
     }
     book.skill = book.zc_skill_id;
-    sync_skill_grade(book, me);
+    // 品阶同步放到 release_prop 之后：先按旧品阶撤属性，再按新品阶挂属性
 
     // If adding position to already-completed book, update player's skill data and refresh props
     if (wasCompleted && book.zc_skill_id) {
@@ -904,6 +903,7 @@ this.cmd_addword_done = function (me, book_id) {
             }
         }
     }
+    sync_skill_grade(book, me);
 
 
     me.notify("<hic>" + book.color_name + "</hic> " + ZC_POSITIONS[position_key].label + "部位推演完成！消耗" + words.length + "本武道书。");
@@ -1026,7 +1026,7 @@ this.cmd_confirm = function (me, book_id, arg2) {
         self.create_or_update_skill(book, me);
     }
     book.skill = book.zc_skill_id;
-    sync_skill_grade(book, me);
+    // 品阶同步放到 release_prop 之后：先按旧品阶撤属性，再按新品阶挂属性
 
     if (wasCompleted && book.zc_skill_id) {
         var sk_data = me.skills[book.zc_skill_id];
@@ -1053,6 +1053,7 @@ this.cmd_confirm = function (me, book_id, arg2) {
             }
         }
     }
+    sync_skill_grade(book, me);
 
 
     me.notify("<hic>" + book.color_name + "</hic> " + ZC_POSITIONS[position_key].label + "部位推演完成！消耗" + totalCost + "本武道书。");
@@ -2183,6 +2184,9 @@ this.cmd_replaceword = function (me, book_id, arg2) {
 
     // 保留旧词条等级给新词条（同等级转移）
     var old_level = get_wl(book.zc_word_levels, old_word_index, position_key);
+    // 剑心额外攻击次数上限 9 次：等级平移同样受此上限约束（与 levelset / lvl 一致）
+    if (new_word_index === 541 && (1 + Math.floor(old_level / 30)) > 9)
+        return me.notify("剑心额外攻击次数最多9次，原词条等级(Lv." + old_level + ")过高，无法直接替换为剑心。请先降低原词条等级。");
     del_wl(book.zc_word_levels, old_word_index, position_key);
 
     // 替换
@@ -2466,6 +2470,9 @@ this.cmd_abandon = function (me, book_id) {
     book.zc_state = book.zc_positions.length > 0 ? "completed" : "named";
     book._deducing_position = null;
     delete book._was_completed;
+    book.update_grade();
+    sync_skill_grade(book, me);
+    me.items_changed(book);
 
 
     me.notify("<hiy>已放弃" + (pos ? ZC_POSITIONS[pos].label : "") + "部位的推演。</hiy>");
@@ -2588,12 +2595,9 @@ this.cmd_removepos = function (me, book_id, position_key) {
 
     // Apply refund
     if (refundWudao > 0) {
-        var wdObj = me.find_obj("wudao book");
-        if (wdObj) {
-            wdObj.count = (wdObj.count || 0) + refundWudao;
-
-            me.notify("<hiy>返还" + refundWudao + "本武道书。</hiy>");
-        }
+        // 原来用 find_obj("wudao book") 按实例 id 找，永远找不到 → 退款被静默丢弃
+        me.add_obj("book/wudao", refundWudao);
+        me.notify("<hiy>返还" + refundWudao + "本武道书。</hiy>");
     }
     if (refundPot > 0) {
         if (!me.pot || isNaN(me.pot)) me.pot = 0;
@@ -2617,8 +2621,10 @@ this.cmd_reset = function (me, book_id) {
     // Calculate refund before clearing data
     var totalWudao = 0;
     var totalPot = 0;
+    // 只退已完成（已付费）部位：推演中的部位、孤儿词条都还没扣过武道书
     for (var pk in book.zc_words) {
-        var ws = book.zc_words[pk];
+        if (book.zc_positions.indexOf(pk) < 0) continue;
+        var ws = book.zc_words[pk] || [];
         totalWudao += ws.length;
         for (var wi = 0; wi < ws.length; wi++) {
             var widx = ws[wi];
@@ -2630,7 +2636,8 @@ this.cmd_reset = function (me, book_id) {
         }
     }
     for (var pk2 in book.zc_pfms) {
-        var pfms = book.zc_pfms[pk2];
+        if (book.zc_positions.indexOf(pk2) < 0) continue;
+        var pfms = book.zc_pfms[pk2] || [];
         for (var pi = 0; pi < pfms.length; pi++) {
             var pfm = pfms[pi];
             var srcSkill = SKILL.get(pfm.skill_id);
@@ -2692,16 +2699,8 @@ this.cmd_reset = function (me, book_id) {
 
     // Refund wudao books
     if (totalWudao > 0) {
-        var wudaoRefund = me.find_obj_bypath("book/wudao");
-        if (wudaoRefund) {
-            wudaoRefund.count += totalWudao;
-            me.items_changed(wudaoRefund);
-        } else {
-            // 背包中没有武道书，创建新的
-            wudaoRefund = WORLD.create_obj("book/wudao");
-            wudaoRefund.count = totalWudao;
-            me.push_item(wudaoRefund);
-        }
+        // add_obj 会与已有的武道书合并；原 else 分支调用的 WORLD.create_obj 并不存在
+        me.add_obj("book/wudao", totalWudao);
     }
     // Refund potential
     if (totalPot > 0) {

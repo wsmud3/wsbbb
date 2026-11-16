@@ -21,7 +21,8 @@ this.enter = function (player, objid, isok) {
     if (obj.level > 0) {
         count += (Math.pow(2, obj.level + 1) - 2) * obj.grade;
     }
-    if (!isok && obj.st_prop && obj.st_prop.length > 0) {
+    // 带不带 ok 都要先清宝石，否则宝石随装备一起被销毁（grade>=5 分支本来就是这样）
+    if (obj.st_prop && obj.st_prop.length > 0) {
         return player.notify(obj.color_name + "已经镶嵌宝石，清理宝石后才可以分解。");
     }
     obj = player.remove_obj(obj);

@@ -111,18 +111,21 @@ module.exports = {
             [role.userid, role.id, role.name, role.title, role.level, role.server, role.data]);
 
     },
-    deleteRole: async function (userid, roleid) {
-
-        let sql = "insert into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where id=? and userid=?";
-        let result = await db.query(sql, [roleid, userid]);
-        if (result.changes != 1)
-            return false;
-        sql = "delete from players where id=? and userid=?";
-        result = await db.query(sql, [roleid, userid]);
-        if (result.changes != 1)
-            return false;
-        return true;
-
+    // 删除角色：传入 server 时限定本服（不能删掉另一服的角色）。
+    // 备份用 insert or replace（同 id 角色可能被后台删过又恢复），备份+删除放在同一事务里。
+    deleteRole: async function (userid, roleid, server) {
+        const hasServer = server !== undefined && server !== null;
+        const cond = hasServer ? "id=? and userid=? and sid=?" : "id=? and userid=?";
+        const params = hasServer ? [roleid, userid, server] : [roleid, userid];
+        return db.db.transaction(() => {
+            let result = db.runSync("insert or replace into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where " + cond, params);
+            if (result.changes != 1)
+                return false;
+            result = db.runSync("delete from players where " + cond, params);
+            if (result.changes != 1)
+                throw new Error('角色删除未生效');
+            return true;
+        })();
     },
     saveRoleSync: function (role) {
         return db.runSync("update players set name=?,title=?,level=?,data=?,update_time=CURRENT_TIMESTAMP where userid=? and id=?",

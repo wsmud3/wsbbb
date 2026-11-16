@@ -32,7 +32,7 @@ function on_check(me) {
     var pot = exp + me.query_prop('lsj_qn') * 100;
     let er = this.yuer;
 
-    let grade = me.query_prop('diaoyu1') + (er.grade) * 5;
+    let grade = me.query_prop('diaoyu1') + ((er && er.grade) || 0) * 5;
     let str = "";
     if (grade > 30) {
         str = "有概率钓到橙色及以下鱼类";
@@ -49,6 +49,15 @@ function do_diaoyu(me) {
 
 
     let er = this.yuer;
+    // 每跳先确认鱼饵仍在身上（可能已被用完、丢弃、交易）
+    if (!er || !(er.count > 0) || me.items.indexOf(er) < 0) {
+        er = query_er(me);
+        this.yuer = er;
+    }
+    if (!er) {
+        me.notify("你身上的鱼饵用完了，只好收起了钓竿。");
+        return false;
+    }
     var obj = me.add_obj('res/yu#' + me.random(18));
     if (obj)
         me.send_room("<hig>$N钓到一条" + obj.color_name + "。</hig>");
@@ -63,6 +72,10 @@ function do_diaoyu(me) {
         + WORLD.DATA.query_temp("diaoyu_exp", 0) * 100;
     var pot = exp + me.query_prop('lsj_qn') * 100;
     me.add_exp(exp, pot, 0);
+    if (!er) {
+        me.notify("你身上的鱼饵用完了，只好收起了钓竿。");
+        return false;
+    }
 
 }
 

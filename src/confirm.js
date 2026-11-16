@@ -256,7 +256,7 @@ export const Confirm = {
             btn_text: "确定",
             onOK: function (v) {
                 if (!(v > 0)) return;
-                var moveobj = Util.Clone(obj);
+                var moveobj = Object.assign({}, obj);
                 moveobj.count = v;
                 Dialog.trade.add_trade(moveobj);
             }

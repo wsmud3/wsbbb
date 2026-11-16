@@ -18,11 +18,13 @@
 	    }
 	    var cookieUser = this.encryptUser(str[0], str[1]);
 	    if (!cookieUser || cookieUser.id === 0) {
-	        return this.login_error(user, "登录参数错误，请使用账号密码<CMD onclick=\\'HideAndShow(\"#login_panel\")\\'>重新登录</CMD>");
+	        return this.login_error(user, "登录参数错误，请使用账号密码<CMD onclick=\\'Process.relogin()\\'>重新登录</CMD>");
 	    }
 	    user.user_level = cookieUser.level ?? 0;
 
-	    user.wait_input = null;
+	    // 认证通过后、角色加载完成前，忽略该连接的其他输入（不能让无角色的 USER 执行命令）；
+	    // 加载成功由 loginIn 清空，失败分支统一回到 wait_login。
+	    user.wait_input = USERLOGIN.wait_loading;
 	    user.userid = cookieUser.id;
 	    user.password = cookieUser.pwd;
 	    user.loginTime = cookieUser.loginTime;
@@ -46,7 +48,9 @@
 	        if (!data) {
 	            return this.login_error(user, '不允许登录');
 	        }
+	        user.wait_input = null;
 	        WORLD.on_user_cross_login(user, data);
+	        if (!user.id) user.wait_input = this.wait_login;
 	        return;
 
 	    } else if (str.length === 3) {
@@ -73,6 +77,17 @@
 	    this.load_roles(user);
 	    user.wait_input = this.wait_login;
 	}
+
+	USERLOGIN.wait_loading = function () { };
+	// 登录/重连/切换角色失败：回到选角状态（可选重发角色列表），避免连接停在「已认证、无角色」状态
+	USERLOGIN.login_fail = function (user, msg, resendRoles) {
+	    user.send("{type:'loginerror',msg:'" + msg + "'}");
+	    if (user.id && WORLD.USERS.indexOf(user) >= 0) return false;
+	    user.id = null;
+	    user.wait_input = this.wait_login;
+	    if (resendRoles && user.userid && user.socket) this.load_roles(user);
+	    return false;
+	};
 
 	USERLOGIN.send_roles = function (roles, user) {
 	    var str = ["{type:'roles',roles:["];

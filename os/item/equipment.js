@@ -281,15 +281,10 @@ const level_desc = ["", "☆", "★", "★☆", "★★", "★★☆", "★★�
     }
 }
 
-EQUIPMENT.prototype.level_up = function (lev) {
-    var cc = this.query_grade_color();
-
-    this.prop = {};
-    this.level = lev;
-    this.levelchange_prop();
-    this.apply_words();
-    // 恢复重铸加成：每次重铸给不可替换的基础属性+1。重铸次数必须与
-    // 装备+1～+12的精炼次数分开，避免普通精炼误解锁重铸门槛。
+// 恢复重铸加成：每次重铸给不可替换的基础属性+1。重铸次数必须与
+// 装备+1～+12的精炼次数分开，避免普通精炼误解锁重铸门槛。
+// 调用前 prop 必须是不含重铸加成的新算结果（level_up 重建后 / on_load 载入后）。
+EQUIPMENT.prototype.apply_recast_bonus = function () {
     if (this.recast_count > 0 && this.eq_type !== undefined && this.is_custom) {
         var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
         if (duanzao && duanzao.DEFAULT_PROPS) {
@@ -299,6 +294,16 @@ EQUIPMENT.prototype.level_up = function (lev) {
             }
         }
     }
+}
+
+EQUIPMENT.prototype.level_up = function (lev) {
+    var cc = this.query_grade_color();
+
+    this.prop = {};
+    this.level = lev;
+    this.levelchange_prop();
+    this.apply_words();
+    this.apply_recast_bonus();
     this.color_name = "<" + cc + ">" + level_desc[this.level] + this.name + "</" + cc + ">";
     this.json = null;
 }
@@ -530,6 +535,12 @@ EQUIPMENT.prototype.on_load = function (me) {
         // level 0 equipment: level_up not called, apply word stats directly
         this.apply_words();
     }
+    // 自制装备 is_custom 可能要靠下面的 path 兼容逻辑才补上，所以重铸加成放到最后（level 0 时 level_up 没走到）
+    if (!(this.level > 0)) {
+        if (!this.is_custom && this.path && (this.path === "eq/cp" || this.path.indexOf("eq/cp#") === 0 || this.path.indexOf("eq/cp/") === 0))
+            this.is_custom = true;
+        this.apply_recast_bonus();
+    }
     // 兼容旧数据：仅当path明确指向自制装备时才设为custom
     // 红装也有精炼计数，且绝不允许根据词条反推is_custom（会造成红装污染）
     if (!this.is_custom) {
@@ -591,10 +602,12 @@ EQUIPMENT.prototype.check_group = function (me, isadd) {
     //  2) 只统计**有效**件数 —— me.equipment 是按 eq_type 索引、含 null 空洞的数组
     //     （read_equipment 会把 11 个槽位显式填 null），故不能用 .length
     if (!me._group_grants) me._group_grants = {};
+    //  3) 本件自身不从槽位里数：穿上时（isadd）按 1 件另计；卸下时 uneq 发生在
+    //     清槽位之前，若把它也数进去，5 件卸 1 件仍按 5 件结算。
     var count = isadd ? 1 : 0;
     for (var i = 0; i < me.equipment.length; i++) {
         var eq = me.equipment[i];
-        if (eq && eq.group_name == this.group_name) {
+        if (eq && eq !== this && eq.group_name == this.group_name) {
             count++;
         }
     }

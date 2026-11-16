@@ -73,6 +73,7 @@ class LoginPage extends Page {
         Client.hide2show($("#role_panel"));
         break;
       case "ToServerPanel":
+        Client.clearLastPlayer();
         Client.closeServer();
         Client.hide2show($("#slist_panel"));
         break;
@@ -126,6 +127,7 @@ class LoginPage extends Page {
         changePwd.open();
         break;
       case "ReLogin":
+        Client.clearLastPlayer();
         loginIn.relogin();
         break;
       case "DeleteRole":

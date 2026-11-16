@@ -104,6 +104,11 @@ var logger = {
 process.on('uncaughtException', function (error) {
     logger.fatal('未捕获异常', { message: error.message, stack: error.stack });
     logger.monitor.crashCount++;
+    // 优先走 main.js 的 gracefulShutdown（停心跳、存世界档、等角色存档落盘），保存成功也以 1 退出
+    if (typeof global.__gracefulShutdown === 'function') {
+        global.__gracefulShutdown('uncaughtException', 1);
+        return;
+    }
     // 尝试紧急存档
     if (global.WORLD && WORLD.save && WORLD.DATA && WORLD.DATA.on_save) {
         WORLD.save().then(function () {

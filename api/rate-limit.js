@@ -1,7 +1,15 @@
 'use strict';
 const buckets = new Map();
+// 规范化路径：Express 路由不区分大小写、允许结尾 /、会对参数 URL 解码，
+// 因此 /API/user/login/、/api/user/%6cogin 都会命中同一个接口，限流必须按同样规则归一。
+function normalizePath(p) {
+    const parts = String(p || '').split('/').filter(Boolean).map(seg => {
+        try { return decodeURIComponent(seg); } catch (e) { return seg; }
+    });
+    return '/' + parts.join('/').toLowerCase();
+}
 module.exports = function rateLimit(req, res, next) {
-    const route = req.path;
+    const route = normalizePath(req.path);
     if (!['/api/user/login','/api/user/regist','/api/user/validimage','/api/admin/login'].includes(route)) return next();
     const now = Date.now();
     const windowMs = route.endsWith('/regist') ? 600000 : 60000;
@@ -19,3 +27,4 @@ module.exports = function rateLimit(req, res, next) {
     }
     next();
 };
+module.exports.normalizePath = normalizePath;

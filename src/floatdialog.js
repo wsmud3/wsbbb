@@ -340,9 +340,8 @@ const FloatDialog = {
         this.updateWarn();
     },
 
-    createFloatWindow(dialog) {
-        this.currentDialogData = dialog;
-
+    /** 浮窗正文（feedback + html/text + 按钮）。单个浮窗与「查看」汇总视图共用。 */
+    buildDescHTML(dialog) {
         // 直接复用 process.js cmds 的 item-commands HTML
         // html：服务端给的整块富内容，原样内嵌（自制装备重铸面板走这条）
         // text：说明文字，转义后显示，避免内容里的尖括号被当标签
@@ -366,7 +365,7 @@ const FloatDialog = {
         if (dialog.feedback) {
             descHTML = "<div class='float-msg'>" + chatText(dialog.feedback) + "</div>" + descHTML;
         }
-        if (dialog.cmds.length) {
+        if (dialog.cmds && dialog.cmds.length) {
             descHTML += "<div class='item-commands'>";
             for (var i = 0; i < dialog.cmds.length; i++) {
                 const {cmd, name, text, br, group} = dialog.cmds[i];
@@ -377,6 +376,13 @@ const FloatDialog = {
             }
             descHTML += "</div>";
         }
+        return descHTML;
+    },
+
+    createFloatWindow(dialog) {
+        this.currentDialogData = dialog;
+
+        let descHTML = this.buildDescHTML(dialog);
 
         let title = dialog.persistent ? '对话（点「忽略」收起）' : '对话';
         let inner = '<div class="float-dialog-header">' + title + '</div>' +
@@ -677,18 +683,8 @@ const FloatDialog = {
         let itemsHTML = '';
         for (let di = 0; di < this.pendingDialogs.length; di++) {
             let d = this.pendingDialogs[di];
-            // 直接复用 process.js cmds 的 item-commands HTML
-            let descHTML = d.text || '';
-            if (d.cmds.length) {
-                descHTML += "<div class='item-commands'>";
-                for (var ci = 0; ci < d.cmds.length; ci++) {
-                    const {cmd, name, text, br} = d.cmds[ci];
-                    descHTML += "<span cmd='" + cmd + "'>" + name + "</span>";
-                    if (text) descHTML += text;
-                    if (br) descHTML += "<br>";
-                }
-                descHTML += "</div>";
-            }
+            // 与单个浮窗同一套渲染：html/feedback 不丢，text 经 chatText 过滤
+            let descHTML = this.buildDescHTML(d);
             itemsHTML += '<div class="fb-action" data-di="' + di + '">' +
                 '<span class="action-desc">' + descHTML + '</span>' +
                 '<span class="action-name unified-ignore-one">忽<br>略</span>' +

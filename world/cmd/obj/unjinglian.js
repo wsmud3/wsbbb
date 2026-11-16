@@ -21,8 +21,17 @@ this.enter = function (me, oid) {
         WORLD.STATS.updateWeapon(me, obj);
 
         if (orglevel > 0) {
-            let count = (Math.pow(2, orglevel + 1) - 2) * obj.grade;
-            var item = me.add_obj("st/xuanjing", count);
+            // 与 jinglian 的消耗公式对称：grade<6 用玄晶 2^lv*grade 累计；
+            // grade>=6 每级消耗 lv 个（grade 6 为元晶），累计 L(L+1)/2
+            let count, path;
+            if (obj.grade < 6) {
+                count = (Math.pow(2, orglevel + 1) - 2) * obj.grade;
+                path = "st/xuanjing";
+            } else {
+                count = (1 + orglevel) * orglevel / 2;
+                path = obj.grade == 6 ? "st/yuanjing" : "st/xuanjing";
+            }
+            var item = me.add_obj(path, count);
             me.send("你获得" + item.unit_name(count) + "。");
         }
 

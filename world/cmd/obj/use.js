@@ -40,7 +40,8 @@ this.enter = function (player, objid, par) {
     if (player.is_faint && !obj.allow_faint) return player.notify("你现在昏迷中，无法使用" + obj.name + "。");
 
     var use_msg = obj.action_msg || "用";
-    var key = "disobj_" + (obj.distype || objid);
+    // 冷却按 distype 或物品 path 记：按实例 id 记的话，拆堆（uncombine 克隆出新 id）就能绕过冷却
+    var key = "disobj_" + (obj.distype || obj.path || objid);
     if (obj.distime && player.query_temp(key)) {
         return player.notify("你刚" + use_msg + "过" + obj.color_name + "，还是等会再" + use_msg + "吧。");
     }

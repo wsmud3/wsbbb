@@ -324,11 +324,20 @@ function handleRequest(req, res) {
                     }
                 }
                 if (!found) { sendJSON(res, { ok: false, msg: '玩家不在线' }, 404); return; }
-                var fields = ['hp', 'max_hp', 'mp', 'max_mp', 'gj', 'fy', 'mz', 'ds', 'zj', 'exp', 'pot', 'money'];
+                // 只允许改存档基础值；gj/fy/mz/ds/zj 是 recount 派生属性，改了下次重算就被覆盖，不开放。
+                // 只写入请求里带了的字段（前端只提交改动过的），且必须是非负安全整数，避免旧快照回滚或写入字符串。
+                var fields = ['hp', 'max_hp', 'mp', 'max_mp', 'exp', 'pot', 'money'];
+                var upd = {}, bad = [];
                 fields.forEach(function (f) {
-                    if (body[f] !== undefined) found[f] = body[f];
+                    if (body[f] === undefined || body[f] === null || body[f] === '') return;
+                    var v = Number(body[f]);
+                    if (!Number.isSafeInteger(v) || v < 0) bad.push(f); else upd[f] = v;
                 });
-                sendJSON(res, { ok: true, msg: '玩家属性已更新' });
+                if (bad.length) { sendJSON(res, { ok: false, msg: '字段数值无效: ' + bad.join(',') }, 400); return; }
+                var keys = Object.keys(upd);
+                if (!keys.length) { sendJSON(res, { ok: false, msg: '没有需要修改的字段' }, 400); return; }
+                keys.forEach(function (f) { found[f] = upd[f]; });
+                sendJSON(res, { ok: true, msg: '玩家属性已更新: ' + keys.join(',') });
             });
         }
         // POST /api/player_kick — 踢玩家下线
@@ -359,8 +368,12 @@ function handleRequest(req, res) {
                 var pid = body.playerId;
                 if (!pid) { sendJSON(res, { error: '缺少角色ID或名称' }, 400); return; }
                 try {
-                    var role = db.db.prepare("select id,name,userid,sid,level from players where id=? or name=?").get(pid, pid);
-                    if (!role) { sendJSON(res, { error: '角色不存在: ' + pid }, 404); return; }
+                    // 只删本服角色：「是否在线/强制下线」只能作用于本进程，他服在线角色被删后其存档会静默失败
+                    var role = db.db.prepare("select id,name,userid,sid,level from players where (id=? or name=?) and sid=?").get(pid, pid, WORLD.SERVERID);
+                    if (!role) {
+                        var other = db.db.prepare("select sid from players where id=? or name=?").get(pid, pid);
+                        sendJSON(res, { error: other ? '该角色属于服务器 ' + other.sid + '，请切换到对应服务器再删除' : '角色不存在: ' + pid }, 404); return;
+                    }
                     // 在线则先踢下线，避免存档覆盖已删数据
                     var online = null;
                     for (var i = 0; i < WORLD.USERS.length; i++) {
@@ -374,8 +387,10 @@ function handleRequest(req, res) {
                         forceLogout(online); // 先强制断开，避免存档覆盖已删数据
                     }
                     // 备份到players_bak（or replace: 同ID角色可能删除后重建过）再删除
-                    db.db.prepare("insert or replace into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where id=? and userid=?").run(role.id, role.userid);
-                    var del = db.db.prepare("delete from players where id=? and userid=?").run(role.id, role.userid);
+                    var del = db.db.transaction(function () {
+                        db.db.prepare("insert or replace into players_bak(id,name,userid,title,level,sid,data,create_time,update_time) select id,name,userid,title,level,sid,data,create_time,update_time from players where id=? and userid=? and sid=?").run(role.id, role.userid, role.sid);
+                        return db.db.prepare("delete from players where id=? and userid=? and sid=?").run(role.id, role.userid, role.sid);
+                    })();
                     if (del.changes != 1) { sendJSON(res, { error: '删除失败（数据库操作未生效）' }, 500); return; }
                     sendJSON(res, { success: true, message: '角色 ' + role.name + ' (ID:' + role.id + ') 已删除' + (wasOnline ? '，已强制下线' : '') + '，原数据已备份' });
                 } catch (e) { sendJSON(res, { error: '删除失败: ' + e.message }, 500); }
@@ -387,6 +402,9 @@ function handleRequest(req, res) {
                 if (err) { sendJSON(res, { ok: false, msg: 'Invalid JSON' }, 400); return; }
                 var pid = body.playerId, msg = body.message, items = body.items || [];
                 if (!pid || !msg) { sendJSON(res, { ok: false, msg: '缺少玩家ID或邮件内容' }, 400); return; }
+                if (!Array.isArray(items)) items = [];
+                // 与 give_item 一致：正式服不允许经由后台凭空发物品（邮件附件同样算发放）
+                if (isFormalServer() && items.length) { sendJSON(res, { ok: false, msg: '正式服不允许发放物品（邮件附件）' }, 403); return; }
                 var found = null;
                 for (var i = 0; i < WORLD.USERS.length; i++) {
                     if (WORLD.USERS[i] && WORLD.USERS[i].is_player && (WORLD.USERS[i].id === pid || WORLD.USERS[i].name === pid)) {
@@ -483,6 +501,9 @@ function handleRequest(req, res) {
                 var msg = body.message;
                 if (!msg) { sendJSON(res, { error: 'message required' }, 400); return; }
                 var items = body.items || [];
+                // 与 give_item 一致：正式服不允许经由后台凭空发物品（附件同样算发放）
+                if (!Array.isArray(items)) items = [];
+                if (isFormalServer() && items.length) { sendJSON(res, { error: '正式服不允许发放物品（公告附件）' }, 403); return; }
                 // Store in notices for message dialog history
                 if (!WORLD.MESSAGE) WORLD.MESSAGE = { NOTICES: [] };
                 var noticeEntry = { content: msg, time: Date.now() };
@@ -536,9 +557,12 @@ function handleRequest(req, res) {
         // POST /api/shutdown
         else if (url === '/api/shutdown' && method === 'POST') {
             sendJSON(res, { success: true, message: 'Shutdown initiated, saving data...' });
-            setTimeout(async function () {
-                await WORLD.save();
-                process.exit(0);
+            setTimeout(function () {
+                // 复用 main.js 的 gracefulShutdown：停止接入与心跳、存世界档、等角色存档落盘，失败则以 1 退出
+                if (typeof globalThis.__gracefulShutdown === 'function') return globalThis.__gracefulShutdown('admin');
+                WORLD.status = -1;
+                if (WORLD.heart_beat_service) clearInterval(WORLD.heart_beat_service);
+                Promise.resolve(WORLD.save()).then(function (ok) { process.exit(ok ? 0 : 1); }, function () { process.exit(1); });
             }, 1000);
         }
         // POST /api/give_item — give item to player
@@ -612,12 +636,13 @@ function handleRequest(req, res) {
                 }
                 try {
                     db.db.prepare("update users set level=? where id=?").run(level, uid);
-                    // Update in-memory user if online
+                    // 刷新内存中该账号的所有角色（含断线挂机的）：uid 是账号 ID，对应角色的 userid；
+                    // 权限判断读的是 user_level（character.js check_command）
                     for (var i = 0; i < WORLD.USERS.length; i++) {
-                        if (WORLD.USERS[i] && WORLD.USERS[i].id == uid) {
-                            WORLD.USERS[i].allow_level = level;
-                            WORLD.USERS[i].notify('<hiy>你的管理员权限已被更新为 Lv.' + level + '</hiy>');
-                            break;
+                        var au = WORLD.USERS[i];
+                        if (au && au.is_player && au.userid == uid) {
+                            au.user_level = level;
+                            try { au.notify('<hiy>你的管理员权限已被更新为 Lv.' + level + '</hiy>'); } catch (e) {}
                         }
                     }
                     sendJSON(res, { success: true, message: '用户 ' + uid + ' 权限已更新为 Lv.' + level });

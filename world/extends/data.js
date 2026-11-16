@@ -74,6 +74,30 @@ function collect_local_ids(sid) {
 //      用 Array.isArray() 判断会全部落空（这正是本函数最初完全失效的原因）。
 //   2. 字段名大小写不一致：tops / score 是小写，家族榜前缀是 tops_。
 //   3. 角色标识字段是 `id`；家族榜条目只有 path（NPC 占位，没有 id），必须保留。
+// 原地压实榜单：剔除越界条目与空洞（null/undefined）。不能用 delete list[i]，
+// 那样会留下空洞，updateScoreItem 遍历到空洞读 .id 会抛错导致登录失败。
+// 返回剔除的越界条目数（空洞本身不计数）。
+function compact_list(list, belongs) {
+    const len = typeof list.length === 'number' ? list.length : 0;
+    const kept = [];
+    let removed = 0;
+    for (let i = 0; i < len; i++) {
+        const item = list[i];
+        if (!item) continue;
+        if (item.id !== undefined && !belongs(item.id)) { removed++; continue; }
+        kept.push(item);
+    }
+    if (kept.length === len) return removed;
+    if (Array.isArray(list)) {
+        list.length = 0;
+        for (const it of kept) list.push(it);
+    } else {
+        for (let i = 0; i < len; i++) delete list[i];
+        for (let i = 0; i < kept.length; i++) list[i] = kept[i];
+        list.length = kept.length;
+    }
+    return removed;
+}
 function sanitize_foreign_stats(stats, sid) {
     const local = collect_local_ids(sid);
     // 取不到归属清单就什么都不做：宁可保留数据，也不误删。
@@ -125,13 +149,7 @@ function sanitize_foreign_stats(stats, sid) {
     for (const key of ['score', 'SCORE']) {
         const list = stats[key];
         if (!list || typeof list !== 'object') continue;
-        const len = typeof list.length === 'number' ? list.length : 0;
-        for (let i = 0; i < len; i++) {
-            const item = list[i];
-            if (!item || item.id === undefined || belongs(item.id)) continue;
-            delete list[i];
-            removed++;
-        }
+        removed += compact_list(list, belongs);
     }
 
     // 门派积分榜：档案里是小写 `score_stats`
@@ -140,13 +158,7 @@ function sanitize_foreign_stats(stats, sid) {
         for (const fam in famStats) {
             const list = famStats[fam];
             if (!list || typeof list !== 'object') continue;
-            const len = typeof list.length === 'number' ? list.length : 0;
-            for (let i = 0; i < len; i++) {
-                const item = list[i];
-                if (!item || item.id === undefined || belongs(item.id)) continue;
-                delete list[i];
-                removed++;
-            }
+            removed += compact_list(list, belongs);
         }
     }
 
@@ -164,6 +176,8 @@ DATA.on_load = function (data) {
     STATS.TOPS = STATS.load_tops(data.tops);
     // STATS.WEAPON = data.weapons ?? new Array(20).fill({ "score": 0 });
     STATS.SCORE = data.score ?? Array.from({ length: 20 }, () => ({ "name": "无", "score": 0 }));
+    // 旧版剔除逻辑用 delete 留下的空洞会被序列化成 null，这里统一压实成真数组
+    STATS.SCORE = Array.from(STATS.SCORE).filter(Boolean);
     STATS.EQ_STATS = new Array(11);
     data.eq_stats = data.eq_stats ?? [];
     for (let i = 0; i < 11; i++) {
@@ -177,8 +191,8 @@ DATA.on_load = function (data) {
     const sc_stats = data.score_stats ?? {};
     STATS.SC_STATS = {};
     for (let key of FAMS_TATAS) {
-        STATS.SC_STATS[key] = sc_stats[key] ??
-            Array.from({ length: 20 }, () => ({ "name": "无", "score": 0 }));
+        STATS.SC_STATS[key] = Array.from(sc_stats[key] ??
+            Array.from({ length: 20 }, () => ({ "name": "无", "score": 0 }))).filter(Boolean);
     }
 
     // 剔除世界档案里不属于本服的角色（两服串号的兜底清理）。

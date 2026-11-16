@@ -4,9 +4,11 @@ this.allow_busy = true;
 this.allow_state = true;
 this.allow_die = true;
 this.admin = true;
+this.allow_level = 6;
 this.desc = "热更新世界脚本，清除BASE.ITEMS缓存后重新加载";
 
 this.enter = function (me, path) {
+    if (me && !((me.user_level || 0) >= 6)) return me.send("什么？");
     if (!path) {
         return me.notify("用法：reloadcmd <路径>\n例如：reloadcmd world/cmd/skill/xue");
     }

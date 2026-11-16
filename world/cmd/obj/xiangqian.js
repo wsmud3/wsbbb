@@ -13,11 +13,16 @@ this.enter = function (player, objid, st) {
         var stone = player.find_obj(st);
         if (!stone)
             return player.notify("你身上没有这种宝石。");
+        // 列表界面只列 is_stone；直接带参数执行时同样只允许宝石，避免把整件装备当宝石镶进去
+        if (!stone.is_stone || stone === obj || !stone.prop)
+            return player.notify(stone.color_name + "不是可以镶嵌的宝石。");
         stone = player.remove_obj(stone, 1);
         if (stone) {
 
-            if (obj.push_stone(stone) == false)
+            if (obj.push_stone(stone) == false) {
+                player.add_obj(stone);
                 return player.notify("你镶嵌失败了。");
+            }
             player.send_room("$N拿出一" + stone.unit + stone.color_name + "，小心翼翼的往" + obj.color_name + "上镶去。");
             if (stone.grade < obj.grade) {
                 player.send_room("<hig>只听得咔嚓一声，" + stone.color_name + "已嵌入" + obj.color_name + "中！</hig>");

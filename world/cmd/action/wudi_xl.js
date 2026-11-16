@@ -11,6 +11,7 @@ const LOCATIONS = {
     huashan: {
         index: 0,
         name: "华山绝顶",
+        room: "huashan/jueding",
         element: "金行灵气",
         base_skill: "weapon",  // 任意武器技能
         desc: "金光璀璨，锋锐无匹"
@@ -18,6 +19,7 @@ const LOCATIONS = {
     taishan: {
         index: 1,
         name: "泰山玉皇顶",
+        room: "ts/yuhuang",
         element: "土行灵气",
         base_skill: "force",
         desc: "黄土厚重，承载万物"
@@ -25,6 +27,7 @@ const LOCATIONS = {
     hengshan_n: {
         index: 2,
         name: "恒山见性峰",
+        room: "hs/jianxingfeng",
         element: "木行灵气",
         base_skill: "parry",
         desc: "青木葱茏，生生不息"
@@ -32,6 +35,7 @@ const LOCATIONS = {
     hengshan_s: {
         index: 3,
         name: "衡山祝融殿",
+        room: "hs2/zhurongdian",
         element: "火行灵气",
         base_skill: "unarmed",
         desc: "烈焰熊熊，焚尽虚空"
@@ -39,11 +43,31 @@ const LOCATIONS = {
     songshan: {
         index: 4,
         name: "嵩山封禅台",
+        room: "ss/fengshantai",
         element: "水行灵气",
         base_skill: "dodge",
         desc: "玄水幽深，柔韧不绝"
     }
 };
+
+// 是否身处该修炼地点（副本房间的 path 与原型相同）
+function at_location(me, loc) {
+    return !!(me && me.environment && me.environment.path === loc.room);
+}
+
+// 吸收中标记的有效期（毫秒）：略长于 10 秒吸收过程，过期后自动失效，
+// 防止吸收中途切换角色 / 重启导致标记残留、主线永久卡死
+const ABSORB_FLAG_MS = 15000;
+function is_absorbing(me) {
+    var t = me.query_temp("wd_absorbing");
+    if (!t) return false;
+    // 旧档里的 1（无时间戳）或已过期的时间戳都视为无效
+    if (typeof t !== "number" || t < 1e12 || Date.now() - t > ABSORB_FLAG_MS) {
+        me.remove_temp("wd_absorbing");
+        return false;
+    }
+    return true;
+}
 
 // 检查技能条件
 function check_skill_condition(me, loc) {
@@ -130,11 +154,13 @@ function start_absorb(me, loc) {
     }
 
     // 开始吸收（设置吸收状态）
-    if (me.query_temp("wd_absorbing")) {
+    if (is_absorbing(me)) {
         return me.notify("你正在吸收灵气中……");
     }
 
-    me.set_temp("wd_absorbing", 1);
+    var absorb_token = Date.now();
+    me.set_temp("wd_absorbing", absorb_token);
+    var absorb_room = me.environment;
 
     // 添加动作状态：防止移动或其他行动打断吸收（持续10秒，稍长于回调作为安全余量）
     me.add_status({
@@ -153,21 +179,36 @@ function start_absorb(me, loc) {
 
     // 吸收过程：10秒后完成
     me.call_out(function () {
-        if (!me.query_temp("wd_absorbing")) {
+        if (me.query_temp("wd_absorbing") !== absorb_token) {
             me.remove_status("wd_absorb");
-            return; // 被打断了
+            return; // 被打断了 / 已重新开始
         }
+        me.remove_temp("wd_absorbing");
 
         // 先清除吸收动作状态
         me.remove_status("wd_absorb");
+
+        // 角色已下线 / 已离开修炼地点：本次吸收作废，不扣不给
+        if (!me.environment || me.environment !== absorb_room || !at_location(me, loc)
+            || (WORLD.getUser && WORLD.getUser(me.id) !== me)) {
+            return;
+        }
+
+        // 结算前重新校验内力与聚元珠（开始到结束之间可能已被消耗）
+        var zhu = me.find_obj_bypath("sp/juyuanzhu");
+        if (!zhu) {
+            return me.notify("你掌中的聚元珠不知所踪，灵气四散，吸收失败。");
+        }
+        if (me.mp < 1500000) {
+            return me.notify("你内力不济，灵气无法凝聚，吸收失败。");
+        }
 
         // 消耗当前内力
         me.mp -= 1500000;
         if (me.mp < 0) me.mp = 0;
 
-        // 重新查找并移除聚元珠（不用闭包引用，避免引用失效）
-        var zhu = me.find_obj_bypath("sp/juyuanzhu");
-        if (zhu) me.remove_obj(zhu, 1);
+        // 移除聚元珠
+        me.remove_obj(zhu, 1);
 
         // 记录吸收
         var absorbed = me.query_temp("wd_absorbed", 0);
@@ -204,8 +245,6 @@ function start_absorb(me, loc) {
         me.notify("<hiw>你的最大内力上限增加了300000。</hiw>");
         me.notify("<hiw>你获得了1点可分配先天属性。</hiw>");
 
-        me.remove_temp("wd_absorbing");
-
         // 检查是否已吸收全部五个
         if (absorbed === 0x1F) {
             // 五气朝元完成，自动进阶武帝
@@ -232,6 +271,11 @@ function start_absorb(me, loc) {
 this.enter = function (me, location_key) {
     var loc = LOCATIONS[location_key];
     if (!loc) return me.notify("修炼地点配置错误，请联系管理员。");
+
+    // 必须身处对应的修炼地点
+    if (!at_location(me, loc)) {
+        return me.notify("此处并无" + loc.element + "汇聚，你需前往" + loc.name + "方可修炼。");
+    }
 
     // 前置检查：必须是武圣境界且已接任务
     if (me.level < 4) {

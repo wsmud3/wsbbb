@@ -166,35 +166,43 @@ CHARACTER.prototype._apply_zc_stack = function (key, stat, pctChange, maxStacks)
     // 记下本层施加前的基准值：重算时必须以它为基准，
     // 否则会用"已放大的当前值"再放大一次（NPC 的 recount 不会重置基准）。
     this._zc_stack_order.push({ key: key, stat: stat, pctChange: pctChange, base: this[stat] - delta });
+    if (!this._zc_applied_stats) this._zc_applied_stats = {};
+    this._zc_applied_stats[stat] = this[stat];
     return true;
 };
 
 CHARACTER.prototype._reapply_zc_stacks = function () {
-    var order = this._zc_stack_order || [];
-    if (!order.length) return;
-    // 幂等重放。原实现是 "this[stat] += delta"，但 NPC 的 recount
-    // （world/extends/char/combat.js 的 `if (!(this.gj > 0))` 单向棘轮）
-    // 不会把 stat 重置回基准，所以每次调用都在已改过的值上再加一次 delta：
-    // 被 -10% 后连续 recount 会 900→810→729→656→590→531 逐次坍缩。
-    // 这里改为先把被动过的 stat 恢复到基准，再按层序完整重放一遍。
-    var baseStats = this._zc_base_stats || {};
+    var stacks = this._zc_stacks;
+    if (!stacks) return;
+    // 幂等重放（每次 recount 之后调用）：
+    //   1. 确定基准：recount 若重新算出了该 stat（玩家总是重算），新值就是新基准，
+    //      不能用缓存的旧基准把 buff 带来的变化冲掉；recount 若没动它（NPC 模板
+    //      显式设定 gj>0 等单向棘轮），当前值仍是上次叠层后的值，回退到缓存基准。
+    //   2. 每个 key 只重放 tracker.count 次（原实现按 _zc_stack_order 每条记录
+    //      再重放 count 次，n 层被施加 n² 次）。
+    var baseStats = this._zc_base_stats || (this._zc_base_stats = {});
+    var applied = this._zc_applied_stats || (this._zc_applied_stats = {});
     for (var stat in baseStats) {
-        this[stat] = baseStats[stat];
-    }
-    for (var i = 0; i < order.length; i++) {
-        var entry = order[i], tracker = this._zc_stacks && this._zc_stacks[entry.key];
-        if (!tracker || tracker.count <= 0) continue;
-        // 与 _apply_zc_stack 使用完全相同的公式与顺序（同 stat 多层为复利叠加）
-        var repeat = tracker.count;
-        for (var n = 0; n < repeat; n++) {
-            var cur = this[entry.stat];
-            var delta;
-            if (entry.stat === "diff_sh_per") delta = entry.pctChange;
-            else if (entry.stat === "gjsd") delta = -cur * entry.pctChange;
-            else delta = cur * entry.pctChange;
-            this[entry.stat] = cur + delta;
+        if (Object.prototype.hasOwnProperty.call(applied, stat) && this[stat] === applied[stat]) {
+            this[stat] = baseStats[stat];
+        } else {
+            baseStats[stat] = this[stat];
         }
     }
+    for (var key in stacks) {
+        var tracker = stacks[key];
+        if (!tracker || !(tracker.count > 0) || !tracker.stat) continue;
+        // 与 _apply_zc_stack 使用完全相同的公式（同 stat 多层为复利叠加）
+        for (var n = 0; n < tracker.count; n++) {
+            var cur = this[tracker.stat];
+            var delta;
+            if (tracker.stat === "diff_sh_per") delta = tracker.pctChange;
+            else if (tracker.stat === "gjsd") delta = -cur * tracker.pctChange;
+            else delta = cur * tracker.pctChange;
+            this[tracker.stat] = cur + delta;
+        }
+    }
+    for (var st in baseStats) applied[st] = this[st];
 };
 
 CHARACTER.prototype._clear_zc_stacks = function () {
@@ -207,6 +215,7 @@ CHARACTER.prototype._clear_zc_stacks = function () {
     if (this.recount) this.recount();
     else for (var stat in baseStats) this[stat] = baseStats[stat];
     this._zc_base_stats = {};
+    this._zc_applied_stats = {};
 };
 
 CHARACTER.prototype.clear_combat_prop = function (name, val) {

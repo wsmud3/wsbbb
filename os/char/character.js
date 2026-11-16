@@ -281,19 +281,27 @@ CHARACTER.prototype.clone = function () {
 
 CHARACTER.prototype.init = function () {
     if (this.equipment) {
+        // 套装：group_prop(count) 是穿满 count 件时的**总**加成（见 EQUIPMENT.check_group），
+        // 登录时只按最终件数授予一次，并记入 _group_grants，之后穿脱按差值结算。
+        // 原实现每件各授一档（5 件套 = 1..5 档全部叠加），且不写 _group_grants。
         let groups = {};
+        this._group_grants = {};
         for (let i = 0; i < this.equipment.length; i++) {
             let item = this.equipment[i];
             if (item) {
                 item.change_prop(this, true);
                 item.on_eq && item.on_eq(this);
-                if (item && item.group_name) {
-                    groups[item.group_name] = (groups[item.group_name] || 0) + 1;
-                    var prop = item.group_prop(groups[item.group_name]);
-                    if (prop) {
-                        this.change_prop(prop, true);
-                    }
+                if (item.group_name && item.group_prop) {
+                    if (!groups[item.group_name]) groups[item.group_name] = { item: item, count: 0 };
+                    groups[item.group_name].count++;
                 }
+            }
+        }
+        for (let name in groups) {
+            let prop = groups[name].item.group_prop(groups[name].count);
+            if (prop) {
+                this.change_prop(prop, true);
+                this._group_grants[name] = prop;
             }
         }
     }

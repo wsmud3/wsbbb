@@ -373,7 +373,7 @@ const Combat = {
         item.anitime = item.duration;
         Combat.StatusItemANI(item);
     }, StatusItem_override: function (player_status, data) {
-
+        if (!player_status) return;
         var item = player_status.items[data.sid];
         if (!item) return;
         item.handler && clearTimeout(item.handler);

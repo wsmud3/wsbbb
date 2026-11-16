@@ -610,7 +610,7 @@ ROOM.prototype.create_by_area = function (area, id, diff_type) {
     }
     if (area.areas) {
         for (var i = 0; i < area.areas.length; i++) {
-            this.create_by_area(area.areas[i], id);
+            this.create_by_area(area.areas[i], id, diff_type);
         }
     }
 }

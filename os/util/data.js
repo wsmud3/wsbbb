@@ -153,6 +153,15 @@ stream.write('",level:');
     },
     _writeData: async function (content) {
         let path = __PATH.DATA + "data.js";
+        // 写入前先校验新内容能被正常解析：手拼的世界存档一旦写坏，原逻辑会在下一次
+        // 存档时把坏主档复制成 .bak，连续两次就主档、备份全坏、拒绝启动。
+        // 校验失败直接抛错：主档与 .bak 都不动。
+        try {
+            JSON.toObject(content);
+        } catch (e) {
+            console.error('[存档] 新世界存档无法解析，已放弃本次写入（主档与.bak保持不变）：', e.message);
+            throw new Error('世界存档内容校验失败：' + e.message);
+        }
         let dt = new Date();
         var f = dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate();
         let _dst = __PATH.DATA + "/temp/temp" + f + ".js";
@@ -161,14 +170,37 @@ stream.write('",level:');
         let tmpPath = path + '.tmp';
         let bakPath = path + '.bak';
         await fs.writeFile(tmpPath, content);
+        // 只有当前主档本身可解析时才轮转成 .bak，坏档不覆盖好备份
         if (await this.check_file(path)) {
-            try { await fs.copyFile(path, bakPath); } catch (e) {}
+            try {
+                JSON.toObject(await fs.readFile(path, 'utf8'));
+                await fs.copyFile(path, bakPath);
+            } catch (e) {
+                console.error('[存档] 当前主档不可解析，跳过 .bak 轮转：', e.message);
+            }
         }
         await fs.rename(tmpPath, path);
-    }, readData: async function () {
+    },
+    // 校验存档尾部的 //MD5: 标记。只告警不拒绝（管理员手工改档也会导致不一致）。
+    verify_md5: function (text, path) {
+        try {
+            text = String(text);
+            const at = text.lastIndexOf('\n//MD5:');
+            if (at < 0) return null;
+            const want = text.slice(at + 7).trim();
+            const got = require('crypto').createHash('md5').update(text.slice(0, at)).digest('hex');
+            if (want !== got) {
+                console.error('[存档] %s 的 MD5 校验不一致（记录 %s，实际 %s），文件可能被截断或手工改动', path, want, got);
+                return false;
+            }
+            return true;
+        } catch (e) { return null; }
+    },
+    readData: async function () {
         let path = __PATH.DATA + "data.js";
         try {
-            const data = await fs.readFile(path);
+            const data = await fs.readFile(path, 'utf8');
+            this.verify_md5(data, path);
             return JSON.toObject(data);
         } catch (error) {
             console.error('[存档] 读取失败，尝试.bak备份...', error.message);

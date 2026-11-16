@@ -56,11 +56,12 @@ this.delete_from = function (me, from) {
 this.delete_all = function (me) {
     let stores = MESSAGE.stores.get(me.id);
     if (!stores) return;
-    stores.forEach((x, y) => {
+    // 注意：forEach 回调里的 return 拦不住后面的删除，这里必须用 for...of
+    for (let x of stores.values()) {
         if (!this.check_store(x)) {
             return me.send('你有未领取的消息，无法删除。');
         }
-    });
+    }
     MESSAGE.stores.delete(me.id);
     me.send('{type:"dialog",dialog:"message",clear:true}');
 }

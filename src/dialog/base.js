@@ -241,6 +241,15 @@ const Dialog = {
     // Reset the public shell and every child flag atomically so the next server
     // snapshot cannot encounter a stale `isShow` reference.
     reset: function () {
+        // 频道条、小地图是从主界面「借」进对话框的公共 DOM；下面 content.empty()
+        // 会把它们一起销毁（频道条点击事件只绑定一次，小地图 CurMapID 未变不会重画）。
+        // 必须先各自 hide()，把元素放回原位。
+        try {
+            if (this.channel && Process.ChannelElement && (this.channel.isShow || this.curItem === "channel")) this.channel.hide();
+        } catch (e) { console.error("reset channel", e); }
+        try {
+            if (this.map && (this.map.isShow || this.curItem === "map")) this.map.hide();
+        } catch (e) { console.error("reset map", e); }
         for (let i = 0; i < DIALOG_NAMES.length; i++) {
             const child = this[DIALOG_NAMES[i]];
             if (!child) continue;

@@ -272,10 +272,15 @@ for (var i = 0; i < SAVE_NUMPROP.length; i++) {
 this[SAVE_NUMPROP[i]] = data.prop[i] || 0;
 }
 this.quit_room = data.quit_room;
-this.items = this.read_items(data.items).filter(function (o) { return o != null; });
-this.stores = this.read_items(data.stores).filter(function (o) { return o != null; });
+// 载入失败（脚本缺失/编译失败）的物品保留原始存档条目，存档时原样写回，
+// 避免一次有问题的部署让物品在下次存档后永久丢失。装备槽里载入失败的件
+// 写回背包列表（脚本恢复后会出现在背包里，而不是凭空消失）。
+this._unloaded_items = [];
+this._unloaded_stores = [];
+this.items = this.read_items(data.items, this._unloaded_items).filter(function (o) { return o != null; });
+this.stores = this.read_items(data.stores, this._unloaded_stores).filter(function (o) { return o != null; });
 this.books = data.books ?? [];
-this.equipment = this.read_equipment(data.eq);
+this.equipment = this.read_equipment(data.eq, this._unloaded_items);
 	// ZC backpack diagnostic
 	var zcCount = 0;
 	if (this.items) for (var zi = 0; zi < this.items.length; zi++) {
@@ -352,7 +357,8 @@ this.title = item[0];
 }
 }
 
-USER.prototype.read_items = function (items) {
+// raw_bucket：可选，载入失败的原始条目放进去，由存档时原样写回（见 save_unloaded）。
+USER.prototype.read_items = function (items, raw_bucket) {
 var objs = [];
 if (!items) return objs;
 for (var i = 0; i < items.length; i++) {
@@ -361,20 +367,41 @@ if (!item) {
 objs.push(null);
 continue;
 }
-var obj = OBJ.CREATE(item[0]);
+var obj = null;
+try {
+obj = OBJ.CREATE(item[0]);
 if (obj) {
 obj.load_db(item);
 obj.on_load(this);
+}
+} catch (e) {
+console.error("[存档保护] %s 的物品 %s 载入异常：%s", this.name || this.id, item[0], e && e.message);
+obj = null;
+}
+if (obj) {
 objs.push(obj);
 } else {
+if (raw_bucket) {
+raw_bucket.push(item);
+console.error("[存档保护] %s 的物品 %s 无法载入，已保留原始存档数据，存档时原样写回", this.name || this.id, item[0]);
+}
 objs.push(null);
 }
 }
 return objs;
 }
 
-USER.prototype.read_equipment = function (items) {
-var objs = this.read_items(items);
+// 把载入失败时保留的原始条目追加写回存档数组（str 已写到 "[" 之后，first 表示数组目前是否为空）
+USER.save_unloaded = function (str, raws, first) {
+if (!raws || !raws.length) return;
+for (var i = 0; i < raws.length; i++) {
+if (!first || i > 0) str.push(",");
+str.push(JSON.stringify(raws[i]));
+}
+}
+
+USER.prototype.read_equipment = function (items, raw_bucket) {
+var objs = this.read_items(items, raw_bucket);
 var fixed = [];
 for (var i = 0; i < objs.length; i++) {
 var obj = objs[i];
@@ -404,7 +431,7 @@ try { this.init(); } catch (e) {}
 try { this.recount(); } catch (e) {}
 this.auto_pfm = false;
 this.long_name();
-WORLD.STATS.checkStats(this);
+try { WORLD.STATS.checkStats(this); } catch (e) { console.error("checkStats 失败(" + this.id + ")：", e && e.message); }
 try { this.send_loginmessage(); } catch (e) {}
 if (this.family) try { this.family.on_login(this); } catch (e) {}
 // 兼容更新前已经达到武帝并通过百层、但尚未写入禁地解锁位的角色。
@@ -483,6 +510,7 @@ str.push(0);
             if (i > 0) str.push(",");
             items[i].save_db(str);
         }
+        USER.save_unloaded(str, this._unloaded_items, items.length === 0);
         str.push("]");
     }
     items = this.stores;
@@ -492,6 +520,7 @@ str.push(0);
             if (i > 0) str.push(",");
             items[i].save_db(str);
         }
+        USER.save_unloaded(str, this._unloaded_stores, items.length === 0);
         str.push("]");
     }
     items = this.books;
@@ -572,6 +601,14 @@ USER.prototype.save = function () {
     return WORLD.DB.saveRole(this.getData());
 }
 USER.prototype.die = function (killer) {
+    // 防重入：同一次死亡可能被多个敌人各自的 query_enemy 再结算一次（A 击杀后
+    // 只清了死者自己的敌人列表，B 的列表里还有它）。已结算的死亡（hp<=0 且已
+    // 离开房间物品列表，复活会重新进入房间）直接返回 true，让调用方把它移出敌人列表。
+    if (this._death_settled && this.hp <= 0
+        && (!this.environment || !this.environment.items || this.environment.items.indexOf(this) < 0)) {
+        return true;
+    }
+    this._death_settled = false;
     if (this.on_die && this.on_die(killer) === false) {
         this.hp = 1;
         return false;
@@ -590,6 +627,7 @@ USER.prototype.die = function (killer) {
     }
     env.item_changed(this, false);
     this.environment = env;
+    this._death_settled = true;
     this.check_state();
     WORLD.on_user_die(this, killer);
     this.on_died(killer);

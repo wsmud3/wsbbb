@@ -26,7 +26,8 @@ console.log('PASS actual IPC routes reject traversal/core-file writes before fil
 const got=[];
 const me={id:'fixture',name:'fixture',exp:1000000,level:1,family:{name:'fixture'},query_temp:k=>k==='pt'?'fixture':0,query_setting:()=>false,send:s=>got.push(s),set_temp(){},add_temp(){}};
 for (const name of ['chat','es','fam','pty']) {
-    const world={USERS:[me],SERVER:{name:'fixture'},DATA:{parties:new Map([['fixture',{roles:[{user:me}]}]])},COMMANDS:{emote:{enter(){}}},sendAllServer(){}};
+    const world={USERS:[me],SERVER:{name:'fixture'},DATA:{parties:new Map([['fixture',{roles:[{id:'fixture'}]}]])},COMMANDS:{emote:{enter(){}}},sendAllServer(){}};
+    me.query_party=()=>world.DATA.parties.get('fixture');
     const ctx=vm.createContext({COMMAND:{},WORLD:world,UTIL:{htmlEncode:s=>s.replaceAll('<','&lt;').replaceAll('>','&gt;'),replace_word:s=>s,diff_time:()=>1}});
     const cmd={inherits(){}};vm.compileFunction(read('world/cmd/channel/'+name+'.js'),[],{parsingContext:ctx}).call(cmd);
     cmd.enter(me,'*<span data-fixture="inert">test</span>');

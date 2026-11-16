@@ -80,8 +80,18 @@ FOLLOWER.INIT_FROM_USER = function (me, datas) {
         var my_npc = FOLLOWER.STORES.get(me.id + "_" + data.id);
         if (my_npc) continue;
         if (!datas[j].id) continue;
+        // 随从模板缺失（文件删除会抛错）或被禁用（返回 null）时，原实现直接读 obj.xxx
+        // 抛 TypeError，整个角色每次登录都失败。现在跳过这个随从，并保留原始存档
+        // 数据，FOLLOWER.SAVE 时原样写回，模板恢复后即可正常载入。
+        var obj = null;
+        try { obj = NPC.CLONE(data.path); } catch (e) { obj = null; }
+        if (!obj) {
+            if (!me._unloaded_followers) me._unloaded_followers = {};
+            me._unloaded_followers[data.id] = data;
+            console.error("[存档保护] %s 的随从 %s(%s) 模板不可用，已保留原始存档数据", me.name || me.id, data.id, data.path);
+            continue;
+        }
         my_npc = new FOLLOWER();
-        var obj = NPC.CLONE(data.path);
         for (var i = 0; i < SAVE_NUMPROP.length; i++) {
             my_npc[SAVE_NUMPROP[i]] = data.prop[i] || 0;
         }
@@ -90,12 +100,13 @@ FOLLOWER.INIT_FROM_USER = function (me, datas) {
         }
         my_npc.on_makelove = obj ? obj.on_makelove : null;
         my_npc.on_master_enter = obj ? obj.on_master_enter : null;
-        my_npc.equipment = data.temp;
+        my_npc.temp = data.temp;
         my_npc.settings = data.settings;
         my_npc.skills = data.skills;
         my_npc.path = obj.path;
-        my_npc.items = me.read_items(data.items).filter(function (o) { return o != null; });
-        my_npc.equipment = me.read_equipment(data.eq);
+        my_npc._unloaded_items = [];
+        my_npc.items = me.read_items(data.items, my_npc._unloaded_items).filter(function (o) { return o != null; });
+        my_npc.equipment = me.read_equipment(data.eq, my_npc._unloaded_items);
         my_npc.level = my_npc.level || obj.level || 3;
         my_npc.init();
         my_npc.recount();
@@ -229,6 +240,7 @@ FOLLOWER.prototype.save = function (me) {
             items[i].save_db(str);
         }
     }
+    USER.save_unloaded(str, this._unloaded_items, items.length === 0);
     str.push("]");
     if (this.skills) {
         str.push(",skills:");
@@ -264,9 +276,17 @@ str.push('",id:"');
 str.push(me.follower[i].id);
 str.push('"');
         var npc = FOLLOWER.STORES.get(me.id + "_" + item.id);
+        var raw = me._unloaded_followers && me._unloaded_followers[item.id];
         if (npc) {
             str.push(",");
             str.push(npc.save(me));
+        } else if (raw) {
+            // 模板不可用而未载入的随从：原样写回其存档字段（path/id 已写过）
+            var rest = Object.assign({}, raw);
+            delete rest.path;
+            delete rest.id;
+            var json = JSON.stringify(rest);
+            if (json.length > 2) str.push(",", json.slice(1, -1));
         }
         str.push('}');
 

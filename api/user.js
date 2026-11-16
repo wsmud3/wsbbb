@@ -50,7 +50,9 @@ class UserAPI extends APIBASE {
         }
         user.pwd = this.MD5(user.pwd);
         user.name = user.name.toLowerCase();
-        user.phone = user.phone ?? null;
+        // 手机号可选；填了就必须是 11 位手机号（改密/解绑要校验后 4 位，短号或对象会让账号永远无法改密）
+        if (user.phone === undefined || user.phone === null || user.phone === '') user.phone = null;
+        else if (typeof user.phone !== 'string' || !/^1\d{10}$/.test(user.phone)) return { code: 0, result: "手机号格式错误" };
         user.link_user = user.guider > 0 ? user.guider : 0;
         if (await DB.getUserBy("name", user.name)) {
             return { code: 0, result: "注册失败，账号已经有人使用" };
@@ -89,7 +91,7 @@ class UserAPI extends APIBASE {
         let result = await DB.getUserBy("id", user.id);
         if (!result) return { code: 0, result: "不存在的用户" };
         if (result.phone) {
-            if (!code || code.length !== 4)
+            if (typeof code !== 'string' || code.length !== 4)
                 return { code: 0, result: "手机尾号格式错误" };
             if (!result.phone.endsWith(code))
                 return { code: 0, result: "错误的手机尾号" };
@@ -113,8 +115,11 @@ class UserAPI extends APIBASE {
 
     async changepassword(data) {
         let { oldpwd, pwd, no } = data;
-        if (!oldpwd || !pwd)
+        if (typeof oldpwd !== 'string' || typeof pwd !== 'string' || !oldpwd || !pwd)
             return { code: 0 };
+        // 与注册一致的密码规则
+        if (pwd.length < 5 || pwd.length > 128)
+            return { code: 0, result: "密码须为5–128位字符" };
         oldpwd = this.MD5(oldpwd);
         pwd = this.MD5(pwd);
         const user = this.getUser();
@@ -128,7 +133,7 @@ class UserAPI extends APIBASE {
             return { code: 0, result: "原始密码输入错误。" };
         }
         if (result.phone) {
-            if (!no || no.length !== 4)
+            if (typeof no !== 'string' || no.length !== 4)
                 return { code: 0, result: "手机尾号格式错误" };
             if (!result.phone.endsWith(no))
                 return { code: 0, result: "错误的手机尾号" };

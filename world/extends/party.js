@@ -108,10 +108,35 @@ Party.prototype.max_roles = function () {
 };
 
 // CHARACTER原型方法：获取玩家所属帮派
+// 同时校验成员身份：离线时被开除/帮派被解散的人，temp 里还残留 pt，这里惰性清掉
 CHARACTER.prototype.query_party = function () {
     var ptId = this.query_temp("pt");
     if (!ptId) return null;
-    return WORLD.DATA.parties.get(ptId) || null;
+    var pt = WORLD.DATA.parties.get(ptId) || null;
+    if (!pt || !pt.get_role(this.id)) {
+        this.remove_temp("pt");
+        this.remove_temp("pt_lv");
+        return null;
+    }
+    return pt;
+};
+
+// 扣除本周活跃度（sc1..sc6 各段依次扣），够扣返回 true；不够则不扣并返回 false
+Party.prototype.spend_score = function (cost) {
+    if (!(cost > 0)) return true;
+    if (this.query_score() < cost) return false;
+    var left = cost;
+    for (var i = 1; i <= 6 && left > 0; i++) {
+        var key = 'sc' + i;
+        var have = this.query_temp(key, 0);
+        if (!(have > 0)) continue;
+        var take = Math.min(have, left);
+        var item = this.temp[key];
+        if (item && item.e) item.v -= take;
+        else this.temp[key] = have - take;
+        left -= take;
+    }
+    return true;
 };
 
 // 帮派数据持久化：序列化

@@ -15,7 +15,10 @@ this.enter = function (me, oid) {
     //  if (me.is_player && target.is_player) return me.notify("你不能和玩家控制的人物双修。");
     if (!target.is_player && target.master != me.id) return me.notify(target.name + "不愿意和你双修。");
     //if (target.on_makelove && target.on_makelove(me) === false) return;
-    if (me.query_temp("mk_request")) {
+    // mk_request 记录的是发出邀请者的 id：只有接受“对方发给我的”邀请才进入双修
+    if (target.is_player && me.query_temp("mk_request") === target.id) {
+        me.remove_temp("mk_request");
+        if (target.fight_type) return me.notify(target.name + "正在战斗中。");
         this.accept(me, target);
         this.accept(target, me);
     } else {
@@ -24,7 +27,7 @@ this.enter = function (me, oid) {
         if (target.is_player) {
             target.notify("<yel>看样子" + me.call3() + "想和你双修...</yel>");
             target.send_commands("makelove " + me.id, "接受");
-            target.set_temp("mk_request", 1, 10000);
+            target.set_temp("mk_request", me.id, 10000);
         } else {
 
             this.accept(me, target);

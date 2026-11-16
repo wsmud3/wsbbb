@@ -10,7 +10,7 @@ this.enter = function (player, target, count, objid) {
     if (objid == "money") {
         if (!count) return player.notify("你要给" + target.name + "多少钱？");
         count = parseInt(count);
-        if (count <= 0) return player.notify("你要给" + target.name + "多少钱？");
+        if (!Number.isSafeInteger(count) || count <= 0) return player.notify("你要给" + target.name + "多少钱？");
         if (count > player.money) return player.notify("你身上没有那么多的钱给" + target.name + "。");
         if (target.on_accept && target.on_accept(player, objid, count)) {
             player.money -= count;
@@ -24,7 +24,8 @@ this.enter = function (player, target, count, objid) {
         return player.notify(target.name + "不要你的钱。");
     } else if (objid == "cash") {
         if (!count) return player.notify("你要给" + target.name + "多少元宝？");
-        if (count <= 0) return player.notify("你要给" + target.name + "多少元宝？");
+        count = parseInt(count);
+        if (!Number.isSafeInteger(count) || count <= 0) return player.notify("你要给" + target.name + "多少元宝？");
         if (count > player.cash_money) return player.notify("你身上没有那么多的元宝给" + target.name + "。");
         if (target.on_accept && target.on_accept(player, objid, count)) {
             return player.add_cash(-count, "给" + target.name);

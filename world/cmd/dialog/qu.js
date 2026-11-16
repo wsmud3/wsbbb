@@ -12,6 +12,16 @@ this.enter = function (me, count, arg) {
     obj.items = me.stores || [];
     var move_count = 1;
     if (count) move_count = parseInt(count);
+    if (!(move_count > 0)) return me.notify("数量错误。");
+    // 背包上限：可与身上同类物品合并的堆叠物品放行，其余在背包满时拒绝
+    var src = null;
+    for (var i = 0; i < obj.items.length; i++) {
+        if (obj.items[i] && obj.items[i].id === arg) { src = obj.items[i]; break; }
+    }
+    if (!src) return me.notify("你的仓库里没有这样东西。");
+    if (me.is_full() && !(src.combined && me.find_obj_bypath(src.path))) {
+        return me.notify("你身上东西太多了。");
+    }
     var moved_obj = obj.remove_item_byid(arg, move_count);
     if (!moved_obj) return me.notify("你的仓库里没有这样东西。");
 

@@ -20,6 +20,20 @@ FAMILY.prototype.create = function (path) {
 
 }
 FAMILY.prototype.update = function (path) {
+    // 热更新：新对象替换旧对象时，迁移运行时状态，并把在线玩家的 family 引用
+    // 指向新对象，否则门派广播（send 比较 ==）、is_team 等判断对在线玩家失效。
+    var old = FAMILIES[this.id];
+    if (old && old !== this) {
+        var runtime = ["temp", "battle_family", "battle_score", "battle_gift", "can_battle", "npcs"];
+        for (var i = 0; i < runtime.length; i++) {
+            if (old[runtime[i]] !== undefined) this[runtime[i]] = old[runtime[i]];
+        }
+        if (typeof WORLD !== "undefined" && WORLD.USERS) {
+            for (var j = 0; j < WORLD.USERS.length; j++) {
+                if (WORLD.USERS[j] && WORLD.USERS[j].family === old) WORLD.USERS[j].family = this;
+            }
+        }
+    }
     FAMILIES[this.id] = this;
 }
 FAMILY.prototype.query_title = function (level) {

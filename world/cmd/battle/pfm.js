@@ -106,9 +106,6 @@ this.enter = function (me, sk, pfmid) {
         //     }
         // }
     }
-    if (pfm.check && !pfm.no_check && !pfm.check(me, lv)) {
-        return;
-    }
     var key = "pfm/" + sk + "/" + pfmid;
     if (me.query_temp(key)) {
         return me.notify(pfm.name + "还没准备好，你还不能使用。");
@@ -131,6 +128,11 @@ this.enter = function (me, sk, pfmid) {
 
     if (me.query_temp("sealed_pfm")) {
         me.send_room("<hir>$N被天地之力封印，技能" + pfm.name + "无法施展！</hir>\n");
+        return;
+    }
+
+    // check 可能有副作用（扣物品、掷随机），放在冷却 / 出招间隔 / 封印等纯判断之后
+    if (pfm.check && !pfm.no_check && !pfm.check(me, lv)) {
         return;
     }
 

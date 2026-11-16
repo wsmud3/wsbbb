@@ -24,8 +24,9 @@ this.enter = function (me, str) {
     if (me.query_temp("chat")) return me.notify("你说话速度太快了。");
     if (!me.query_temp("pt")) return me.notify("你还没加入过帮派。");
 
-    var pt = WORLD.DATA.parties.get(me.query_temp("pt"));
-    if (!pt) return me.notify("没有这个帮派。");
+    // query_party 会顺带校验成员身份（离线被开除的人在这里被清掉，不能再往原帮派广播）
+    var pt = me.query_party();
+    if (!pt) return me.notify("你已经不在帮派中了。");
 
     var msg = "", name = me.name;
     if (str[0] == "*") {
@@ -43,7 +44,9 @@ this.enter = function (me, str) {
     if (WORLD.chatlog) WORLD.chatlog.record("pty", me, str, { party: me.query_temp("pt") });
     msg = JSON.stringify({ type: "msg", ch: "pty", content: msg, uid: me.id, name: name })
     for (var i = 0; i < pt.roles.length; i++) {
-        var user = pt.roles[i].user;
+        // role 上没有 user 字段（只有 id/name/level/sc/online），按 id 找在线玩家，与 send_system 一致
+        var rid = pt.roles[i].id;
+        var user = WORLD.USERS.find(function (u) { return u.id === rid; });
         if (user && !user.query_setting("off_pty")) {
             user.send(msg);
         }

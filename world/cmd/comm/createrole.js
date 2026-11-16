@@ -42,6 +42,29 @@ this.enter = function (me, pars) {
 
     me.ip_address = me.socket.remoteAddress;
     if (!WORLD.USERLOGIN.check_user(me)) return;
+    if (me._creatingRole) return;
+    this.create_role(me, name, gender, str, con, dex, int);
+}
+
+this.create_role = async function (me, name, gender, str, con, dex, int) {
+    me._creatingRole = true;
+    try {
+        // 只查在线玩家不够：离线角色同名会撞唯一索引。入库前先查库。
+        let exists = await __CONFIG.DB.exitsRoleName(name);
+        if (exists) return me.send('{"type":"regist","result":"这个名字已经有人用了"}');
+        if (me.id || !me.socket) return;
+        this.init_role(me, name, gender, str, con, dex, int);
+        await this.save2db(me);
+    } catch (err) {
+        console.log("角色创建失败", err);
+        this.reset_role(me);
+        me.send('{"type":"regist","result":"创建角色失败"}');
+    } finally {
+        me._creatingRole = false;
+    }
+}
+
+this.init_role = function (me, name, gender, str, con, dex, int) {
 
     me.name = name;
     me.id = UTIL.create_id();
@@ -70,7 +93,6 @@ this.enter = function (me, pars) {
     me.eq_groups = [];
     me.sk_groups = [];
     me.skills = {};
-    this.save2db(me);
 }
 
 this.save2db = async function (me) {
@@ -83,16 +105,25 @@ this.save2db = async function (me) {
             me.wait_input = null;
             me.do_login();
         } else {
+            this.reset_role(me);
             return me.send('{"type":"regist","result":"创建角色失败"}');
         }
     } catch (err) {
-        if (err.errno == 1062) {
-            me.id = null;
+        this.reset_role(me);
+        // better-sqlite3 的唯一约束错误：code = SQLITE_CONSTRAINT_UNIQUE（errno 1062 是 MySQL 的）
+        if (err && (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.errno == 1062)) {
             return me.send('{"type":"regist","result":"角色名称重复，请重新输入"}');
         } else {
-            console.log("角色创建失败", err, pars);
+            console.log("角色创建失败", err);
             return me.send('{"type":"regist","result":"创建角色失败"}');
         }
     }
+}
+
+// 创建失败时撤销已写入的身份字段，允许玩家重新提交
+this.reset_role = function (me) {
+    if (WORLD.USERS.indexOf(me) >= 0) return;
+    me.id = null;
+    me.name = null;
 }
 

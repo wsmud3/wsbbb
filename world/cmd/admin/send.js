@@ -3,10 +3,12 @@ this.command = "send";
 this.allow_busy = true;
 this.allow_state = true;
 this.allow_die = true;
+this.allow_level = 5;
 
 this.regex = /^(\w+)\s(.+)$/;
 this.enter = function (me, user, arg) {
-    if (me && me.allow_level < 5) return false;
+    // me 为空表示系统调用（COMMAND.DO）；玩家调用须为 5 级以上管理员
+    if (me && !((me.user_level || 0) >= 5)) return false;
     if (!arg) return me && me.send("没有消息内容。");
     var msg;
     var is_str = typeof arg == "string";

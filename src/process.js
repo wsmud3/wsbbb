@@ -1,13 +1,14 @@
 
 import MessageQueue from './message.js';
 import FloatDialog from './floatdialog.js';
-import { connectServer, hide2show, isConnected, onLogin, SendCommand, showLoader, GameClient } from './client.js';
+import { connectServer, hide2show, isConnected, onLogin, SendCommand, showLoader, GameClient, clearReconnectTimer, setChangeServer, clearLastPlayer, resetToLogin } from './client.js';
 import Combat from './combat.js';
 import Setting from './setting.js';
 import MAP from './map.js';
 import SCRIPT from './script.js';
 import { roles } from './login/index.js';
 import { SERVERS } from "./login/server.js";
+import { chatText } from './utils/chat-text.js';
 
 const MessageContent = () => $(".content-message");
 const MessagePage = { append: (div) => $(".content-message").append(div) };
@@ -18,9 +19,10 @@ const Process = {
     message: null,
     channel: null,
     relogin() {
-        hide2show('#login_panel')
+        resetToLogin();
     },
     clear: function () {
+        MAP.CancelWalk();
         Dialog.pack.items = null;
         Dialog.skills.items = null;
 
@@ -107,27 +109,35 @@ const Process = {
         }
     }, cross: function (data) {
         var serv = null;
-        for (var i = 0; i < SERVERS.length; i++) {
-            if (SERVERS[i].ID == data.sid) {
+        // 服务器列表（data/sql.js getServers 与本地兜底）字段是小写 id/name
+        for (var i = 0; SERVERS && i < SERVERS.length; i++) {
+            var sid = SERVERS[i].id != null ? SERVERS[i].id : SERVERS[i].ID;
+            if (sid == data.sid) {
                 serv = SERVERS[i];
             }
         }
-        if (!serv) return;
+        if (!serv) {
+            console.log("跨服失败：找不到服务器", data.sid);
+            return;
+        }
 
-        GameClient.ChangeServer = true;
-        GameClient.Close();
+        setChangeServer(true);
+        clearLastPlayer();
+        if (GameClient) GameClient.Close();
         Dialog.pack.items = null;
         if (data.cross_type == 'duizhan') {
             Dialog.skills.items = null;
             Dialog.skills.isShow = false;
         }
-        console.log("重新连接到", serv.Name);
+        console.log("重新连接到", serv.name || serv.Name);
         if (!data.pid) Process.die({ relive: true });
         connectServer(serv, data.pid);
     }
     ,
     roles: function (x) {
         if (!x || !Array.isArray(x.roles)) return;
+        // 服务端已正常应答（等玩家选角），撤掉 15 秒强制刷新的保护
+        clearReconnectTimer();
         var result = x.roles;
         if (!result.length) {
             roles.addRole();
@@ -146,6 +156,10 @@ const Process = {
             $(".role-list").html(html.join(""));
         }
     }, loginerror: function (msg) {
+        // 不断开 socket 的登录失败（重复登录/读取失败/密码失效）不能再触发 15 秒刷新；
+        // 断线前保存的角色也作废，避免下次连接继续自动登录它
+        clearReconnectTimer();
+        clearLastPlayer();
         $(".container").hide();
         $(".login-content").show();
         showLoader("<strong>登陆失败：</strong>" + msg.msg + "");
@@ -171,10 +185,17 @@ const Process = {
                 " container.display=" + $(".container").css("display"));
         }, 3000);
 
+        MAP.CancelWalk();
         Process.player = x.id;
         Process.level = x.level;
-        Setting.load(x.setting);
-        onLogin();
+        // 设置载入失败（例如本地存储不可用）不能跳过 onLogin，否则重连定时器不会被清掉
+        try {
+            Setting.load(x.setting);
+        } catch (e) {
+            console.error("[login] Setting.load failed", e);
+        } finally {
+            onLogin();
+        }
         //var panel = $(".player-panel").html(CreateHeadPanel(x));
 
     }, levelup: function (x) {
@@ -461,8 +482,22 @@ const Process = {
             FloatDialog.add(pass, data);
             return;
         }
+        // 非浮窗模式：自创武学、重铸等面板的正文在 feedback/text/html 里，items 可能为空，
+        // 只渲染 items 会输出一个空 div。这里按浮窗同样的顺序把它们输出到主消息流。
+        var items = Array.isArray(data.items) ? data.items : (data.items ? [data.items] : []);
+        var body = [];
+        if (data.feedback) body.push(chatText(data.feedback));
+        if (data.text) body.push(chatText(data.text));
+        if (data.html) {
+            var block = String(data.html);
+            // 有 items 时 html 里往往带着同一批按钮，剥掉避免重复（与浮窗一致）
+            if (items.length) block = block.replace(/<span\b[^>]*\bcmd="[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
+            body.push(block);
+        }
+        if (body.length) ReceiveMessage(body.join("<br>"));
+        if (!items.length) return;
+        data.items = items;
         var html = ["<div class='item-commands'>"];
-        if (!data.items.length) data.items = [data.items];
         for (var i = 0; i < data.items.length; i++) {
             var it = data.items[i];
             if (it.group) html.push("<div class='command-group-title'>", it.group, "</div>");

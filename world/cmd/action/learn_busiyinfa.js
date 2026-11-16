@@ -4,6 +4,7 @@ this.allow_busy = true;
 this.enter = function(me, npcId) {
     // 从NPC交互触发时，npcId是NPC的ID
     var sx = null;
+    if (!me.environment) return;
     if (npcId) {
         sx = me.environment.find_obj(npcId);
     }
@@ -11,7 +12,7 @@ this.enter = function(me, npcId) {
         // fallback: 搜索房间中的石之轩
         sx = me.environment.find_obj_bypath('jncz/shizhixuan');
     }
-    if (!sx) {
+    if (!sx || sx.path !== 'jncz/shizhixuan') {
         return me.notify("石之轩残魂不在这里。");
     }
     if (me.query_temp("jncz_xiewang")) {

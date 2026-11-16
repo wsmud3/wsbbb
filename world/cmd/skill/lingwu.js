@@ -143,6 +143,16 @@ function knowledge_flow(player, skid, skill_base, sk, arg1, arg2) {
             if ((r_new_def.count === 1 || !r_new_def.count) && sk.addin.indexOf(r_new_si) !== -1) {
                 return player.notify("你已经拥有了" + r_new_def.name + "进阶。");
             }
+            // 可叠加的进阶同样受 slot.count 上限约束（替换菜单会隐藏已满的分支，直接发 r<old> 也要拦住）
+            if (r_new_def.count > 1) {
+                var r_cnt = 0;
+                for (var rj = 0; rj < sk.addin.length; rj++) {
+                    if (sk.addin[rj] === r_new_si) r_cnt++;
+                }
+                if (r_new_si === r_old_val) r_cnt--;
+                if (r_cnt >= r_new_def.count)
+                    return player.notify(r_new_def.name + "进阶已达上限。");
+            }
 
             var r_needs = r_new_def.query_needs(grd);
             if (!r_needs || !r_needs.length)
@@ -161,7 +171,7 @@ function knowledge_flow(player, skid, skill_base, sk, arg1, arg2) {
                 var r_idx = sk.addin.indexOf(r_old_val);
                 sk.addin.splice(r_idx, 1);
                 sk.addin.push(r_new_si);
-                skill_base.attach_prop(player, sk.level);
+                skill_base.attach_prop(player, player.query_skill(skid));
                 player.recount();
             }
             player.remove_obj(r_frag, 1);
@@ -374,7 +384,7 @@ function execute_global_slot(player, skid, skill_base, sk, position, slot_idx) {
     skill_base.release_prop(player, player.query_skill(skid));
     sk.addin.push(slot_idx);
     recalc_level(player, skill_base, sk, old_grd);
-    skill_base.attach_prop(player, sk.level);
+    skill_base.attach_prop(player, player.query_skill(skid));
     player.recount();
     player.remove_obj(item, cost);
 
@@ -423,7 +433,7 @@ function execute_specific_slot(player, skid, skill_base, sk, slot_idx) {
     skill_base.release_prop(player, player.query_skill(skid));
     sk.addin.push(si);
     recalc_level(player, skill_base, sk, old_grd);
-    skill_base.attach_prop(player, sk.level);
+    skill_base.attach_prop(player, player.query_skill(skid));
     player.recount();
 
     var new_grd = skill_base.query_grade(player);
@@ -545,7 +555,7 @@ function execute_faction_upgrade(player, skid, skill_base, sk) {
         skill_base.release_prop(player, player.query_skill(skid));
         sk.addin.push(marker);
         recalc_level(player, skill_base, sk, old_grd);
-        skill_base.attach_prop(player, sk.level);
+        skill_base.attach_prop(player, player.query_skill(skid));
         player.recount();
 
         var new_grd = skill_base.query_grade(player);
@@ -591,7 +601,7 @@ function combat_reset_flow(player, skid, skill_base, sk, arg2) {
         // the removed slot's props are never cleaned up (leaked).
         skill_base.release_prop(player, player.query_skill(skid));
         sk.addin.splice(pos, 1);
-        skill_base.attach_prop(player, sk.level);
+        skill_base.attach_prop(player, player.query_skill(skid));
         player.recount();
 
         player.pot += pot_refund;

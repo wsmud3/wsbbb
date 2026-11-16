@@ -74,9 +74,14 @@ const blankTops = () => {
     for (const k of ALL_TOP_KEYS) s["tops_" + k] = sparse([{ path: "pub/gaoshou1" }, { path: "pub/gaoshou1" }]);
     return s;
 };
+// 剔除后榜单必须是"压实"的：不能留下空洞（delete list[i] 会留空洞，
+// updateScoreItem 遍历到空洞读 .id 会抛错 -> 全员登录失败）。
 const compact = (list) => {
     const out = [];
-    for (let i = 0; i < (list.length || 0); i++) if (list[i]) out.push(list[i]);
+    for (let i = 0; i < (list.length || 0); i++) {
+        assert.ok(list[i], "榜单第 " + i + " 项是空洞：剔除后必须压实数组");
+        out.push(list[i]);
+    }
     return out;
 };
 

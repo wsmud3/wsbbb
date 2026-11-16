@@ -59,7 +59,8 @@ require_os().then(async () => {
 
 // 优雅关闭：保存所有玩家数据后再退出
 let shutdownPromise = null;
-async function gracefulShutdown(signal) {
+// exitCode：保存成功时的退出码（崩溃路径传 1，让 pm2 能看出是异常退出）
+async function gracefulShutdown(signal, exitCode) {
     if (shutdownPromise) return shutdownPromise;
     shutdownPromise = (async function () {
         console.log('收到%s信号，正在保存数据...', signal);
@@ -76,20 +77,17 @@ async function gracefulShutdown(signal) {
         } catch (e) {
             console.error('保存数据失败:', e.message);
         }
-        process.exit(ok ? 0 : 1);
+        process.exit(ok ? (exitCode || 0) : 1);
     })();
     return shutdownPromise;
 }
+// 供 os/logger.js（崩溃）与 os/admin-server.js（后台关服）复用同一条关服流程
+globalThis.__gracefulShutdown = gracefulShutdown;
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-process.on('uncaughtException', (error) => {
-    console.error('未捕获的异常:', error);
-
-});
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('未处理的Promise拒绝:', reason);
-});
+// uncaughtException / unhandledRejection 统一由 os/logger.js 处理（记录 + 走 gracefulShutdown 退出），
+// 这里不再重复注册：以前两处处理器同时生效，一个"记录后继续"、一个"存档后退出"，行为互相矛盾。
 
 // === 运维定时任务 ===
 setInterval(function () {

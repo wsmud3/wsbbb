@@ -30,12 +30,14 @@ this.enter = function (me, arg) {
         }
         var user = WORLD.getUser(me.query_temp("wife") || me.query_temp("husband"));
         if (!user) return me.notify("没有这个玩家，或者不在线。");
-        if (me.money < 1000 * count) {
+        // 丈夫送花 1000/朵，妻子送花 10000/朵：余额检查与扣款用同一个价格
+        var price = me.query_temp("wife") ? 1000 : 10000;
+        if (!(me.money >= price * count)) {
             return me.notify("你身上的钱不够，买不起花。");
         }
         if (me.query_temp("wife")) {
             if (user.query_temp("husband") != me.id) return me.notify("你不是" + user.name + "丈夫，无法送花。");
-            me.money -= 1000 * count;
+            me.money -= price * count;
             me.notify("你购买了" + UTIL.to_c(count) + "朵玫瑰花送给你妻子" + user.name + "。");
             me.set_temp("greet2", 1, UTIL.diff_week_time());
             COMMAND.DO("send", user.id, {
@@ -51,7 +53,7 @@ this.enter = function (me, arg) {
         }
         else {
             if (user.query_temp("wife") != me.id) return me.notify("你不是" + user.name + "妻子，无法送花。");
-            me.money -= 10000 * count;
+            me.money -= price * count;
             me.notify("你购买了" + UTIL.to_c(count) + "朵玫瑰花送给你丈夫" + user.name + "。");
             me.set_temp("greet2", 1, UTIL.diff_week_time());
             COMMAND.DO("send", user.id, {

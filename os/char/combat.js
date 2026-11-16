@@ -108,6 +108,10 @@ CHARACTER.prototype.set_mp = function (v) {
     this.notify_hp("mp", this.mp);
 };
 CHARACTER.prototype.add_mp = function (v) {
+    // 与 add_hp 一致挡住非法值：NaN 一旦写入，mp < cost 恒为 false = 无限内力
+    v = Number(v);
+    if (!v || isNaN(v)) return;
+    if (isNaN(this.mp)) this.mp = 0;
     var mp = this.mp + v;
     if (mp > this.max_mp) mp = this.max_mp;
     if (mp < 0) mp = 0;

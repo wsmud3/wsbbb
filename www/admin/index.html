@@ -385,7 +385,7 @@ async function viewPlayer(id,sid){
     '<button class="red" onclick="deletePlayer(\''+p.id+'\',\''+(p.name||'')+'\','+psid+')">🗑️ 删除角色</button></div>'+
     '<div class="row"><span>HP:</span><input id="pe_hp" value="'+p.hp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_hp" value="'+p.max_hp+'" style="width:70px" type="number"></div>'+
     '<div class="row"><span>MP:</span><input id="pe_mp" value="'+p.mp+'" style="width:70px" type="number"><span>/</span><input id="pe_max_mp" value="'+p.max_mp+'" style="width:70px" type="number"></div>'+
-    '<div class="row"><span>攻:</span><input id="pe_gj" value="'+p.gj+'" style="width:70px" type="number"><span>防:</span><input id="pe_fy" value="'+p.fy+'" style="width:70px" type="number"><span>敏:</span><input id="pe_mz" value="'+p.mz+'" style="width:70px" type="number"><span>闪:</span><input id="pe_ds" value="'+p.ds+'" style="width:70px" type="number"><span>招:</span><input id="pe_zj" value="'+p.zj+'" style="width:70px" type="number"></div>'+
+    '<div class="row" title="派生属性，由装备/技能/状态重算得出，不可直接修改"><span>攻:</span><span>'+p.gj+'</span><span>防:</span><span>'+p.fy+'</span><span>敏:</span><span>'+p.mz+'</span><span>闪:</span><span>'+p.ds+'</span><span>招:</span><span>'+p.zj+'</span></div>'+
     '<div class="row"><span>经验:</span><input id="pe_exp" value="'+p.exp+'" style="width:100px" type="number"><span>潜能:</span><input id="pe_pot" value="'+p.pot+'" style="width:100px" type="number"><span>金钱:</span><input id="pe_money" value="'+p.money+'" style="width:100px" type="number"></div>'+
     '<div class="row"><span>门派:</span><span>'+(p.family||'')+'</span><span>位置:</span><span>'+p.location+'</span></div>'+
     '<p>装备: '+eq+'</p>'+
@@ -395,8 +395,10 @@ async function viewPlayer(id,sid){
 
 async function savePlayerEdit(id,sid){
   var data={id:id};
-  var fields=['hp','max_hp','mp','max_mp','gj','fy','mz','ds','zj','exp','pot','money'];
-  fields.forEach(function(f){var el=document.getElementById('pe_'+f);if(el)data[f]=parseInt(el.value)||0});
+  // 只提交改动过的字段：面板打开期间玩家获得的经验/银两不会被旧快照覆盖
+  var fields=['hp','max_hp','mp','max_mp','exp','pot','money'],changed=0;
+  fields.forEach(function(f){var el=document.getElementById('pe_'+f);if(el&&el.value!==el.defaultValue){data[f]=parseInt(el.value);changed++}});
+  if(!changed){document.getElementById('pe_msg').innerHTML=M('没有改动','err');return}
   if(sid)data.sid=parseInt(sid);
   var r=await call('player_update',data);
   document.getElementById('pe_msg').innerHTML=M(r.msg||(r.ok?'已保存':'失败'),r.ok?'ok':'err');

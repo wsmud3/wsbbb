@@ -103,7 +103,7 @@ CHARACTER.prototype.moveto = function (rm, leave_msg, in_msg, dir) {
     }
 
     next_room.do_enter(this, true, in_msg);
-    this.notify_follower(dir);
+    this.notify_follower(dir, cur_room);
     if (cur_room && next_room.parent !== cur_room.parent) {
         cur_room.parent.on_leaved(this);
     }
@@ -143,10 +143,25 @@ CHARACTER.prototype.clear_follow = function () {
     }
 }
 
-CHARACTER.prototype.notify_follower = function (dir) {
+// 玩家跟随者不能被无条件拖走：必须与领队原本在同一房间，且满足 go 指令的同等前置
+// （非战斗、非 rash、未死亡、被追杀不得进安全区/副本），也不能被带进别人的副本实例。
+// 不满足时解除跟随。
+CHARACTER.prototype.can_follow_move = function (leader, from_room, to_room) {
+    if (from_room && this.environment !== from_room) return "";
+    if (this.hp <= 0) return "";
+    if (this.fight_type > 0) return "你正在战斗中，没能跟上" + leader.name + "。";
+    if (this.is_rash || this.is_busy) return "你现在没办法移动，没能跟上" + leader.name + "。";
+    if (this.query_temp && this.query_temp("killer") && to_room && (to_room.is_copy() || to_room.no_fight))
+        return "你现在正在被追杀，不能跟随进入安全区和副本区域。";
+    if (to_room && to_room.owner && (!from_room || from_room.owner !== to_room.owner))
+        return "你无法跟随" + leader.name + "进入那里。";
+    return null;
+}
+CHARACTER.prototype.notify_follower = function (dir, from_room) {
     if (this.follow_targets) {
-        for (var i = 0; i < this.follow_targets.length; i++) {
-            var item = this.follow_targets[i];
+        var list = this.follow_targets.slice();
+        for (var i = 0; i < list.length; i++) {
+            var item = list[i];
             if (!item.environment) continue;
             if (!item.is_player) {
                 if (item.on_master_leave) {
@@ -164,6 +179,12 @@ CHARACTER.prototype.notify_follower = function (dir) {
                 item.moveto(this.environment,
                     sendOutMessage(item, dir), sendInMessage(item));
             } else {
+                var why = item.can_follow_move(this, from_room, this.environment);
+                if (why !== null) {
+                    if (why) item.notify(why);
+                    item.do_follow(null);
+                    continue;
+                }
                 item.moveto(this.environment,
                     sendOutMessage(item, dir), sendInMessage(item));
             }

@@ -119,4 +119,4 @@ this.store_all = function (target, me) {//target仓库所有人=玩家 me玩家�
             target.notify('{type:"dialog",dialog:"list",id:"' + move_item.id + '",storeid:"' + store_item.id + '",store:' + move_item.count + '}');
             me.items.splice(i, 1);
 				// Notify pack of item removal (splice bypasses items_changed)
-				me.send('{type:"dialog",dialog:"pack",id:"' + move_item.id + '",remove:' + move_item.count + '",money:' + me.money + '}');\ni--;\n}\n}\nme.send('你将背包中的道具自动合并到仓库中已有的道具。');\nme.set_temp('store_all', 1, 6000);\n}
+				me.send('{type:"dialog",dialog:"pack",id:"' + move_item.id + '",remove:' + move_item.count + ',money:' + me.money + '}');\ni--;\n}\n}\nme.send('你将背包中的道具自动合并到仓库中已有的道具。');\nme.set_temp('store_all', 1, 6000);\n}

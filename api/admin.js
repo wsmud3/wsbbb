@@ -178,7 +178,7 @@ class AdminAPI extends APIBASE {
         var fp = path.join(SKILL_DIR, type, name + '.js');
         if (!fp.startsWith(SKILL_DIR)) return { ok: false, msg: '路径越界' };
         try { fs.writeFileSync(fp, content, 'utf8'); } catch (e) { return { ok: false, msg: '写入失败: ' + e.message }; }
-        try { var r = await ipcCall('POST', '/api/update', { path: 'world/skill/' + type + '/', fname: name }); if (r.error) return { ok: true, msg: '文件已保存，但热更失败: ' + r.error }; return { ok: true, msg: '保存成功，热更完成' }; }
+        try { var r = await ipcCall('POST', '/api/update', { path: 'world/skill/' + type + '/', fname: name }, this._sid(params || {})); if (r.error) return { ok: true, msg: '文件已保存，但热更失败: ' + r.error }; return { ok: true, msg: '保存成功，热更完成' }; }
         catch (e) { return { ok: true, msg: '保存成功，但热更失败(服务器离线)' }; }
     }
 
@@ -200,7 +200,7 @@ class AdminAPI extends APIBASE {
         ].join('\n');
         try { new Function(def); } catch (e) { return { ok: false, msg: '模板语法错误: ' + e.message }; }
         try { fs.writeFileSync(fp, def, 'utf8'); } catch (e) { return { ok: false, msg: '创建失败: ' + e.message }; }
-        try { var r = await ipcCall('POST', '/api/update', { path: 'world/skill/' + type + '/', fname: name }); if (r.error) return { ok: true, msg: '文件已创建，但热更失败: ' + r.error }; return { ok: true, msg: '创建成功并已热更' }; }
+        try { var r = await ipcCall('POST', '/api/update', { path: 'world/skill/' + type + '/', fname: name }, this._sid(params || {})); if (r.error) return { ok: true, msg: '文件已创建，但热更失败: ' + r.error }; return { ok: true, msg: '创建成功并已热更' }; }
         catch (e) { return { ok: true, msg: '创建成功，但热更失败(服务器离线)' }; }
     }
 
@@ -216,7 +216,7 @@ class AdminAPI extends APIBASE {
         try {
             fs.unlinkSync(fp);
             // 通知游戏服务器清缓存（IPC端会删除对应文件并清BASE.ITEMS）
-            try { await ipcCall('POST', '/api/skill_delete', { type: type, name: name }); }
+            try { await ipcCall('POST', '/api/skill_delete', { type: type, name: name }, this._sid(params || {})); }
             catch (e2) { /* 游戏服务器离线，文件已删除即可 */ }
             return { ok: true, msg: '已删除: ' + type + '/' + name + '.js' };
         } catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
@@ -234,9 +234,10 @@ class AdminAPI extends APIBASE {
     }
 
     // POST /api/admin/broadcast_clear
-    async broadcast_clear() {
+    async broadcast_clear(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('DELETE', '/api/broadcast'); return { ok: true, msg: r.message || '已清空' }; }
+        var sid = this._sid(params || {});
+        try { var r = await ipcCall('DELETE', '/api/broadcast', null, sid); return { ok: true, msg: r.message || '已清空' }; }
         catch (e) { return { ok: false, msg: '清空失败: ' + e.message }; }
     }
 
@@ -279,8 +280,16 @@ class AdminAPI extends APIBASE {
         var user = await DB.getUserBy('name', name);
         if (!user) return { ok: false, msg: '账号不存在: ' + name };
         if (user.level >= 6) return { ok: false, msg: '不能修改超级管理员' };
-        try { var r = await ipcCall('POST', '/api/set_admin', { uid: user.id, level: level }); return { ok: r.success || false, msg: r.message || r.error }; }
+        // 账号等级以 web 自己的库为准（各服共用 users 表），不依赖某一个游戏服在线；
+        // 再逐服通知在线角色刷新内存里的权限（离线的服跳过，下次登录读库即生效）。
+        try { await DB.updateUserLevel(user.id, level); }
         catch (e) { return { ok: false, msg: '设置失败: ' + e.message }; }
+        var synced = [];
+        await Promise.all(Object.keys(IPC_PORT_MAP).map(function (s) {
+            return ipcCall('POST', '/api/set_admin', { uid: user.id, level: level }, Number(s))
+                .then(function (r) { if (r && r.success) synced.push(s); }).catch(function () {});
+        }));
+        return { ok: true, msg: '账号 ' + name + ' 权限已更新为 Lv.' + level + (synced.length ? '（已同步在线服务器 ' + synced.join(',') + '）' : '（游戏服务器离线，登录时生效）') };
     }
 
     // POST /api/admin/shutdown
@@ -308,44 +317,44 @@ class AdminAPI extends APIBASE {
                 is_multi: !!params.is_multi,
                 rooms: params.rooms || [],
                 drops: params.drops || [],
-            });
+            }, this._sid(params || {}));
             return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, fb_index: r.fb_index, areaFile: r.areaFile };
         } catch (e) { return { ok: false, msg: '创建失败: ' + e.message }; }
     }
 
     // [deprecated] kept for backward compat
-    async repair_check() {
+    async repair_check(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/repair_check'); return { ok: true, data: r.data || [] }; }
+        try { var r = await ipcCall('GET', '/api/repair_check', null, this._sid(params || {})); return { ok: true, data: r.data || [] }; }
         catch (e) { return { ok: false, msg: '检查失败: ' + e.message, data: [] }; }
     }
-    async repair_fix() {
+    async repair_fix(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('POST', '/api/repair_fix'); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, fixed: r.fixed }; }
+        try { var r = await ipcCall('POST', '/api/repair_fix', null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, fixed: r.fixed }; }
         catch (e) { return { ok: false, msg: '修复失败: ' + e.message }; }
     }
 
-    async room_list() {
+    async room_list(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/room_list'); return { ok: true, data: r.data || [] }; }
+        try { var r = await ipcCall('GET', '/api/room_list', null, this._sid(params || {})); return { ok: true, data: r.data || [] }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: [] }; }
     }
 
     // Map management
-    async map_list() {
+    async map_list(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/map_list'); return { ok: true, data: r.data || [] }; }
+        try { var r = await ipcCall('GET', '/api/map_list', null, this._sid(params || {})); return { ok: true, data: r.data || [] }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: [] }; }
     }
     async map_detail(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/map_detail?type=' + (params.type||'public') + '&id=' + encodeURIComponent(params.id)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        try { var r = await ipcCall('GET', '/api/map_detail?type=' + (params.type||'public') + '&id=' + encodeURIComponent(params.id), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
     }
     async map_delete(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.id) return { ok: false, msg: 'id必填' };
-        try { var r = await ipcCall('POST', '/api/map_delete', { type: params.type || 'public', id: params.id }); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        try { var r = await ipcCall('POST', '/api/map_delete', { type: params.type || 'public', id: params.id }, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
         catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
     }
 
@@ -358,7 +367,7 @@ class AdminAPI extends APIBASE {
     async items_search(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         var q = params.q || '';
-        try { var r = await ipcCall('GET', '/api/items_search?q=' + encodeURIComponent(q)); return { ok: true, data: Array.isArray(r) ? r : [] }; }
+        try { var r = await ipcCall('GET', '/api/items_search?q=' + encodeURIComponent(q), null, this._sid(params || {})); return { ok: true, data: Array.isArray(r) ? r : [] }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: [] }; }
     }
 
@@ -374,7 +383,7 @@ class AdminAPI extends APIBASE {
     async npc_detail(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('GET', '/api/npc_detail?path=' + encodeURIComponent(params.path)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        try { var r = await ipcCall('GET', '/api/npc_detail?path=' + encodeURIComponent(params.path), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
     }
 
@@ -382,7 +391,7 @@ class AdminAPI extends APIBASE {
     async npc_editdata(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('GET', '/api/npc_editdata?path=' + encodeURIComponent(params.path)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        try { var r = await ipcCall('GET', '/api/npc_editdata?path=' + encodeURIComponent(params.path), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
     }
 
@@ -390,43 +399,43 @@ class AdminAPI extends APIBASE {
     async npc_delete(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('POST', '/api/npc_delete', params); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        try { var r = await ipcCall('POST', '/api/npc_delete', params, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
         catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
     }
 
     // POST /api/admin/npc_create
     async npc_create(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('POST', '/api/npc_create', params); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, path: r.path }; }
+        try { var r = await ipcCall('POST', '/api/npc_create', params, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, path: r.path }; }
         catch (e) { return { ok: false, msg: '创建失败: ' + e.message }; }
     }
 
     // === Equipment Management ===
     // GET /api/admin/equipments
-    async equipments() {
+    async equipments(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/equipments'); return { ok: true, data: r.data || [] }; }
+        try { var r = await ipcCall('GET', '/api/equipments', null, this._sid(params || {})); return { ok: true, data: r.data || [] }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: [] }; }
     }
     // GET /api/admin/equipment_detail
     async equipment_detail(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('GET', '/api/equipment_detail?path=' + encodeURIComponent(params.path)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        try { var r = await ipcCall('GET', '/api/equipment_detail?path=' + encodeURIComponent(params.path), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message }; }
     }
     // POST /api/admin/equipment_save
     async equipment_save(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('POST', '/api/equipment_save', params); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, path: r.path }; }
+        try { var r = await ipcCall('POST', '/api/equipment_save', params, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message, path: r.path }; }
         catch (e) { return { ok: false, msg: '保存失败: ' + e.message }; }
     }
     // POST /api/admin/equipment_delete
     async equipment_delete(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('POST', '/api/equipment_delete', params); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        try { var r = await ipcCall('POST', '/api/equipment_delete', params, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
         catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
     }
 
@@ -440,22 +449,25 @@ class AdminAPI extends APIBASE {
         catch (e) { return { ok: false, msg: '执行失败: ' + e.message }; }
     }
     
-    async backup_list() {
+    async backup_list(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { var r = await ipcCall('GET', '/api/backups'); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        var sid = this._sid(params || {});
+        try { var r = await ipcCall('GET', '/api/backups', null, sid); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '获取备份列表失败: ' + e.message }; }
     }
     async backup_rollback(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.filename) return { ok: false, msg: 'filename必填' };
-        try { var r = await ipcCall('POST', '/api/backup_rollback', { filename: params.filename }); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
+        var sid = this._sid(params);
+        try { var r = await ipcCall('POST', '/api/backup_rollback', { filename: params.filename }, sid); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message }; }
         catch (e) { return { ok: false, msg: '回滚失败: ' + e.message }; }
     }
-    async safe_shutdown() {
+    // 安全关服：只关所选游戏服（游戏服自己走存档+退出流程），不退出 web 进程本身。
+    async safe_shutdown(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
-        try { await ipcCall('POST', '/api/shutdown'); } catch(e) {}
-        setTimeout(function () { process.exit(0); }, 1500);
-        return { ok: true, msg: '安全关服已启动' };
+        var sid = this._sid(params || {});
+        try { var r = await ipcCall('POST', '/api/shutdown', {}, sid); return { ok: true, msg: (r && r.message) || '安全关服已启动' }; }
+        catch (e) { return { ok: false, msg: '关服失败: ' + e.message }; }
     }
 
     // ===== File Manager =====
@@ -463,14 +475,14 @@ class AdminAPI extends APIBASE {
     async file_list(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         var dir = params.dir || '';
-        try { var r = await ipcCall('GET', '/api/file_list?dir=' + encodeURIComponent(dir)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data, dir: r.dir }; }
+        try { var r = await ipcCall('GET', '/api/file_list?dir=' + encodeURIComponent(dir), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data, dir: r.dir }; }
         catch (e) { return { ok: false, msg: '查询失败: ' + e.message, data: [] }; }
     }
     // GET /api/admin/file_read?path=xxx
     async file_read(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('GET', '/api/file_read?path=' + encodeURIComponent(params.path)); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
+        try { var r = await ipcCall('GET', '/api/file_read?path=' + encodeURIComponent(params.path), null, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, data: r.data }; }
         catch (e) { return { ok: false, msg: '读取失败: ' + e.message }; }
     }
     // POST /api/admin/file_save
@@ -478,14 +490,14 @@ class AdminAPI extends APIBASE {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
         if (params.content === undefined) return { ok: false, msg: 'content必填' };
-        try { var r = await ipcCall('POST', '/api/file_save', { path: params.path, content: params.content }); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message || '保存成功' }; }
+        try { var r = await ipcCall('POST', '/api/file_save', { path: params.path, content: params.content }, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message || '保存成功' }; }
         catch (e) { return { ok: false, msg: '保存失败: ' + e.message }; }
     }
     // POST /api/admin/file_delete
     async file_delete(params) {
         try { this._requireAdmin(); } catch (e) { return { ok: false, msg: e.message }; }
         if (!params.path) return { ok: false, msg: 'path必填' };
-        try { var r = await ipcCall('POST', '/api/file_delete', { path: params.path }); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message || '删除成功' }; }
+        try { var r = await ipcCall('POST', '/api/file_delete', { path: params.path }, this._sid(params || {})); return r.error ? { ok: false, msg: r.error } : { ok: true, msg: r.message || '删除成功' }; }
         catch (e) { return { ok: false, msg: '删除失败: ' + e.message }; }
     }
 

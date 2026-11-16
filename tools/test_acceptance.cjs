@@ -170,7 +170,7 @@ async function run() {
   ticks.length = 0; world.USERS = [{ heart_beat() { ticks.push('first'); world.USERS.shift(); } }, { heart_beat() { ticks.push('second'); } }]; world.RUN_ROOMS = [];
   world.heart_beat();
   result('OS01-heartbeat-removal', 'Self-removal does not skip following actor', ticks, ticks.includes('second'));
-  const shutdown = "let shutdownPromise = null;" + part('main.js', 'async function gracefulShutdown(signal)', "process.on('SIGINT'");
+  const shutdown = "let shutdownPromise = null;" + part('main.js', 'async function gracefulShutdown(signal', "process.on('SIGINT'");
   const logs = [], sc = { WORLD: { save: async () => false }, console: { log: (...a) => logs.push(a.join(' ')), error: (...a) => logs.push(a.join(' ')) }, process: { exit(code) { this.exitCode = code; } } };
   vm.runInNewContext(shutdown, sc); await sc.gracefulShutdown('OFFLINE');
   result('R08-shutdown-failed-save', 'Do not report failed save as clean exit', { exitCode: sc.process.exitCode, logs }, sc.process.exitCode !== 0);
