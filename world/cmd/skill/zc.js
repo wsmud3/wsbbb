@@ -253,7 +253,7 @@ function zc_btn_html(cmd, label) {
     };
     var onclick = 'window.SendCommand(' + amp + 'apos;' + escHtml(escJs(cmdText)) + amp + 'apos;)';
     var style = 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
-        + 'padding:0.25em 0.6em;margin:2px;cursor:pointer;display:inline-block;';
+        + 'padding:0.25em 1em;margin:0.25em 0.625em 0.25em 0;min-width:2.5em;text-align:center;cursor:pointer;display:inline-block;';
     return '<span cmd=' + dq + escHtml(cmdText) + dq + ' onclick=' + dq + onclick + dq
         + ' style=' + dq + style + dq + '>' + label + '</span>';
 }
@@ -520,7 +520,7 @@ this.handle_name_input = function (me, input, book_id) {
     for (var sk_id in WORLD.SKILLS) {
         if (WORLD.SKILLS[sk_id].name === name) {
 
-            me.notify("已有同名武功'" + name + "'存在，请换一个名字：");
+            me.notify("已有同名武功「" + name + "」，请换一个名字：");
             return false;
         }
     }
@@ -790,7 +790,7 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
     for (var j = 0; j < wdef.positions.length; j++) {
         if (pos_keys.indexOf(wdef.positions[j]) >= 0) { supported = true; break; }
     }
-    if (!supported) return me.notify("词条'" + wdef.name + "'不支持该部位。");
+    if (!supported) return me.notify("词条「" + wdef.name + "」不能用在这个部位。");
 
     // Check duplicates
     var existing = book.zc_words[position_key] || [];
@@ -940,7 +940,7 @@ this.cmd_confirm = function (me, book_id, arg2) {
     var seenWords = {};
     for (var i = 0; i < wordIndices.length; i++) {
         var widx = wordIndices[i];
-        if (isNaN(widx) || widx < 500) return me.notify("无效词条index: " + widx);
+        if (isNaN(widx) || widx < 500) return me.notify("没有这个词条。");
         if (seenWords[widx]) return me.notify("词条" + widx + "重复选择，每个词条只能选一次。");
         seenWords[widx] = true;
         var wdef = book.get_word_def(widx);
@@ -951,7 +951,7 @@ this.cmd_confirm = function (me, book_id, arg2) {
         for (var j = 0; j < wdef.positions.length; j++) {
             if (pos_keys.indexOf(wdef.positions[j]) >= 0) { supported = true; break; }
         }
-        if (!supported) return me.notify("词条'" + wdef.name + "'不支持该部位。");
+        if (!supported) return me.notify("词条「" + wdef.name + "」不能用在这个部位。");
     }
 
     if (wordIndices.length === 0 || wordIndices.length > 6)
@@ -1434,7 +1434,7 @@ this.cmd_wordselect = function (me, book_id, position_key) {
 
     me.notify("<hiy>══ 词条推演 · " + book.color_name + "</hiy> · " + pos.label + " (" + existing.length + "/6) ══");
 
-    me.notify("武道书: " + wudaoCount + "本 | 每添加1个词条消耗1本武道书");
+    me.notify("武道书：" + wudaoCount + "本，每添加一个词条耗一本。");
 
     // 部位切换
     if (book.zc_positions.length > 1) {
@@ -1486,7 +1486,7 @@ this.cmd_wordselect = function (me, book_id, position_key) {
         }
         if (cArgs.length > 0) { cArgs.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, cArgs); }
     }
-    if (!hasAny) me.notify("(没有更多可选词条)");
+    if (!hasAny) me.notify("（没有更多可选的词条了）");
 
     me.send_commands("zc posmenu " + book.id + " " + position_key, "返回部位管理", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
 };
@@ -1559,8 +1559,8 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
 
     var wudaoCount = query_wudao_count(me);
     var head = extraFeedback
-        ? String(extraFeedback) + "\n<hiy>════ 词条管理 · " + skill.name + " · " + posLabel + " ════</hiy>\n武道书: " + wudaoCount + "本"
-        : "<hiy>════ 词条管理 · " + skill.name + " · " + posLabel + " ════</hiy>\n武道书: " + wudaoCount + "本";
+        ? String(extraFeedback) + "\n<hiy>词条管理 · " + skill.name + " · " + posLabel + "</hiy>\n武道书：" + wudaoCount + "本"
+        : "<hiy>词条管理 · " + skill.name + " · " + posLabel + "</hiy>\n武道书：" + wudaoCount + "本";
 
     // 整块菜单一次成型（持久浮窗每次收报文都会替换窗口，分多条发只剩最后一条）
     var html = "";
@@ -1604,7 +1604,7 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
                 max_affordable = test_lv;
             }
 
-            var text = wdef.name + " <HIG>(Lv." + wl + ")</HIG> <HIG>" + valStr + "</HIG>" + extra;
+            var text = wdef.name + " <HIG>" + wl + "级</HIG>　<HIG>" + valStr + "</HIG>" + extra;
             var btns = [];
             btns.push(zc_btn_html("_confirm lvlset " + skill_id + " " + book.id + " " + widx + " " + wl + " " + max_affordable, "升级"));
             btns.push(zc_btn_html("zc replaceword " + book.id + " " + filter_pos + " " + widx, "替换"));
@@ -1637,7 +1637,7 @@ this.cmd_levelset = function (me, skill_id, arg2) {
 	        word_index = parseInt(parts[1]);
 	    }
 	    if (!book_id || isNaN(word_index) || word_index < 500)
-	        return me.notify("用法: zc levelset <技能ID> <秘籍ID> [部位] <词条index>");
+	        return me.notify("你要调整哪个词条的等级？");
 	
 	    var book = find_book(me, book_id);
 	    if (!book || book.path.indexOf("zc/blank_book") < 0)
@@ -1728,7 +1728,7 @@ this.cmd_lvlask = function (me, target_str, rest) {
     var cur_level = get_wl(book.zc_word_levels, word_index, position_key);
 
     if (target === cur_level) {
-        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), wdef.name + " 已是 Lv." + cur_level + "，无需调整。");
+        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), wdef.name + "已是" + cur_level + "级，无需调整。");
         return;
     }
 
@@ -1749,7 +1749,7 @@ this.cmd_lvlask = function (me, target_str, rest) {
 
         if (me.pot < total_cost) {
             me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
-                { persistent: true, size: "lg", feedback: "潜能不足：升级到 Lv." + target + " 需要 " + potStr(total_cost) + "，当前 " + potStr(me.pot) + "。" });
+                { persistent: true, size: "lg", feedback: "潜能不足：升到" + target + "级需要" + potStr(total_cost) + "潜能，你现有" + potStr(me.pot) + "。" });
             return;
         }
 
@@ -1760,7 +1760,7 @@ this.cmd_lvlask = function (me, target_str, rest) {
 
         me.send_commands(lvlCmd, "确认升级", "zc lvlno", "取消",
             { persistent: true, size: "lg",
-              feedback: "将词条「" + wdef.name + "」从 Lv." + cur_level + " 升级到 Lv." + target + "，消耗 " + potStr(total_cost) + " 潜能" });
+              feedback: "将词条「" + wdef.name + "」从" + cur_level + "级升到" + target + "级，消耗" + potStr(total_cost) + "潜能" });
     } else {
         // 降级
         if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
@@ -1777,7 +1777,7 @@ this.cmd_lvlask = function (me, target_str, rest) {
 
         me.send_commands(lvlCmd, "确认降级", "zc lvlno", "取消",
             { persistent: true, size: "lg",
-              feedback: "将词条「" + wdef.name + "」从 Lv." + cur_level + " 降级到 Lv." + target + "，返还 " + potStr(refund) + " 潜能" });
+              feedback: "将词条「" + wdef.name + "」从" + cur_level + "级降到" + target + "级，返还" + potStr(refund) + "潜能" });
     }
 };
 
@@ -1801,7 +1801,7 @@ this.cmd_lvl = function (me, target_str, rest) {
     // 兼容手动输入: zc lvl <target> (fallback to temp)
     var target = Number(target_str);
     if (!Number.isSafeInteger(target) || target < 0)
-        return me.notify("请输入有效的目标等级: zc lvl <等级>");
+        return me.notify("你要升到几级？");
 
 	    var restParts = (rest || "").split(" ");
 	    var skill_id = restParts[0] || me.query_temp("zc_lvl_skill");
@@ -1855,7 +1855,7 @@ this.cmd_lvl = function (me, target_str, rest) {
     var cur_level = get_wl(book.zc_word_levels, word_index, position_key);
 
     if (target === cur_level) {
-        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), wdef.name + " 已是 Lv." + cur_level + "，无需调整。");
+        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), wdef.name + "已是" + cur_level + "级，无需调整。");
         return;
     }
 
@@ -1871,7 +1871,7 @@ this.cmd_lvl = function (me, target_str, rest) {
             return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "目标等级或升级费用过大，请分段调整。");
 
         if (me.pot < total_cost)
-            return me.notify("潜能不足！升级到(Lv." + target + ")需要" + potStr(total_cost) + "潜能，当前" + potStr(me.pot) + "点潜能。");
+            return me.notify("潜能不足：升到" + target + "级需要" + potStr(total_cost) + "潜能，你现有" + potStr(me.pot) + "。");
 
         var sk_data = me.skills[skill_id];
         var oldPot = me.pot, oldBookLevels = JSON.stringify(book.zc_word_levels || {}),
@@ -1903,7 +1903,7 @@ this.cmd_lvl = function (me, target_str, rest) {
         }
 
         me.items_changed(book);
-        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "词条「" + wdef.name + "」升级到 Lv." + target + "，消耗 " + potStr(total_cost) + " 潜能。");
+        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "词条「" + wdef.name + "」已升到" + target + "级，消耗" + potStr(total_cost) + "潜能。");
     } else {
         // 降级
         if (target < 0) return me.send_commands(lvlAskBackCmd(skill_id, book_id, (restParts[2] && isNaN(parseInt(restParts[2]))) ? restParts[2] : null), "返回词条",
@@ -1944,7 +1944,7 @@ this.cmd_lvl = function (me, target_str, rest) {
         }
 
         me.items_changed(book);
-        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "词条「" + wdef.name + "」降级到 Lv." + target + "，返还 " + potStr(refund) + " 潜能。");
+        return self.cmd_words(me, skill_id, book_id + (position_key ? " " + position_key : ""), "词条「" + wdef.name + "」已降到" + target + "级，返还" + potStr(refund) + "潜能。");
     }
 
     notify_skill_update(me, skill_id);
@@ -1978,7 +1978,7 @@ this.cmd_wordadd = function (me, book_id, arg2) {
     for (var j = 0; j < wdef.positions.length; j++) {
         if (pos_keys.indexOf(wdef.positions[j]) >= 0) { supported = true; break; }
     }
-    if (!supported) return me.notify("词条'" + wdef.name + "'不支持该部位。");
+    if (!supported) return me.notify("词条「" + wdef.name + "」不能用在这个部位。");
 
     // Check duplicates
     var existing = book.zc_words[position_key] || [];
@@ -2070,7 +2070,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
         return me.notify("你身上没有自创秘籍。");
 
     if (!position_key || isNaN(old_word_index))
-        return me.notify("用法: zc replaceword <秘籍ID> <部位> <旧词条index> [新词条index]");
+        return me.notify("你要替换哪个词条？");
 
     if (!book.has_position(position_key))
         return me.notify("该部位尚未推演。");
@@ -2106,7 +2106,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
 
         // 内功部位特殊词条也可选
 
-        me.notify("<hiy>替换词条 '" + (old_wdef ? old_wdef.name : "#" + old_word_index) + "' — 选择新词条：</hiy>");
+        me.notify("<hiy>替换词条「" + (old_wdef ? old_wdef.name : "旧词条") + "」，选择新词条：</hiy>");
         var rByCat = {};
         for (var ri = 0; ri < candidates.length; ri++) {
             var rc = candidates[ri];
@@ -2142,7 +2142,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
     // 确认步骤
     if (!confirmed) {
 
-        me.notify("<hiy>确认用 '" + new_wdef.name + "' 替换 '" + (old_wdef ? old_wdef.name : "#" + old_word_index) + "'？（原等级 <HIG>(Lv." + get_wl(book.zc_word_levels, old_word_index, position_key) + ")</HIG> 将转移给新词条）</hiy>");
+        me.notify("<hiy>确认用「" + new_wdef.name + "」替换「" + (old_wdef ? old_wdef.name : "旧词条") + "」？原有的<HIG>" + get_wl(book.zc_word_levels, old_word_index, position_key) + "级</HIG>会转给新词条。</hiy>");
         me.send_commands("zc replaceword " + book.id + " " + position_key + " " + old_word_index + " " + new_word_index + " ok", "确认替换", { persistent: true, size: "lg" });
         me.send_commands("zc words " + book.zc_skill_id + " " + book.id + " " + position_key, "取消", { persistent: true, size: "lg" });
         return;
@@ -2154,7 +2154,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
     for (var j = 0; j < new_wdef.positions.length; j++) {
         if (pos_keys.indexOf(new_wdef.positions[j]) >= 0) { supported = true; break; }
     }
-    if (!supported) return me.notify("词条'" + new_wdef.name + "'不支持该部位。");
+    if (!supported) return me.notify("词条「" + new_wdef.name + "」不能用在这个部位。");
 
     // 同一部位不能重复选择同一词条
     if (existing.indexOf(new_word_index) >= 0 && existing.indexOf(new_word_index) !== old_idx_in_pos)
@@ -2180,13 +2180,13 @@ this.cmd_replaceword = function (me, book_id, arg2) {
 
     // 内功部位首词条限制
     if (position_key === "内功" && (old_idx_in_pos === 0 || old_word_index === 506) && new_word_index !== 506)
-        return me.notify("内功部位第一个词条必须为'内力上限'(index 506)，不可替换。");
+        return me.notify("内功部位的第一个词条须为「内力上限」，不能替换。");
 
     // 保留旧词条等级给新词条（同等级转移）
     var old_level = get_wl(book.zc_word_levels, old_word_index, position_key);
     // 剑心额外攻击次数上限 9 次：等级平移同样受此上限约束（与 levelset / lvl 一致）
     if (new_word_index === 541 && (1 + Math.floor(old_level / 30)) > 9)
-        return me.notify("剑心额外攻击次数最多9次，原词条等级(Lv." + old_level + ")过高，无法直接替换为剑心。请先降低原词条等级。");
+        return me.notify("剑心最多额外攻击9次，原词条已有" + old_level + "级，等级过高，不能直接换成剑心。请先把原词条降级。");
     del_wl(book.zc_word_levels, old_word_index, position_key);
 
     // 替换
@@ -2236,7 +2236,7 @@ this.cmd_replaceword = function (me, book_id, arg2) {
 
     me.items_changed(book);
 
-    me.notify("词条已替换：" + (old_wdef ? old_wdef.name : "#" + old_word_index) + " → " + new_wdef.name + " <HIG>(Lv." + old_level + ")</HIG>。");
+    me.notify("词条已替换：" + (old_wdef ? old_wdef.name : "旧词条") + " → " + new_wdef.name + "，<HIG>" + old_level + "级</HIG>。");
     notify_skill_update(me, skill_id);
     return self.cmd_words(me, skill_id, book_id + " " + position_key);
 };
@@ -2248,7 +2248,7 @@ this.cmd_pfms = function (me, book_id) {
         return me.notify("你身上没有自创秘籍。");
 
     var total = book.get_total_pfms();
-    var head = "<hiy>════ 管理技能 · " + (book.zc_name || book.name) + " ════</hiy>";
+    var head = "<hiy>管理技能 · " + (book.zc_name || book.name) + "</hiy>";
 
     if (total === 0) {
         zc_send(me, '<div class="zc-row"><hic>（暂无 PFM）</hic></div>' + '<div class="zc-tabs">'
@@ -2296,7 +2296,7 @@ this.cmd_removepfm = function (me, book_id, arg2) {
         return me.notify("你身上没有自创秘籍。");
 
     if (!position_key || isNaN(pfm_index))
-        return me.notify("用法: zc removepfm <秘籍ID> <部位> <PFM序号>");
+        return me.notify("你要移除哪个PFM？");
 
     var pfms = book.zc_pfms[position_key] || [];
     if (pfm_index < 0 || pfm_index >= pfms.length)
@@ -2344,7 +2344,7 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
         return me.notify("你身上没有自创秘籍。");
 
     if (!position_key || isNaN(pfm_index))
-        return me.notify("用法: zc replacepfm <秘籍ID> <部位> <PFM序号> [技能.pfm]");
+        return me.notify("你要替换哪个PFM？");
 
     var pfms = book.zc_pfms[position_key] || [];
     if (pfm_index < 0 || pfm_index >= pfms.length)
@@ -2379,7 +2379,7 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
         }
 
 
-        me.notify("<hiy>替换PFM '" + old_name + "' — 选择新PFM：</hiy>");
+        me.notify("<hiy>替换PFM「" + old_name + "」，选择新PFM：</hiy>");
         var args = [];
         for (var ci = 0; ci < candidates.length; ci++) {
             var c = candidates[ci];
@@ -2409,7 +2409,7 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
     // 确认
     if (!confirmed) {
 
-        me.notify("<hiy>确认用 '" + new_name + "'（" + new_src.name + "）替换 '" + old_name + "'？</hiy>");
+        me.notify("<hiy>确认用「" + new_name + "」（" + new_src.name + "）替换「" + old_name + "」？</hiy>");
         me.send_commands("zc replacepfm " + book.id + " " + position_key + " " + pfm_index + " " + new_skill_id + "." + new_pfm_key + " ok", "确认替换", { persistent: true, size: "lg" });
         me.send_commands("zc pfms " + book.id, "取消", { persistent: true, size: "lg" });
         return;
@@ -2733,8 +2733,8 @@ this.cmd_skill_info = function (me, skill_id) {
     if (!sk_data) return me.notify("你还没有学会这个技能。");
 
     var lines = [];
-    lines.push("<hiy>" + skill.name + "</hiy> (Grade " + (skill.grade || 0) + ")");
-    lines.push("词条:");
+    lines.push(skill.color_name || ("<hiy>" + skill.name + "</hiy>"));
+    lines.push("<hic>词条</hic>");
 
     var addin = sk_data.addin || [];
     var word_levels = sk_data.word_levels || {};
@@ -2745,7 +2745,7 @@ this.cmd_skill_info = function (me, skill_id) {
             var pwords = skill.zc_words_by_position ? (skill.zc_words_by_position[pk] || []) : [];
             if (pwords.length === 0) continue;
             var posLabel = (ZC_POSITIONS[pk] && ZC_POSITIONS[pk].label) || pk;
-            lines.push(" <hic>" + posLabel + "：</hic>");
+            lines.push(posLabel + "：");
             for (var wi = 0; wi < pwords.length; wi++) {
                 var widx = pwords[wi];
                 var wdef = skill.slots ? skill.slots[widx - 500] : null;
@@ -2756,7 +2756,7 @@ this.cmd_skill_info = function (me, skill_id) {
                     if (skill.mp_to_hp && widx === 506) {
                         extra = "（转血量" + (29 + wl) + "%）";
                     }
-                    lines.push("   [" + widx + "] " + wdef.name + " <HIG>(Lv." + wl + ")</HIG>" + extra + " (升级需" + potStr(next_cost) + "潜能)");
+                    lines.push("　" + wdef.name + " <HIG>" + wl + "级</HIG>" + extra + "<hik>（再升一级需" + potStr(next_cost) + "潜能）</hik>");
                 }
             }
         }
@@ -2768,12 +2768,12 @@ this.cmd_skill_info = function (me, skill_id) {
             var wl2 = get_wl(word_levels, widx2, get_slot_position(skill.slot_to_position, widx2));
             if (wdef2) {
                 var next_cost2 = wdef2.upgrade_cost(wl2 + 1);
-                lines.push("  [" + widx2 + "] " + wdef2.name + " <HIG>(Lv." + wl2 + ")</HIG> (升级需" + potStr(next_cost2) + "潜能)");
+                lines.push("　" + wdef2.name + " <HIG>" + wl2 + "级</HIG><hik>（再升一级需" + potStr(next_cost2) + "潜能）</hik>");
             } else {
-                lines.push("  [" + widx2 + "] Lv." + wl2);
+                lines.push("　未知词条 " + wl2 + "级");
             }
         }
-        if (addin.length === 0) lines.push("  (无)");
+        if (addin.length === 0) lines.push("　（无）");
     }
 
     // PFM info
@@ -2783,13 +2783,13 @@ this.cmd_skill_info = function (me, skill_id) {
             if (skill.pfm[pk] && skill.pfm[pk].name) pfmCount++;
         }
         if (pfmCount > 0) {
-            lines.push("绝招:");
+            lines.push("<hic>PFM</hic>");
             for (var pk2 in skill.pfm) {
                 var p_item = skill.pfm[pk2];
                 if (!p_item || !p_item.name) continue;
                 var srcName = p_item.source_skill ? "（源自" + (SKILL.get(p_item.source_skill) ? SKILL.get(p_item.source_skill).name : p_item.source_skill) + "）" : "";
-                lines.push("  【" + p_item.name + "】" + srcName);
-                if (p_item.desc) lines.push("    " + p_item.desc);
+                lines.push("　【" + p_item.name + "】<hik>" + srcName + "</hik>");
+                if (p_item.desc) lines.push("　　" + p_item.desc);
             }
         }
     }

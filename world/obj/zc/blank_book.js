@@ -555,7 +555,7 @@ function _zc_btn(cmd, label) {
     };
     var onclick = 'window.SendCommand(' + amp + 'apos;' + escHtml(escJs(cmdText)) + amp + 'apos;)';
     var style = 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
-        + 'padding:0.25em 1em;margin:2px;cursor:pointer;display:inline-block;';
+        + 'padding:0.25em 1em;margin:0.25em 0.625em 0.25em 0;min-width:2.5em;text-align:center;cursor:pointer;display:inline-block;';
     return '<span cmd=' + dq + escHtml(cmdText) + dq + ' onclick=' + dq + onclick + dq
         + ' style=' + dq + style + dq + '>' + label + '</span>';
 }
