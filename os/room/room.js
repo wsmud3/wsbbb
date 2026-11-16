@@ -320,6 +320,8 @@ ROOM.prototype.to_json = function () {
     // 全局功能按钮（动作栏内）
     obj.commands.push({ cmd: "cangku", name: "仓库" });
     obj.commands.push({ cmd: "killauto", name: "自动攻击" });
+    // 自动出招面板原先只能靠手敲 killauto config，而输入框只发频道消息，玩家实际上打不开
+    obj.commands.push({ cmd: "killauto config", name: "出招配置" });
     if (this.zhenyi_trial_room) {
         obj.commands.push({ cmd: "zhenyi trial_complete", name: "完成副本" });
     } else if (this.is_copy_room && !this.parent.not_fb) {

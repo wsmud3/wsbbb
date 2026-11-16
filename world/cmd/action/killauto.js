@@ -34,7 +34,7 @@
 	        me.notify("自动攻击已关闭。");
 	    } else {
 	        me.auto_pfm = true;
-	        me.notify("<hig>自动攻击已开启，将在战斗中自动释放绝招。</hig>");
+	        me.notify("<hig>自动攻击已开启，将在战斗中自动释放绝招。</hig>点动作栏的「出招配置」可选择施展哪些绝招、先后次序。");
 	        // 立即触发一次auto_attack循环
 	        if (me.is_fighting() && me.reauto_attack) {
 	            me.reauto_attack();
