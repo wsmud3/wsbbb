@@ -268,7 +268,7 @@ export default {
         this.list_elem.removeClass('hide');
         this.edit_elem.addClass('hide');
         if (!this.footer_buttons) {//<button ecmd="add">添加新的扩展</button>
-            this.footer_buttons = $('<div class="obj-money"><span for="import" class="footer-item">导入</span><span for="export" class="footer-item">导出</span><span for="add" class="footer-item">添加扩展</span></div>');
+            this.footer_buttons = $('<div class="obj-money"><span for="import" class="footer-item footer-action">导入</span><span for="export" class="footer-item footer-action">导出</span><span for="add" class="footer-item footer-action">添加扩展</span></div>');
         }
         Dialog.footerElement.append(this.footer_buttons);
     },

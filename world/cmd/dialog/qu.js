@@ -2,7 +2,8 @@
 this.command = "qu";
 this.regex = /^(?:(\d+\s+))?(\w+)$/;
 this.enter = function (me, count, arg) {
-    if (!me.environment.allow_store) return me.notify("这里没有仓库。");
+    // 钱庄、家里等有仓库的房间可直接取；别处须先从动作栏「仓库」打开随身仓库（cangku 打的标记）
+    if (!me.environment.allow_store && !me.query_temp("cangku_open")) return me.notify("这里没有仓库。");
 
     if (!arg) return me.notify("你要取什么东西？");
 

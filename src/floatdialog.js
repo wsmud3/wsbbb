@@ -289,6 +289,15 @@ Dialog.injectStyle(float_css + `
     }
     .float-dialog .fb-actions { padding: 0.4em; }
     .float-dialog .fb-actions > .fb-action { padding-left: 0.5em; }
+    /* 手机上浮窗满宽，再不限高就会把主消息栏整块盖住：最多占半屏，多出的内容在浮窗里滚动 */
+    .float-dialog {
+        max-height: 45vh;
+        max-height: 45dvh;
+    }
+    .float-dialog-unified {
+        max-height: 45vh;
+        max-height: 45dvh;
+    }
 }
 `);
 
@@ -425,6 +434,10 @@ const FloatDialog = {
         if (FloatDialog.savedLeft !== null && FloatDialog.savedTop !== null) {
             el.style.left = clampLeft(FloatDialog.savedLeft) + 'px';
             el.style.top = clampTop(FloatDialog.savedTop) + 'px';
+        } else if (ww <= 480) {
+            // 手机：默认贴顶，主消息栏最新的内容在下方，不被挡住
+            el.style.left = clampLeft(vp.left + (ww - ew) / 2) + 'px';
+            el.style.top = clampTop(vp.top + 4) + 'px';
         } else {
             el.style.left = clampLeft(vp.left + (ww - ew) / 2) + 'px';
             el.style.top = clampTop(vp.top + (wh - eh) / 2 - 40) + 'px';

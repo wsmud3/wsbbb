@@ -208,6 +208,12 @@ const Dialog = {
     },
     footerClick: function () {
         var elem = $(this);
+        // 一次性动作按钮（导入/导出/添加扩展等）不是页签：不记选中态，每次点都要生效。
+        // 原来点过一次就带上 .select，再点会被下面的判断吞掉，表现为「按钮没反应」。
+        if (elem.is(".footer-action")) {
+            Dialog[Dialog.curItem].footerChanged(elem.attr("for"), elem);
+            return;
+        }
         if (elem.is(".select")) return;
         var cmd = elem.attr("for");
         elem.parent().find(".footer-item.select").removeClass("select");
