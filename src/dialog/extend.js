@@ -297,7 +297,7 @@ export default {
                     try {
                         const jsonObj = JSON.parse(event.target.result);
                         if (!jsonObj || !Array.isArray(jsonObj.items)) {
-                            return ReceiveMessage('<red>扩展文件格式错误：缺少 items 数组。</red>');
+                            return ReceiveMessage('<red>这不是有效的扩展文件，没有找到扩展列表。</red>');
                         }
                         Dialog.extend.setting = jsonObj.items;
                         Dialog.extend.refresh_list();
@@ -345,7 +345,7 @@ export default {
             }
         } catch (error) {
             console.error("保存JSON文件失败：", error);
-            alert("文件保存失败，请重试！");
+            ReceiveMessage("<red>扩展没能导出成文件，请再试一次。</red>");
         }
     },
     hide: function () {

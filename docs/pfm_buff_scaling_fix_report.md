@@ -25,7 +25,7 @@
 
 | 文件 | 技能 | buff/debuff | 修改内容 |
 |---|---|---|---|
-| [hengshenshenfa.js](../world/skill/dodge/hengshenshenfa.js) | 恒山身法 | 灵虚 (增益) | duration: 11000→1000+lv×10, ds_per: 20→10+lv/100, fy_per: 20→10+lv/100 |
+| [hengshanshenfa.js](../world/skill/dodge/hengshanshenfa.js) | 恒山身法 | 灵虚 (增益) | duration: 11000→1000+lv×10, ds_per: 20→10+lv/100, fy_per: 20→10+lv/100 |
 | [shenxingbaibian.js](../world/skill/dodge/shenxingbaibian.js) | 神形百变 | 神行 (增益) | duration: 6000→lv×10, ds_per: 100→90+lv/100 |
 | [tagexing.js](../world/skill/dodge/tagexing.js) | 踏歌行 | 踏歌行 (增益) | duration: 20000→10000+lv×10 |
 | [xuanxubu.js](../world/skill/dodge/xuanxubu.js) | 玄虚步 | 幻影 (增益) | ds_per: 15→5+lv/100, diff_sh_per: 15→5+lv/100 |

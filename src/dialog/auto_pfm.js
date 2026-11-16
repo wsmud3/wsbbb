@@ -39,16 +39,13 @@ export default {
         this.element.on("click", ".apfm-reset", function () {
             self.doReset();
         });
-        this.element.on("click", ".apfm-close", function () {
-            self.doClose();
-        });
     },
     show: function (data) {
         this.isShow = true;
         this.init_element();
         this.element.empty();
         this.element.appendTo(Dialog.contentElement);
-        Dialog.title("自动出招配置");
+        Dialog.title("自动出招");
         Dialog.icon("cog");
         Dialog.footer("");
         this.render(data);
@@ -114,42 +111,36 @@ export default {
         this.skills = orderedSkills;
 
         var html = '';
-        html += '<div class="apfm-header">';
-        html += '<span style="color:#0f9;font-size:1rem">⚔ 自动出招配置</span>';
-        html += '<span style="color:#888;font-size:0.75rem;margin-left:8px">勾选=允许自动释放 | ▲▼排序 | 冷却=间隔毫秒</span>';
+        html += '<div class="apfm-hint">勾选的绝招才会自动施展；用 ▲▼ 调整先后；冷却填两次施展的间隔（毫秒），不填则按绝招本身的冷却。</div>';
+
+        // 出招模式
+        html += '<div class="apfm-mode item-commands">';
+        html += '<span class="apfm-label">出招：</span>';
+        html += '<span class="apfm-mode-btn' + (mode === "sequence" ? ' active' : '') + '" data-mode="sequence">依次施展</span>';
+        html += '<span class="apfm-mode-btn' + (mode === "random" ? ' active' : '') + '" data-mode="random">随机施展</span>';
         html += '</div>';
 
-        // Mode toggle
-        html += '<div class="apfm-mode">';
-        html += '<span>出招模式：</span>';
-        html += '<button class="apfm-mode-btn' + (mode === "sequence" ? ' active' : '') + '" data-mode="sequence">📋 顺序释放</button>';
-        html += '<button class="apfm-mode-btn' + (mode === "random" ? ' active' : '') + '" data-mode="random">🎲 随机释放</button>';
-        html += '</div>';
-
-        // Skill table
+        // 绝招列表
         html += '<div class="apfm-table">';
         if (!this.skills.length) {
-            html += '<div style="color:#888;padding:12px;text-align:center">没有可用的绝招</div>';
+            html += '<div class="empty">你还没有可用的绝招。</div>';
         } else {
             for (var i = 0; i < this.skills.length; i++) {
                 var s = this.skills[i];
                 html += '<div class="apfm-row' + (s.enabled ? '' : ' disabled') + '" data-id="' + s.id + '" data-idx="' + i + '">';
                 html += '<input type="checkbox" ' + (s.enabled ? 'checked' : '') + '>';
-                html += '<span class="apfm-name" title="' + s.id + '">' + s.name + '</span>';
-                html += '<span class="apfm-id">' + s.id + '</span>';
-                html += '<input class="apfm-cd" placeholder="冷却ms" value="' + (s.cd || '') + '">';
-                html += '<button class="apfm-btn apfm-move-up" title="上移">▲</button>';
-                html += '<button class="apfm-btn apfm-move-down" title="下移">▼</button>';
+                html += '<span class="apfm-name">' + s.name + '</span>';
+                html += '<input class="apfm-cd" type="number" min="0" placeholder="冷却" value="' + (s.cd || '') + '">';
+                html += '<span class="item-commands"><span class="apfm-move-up" title="上移">▲</span><span class="apfm-move-down" title="下移">▼</span></span>';
                 html += '</div>';
             }
         }
         html += '</div>';
 
-        // Actions
-        html += '<div class="apfm-actions">';
-        html += '<button class="apfm-save">💾 保存配置</button>';
-        html += '<button class="apfm-reset">🔄 重置</button>';
-        html += '<button class="apfm-close">❌ 关闭</button>';
+        // 操作
+        html += '<div class="item-commands apfm-actions">';
+        html += '<span class="apfm-save">保存</span>';
+        html += '<span class="apfm-reset">还原</span>';
         html += '</div>';
         html += '<div id="apfm_msg"></div>';
 
@@ -202,18 +193,14 @@ export default {
         Setting.save("auto_pfm", order.join(","));
         Setting.save("auto_pfm_config", configStr);
 
-        ReceiveMessage("<hic>自动出招配置已保存！</hic>");
-        $("#apfm_msg").html('<div style="color:#0f9;font-size:0.8rem;padding:4px">✅ 配置已保存</div>');
+        ReceiveMessage("<hic>你记下了这套出招的路数。</hic>");
+        $("#apfm_msg").html('<hig>已保存。</hig>');
     },
 
     doReset: function () {
         // Re-render with original data from server, discarding unsaved changes
         this.render({ skills: this.rawSkills, config: this.config });
-        ReceiveMessage("已重置为上次保存的配置。");
-    },
-
-    doClose: function () {
-        Dialog.hide();
+        ReceiveMessage("已还原为上次保存的出招路数。");
     },
 
     hide: function () {
@@ -227,70 +214,91 @@ export default {
 
 const auto_pfm_css = `
 .dialog-auto-pfm {
-    padding: 8px 12px;
+    padding: 0.5em;
     height: 100%;
     overflow-y: auto;
-    color: #ccc;
-    font-size: 0.85rem;
 }
-.apfm-header {
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #333;
+
+.dialog-auto-pfm>.apfm-hint {
+    color: #808080;
+    font-size: 0.85em;
+    line-height: 1.5em;
+    margin-bottom: 0.5em;
 }
-.apfm-mode {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+
+.dialog-auto-pfm>.apfm-mode>.apfm-label {
+    border: none;
+    background-color: transparent;
+    min-width: 0;
+    padding: 0.25em 0;
+    margin-right: 0.25em;
+    cursor: default;
 }
-.apfm-mode-btn {
-    padding: 5px 14px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.82rem;
-    background: #222;
-    color: #ccc;
+
+.dialog-auto-pfm>.apfm-mode>.apfm-mode-btn.active {
+    border-color: #00ff00;
+    color: #00ff00;
 }
-.apfm-mode-btn.active {
-    background: #e94560;
-    color: #fff;
-    border-color: #e94560;
-}
-.apfm-mode-btn:hover {
-    border-color: #e94560;
-}
-.apfm-table {
-    border: 1px solid #333;
-    border-radius: 4px;
-    max-height: 320px;
+
+.dialog-auto-pfm>.apfm-table {
+    max-height: 20em;
     overflow-y: auto;
-    margin-bottom: 10px;
+    margin: 0.5em 0;
 }
-.apfm-row {
+
+.dialog-auto-pfm .apfm-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 8px;
-    border-bottom: 1px solid #1a1a1a;
-    font-size: 0.8rem;
+    line-height: 2em;
+    padding-left: 0.5em;
+    margin-bottom: 0.5em;
+    background-color: #111;
+    border-left: 2px solid #00ff00;
+    border-radius: 4px;
 }
-.apfm-row:hover { background: #1a1a2e; }
-.apfm-row.disabled .apfm-name { color: #555; text-decoration: line-through; }
-.apfm-row.disabled .apfm-id { color: #444; }
-.apfm-row input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #e94560; }
-.apfm-name { flex: 0 0 auto; min-width: 80px; font-weight: bold; }
-.apfm-id { flex: 1; color: #888; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.apfm-cd { width: 72px; padding: 3px 5px; font-size: 0.72rem; background: #111; border: 1px solid #444; color: #ccc; border-radius: 3px; }
-.apfm-cd::placeholder { color: #444; }
-.apfm-btn { padding: 2px 7px; font-size: 0.7rem; background: #333; color: #ccc; border: 1px solid #555; border-radius: 3px; cursor: pointer; }
-.apfm-btn:hover { background: #e94560; color: #fff; }
-.apfm-actions { display: flex; gap: 8px; margin-top: 10px; }
-.apfm-save { padding: 7px 20px; background: #e94560; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-.apfm-save:hover { opacity: 0.85; }
-.apfm-reset { padding: 7px 14px; background: #333; color: #ccc; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-.apfm-reset:hover { border-color: #e94560; }
-.apfm-close { padding: 7px 14px; background: transparent; color: #888; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-.apfm-close:hover { color: #fff; border-color: #888; }
+
+.dialog-auto-pfm .apfm-row.disabled {
+    border-left-color: gray;
+}
+
+.dialog-auto-pfm .apfm-row.disabled>.apfm-name {
+    color: #505050;
+}
+
+.dialog-auto-pfm .apfm-row>input[type="checkbox"] {
+    width: 1em;
+    height: 1em;
+    margin: 0 0.5em 0 0;
+    cursor: pointer;
+}
+
+.dialog-auto-pfm .apfm-row>.apfm-name {
+    flex: 1;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dialog-auto-pfm .apfm-row>.apfm-cd {
+    width: 5em;
+    height: 1.8em;
+    background-color: transparent;
+    border: 1px solid #666666;
+    border-radius: 0.25em;
+    color: inherit;
+    text-align: center;
+    outline: none;
+}
+
+.dialog-auto-pfm .apfm-row>.item-commands {
+    padding-bottom: 0;
+    margin-left: 0.5em;
+}
+
+.dialog-auto-pfm .apfm-row>.item-commands>span {
+    min-width: 0;
+    padding: 0 0.6em;
+    margin: 0 0.25em 0 0;
+}
 `;

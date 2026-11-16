@@ -27,7 +27,7 @@
 	    if (!me.is_player) return;
 	    if (cmd !== "exchange") return;
 	    var item = SHOP[par];
-	    if (!item) return me.notify("没有这个商品。可选：xuami/dye/box1/box2/box3/xuanjing/bp");
+	    if (!item) return me.notify("绿柳山庄没有这样东西。可换的有：" + Object.keys(SHOP).map(function (k) { return SHOP[k].name; }).join("、") + "。");
 
 	    var coin = me.query_temp("lvliu_coin", 0);
 	    if (coin < item.cost) return me.notify("绿柳令不足！需要" + item.cost + "枚，当前" + coin + "枚。");
@@ -39,12 +39,12 @@
 	        case "xuami":
 	            var page = me.add_obj("book/bc#xuanmingshenzhang", 1);
 	            if (page) me.notify("<hig>你兑换了玄冥神掌残页×1。剩余绿柳令：" + coin + "</hig>");
-	            else { me.add_temp("lvliu_coin", item.cost); me.notify("兑换失败，已退款。"); }
+	            else { me.add_temp("lvliu_coin", item.cost); me.notify("东西没能到手，绿柳令已如数退还。"); }
 	            break;
 	        case "dye":
 	            var obj = me.add_obj("cash/dye", 1);
 	            if (obj) me.notify("<hig>你兑换了装备染色剂×1。剩余绿柳令：" + coin + "</hig>");
-	            else { me.add_temp("lvliu_coin", item.cost); me.notify("兑换失败，已退款。"); }
+	            else { me.add_temp("lvliu_coin", item.cost); me.notify("东西没能到手，绿柳令已如数退还。"); }
 	            break;
 	        case "box1":
 	        case "box2":
@@ -55,7 +55,7 @@
 	            var dropCount = (typeof drop === "object" && drop.count) ? drop.count : 1;
 	            var boxItem = me.add_obj(dropPath, dropCount);
 	            if (boxItem) me.notify("<hig>你打开" + item.name + "，获得了" + boxItem.color_name + "！剩余绿柳令：" + coin + "</hig>");
-	            else { me.add_temp("lvliu_coin", item.cost); me.notify("兑换失败，已退款。"); }
+	            else { me.add_temp("lvliu_coin", item.cost); me.notify("东西没能到手，绿柳令已如数退还。"); }
 	            break;
 	        case "xuanjing":
 	            me.add_obj("st/xuanjing", 100);

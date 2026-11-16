@@ -188,7 +188,7 @@
 	    if (!pt) return me.notify("你还没有加入帮派。");
 
 	    var role = pt.get_role(me.id);
-	    if (!role) return me.notify("数据异常，找不到你的帮派成员信息。");
+	    if (!role) return me.notify("帮派名册上查不到你的名字，请重新登录后再试。");
 	    if (role.level === 1) {
 	        return me.notify("帮主不能直接退出，请先转让帮主或解散帮派。");
 	    }
@@ -237,7 +237,7 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
-	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
+	    if (!myRole) return me.notify("帮派名册上查不到你的名字，请重新登录后再试。");
 	    if (!targetRole) return me.notify("找不到该成员。");
 	    // 帮主只能有一个：副帮主不能再往上提，换帮主走 trans
 	    if (targetRole.level <= 2) return me.notify("该成员已是最高职位，转让帮主请使用转让功能。");
@@ -262,7 +262,7 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
-	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
+	    if (!myRole) return me.notify("帮派名册上查不到你的名字，请重新登录后再试。");
 	    if (!targetRole) return me.notify("找不到该成员。");
 	    if (targetRole.level >= 5) return me.notify("该成员已是最低职位。");
 	    if (myRole.level >= targetRole.level) return me.notify("你的职位不够高，无法降级该成员。");
@@ -286,7 +286,7 @@
 
 	    var myRole = pt.get_role(me.id);
 	    var targetRole = pt.get_role(targetId);
-	    if (!myRole) return me.notify("数据异常，找不到你的帮派成员信息。");
+	    if (!myRole) return me.notify("帮派名册上查不到你的名字，请重新登录后再试。");
 	    if (!targetRole) return me.notify("找不到该成员。");
 	    if (myRole.level >= targetRole.level) return me.notify("你的职位不够高，无法开除该成员。");
 	    if (targetRole.level === 1) return me.notify("无法开除帮主。");
@@ -339,13 +339,12 @@
 	        var settings = {
 	            power: pt.query_temp("power", 0),
 	            join: pt.query_temp("join", 0),
-	            open_sc: pt.query_temp("open_sc", 0),
-	            alloc: pt.query_temp("alloc", 0)
+	            open_sc: pt.query_temp("open_sc", 0)
 	        };
-	        return me.notify("当前帮派设置：\n权限等级:" + settings.power + "\n加入方式:" + (settings.join ? "需要审批" : "自由加入") + "\n活动开关:" + (settings.open_sc ? "开启" : "关闭") + "\n分配方式:" + (settings.alloc ? "按活跃度" : "随机"));
+	        return me.notify("当前帮派设置：\n权限等级:" + settings.power + "\n加入方式:" + (settings.join ? "需要审批" : "自由加入") + "\n活动开关:" + (settings.open_sc ? "开启" : "关闭"));
 	    }
 	    // 只允许切换这几项开关；temp 里还存着设施等级、活跃度(sc1..sc6)等，不能被任意改
-	    if (["power", "join", "open_sc", "alloc"].indexOf(type) < 0)
+	    if (["power", "join", "open_sc"].indexOf(type) < 0)
 	        return me.notify("没有这项帮派设置。");
 	    // 切换对应设置
 	    var current = pt.query_temp(type, 0);
@@ -393,7 +392,7 @@
 	        pt.set_temp("lianyao", lv + 1);
 	        me.notify("炼药房已升级到" + (lv + 1) + "级！");
 	    } else {
-	        return me.notify("可升级的设施：liangong(练功房)、lianyao(炼药房)");
+	        return me.notify("你要升级哪处设施？练功房还是炼药房？");
 	    }
 	};
 

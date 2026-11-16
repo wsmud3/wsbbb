@@ -9,12 +9,12 @@
 	USERLOGIN.check_session = async function (user, str) {
 
 	    if (user.userid) {
-	        return this.login_error(user, '参数错误');
+	        return this.login_error(user, '登录信息不完整，请重新登录。');
 	    }
 	    str = str.split(" ");
 
 	    if (str.length < 2) {
-	        return this.login_error(user, '参数错误');
+	        return this.login_error(user, '登录信息不完整，请重新登录。');
 	    }
 	    var cookieUser = this.encryptUser(str[0], str[1]);
 	    if (!cookieUser || cookieUser.id === 0) {
@@ -43,7 +43,7 @@
 
 	    if (str.length === 4) {
 	        if (parseInt(str[3]) !== WORLD.SERVERID)
-	            return this.login_error(user, '参数错误。');
+	            return this.login_error(user, '登录信息不完整，请重新登录。');
 	        var data = WORLD.can_cross(str[2]);
 	        if (!data) {
 	            return this.login_error(user, '不允许登录');
@@ -132,6 +132,6 @@
 	    } catch (error) {
 	        console.error(user.userid, '角色读取 ', error);
 	        WORLD.log(null, "登陆失败：" + user.userid, error.message);
-	        return USERLOGIN.login_error(user, '数据读取失败');
+	        return USERLOGIN.login_error(user, '角色读取失败，请重新登录。');
 	    }
 	}

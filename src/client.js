@@ -56,7 +56,8 @@ export function connectServer(server, pid) {
             ReconnectTimer = null;
         }
         if (err) {
-            if (err.isTrusted) err = "服务器没有响应，请稍后重试";
+            // 只有服务端主动给出的中文说明才原样显示；浏览器事件、Error 对象一律换成玩家能看懂的话
+            if (err.isTrusted || typeof err !== "string") err = "服务器没有响应，请稍后重试";
             showLoader("<strong>连接失败：</strong>" + err + "");
         }
     }

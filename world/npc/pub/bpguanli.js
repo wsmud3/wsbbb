@@ -47,7 +47,7 @@
 	    me.notify("帮会管理员：你要更改哪些设置？");
 	    return me.send_commands("party setting power", "更改权限", "party setting join", "加入方式",
 	        "party setting open_sc", "开启门派活动",
-	        "party setting alloc", "战利品分配", "party setting notice", "发布公告");
+	        "party setting notice", "发布公告");
 
 	});
 

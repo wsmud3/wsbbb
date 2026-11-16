@@ -162,7 +162,7 @@ export default {
         for (let item of commands) {
             html.push('<span cmd="', item.cmd, '">', item.name, '</span>');
         }
-        html.push('<span class="sub-close" style="float:right;color:#888;cursor:pointer">✕</span>');
+        html.push('<span class="sub-close">✕</span>');
         html.push("</div>");
         Dialog.master.element.find(".item-commands").remove();
         $(html.join("")).insertAfter(elem).on("click", ".sub-close", function () {

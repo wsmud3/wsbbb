@@ -32,7 +32,7 @@
 
 | 脚本 | 用途 |
 |---|---|
-| `build_frontend.js` | 构建前端产物（`npm run build` 与 `deploy/pull.sh` 都调用） |
+| `build_frontend.js` | 构建前端产物（`npm run build` 调用）；产物 `www/` 随提交入库，`deploy/pull.sh` 不再构建，只用 `check_release_assets.js` 校验 |
 | `check_deploy_health.js <sha>` | 校验三个服务上报的 release 是否等于给定 sha |
 | `backup_database.js` | 数据库备份 |
 

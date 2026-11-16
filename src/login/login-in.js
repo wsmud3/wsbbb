@@ -13,12 +13,12 @@ class LoginInPage extends Page {
     super();
     this.template = `
  <div class="login-content">
-        <div id="loader" class="loader hide"><img src="${loader}" alt="" /><span id="loader_msg">正在登陆</span></div>
+        <div id="loader" class="loader hide"><img src="${loader}" alt="" /><span id="loader_msg">正在登录</span></div>
         <div class="error hide"></div>
         <div id="login_panel" class="mypanel" style="display:none;">
             <ul>
                 <li class="panel_item active">
-                    <span>欢迎登陆</span>
+                    <span>欢迎登录</span>
                 </li>
                 <li class="content">
                     <h3>你的用户名</h3>
@@ -27,7 +27,7 @@ class LoginInPage extends Page {
                     <input type="password" id="login_pwd" value="" placeholder="请输入密码" class="textbox" />
                 </li>
                 <li class="panel_item" command="LoginIn"><span class="glyphicon glyphicon-log-in"></span><span
-                        style="margin-left:0.5rem">登陆</span></li>
+                        style="margin-left:0.5rem">登录</span></li>
                 <li class="panel_item" command="ToRegist"><span class="glyphicon glyphicon-edit"></span><span
                         style="margin-left:0.5rem">注册</span></li>
                 <li class="panel_item" command="Forget"><span class="glyphicon glyphicon-question-sign"></span><span
@@ -63,7 +63,7 @@ class LoginInPage extends Page {
         Util.SetCookie("p", x.p);
         server.showServers();
       } else {
-        Client.showInputError("#login_name", x.result || '登陆失败');
+        Client.showInputError("#login_name", x.result || '登录失败');
         Client.hide2show("#login_panel");
       }
     });

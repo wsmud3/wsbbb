@@ -105,7 +105,7 @@ export default {
                             }
                         }
                     }
-                    str.push('<span class="rep-word" data-key="' + w.key + '" data-uniq="' + uniq + '" style="color:#c09853;cursor:pointer;margin-left:4px;">替换</span>');
+                    str.push('<span class="rep-word" data-key="' + w.key + '" data-uniq="' + uniq + '">替换</span>');
                     str.push('</span><br>');
                 }
             } else {
@@ -667,6 +667,12 @@ const packet_css = `
     padding-top: 0.5em;
 }
 
+@media (max-width: 480px) {
+    .dialog-pack {
+        min-width: 0;
+    }
+}
+
 
 .dialog-pack>.obj-list {
     width: 50%;
@@ -848,6 +854,19 @@ const list_css = `
     border-left-color: #00ff00;
 }
 
+@media (max-width: 480px) {
+    .dialog-list>.otype-list {
+        width: 2.5em;
+    }
+
+    .dialog-list>.otype-list>.otype-item {
+        writing-mode: vertical-rl;
+        width: 2em;
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+    }
+}
+
 .dialog-list>.trade-list,
 .dialog-list>.obj-list {
 
@@ -866,13 +885,6 @@ const list_css = `
     overflow-y: auto;
 }
 
-.dialog-list>.trade-list {
-
-    height: 21.25em;
-    display: inline-block;
-    overflow-y: auto;
-    flex: 1;
-}
 .trade-list>.obj-item {
     background-color: #111;
     line-height: 1.875em;

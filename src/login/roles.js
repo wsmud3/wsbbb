@@ -101,7 +101,7 @@ class RolesPage extends Page {
                     <ul class="role-list"></ul>
                 </li>
                 <li class="panel_item" command="SelectRole"><span class="glyphicon glyphicon-ok"></span><span
-                        style="margin-left:0.5rem">登陆</span></li>
+                        style="margin-left:0.5rem">登录</span></li>
                 <li class="panel_item" command="AddRole"><span class="glyphicon glyphicon-plus"></span><span
                         style="margin-left:0.5rem">创建角色</span></li>
                 <li class="panel_item" command="DeleteRole"><span class="glyphicon glyphicon-remove"></span><span

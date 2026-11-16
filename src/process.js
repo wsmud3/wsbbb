@@ -162,7 +162,7 @@ const Process = {
         clearLastPlayer();
         $(".container").hide();
         $(".login-content").show();
-        showLoader("<strong>登陆失败：</strong>" + msg.msg + "");
+        showLoader("<strong>登录失败：</strong>" + msg.msg + "");
 
         //hide2show ("#role_panel");
     }, login: function (x) {

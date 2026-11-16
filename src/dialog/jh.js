@@ -412,6 +412,12 @@ const jh_css = `
     overflow-y: auto;
 }
 
+@media (max-width: 480px) {
+    .dialog-fb>.fb-left {
+        width: 8em;
+    }
+}
+
 .dialog-fb>.fb-right {
     flex: 1;
     height: 100%;

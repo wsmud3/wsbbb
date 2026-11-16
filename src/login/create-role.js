@@ -22,7 +22,7 @@ class CreateRolePage extends Page {
                             class="glyphicon glyphicon-refresh regist-title-ref"></span>
                     </div>
                     <div>
-                        <input type="text" placeholder="请输入姓名" id="reg_name" class="textbox" style="width:250px;" />
+                        <input type="text" placeholder="请输入姓名" id="reg_name" class="textbox" style="max-width:250px;" />
                     </div>
                     <h3>你的性别</h3>
                     <div>

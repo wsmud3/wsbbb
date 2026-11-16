@@ -253,7 +253,7 @@ export const Confirm = {
         if (!obj) return;
         this.Show({
             content: this.get_countelement(obj.count, obj.count),
-            btn_text: "确定",
+            btn_text: "确认",
             onOK: function (v) {
                 if (!(v > 0)) return;
                 var moveobj = Object.assign({}, obj);

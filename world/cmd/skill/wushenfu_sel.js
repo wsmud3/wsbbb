@@ -17,7 +17,7 @@
 			tianzhu: "招架",
 		};
 		if (!names[choice]) {
-			return me.notify("无效的选择。可选：zhurong, shilin, furong, hexiang, tianzhu");
+			return me.notify("五岳神符只有祝融、石廪、芙蓉、鹤翔、天柱五种，你要选哪一种？");
 		}
 		me.set_temp("wushenfu_choice", choice);
 		me.notify("你选择了" + names[choice] + "峰神力——五神赋将增益你的" + stats[choice] + "！");

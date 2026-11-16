@@ -163,7 +163,7 @@ function team_dice(obj) {
     if (!player) {
         obj.dice = null;
         this.objs.remove(obj);
-        return me.notify("战利品分配失败，玩家不在队伍。");
+        return me.notify("对方不在你的队伍里，分不了战利品。");
     }
     obj.dice = null;
     this.objs.remove(obj);

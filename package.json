@@ -7,7 +7,6 @@
   "scripts": {
     "web": "node web.js",
     "web-debug": "node --inspect-brk web.js",
-    "mix": "node pack.js",
     "os": "node main.js",
     "os-debug": "node  --inspect-brk main.js",
     "dev": "vite",

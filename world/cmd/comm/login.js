@@ -70,16 +70,16 @@ this.switch_role = async function (user, id) {
 // 切换前的目标校验：归属本账号、本服；在内存中的必须是同一账号（走 relogin 接管）。
 // 失败时只提示，不动当前角色。
 this.check_switch_target = async function (user, id) {
-    if (!id || typeof id !== 'string') { user.notify_fail("参数错误。"); return null; }
+    if (!id || typeof id !== 'string') { user.notify_fail("你要登录哪个角色？"); return null; }
     var online = WORLD.getUser(id);
     if (online) {
-        if (online.userid !== user.userid) { user.notify_fail("角色读取失败。"); return null; }
+        if (online.userid !== user.userid) { user.notify_fail("角色读取失败，请重新登录。"); return null; }
         return { online: online };
     }
     var data;
     try { data = await WORLD.DB.getRoleData(user.userid, id, WORLD.SERVERID); }
     catch (e) { WORLD.log(user, "切换角色读取失败", e.message); data = null; }
-    if (!data) { user.notify_fail("角色读取失败。"); return null; }
+    if (!data) { user.notify_fail("角色读取失败，请重新登录。"); return null; }
     if (data.pwd !== user.password) { user.notify_fail("登录凭证已失效，请重新登录。"); return null; }
     return { online: null };
 }
@@ -113,7 +113,7 @@ this.relogin = function (oldUser, user) {
     } else {
         WORLD.log(null, "登陆失败：" + oldUser.id + ",原始ID："
             + oldUser.userid + "，现在ID：" + user.userid);
-        return WORLD.USERLOGIN.login_fail(user, '当前使用的登陆凭证和角色不一致', true);
+        return WORLD.USERLOGIN.login_fail(user, '当前使用的登录凭证和角色不一致', true);
     }
 }
 this.on_user_relogin = function (user, me) {
@@ -137,7 +137,7 @@ this.loginIn = async function (user, id) {
     try {
         // 显式传入本服 sid：同一账号可能在两服都有角色，不传会跨服取档。
         const data = await WORLD.DB.getRoleData(user.userid, id, WORLD.SERVERID);
-        if (!data) return WORLD.USERLOGIN.login_fail(user, '角色读取失败，请重新登陆', true);
+        if (!data) return WORLD.USERLOGIN.login_fail(user, '角色读取失败，请重新登录', true);
 
         if (!user.socket || user.socket.destroyed) return;
         const oldUser = WORLD.getUser(id);

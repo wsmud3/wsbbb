@@ -69,7 +69,7 @@ export default {
     }, create_other: function (items, type) {
         var html = [];
         if (!items || !items.length) {
-            html.push("<div class='top-item' style='text-align:center;color:gray;'>暂无数据</div>");
+            html.push("<div class='top-item top-empty'>暂无数据</div>");
         } else for (var i = 0; i < 20; i++) {
             html.push("<div class='top-item");
             if (i < 3) html.push(' top', i + 1);
@@ -117,7 +117,7 @@ export default {
     create_scores: function (items, data) {
         var html = [];
         if (!items || !items.length) {
-            html.push("<div class='top-item' style='text-align:center;color:gray;'>暂无数据</div>");
+            html.push("<div class='top-item top-empty'>暂无数据</div>");
         } else for (var i = 0; i < 20; i++) {
             html.push("<div class='top-item scores");
             if (i < 3) html.push(' top', i + 1);
@@ -146,7 +146,7 @@ export default {
     create_tops: function (items, data) {
         var html = [];
         if (!items || !items.length) {
-            html.push("<div class='top-item' style='text-align:center;color:gray;'>暂无数据</div>");
+            html.push("<div class='top-item top-empty'>暂无数据</div>");
         } else for (var i = 0; i < items.length; i++) {
             html.push("<div class='top-item top ");
             if (i < 3) html.push(' top', i + 1);
@@ -169,7 +169,7 @@ export default {
     }, create_weapons: function (items) {
         var html = [];
         if (!items || !items.length) {
-            html.push("<div class='top-item' style='text-align:center;color:gray;'>暂无数据</div>");
+            html.push("<div class='top-item top-empty'>暂无数据</div>");
         } else for (var i = 0; i < items.length; i++) {
             html.push("<div class='top-item weapon top")
             html.push(i + 1);
@@ -283,10 +283,7 @@ const stats_css = `
 
 .stats-container>.stats-container-left {
     overflow-y: auto;
-}
-
-.stats-container-left {
-    padding: 0 !important;
+    padding: 0;
 }
 
 .stats-container-left>.stats-silder {
@@ -348,6 +345,19 @@ const stats_css = `
     line-height: 1.875em;
     padding-left: 1em;
     margin-right: 1em;
+}
+
+@media (min-width: 768px) {
+    .dialog-stats>.top-item>.top-title {
+        padding-left: 3em;
+        margin-right: 2em;
+    }
+}
+
+.dialog-stats>.top-item.top-empty {
+    text-align: center;
+    color: #505050;
+    cursor: default;
 }
 
 .dialog-stats>.top-item>.top-sc {

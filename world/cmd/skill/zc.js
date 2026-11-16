@@ -773,7 +773,7 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
         return me.notify("你身上没有自创秘籍。");
 
     if (!position_key || isNaN(word_index))
-        return me.notify("参数错误。格式: zc addword <物品ID> <部位> <词条index>");
+        return me.notify("你要往哪本秘籍的哪个部位添加什么词条？");
 
     if (book.zc_state !== "deducing")
         return me.notify("秘籍不在推演状态。");
@@ -842,7 +842,7 @@ this.cmd_addword_done = function (me, book_id) {
         return me.notify("你身上没有自创秘籍。");
 
     var position_key = book._deducing_position;
-    if (!position_key) return me.notify("推演状态异常。");
+    if (!position_key) return me.notify("你还没选定要推演的部位。");
 
     var words = book.zc_words[position_key] || [];
     if (words.length === 0)
@@ -919,7 +919,7 @@ this.cmd_confirm = function (me, book_id, arg2) {
         return me.notify("你身上没有自创秘籍。");
 
     var position_key = book._deducing_position;
-    if (!position_key) return me.notify("推演状态异常，请先选择部位。");
+    if (!position_key) return me.notify("你还没选定要推演的部位。");
 
     // 解析: word1,word2,word3|pfmref1,pfmref2
     var wordStr = arg2 || "";
@@ -1105,7 +1105,7 @@ this.cmd_addpfm_ok = function (me, book_id, arg2) {
     var position_key = parts[0];
     var pfm_ref = parts[1] || "";
     var dot = pfm_ref.indexOf(".");
-    if (dot < 0) return me.notify("PFM格式错误。");
+    if (dot < 0) return me.notify("没有这个PFM。");
 
     var skill_id = pfm_ref.substring(0, dot);
     var pfm_key = pfm_ref.substring(dot + 1);
@@ -2300,7 +2300,7 @@ this.cmd_removepfm = function (me, book_id, arg2) {
 
     var pfms = book.zc_pfms[position_key] || [];
     if (pfm_index < 0 || pfm_index >= pfms.length)
-        return me.notify("无效的PFM序号。");
+        return me.notify("没有这个PFM。");
 
     var removed = pfms.splice(pfm_index, 1)[0];
     var src = SKILL.get(removed.skill_id);
@@ -2348,7 +2348,7 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
 
     var pfms = book.zc_pfms[position_key] || [];
     if (pfm_index < 0 || pfm_index >= pfms.length)
-        return me.notify("无效的PFM序号。");
+        return me.notify("没有这个PFM。");
 
     var old_pfm = pfms[pfm_index];
     var old_src = SKILL.get(old_pfm.skill_id);
@@ -2392,7 +2392,7 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
 
     // 解析新PFM引用
     var dot = new_pfm_ref.indexOf(".");
-    if (dot < 0) return me.notify("PFM格式错误，应为 技能ID.pfmKey。");
+    if (dot < 0) return me.notify("没有这个PFM。");
     var new_skill_id = new_pfm_ref.substring(0, dot);
     var new_pfm_key = new_pfm_ref.substring(dot + 1);
 

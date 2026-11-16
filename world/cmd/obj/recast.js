@@ -143,7 +143,7 @@
 	    if (!obj.words) obj.words = [];
 
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
-	    if (!duanzao) return player.notify('锻造系统未初始化。');
+	    if (!duanzao) return player.notify('铁匠铺还没开张，稍后再来吧。');
 
 	    var rc = obj.recast_count || 0;
 	    var limits = this.get_category_limits(rc);
@@ -217,7 +217,7 @@
 	        }
 	        var stone = player.find_obj(arg2);
 	        if (!stone) { player.notify('找不到词条石。'); return; }
-	        if (!stone.prop_key) { player.notify('无效的词条石。'); return; }
+	        if (!stone.prop_key) { player.notify('这块石头上没有可用的词条。'); return; }
 
 	        var prop_info = duanzao.PROPS[stone.prop_key];
 	        if (!prop_info) { player.notify('词条石属性无效。'); return; }
@@ -297,7 +297,7 @@
 	                player.items_changed(obj);
 	                this.send_ui(player, obj);
 	            } else {
-	                player.notify('镶嵌失败，请重试。');
+	                player.notify('词条石没能嵌进去，再试一次吧。');
 	            }
 	        }
 	        return;
@@ -363,9 +363,9 @@
 	    }
 	    var stone = player.find_obj(stoneid);
 	    if (!stone) { player.notify('你身上没有这种词条石。'); return false; }
-	    if (!stone.prop_key) { player.notify('无效的词条石。'); return false; }
+	    if (!stone.prop_key) { player.notify('这块石头上没有可用的词条。'); return false; }
 	    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
-	    if (!duanzao) { player.notify('锻造系统未初始化。'); return false; }
+	    if (!duanzao) { player.notify('铁匠铺还没开张，稍后再来吧。'); return false; }
 	    var new_prop_info = duanzao.PROPS[stone.prop_key];
 	    if (!new_prop_info) { player.notify('词条石属性无效。'); return false; }
 	    if (stone.prop_key === old_key) { player.notify('不能替换为同名词条，请使用升级功能。'); return false; }

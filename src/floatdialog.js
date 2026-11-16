@@ -135,8 +135,8 @@ const float_css = `
 /* 提示行：失败原因/消耗说明显示在同一窗口内，不占主消息栏 */
 .float-dialog .fb-actions>.fb-action>.action-desc>.float-msg {
     display: block;
-    color: #FFAA00;
-    border-left: 2px solid #FF6600;
+    color: #FFA500;
+    border-left: 2px solid #FF4500;
     padding: 0.15em 0 0.15em 0.5em;
     margin-bottom: 0.35em;
     white-space: pre-wrap;
@@ -194,7 +194,7 @@ const float_css = `
     transition: color 0.15s;
 }
 .float-dialog-unified>.unified-header>.unified-close:hover {
-    color: #FF0000;
+    color: #bdc3c7;
 }
 .float-dialog-unified .fb-actions {
     margin-top: 0;
@@ -398,7 +398,10 @@ const FloatDialog = {
         // 跟随全局字号（.container 上的 font-size）
         let container = document.querySelector('.container');
         if (container) {
-            el.style.fontSize = getComputedStyle(container).fontSize;
+            // 浮窗挂在 body 上，不在 .container 里，字号、字体设置都要手动跟过来
+            let cs = getComputedStyle(container);
+            el.style.fontSize = cs.fontSize;
+            el.style.fontFamily = cs.fontFamily;
         }
 
         // 先入文档，才能量出宽度用于定位
@@ -698,7 +701,9 @@ const FloatDialog = {
         unified.className = 'float-dialog-unified';
         let container = document.querySelector('.container');
         if (container) {
-            unified.style.fontSize = getComputedStyle(container).fontSize;
+            let cs = getComputedStyle(container);
+            unified.style.fontSize = cs.fontSize;
+            unified.style.fontFamily = cs.fontFamily;
         }
         unified.innerHTML = '<div class="unified-header">' +
             '<span class="unified-title">未处理的对话</span>' +

@@ -1142,31 +1142,6 @@ const setting_css = `
     color: #eee;
 }
 
-.pfm-table {
-    margin-left: 0.625em;
-    border: 1px solid gray;
-    padding: 6px;
-    max-height: 280px;
-    overflow-y: auto;
-}
-.pfm-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 4px;
-    border-bottom: 1px solid #222;
-    font-size: 0.8rem;
-}
-.pfm-row:hover { background: #1a1a1a; }
-.pfm-row .pfm-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pfm-row input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: #e94560; }
-.pfm-row .pfm-cd { width: 70px; padding: 2px 4px; font-size: 0.75rem; background: #222; border: 1px solid #444; color: #ccc; border-radius: 3px; }
-.pfm-row .pfm-cd::placeholder { color: #555; font-size: 0.7rem; }
-.pfm-row button { padding: 1px 6px; font-size: 0.7rem; line-height: 1.2; background: #333; color: #ccc; border: 1px solid #555; border-radius: 3px; cursor: pointer; }
-.pfm-row button:hover { background: #e94560; }
-.pfm-row.disabled .pfm-name { color: #555; text-decoration: line-through; }
-.pfm-hint { font-size: 0.7rem; color: #666; margin: 4px 0 0 0.625em; }
-
 /* 安全距离滑块 */
 .setting .setting-range {
     flex: 1;

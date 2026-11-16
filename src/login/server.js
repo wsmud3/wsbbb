@@ -117,7 +117,7 @@ class ServerPage extends Page {
       html.push("&nbsp;&nbsp;");
       html.push(SERVERS[i].name);
       if (SERVERS[i].isdef) {
-        html.push("<span style='color:red;font-size:0.5rem;line-height:2rem;height:2rem;'>&nbsp;（推荐）</span>");
+        html.push("<hir style='font-size:0.8em'>&nbsp;（推荐）</hir>");
       }
       html.push("</li>");
     }

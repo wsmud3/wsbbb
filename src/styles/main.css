@@ -477,6 +477,17 @@
     color: black;
 }
 
+/* 子面板右侧的收起按钮：不当作普通指令按钮显示 */
+.item-commands>.sub-close {
+    float: right;
+    border-color: transparent;
+    background-color: transparent;
+    min-width: 0;
+    padding: 0.25em 0.5em;
+    margin-right: 0;
+    color: #888;
+}
+
 .room_exits {}
 
 .room_exits>.exits-item {
@@ -701,18 +712,19 @@
     margin-right: 0.625em;
 }
 
-.room-item>.item-status {
-    display: inline-block;
-    float: right;
-}
+@media (max-width: 480px) {
+    .confirm-count>.btn {
+        width: 2.8em;
+    }
 
-.room-item>.item-status-bar {
-    display: inline-block;
-    float: right;
-}
+    .confirm-count>input {
+        width: 3em;
+    }
 
-.room_items>.item-commands {
-    margin-left: 2em;
+    .dialog-confirm>.btn-ok {
+        padding-left: 0.4em;
+        padding-right: 0.4em;
+    }
 }
 
 .warn-dialog {

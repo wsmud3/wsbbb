@@ -411,7 +411,15 @@ function handleRequest(req, res) {
                         found = WORLD.USERS[i]; break;
                     }
                 }
-                if (!found) { sendJSON(res, { ok: false, msg: '找不到该玩家' }, 404); return; }
+                if (!found) {
+                    // 离线玩家：按本服存档找到角色后照样投递，上线时在消息里领取（与游戏内 send 指令一致）
+                    var role = null;
+                    try {
+                        role = db.db.prepare("select id,name from players where (id=? or name=?) and sid=?").get(pid, pid, WORLD.SERVERID);
+                    } catch (e) { role = null; }
+                    if (!role) { sendJSON(res, { ok: false, msg: '找不到该玩家' }, 404); return; }
+                    found = { id: role.id, name: role.name, socket: null };
+                }
                 // 推送到消息系统
                 if (WORLD.MESSAGE && WORLD.MESSAGE.pushUserMessage) {
                     var attachItems = [];

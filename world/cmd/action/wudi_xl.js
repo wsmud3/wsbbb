@@ -91,17 +91,14 @@ function check_skill_condition(me, loc) {
 
     // 特定基本技能 + 对应的橙色特殊技能
     if (!sk[base_skill] || sk[base_skill].level < 2500) {
-        me.notify("[DEBUG] base_skill=" + base_skill + " sk_exists=" + !!sk[base_skill] + " level=" + (sk[base_skill] ? sk[base_skill].level : "N/A"));
         return false;
     }
     if (!sk[base_skill].enable_skill) {
-        me.notify("[DEBUG] enable_skill is falsy: " + sk[base_skill].enable_skill);
         return false;
     }
 
     var sp_skill = SKILL.get(sk[base_skill].enable_skill);
     if (!sp_skill || sp_skill.grade < 5) {
-        me.notify("[DEBUG] enable_skill_id=" + sk[base_skill].enable_skill + " sp_skill=" + !!sp_skill + " grade=" + (sp_skill ? sp_skill.grade : "N/A"));
         return false;
     }
 
@@ -145,7 +142,7 @@ function start_absorb(me, loc) {
         var sk_names = {force: "内功", parry: "招架", unarmed: "拳脚", dodge: "轻功"};
         var requirement = loc.base_skill === "weapon" ? "任意武器技能及对应的橙色特殊技能达到2500级" :
             "基本" + sk_names[loc.base_skill] + "及对应的橙色特殊技能达到2500级";
-        return me.notify("你的" + requirement + "，无法吸收" + loc.element + "。");
+        return me.notify("须" + requirement + "，方能吸收" + loc.element + "。");
     }
 
     // 检查背包里是否有聚元珠
@@ -270,7 +267,7 @@ function start_absorb(me, loc) {
 // 主入口
 this.enter = function (me, location_key) {
     var loc = LOCATIONS[location_key];
-    if (!loc) return me.notify("修炼地点配置错误，请联系管理员。");
+    if (!loc) return me.notify("此处并无灵气汇聚。");
 
     // 必须身处对应的修炼地点
     if (!at_location(me, loc)) {
@@ -308,7 +305,7 @@ this.enter = function (me, location_key) {
         // 召唤影子
         shadow = NPC.CLONE("pub/wudi_shadow");
         if (!shadow) {
-            return me.notify("灵气紊乱，无法凝聚试炼之影，请稍后再试。");
+            return me.notify("灵气紊乱，试炼之影迟迟未能凝聚，过一会儿再来吧。");
         }
 
         shadow.init_shadow(me);
