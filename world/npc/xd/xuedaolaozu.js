@@ -110,3 +110,21 @@ this.on_heart_beat = function () {
         if (it && it.path === "xd/laozu_xuedao") { this.equip(it); break; }
     }
 };
+// 老祖专属：血祭期间免控（昏迷、忙乱、失手、冲动一律无效）。玩家学的血海魔功不受影响，仍按原技能。
+this.has_xueji = function () {
+    if (!this.status) return false;
+    for (var i = 0; i < this.status.length; i++) if (this.status[i] && this.status[i].id === "xueji") return true;
+    return false;
+};
+this.add_status = function (buff, from) {
+    if (buff && (buff.is_busy || buff.is_faint || buff.is_miss || buff.is_rash) && this.has_xueji()) {
+        if (from && from.notify && !this._xd_immune_tip) {
+            this._xd_immune_tip = true;
+            var self = this;
+            this.call_out(function () { self._xd_immune_tip = false; }, 3000);
+            from.notify("<hir>血刀老祖血祭附体，浑身血雾翻腾，竟丝毫不受影响！</hir>");
+        }
+        return false;
+    }
+    return CHARACTER.prototype.add_status.call(this, buff, from);
+};
