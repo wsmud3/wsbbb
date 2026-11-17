@@ -27,28 +27,28 @@ this.set_drop({
     min: 10,
     max: 100
 }, {
-    obj: ["eq/lv2/lanbaoshi"],
+    obj: ["st/st_blu#1"],
     odds: 5520
 }, {
-    obj: ["eq/lv2/hongbaoshi"],
+    obj: ["st/st_red#1"],
     odds: 5520
 }, {
-    obj: ["eq/lv2/huangbaoshi"],
+    obj: ["st/st_yel#1"],
     odds: 5520
 }, {
-    obj: ["eq/lv2/lvbaoshi"],
+    obj: ["st/st_gre#1"],
     odds: 5520
 }, {
     obj: ["st/xuanjing"],
     odds: 7360
 }, {
-    obj: ["eq/lv3/jingzhilanbaoshi"],
+    obj: ["st/st_blu#2"],
     odds: 3680
 }, {
-    obj: ["eq/lv3/jingzhilvbaoshi"],
+    obj: ["st/st_gre#2"],
     odds: 3680
 }, {
-    obj: ["eq/lv3/jingzhihuangbaoshi"],   // 攻略列有精致的黄宝石（与蓝/绿同掉率）
+    obj: ["st/st_yel#2"],   // 攻略列有精致的黄宝石（与蓝/绿同掉率）
     odds: 3680
 });
 this.on_enter = function (me) {

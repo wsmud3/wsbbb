@@ -36,7 +36,7 @@ this.set_drop({
     obj: ["eq/lv3/hl_jian", "eq/lv3/hl_gun", "eq/lv3/hl_bian", "eq/lv3/hl_dao", "eq/lv3/hl_quan"],
     odds: 6520
 }, {
-    obj: ["eq/lv2/lanbaoshi", "eq/lv2/hongbaoshi", "eq/lv2/lvbaoshi", "eq/lv2/huangbaoshi"],
+    obj: ["st/st_blu#1", "st/st_red#1", "st/st_gre#1", "st/st_yel#1"],
     odds: 8150
 });
 this.on_enter = function (me) {

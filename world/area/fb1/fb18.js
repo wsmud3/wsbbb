@@ -31,12 +31,12 @@
 	this.drops = [
 	    "eq/lv3/hl_jian", "eq/lv3/hl_gun", "eq/lv3/hl_bian", "eq/lv3/hl_dao", "eq/lv3/hl_quan",
 	    "res/huolongpi", "res/eyupi", "st/xuanjing",
-	    "eq/lv2/lanbaoshi", "eq/lv2/hongbaoshi", "eq/lv2/lvbaoshi", "eq/lv2/huangbaoshi"
+	    "st/st_blu#1", "st/st_red#1", "st/st_gre#1", "st/st_yel#1"
 	];
 
 	this.quick_drops = [
 	    { obj: "money/silver", min: 1, max: 10 },
 	    { obj: ["res/huolongpi", "res/eyupi", "st/xuanjing"], odds: 10000 },
-	    { obj: ["eq/lv2/lanbaoshi", "eq/lv2/hongbaoshi", "eq/lv2/lvbaoshi", "eq/lv2/huangbaoshi"], odds: 9300 },
+	    { obj: ["st/st_blu#1", "st/st_red#1", "st/st_gre#1", "st/st_yel#1"], odds: 9300 },
 	    { obj: ["eq/lv3/hl_jian", "eq/lv3/hl_gun", "eq/lv3/hl_bian", "eq/lv3/hl_dao", "eq/lv3/hl_quan"], odds: 250 },
 	];

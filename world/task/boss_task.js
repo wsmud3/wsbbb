@@ -325,10 +325,10 @@ this.boss_auto_drops = function (me, boss, par) {
 
 	var lv = boss.diff_level || 20;
 	if (percent >= 30) {
-		drops.push({ obj: ["eq/lv2/lanbaoshi", "eq/lv2/hongbaoshi", "eq/lv2/lvbaoshi", "eq/lv2/huangbaoshi"], odds: 5000 + lv * 5 });
+		drops.push({ obj: ["st/st_blu#1", "st/st_red#1", "st/st_gre#1", "st/st_yel#1"], odds: 5000 + lv * 5 });
 	}
 	if (percent >= 50) {
-		drops.push({ obj: ["eq/lv3/jingzhilanbaoshi", "eq/lv3/jingzhihongbaoshi", "eq/lv3/jingzhilvbaoshi"], odds: 2000 + lv * 3 });
+		drops.push({ obj: ["st/st_blu#2", "st/st_red#2", "st/st_gre#2"], odds: 2000 + lv * 3 });
 	}
 
 	// 添加副本掉落（几率方式，已过滤 lv5+ 装备）
