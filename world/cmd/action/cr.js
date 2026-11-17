@@ -104,12 +104,15 @@ function fb_quick(me, area, isdiff) {
     me.add_temp("fb_count_day", 1, UTIL.diff_time());
 
     var diff = isdiff ? 1 : 0;
+    // 橙装门槛按本次之前的次数判断（与手动一致：第 801 次起才可能出橙装）
+    var orange_ok = !(area.orange_locked && area.orange_locked(me));
     if (area.is_record(diff)) {
         ''
         me.add_temp("fbc_" + diff + "_" + area.fb_index, 1);
     }
     for (var j = 0; j < drops.length; j++) {
         var items = OBJ.create_by_odds(drops[j], isdiff ? 1 : 0);   // 扫荡同样按难度过滤 diff 条目
+        if (!orange_ok) items = items.filter(function (it) { return !AREA.is_orange(it); });
         for (var i = 0; i < items.length; i++) {
             var item = me.add_obj(items[i]);
             if (item.is_equipment && item.grade >= 5) {

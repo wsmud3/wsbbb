@@ -7,4 +7,4 @@ this.exits = {
     "north": "hmy/bh_tang",
     "south": "hmy/ql_tang",
 };
-this.set_npc(["hmy/auto_3", 1]);
+this.set_npc(["hmy/auto_3", 1], ["pub/dongfeng", 1]);

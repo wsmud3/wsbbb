@@ -4,4 +4,4 @@ this.desc = "这是耸拔群山之中，人迹罕至，遥望远处山路迂回�
 this.exits = {
     "south": "cihang/shanyao",
 };
-this.set_npc(["cihang/auto_1", 1]);
+this.set_npc(["cihang/auto_1", 1], ["pub/dongfeng", 1]);

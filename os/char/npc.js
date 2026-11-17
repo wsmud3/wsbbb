@@ -135,6 +135,7 @@ NPC.prototype.die = function (killer) {
     var corpse = new CORPSE();
 
     var isinfb = this.environment.is_fb();
+    this._drop_killer = killer;   // query_drop 按击杀者的副本次数决定是否出橙装
     corpse.init(this, isinfb);
     this.die_room = this.environment;
     this.environment.item_changed(corpse, true);

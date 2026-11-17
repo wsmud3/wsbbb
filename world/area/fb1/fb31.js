@@ -7,6 +7,8 @@ this.set({
     is_show: true,
     first: "hslj/leitaixia",
     is_copy: true,
+    record_0: true,    // 记录单人通关/扫荡次数（副本次数兑换、橙装次数门槛要用）
+    record_1: true,
     expend: 10,
     is_multi: false,
     exp: 46000,
@@ -53,7 +55,7 @@ this.set({
 	    { obj: ["book/bc#duanjiajian", "book/bc#quanzhenjianfa", "book/bc#anyingfuxiang", "book/bc#luoyingshenjian"], odds: 2400 },
 	    { obj: ["book/bc#kumushengong", "book/bc#hamagong", "book/bc#lingshezhangfa", "book/bc#tanzhishengong", "book/bc#yiyangzhi"], odds: 2900 },
 	    { obj: ["eq/lv4/lingshezhang", "eq/lv4/yuxiao", "eq/lv4/yuzhuzhang"], odds: 90 },
-	    { obj: "book/bc#jiuyinshengong", odds: 2900 },
+	    { obj: "book/bc#jiuyinshengong", odds: 5000 },          // 残页 Boss 档
 	    { obj: "eq/lv5/wushen/tianlong_waist", odds: 17 },
 	];
 
@@ -75,8 +77,8 @@ this.drop_npcs1 = HSLJ_ORDER.slice();
 // 绝顶宝箱（王重阳和宝箱都有几率出九阴；天龙鞶是刷九阴的赠品）
 var HSLJ_BOX = [
     { obj: "money/gold", min: 1, max: 3 },
-    { obj: "book/bc#jiuyinshengong", odds: 2900 },
-    { obj: "eq/lv5/wushen/tianlong_waist", odds: 880 }
+    { obj: "book/bc#jiuyinshengong", odds: 5000 },          // 残页 Boss 档
+    { obj: "eq/lv5/wushen/tianlong_waist", odds: 30 }        // 橙装 Boss 档
 ];
 this.HSLJ_BOX = HSLJ_BOX;
 // 扫荡掉落里补上宝箱

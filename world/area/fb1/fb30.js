@@ -7,6 +7,8 @@ this.set({
     is_show: true,
     first: "gm2/gumukou",
     is_copy: true,
+    record_0: true,    // 记录单人通关/扫荡次数（副本次数兑换、橙装次数门槛要用）
+    record_1: true,
     expend: 10,
     is_multi: false,
     is_diffi: true,      // 困难：剑灵变剑魔（主动叫杀、控不住、绝对命中），掉龙骨环不掉盘龙簪

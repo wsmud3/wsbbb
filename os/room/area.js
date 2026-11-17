@@ -44,6 +44,28 @@ AREA.prototype.find_area = function (path) {
 AREA.prototype.is_record = function (diff) {
     return this["record_" + diff];
 }
+
+// ── 副本次数与橙装（lv5）门槛 ──
+// 副本次数 = 本副本普通 + 困难的单人通关/扫荡次数（fb_over / 扫荡时按 record_0/record_1 记 fbc_<难度>_<fb_index>）。
+// 次数不到 ORANGE_MIN_RUNS 时，手动击杀和扫荡都不出橙装；兑换（易直非）另记已花费次数，不影响这里的门槛。
+AREA.ORANGE_MIN_RUNS = 800;
+AREA.prototype.query_run_count = function (me) {
+    if (!me || !me.query_temp || this.fb_index === undefined) return 0;
+    return me.query_temp("fbc_0_" + this.fb_index, 0) + me.query_temp("fbc_1_" + this.fb_index, 0);
+}
+AREA.prototype.orange_locked = function (me) {
+    return this.query_run_count(me) < AREA.ORANGE_MIN_RUNS;
+}
+AREA.is_orange = function (item) {
+    var p = item && (typeof item === "string" ? item : item.path);
+    return typeof p === "string" && p.indexOf("eq/lv5/") === 0;
+}
+// 次数不够时把橙装从一批掉落里拿掉；不是副本或没有玩家时一律拿掉
+AREA.filter_orange = function (area, me, items) {
+    if (!items || !items.length) return items;
+    if (area && area.orange_locked && me && !area.orange_locked(me)) return items;
+    return items.filter(function (it) { return !AREA.is_orange(it); });
+}
 AREA.prototype.query_exp = function () {
     var lv = this.fb_index || 0;
     return 1000 + lv * 100;

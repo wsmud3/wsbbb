@@ -7,6 +7,8 @@ this.set({
     is_show: true,
     first: "yz2/anbian",
     is_copy: true,
+    record_0: true,    // 记录单人通关/扫荡次数（副本次数兑换、橙装次数门槛要用）
+    record_1: true,
     expend: 10,
     // 攻略：普通困难一样打法（机制完全相同，见各房间/NPC 注释）
     is_diffi: true,

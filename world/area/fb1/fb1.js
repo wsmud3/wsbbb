@@ -7,6 +7,8 @@
 	    first: "yz/lw/shangu",
 	    is_show: true,
 	    is_copy: true,
+    record_0: true,    // 记录单人通关/扫荡次数（副本次数兑换、橙装次数门槛要用）
+    record_1: true,
 	    expend: 10,
 	    index: 0,
 	    exp: 500,

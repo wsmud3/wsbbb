@@ -21,6 +21,7 @@ this.set_item("xiang", "宝箱", "一个古旧的木箱，箱盖上刻着「天�
         }
         this.set_temp(me, "hslj_box_opened", 1);
         var items = OBJ.create_by_odds((a && a.HSLJ_BOX) || []);
+        if (AREA.filter_orange) items = AREA.filter_orange(a, me, items);   // 副本次数不到 800 不出天龙鞶
         var names = [];
         for (var i = 0; i < items.length; i++) {
             var it = items[i];

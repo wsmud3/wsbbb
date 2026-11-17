@@ -7,6 +7,8 @@
 		  is_show: true,
 		  first: "bj/ao/damen",
 		  is_copy: true,
+    record_0: true,    // 记录单人通关/扫荡次数（副本次数兑换、橙装次数门槛要用）
+    record_1: true,
 		  expend: 10,
 		  exp: 5000,
 		  pot: 4000,

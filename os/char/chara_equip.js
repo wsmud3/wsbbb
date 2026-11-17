@@ -181,11 +181,26 @@ CHARACTER.prototype.set_drop = function () {
         this.drop_list.push(arguments[i]);
     }
 }
+// 掉落归属的玩家：玩家本人；随从/宠物找主人；NPC 补刀等则取房间里的第一个玩家
+function query_drop_owner(killer, env) {
+    if (killer && killer.is_player) return killer;
+    var items = env && env.items || [];
+    if (killer && killer.master) {
+        for (var i = 0; i < items.length; i++) if (items[i] && items[i].is_player && items[i].id === killer.master) return items[i];
+    }
+    for (var j = 0; j < items.length; j++) if (items[j] && items[j].is_player) return items[j];
+    return null;
+}
 CHARACTER.prototype.query_drop = function () {
     if (!this.drop_list) return;
     // 按所在副本的难度过滤 diff 条目（非副本房间返回 undefined，不过滤）
     var env = this.environment || this.die_room;
     var diff = env && env.query_difficulty ? env.query_difficulty() : undefined;
-    return OBJ.create_by_odds(this.drop_list, diff);
+    var items = OBJ.create_by_odds(this.drop_list, diff);
+    // 副本里：击杀者（随从算主人）该副本次数不到 800 次不出橙装（AREA.filter_orange）
+    if (env && env.is_fb && env.is_fb() && typeof AREA !== "undefined" && AREA.filter_orange) {
+        items = AREA.filter_orange(env.parent, query_drop_owner(this._drop_killer, env), items);
+    }
+    return items;
 
 }

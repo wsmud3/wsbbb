@@ -4,4 +4,4 @@ this.desc = "你发现自己已身处深谷之中，雾气蒙蒙，寒意逼人�
 this.exits = {
     "enter": "gm2/qianting",
 };
-this.set_npc(["gm2/auto_2", 1]);
+this.set_npc(["gm2/auto_2", 1], ["pub/dongfeng", 1]);
