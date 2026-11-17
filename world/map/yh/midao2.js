@@ -27,8 +27,11 @@ this.yh_open_xia = function (me) {
     me.add_obj("money/gold", gold);
     me.notify("<hiy>匣中整整齐齐码着 " + gold + " 两黄金。</hiy>");
     var YH_CANYE = ["book/bc#jueqingzhang", "book/bc#yifengjianfa", "book/bc#mingyugong", "book/bc#yihuajiemu"];
-    me.add_obj(YH_CANYE[Math.floor(Math.random() * YH_CANYE.length)]);
-    me.notify("<hig>黄金底下还压着一页泛黄的武功残页！</hig>");
+    var page = me.add_obj(YH_CANYE[Math.floor(Math.random() * YH_CANYE.length)]);
+    // 写明是哪门武功的残页（带技能颜色），不再只说「一页武功残页」
+    var sk = page && page.skill && SKILL.get(page.skill);
+    var pname = sk ? (sk.color_name || sk.name) + "<hig>残页</hig>" : (page && page.name) || "武功残页";
+    me.notify("<hig>黄金底下还压着一页泛黄的</hig>" + pname + "<hig>！</hig>");
     return true;
 };
 this.set_item("xia", "小匣子", "洞壁上嵌着的一只小匣子，做工精巧，似乎可以打开。", [
