@@ -12,6 +12,8 @@
 //   NPC 动作只能带 NPC 自己的 id 当参数，所以副本/难度/物品的序号编进动作名：
 //     fbx → 副本列表；fbx_a<副本序号*2+难度> → 类别；fbx_k<类别序号> → 物品；fbx_i<物品序号> → 详情；fbx_c<物品序号> → 确认兑换。
 //   全部用动作按钮浮窗（send_commands，persistent），每层都有「返回」。
+//   界面参照赌场神秘商人兑换的样式：一级按钮「副本名(难度)」，物品按钮「N次兑换<品质色道具名>」；
+//   只有一个类别时跳过类别这一层，直接列物品。
 // ────────────────────────────────────────────────────────────
 var FBX_COST = 1000;
 var FBX_MAX_AREA = 64;
@@ -96,11 +98,11 @@ function fbx_cats_of(area, diff) {
     for (var i = 0; i < FBX_CATS.length; i++) if (fbx_cat_items(FBX_CATS[i], area, diff).length) out.push(i);
     return out;
 }
-function fbx_label(area, d) { return area.name + "·" + FBX_DIFF_NAME[d]; }
-function fbx_send(me, buttons, text, feedback) {
+function fbx_label(area, d) { return area.name + "(" + FBX_DIFF_NAME[d] + ")"; }
+function fbx_send(me, buttons, text, feedback, size) {
     var args = buttons.slice();
     // 有按钮时常驻（多级菜单来回点不自动关）；没按钮的纯提示照常可关
-    args.push({ text: text, feedback: feedback || "", persistent: buttons.length > 0 });
+    args.push({ text: text, feedback: feedback || "", persistent: buttons.length > 0, size: size || "" });
     me.send_commands.apply(me, args);
 }
 
@@ -115,9 +117,9 @@ function fbx_show_areas(me, npc, feedback) {
     var btn = [];
     for (var i = 0; i < list.length; i++) {
         var a = all[list[i][0]], d = list[i][1];
-        btn.push("fbx_a" + (list[i][0] * 2 + d) + " " + npc.id, fbx_label(a, d) + "（" + fbx_avail(me, a, d) + "次）");
+        btn.push("fbx_a" + (list[i][0] * 2 + d) + " " + npc.id, fbx_label(a, d));
     }
-    fbx_send(me, btn, "易直非搓着手笑道：「副本跑得多了，总有些好东西从指缝里漏掉。拿你的副本次数来，我替你寻来。」", feedback);
+    fbx_send(me, btn, "一个神秘的商人，可以帮你兑换你一直想要却得不到的道具。<br>你要兑换哪个副本的道具？", feedback, "lg");
 }
 // 二级：类别
 function fbx_show_cats(me, npc, code, feedback) {
@@ -129,6 +131,8 @@ function fbx_show_cats(me, npc, code, feedback) {
     if (!a || !ok) return fbx_show_areas(me, npc);
     me._fbx_pick = { npc: npc.id, area: ai, diff: d };
     var btn = [], cats = fbx_cats_of(a, d);
+    // 只有一个类别：不多点一层，直接列物品
+    if (cats.length === 1) return fbx_show_items(me, npc, cats[0], feedback);
     for (var c = 0; c < cats.length; c++) {
         var cat = FBX_CATS[cats[c]];
         btn.push("fbx_k" + cats[c] + " " + npc.id, cat.name + "（" + fbx_cat_items(cat, a, d).length + "件）");
@@ -146,11 +150,15 @@ function fbx_show_items(me, npc, ci, feedback) {
     pick.cat = ci;
     var btn = [];
     for (var k = 0; k < items.length; k++) {
-        var o = fbx_obj_name(items[k]);
-        btn.push("fbx_i" + k + " " + npc.id, (o.obj ? o.obj.name : items[k]) + "（" + cat.cost + "次）");
+        btn.push("fbx_i" + k + " " + npc.id, cat.cost + "次兑换" + fbx_obj_name(items[k]).html);
     }
-    btn.push("fbx_a" + (pick.area * 2 + d) + " " + npc.id, "返回");
-    fbx_send(me, btn, fbx_label(a, d) + " · " + cat.name + "：可用 " + fbx_avail(me, a, d) + " 次。", feedback);
+    // 类别那一层被跳过时（只有一个类别），返回直接回副本列表，否则会又被跳回这里
+    var multi = fbx_cats_of(a, d).length > 1;
+    btn.push((multi ? "fbx_a" + (pick.area * 2 + d) : "fbx") + " " + npc.id, "返回");
+    var done = a.query_run_count(me, d), avail = fbx_avail(me, a, d);
+    fbx_send(me, btn, "易直非对你说道：「你可以使用你完成副本的次数兑换一些你想要的" + (multi ? cat.name : "道具") +
+        "，你在" + fbx_label(a, d) + "共完成" + done + "次" + (avail !== done ? "（还可用" + avail + "次）" : "") +
+        "。你可以选择以下道具兑换：」", feedback, "lg");
 }
 // 四级：详情 / 确认兑换
 function fbx_pick(me, npc, k, confirm) {
@@ -202,7 +210,8 @@ WORLD.FB_EXCHANGE = {
     // opts.all：赌场的易直非，能换所有副本（只列出有次数的）
     install: function (npc, opts) {
         npc._fbx_all = !!(opts && opts.all);
-        npc.add_action("fbx", "副本兑换", function (me) { fbx_show_areas(me, this); });
+        // 赌场易直非的「兑换」已用于神器兑换，所以那里仍叫「副本兑换」；副本入口的易直非直接叫「兑换」
+        npc.add_action("fbx", npc._fbx_all ? "副本兑换" : "兑换", function (me) { fbx_show_areas(me, this); });
         for (var i = 0; i < FBX_MAX_AREA * 2; i++) {
             (function (code) {
                 npc.add_action("fbx_a" + code, null, function (me) { fbx_show_cats(me, this, code); });
