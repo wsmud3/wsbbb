@@ -6,8 +6,9 @@ this.exits = { "south": "gm2/qiaobi" };
 this.set_npc([]);
 
 // 原版机制（攻略第 30 节）：点石块 → 杨过会来 → 点「我准备好了」抗一下海潮汹涌 → 进剑冢。
-// 海潮汹涌是内力伤害：固定 800 万，无视防御、不能招架；可以闪避（凌波），按伤害减免打折，
-// 再经内功的受伤处理（护体类效果照常生效），剩下的靠气血硬扛。
+// 海潮汹涌是内力伤害：固定 800 万，无视防御；按伤害减免打折，再经内功的受伤处理（护体类效果照常生效）。
+//   普通：可以闪避（凌波），也可以招架（招架 10 万左右基本能架住）。
+//   困难：不能闪避、不能招架，只能靠伤害减免和气血硬扛。
 function gm2_area(room) { return room && room.parent && room.parent.gm2_find ? room.parent : null; }
 
 function push_stone(me) {
@@ -52,10 +53,14 @@ this.add_action("ready", "我准备好了", function (me) {
     this.send_room("<hic>杨过长啸一声，玄铁重剑横扫而出，剑风卷起滔天巨浪——「海潮汹涌」！</hic>");
     var GM2_TIDE_DMG = 8000000;
     var mz = yg.mz || 0;
-    var dodge = Math.random() * (me.ds / 2) + me.ds / 2 > mz;
+    var hard = this.query_temp(me, "diff", 0) === 1;
+    var dodge = !hard && Math.random() * (me.ds / 2) + me.ds / 2 > mz;
+    var parry = !hard && !dodge && !me.is_busy && (Math.random() * (me.zj / 2) + me.zj / 2 > mz * 0.2);
     var dmg = 0;
     if (dodge) {
         me.notify("<hig>你身形飘忽，巨浪从你身侧轰然拍过，竟没沾到你半点！</hig>");
+    } else if (parry) {
+        me.notify("<hig>你稳住身形硬架这一剑，借势卸去了海潮之力！</hig>");
     } else {
         var sh = GM2_TIDE_DMG;
         var cut = me.diff_sh_per || 0;               // 伤害减免
