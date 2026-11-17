@@ -10,7 +10,7 @@ this.set({
     max_hp: 600000,
     mp: 210000,
     max_mp: 210000,
-    score: 0,
+    score: 20,   // 须击杀
     gj: 45000,
     fy: 26000,
     mz: 34000,
@@ -31,9 +31,6 @@ this.set_drop({
 }, {
     obj: ["book/bc#chanchubufa"],
     odds: 7100
-}, {
-    obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_shoes"],
-    odds: 4260
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

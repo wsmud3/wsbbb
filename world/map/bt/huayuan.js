@@ -5,5 +5,4 @@ this.exits = {
     "north": "bt/dating",
     "south": "bt/menlang",
 };
-// 攻略第 20 节：花园里只有白衣少女（可比试刷五神剑 buff），没有欧阳克
-this.set_npc(["bt/baiyishaonv", 1]);
+this.set_npc(["bt/ouyangke", 1], ["bt/baiyishaonv", 1]);
