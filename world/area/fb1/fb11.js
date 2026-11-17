@@ -34,6 +34,7 @@ this.set({
 	this.drops = [
 	    "book/bc#jinshejianfa",
 	    "book/bc#jinsheyoushenbu",
+	    "book/bc#jinshezhuifa",
 	    "book/bc#jinsheyoushenzhang",
 	    "book/bc#baguaquan",
 	    "book/bc#baguagunfa",
@@ -48,7 +49,7 @@ this.set({
 	this.quick_drops = [
 	    { obj: "money/silver", min: 1, max: 10 },
 	    { obj: ["book/bc#baguaquan", "book/bc#baguagunfa", "eq/lv1/jinshezhui"], odds: 2100 },
-	    { obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenbu", "book/bc#jinsheyoushenzhang"], odds: 2400 },
+	    { obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenbu", "book/bc#jinsheyoushenzhang", "book/bc#jinshezhuifa"], odds: 2400 },
 	    { obj: ["eq/lv2/wf_pifeng", "eq/lv2/wf_jie", "eq/lv2/wf_xiangnang"], odds: 9300 },
 	    { obj: ["eq/lv3/wf_jian", "eq/lv3/wf_gun"], odds: 250 },
 	];

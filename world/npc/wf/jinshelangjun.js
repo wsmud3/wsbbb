@@ -36,7 +36,7 @@ this.set_drop({
     min: 30,
     max: 80
 }, {
-    obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenzhang","book/bc#jinsheyoushenbu"],
+    obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenzhang","book/bc#jinsheyoushenbu", "book/bc#jinshezhuifa"],   // 金蛇锥法残页（攻略列有）
     odds: 6400
 }, {
     obj: ["eq/lv2/js_pifeng", "eq/lv2/js_ring", "eq/lv2/js_nang", "eq/lv1/jinshezhui"],
