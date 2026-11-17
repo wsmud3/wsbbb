@@ -10,7 +10,7 @@ this.set({
     max_hp: 4955200,
     mp: 796000,
     max_mp: 796000,
-    score: 90,
+    score: 50,   // 五绝依次出场，合计 300 = 100%
     gj: 296400,
     fy: 169312,
     mz: 292600,
@@ -33,4 +33,10 @@ this.set_drop(
     {obj: ["book/bc#kumushengong"], odds: 14800},
     {obj: ["eq/lv4/yuzhuzhang"], odds: 8880}
 );
-this.on_enter = function (me) { me.notify("洪七公哈哈大笑，声如洪钟：'小娃娃功夫不错，来陪老叫花走两招！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("洪七公哈哈大笑，声如洪钟：'小娃娃功夫不错，来陪老叫花走两招！'"); this.do_kill(me); };
+
+// 依次出场：死后请下一位（world/area/fb1/fb31.js）
+this.on_died = function (killer) {
+    var room = this.environment;
+    if (room && room.parent && room.parent.hslj_on_died) room.parent.hslj_on_died(this, killer);
+};

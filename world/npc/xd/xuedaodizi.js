@@ -5,8 +5,8 @@ this.set({
     gender: 1,
     age: 30,
     per: 10,
-    hp: 1664000,
-    max_hp: 1664000,
+    hp: 550000,
+    max_hp: 550000,   // 攻略：两名弟子 50w、60w 血
     mp: 302000,
     max_mp: 302000,
     score: 0,
@@ -29,16 +29,4 @@ this.set_drop(
     {obj: ["book/bc#xuedao"], odds: 7620}
 );
 this.on_enter = function (me) { me.notify("血刀弟子怪叫一声，举刀向你砍来！"); this.do_kill(me); };
-
-this.on_died = function (killer, corpse) {
-    var room = this.environment;
-    if (!room) return;
-    // 找本副本里的忘忧谷（原写 xd/wangyougu 不存在；且要取玩家副本实例而非基础房间）
-    var base = ROOM.Get("xd/wangyou");
-    var b = base && room.owner ? base.query_copy(room.owner) : base;
-    if (!b) return;
-    for (var i = 0; i < b.items.length; i++) {
-        var o = b.items[i];
-        if (o && o.path === "xd/xuedaolaozu" && o.hp > 0 && o.xd_move_west) { o.xd_move_west(); break; }
-    }
-};
+// 原先这里死后会让血刀老祖往山谷走一步；按攻略老祖只在砍死「落花流水」四侠时才走（见 fb29.js）。

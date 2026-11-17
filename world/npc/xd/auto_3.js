@@ -1,52 +1,41 @@
 this.inherits(NPC);
+// 「落花流水」四侠之一。原版采集数据里这四人在雪山山谷（这里原先误套了词条石商人模板，不能打）。
+// 机制（world/area/fb1/fb29.js）：玩家在山洞惊动血刀老祖后，四侠赶去与老祖混战；
+// 老祖每砍死一人就往山谷退一步。四侠是友军：不攻击玩家，也不能被玩家杀，不计完成度、不掉落。
 this.set({
-    name: "柔云剑 刘乘风",
-    desc: "一位贩卖各种属性词条石的商人，据说他的石头可以镶嵌到自制装备上。",
-
+    name: "刘乘风",
+    title: "<hic>柔云剑</hic>",
+    desc: "「落花流水」四侠之一，一路追杀血刀老祖至此，誓要为江湖除此大害。",
     gender: 1,
-    age: 40,
-    per: 25,
-    mp: 10000, max_mp: 10000,
-    hp: 10000, max_hp: 10000,
+    age: 45,
+    per: 18,
+    hp: 3800000,
+    max_hp: 3800000,
+    mp: 300000,
+    max_mp: 300000,
+    score: 0,
+    gj: 58000,
+    fy: 1500000,   // 四侠要能在老祖刀下撑一阵（老祖一刀七八十万），否则还没跟上就被砍光
+    mz: 150000,
+    ds: 64000,
+    zj: 1785
 });
-
-this.add_action("list", "购买词条石", function (me) {
-    me.do_command("list", this.id);
-});
-
+this.set_objects(["eq/lv0/cloth", 1, 1]);
+this.skill_map(
+    ["dodge", 3865],
+    ["parry", 3760],
+    ["force", 3865],
+    ["unarmed", 3865]
+);
 this.on_kill = function (me) {
-    return me.notify_fail("竖子尔敢？光天化日朗朗乾坤，竟敢如此！");
-};
-
-this.on_die = function () {
+    if (me && me.notify) me.notify("刘乘风怒道：「我等是来诛杀血刀恶僧的，你分不清敌友么？」");
     return false;
 };
-
-this._goodsCache = null;
-
-this.on_sell = function (me) {
-    if (this._goodsCache) return this._goodsCache;
-
-    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
-    if (!duanzao || !duanzao.PROPS) {
-        me.notify("锻造系统未加载，无法出售词条石。");
-        return [];
-    }
-
-    this._goodsCache = [];
-    for (var propKey in duanzao.PROPS) {
-        var propInfo = duanzao.PROPS[propKey];
-        if (!propInfo || !propInfo.name) continue;
-
-        var stone = OBJ.CREATE("st/p#" + propKey);
-        if (!stone) continue;
-
-        stone.count = -1;   // 充足库存
-        stone.value = 50000; // 单价 5 两黄金（5万铜板），可根据稀有度调整
-        // 可选：根据属性类别调整价格
-        // if (propInfo.category >= 3) stone.value = 100000;
-
-        this._goodsCache.push(stone);
-    }
-    return this._goodsCache;
+this.on_died = function (killer, corpse) {
+    var room = this.environment;
+    if (room && room.parent && room.parent.xd_hero_died) room.parent.xd_hero_died(this, killer);
+};
+this.on_before_fight = function (me) {
+    if (me && me.notify) me.notify(this.name + "摆手道：「大敌当前，哪有工夫和你切磋！」");
+    return false;
 };

@@ -33,4 +33,44 @@ this.set_drop(
     {obj: ["book/bc#yinsuojinling"], odds: 13750},
     {obj: ["eq/lv4/jinlingsuo"], odds: 8250}
 );
-this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("小龙女冷冷地看着你，玉手轻扬，银索金铃已如灵蛇般袭来！"); this.do_kill(me); };
+// 攻略第 30 节：弹琴后才出现，不主动出手；可以比试。
+// 「比试到剩一滴血 → 叫杀 → 凌波溜 → 死了复活 → 干掉小龙女」：她受伤后不会自行回血。
+// 对她叫杀，杨过会来帮手；她死后杨过拼命（杨过只能打昏，见 yangguo.js）。
+this.on_enter = function (me) { };
+this.on_before_fight = function (me) {
+    if (me && me.is_player) this.gm2_hurt = true;
+    return true;
+};
+this.on_kill = function (me) {
+    if (!me || !me.is_player) return true;
+    this.gm2_hurt = true;
+    var room = this.environment;
+    var yg = room && room.find_obj_bypath && room.find_obj_bypath("gm2/yangguo");
+    if (yg && yg.hp > 0 && !yg.is_fighting(me)) {
+        // 稍后再加入：玩家的出手目标是敌人列表第一位，杨过若抢在前面，玩家会一直砍杀不死的杨过
+        yg.call_out(function () {
+            if (yg.hp <= 0 || !me.environment || yg.environment !== me.environment || me.hp <= 0) return;
+            if (yg.environment.send_room) yg.environment.send_room("<hiy>杨过喝道：「休伤龙儿！」挺身挡在小龙女身前。</hiy>");
+            yg.do_kill(me);
+        }, 1500);
+    }
+    return true;
+};
+// 古墓寒气：交过手之后不会自行回血（NPC 默认脱战每 5 秒回一半血）
+this.heart_beat = function (dt) {
+    if (this.gm2_hurt && !this.fight_type && this.hp > 0) {
+        if (this.mp < this.max_mp) this.add_mp(parseInt(this.max_mp / 2));
+        return;
+    }
+    return NPC.prototype.heart_beat.call(this, dt);
+};
+this.on_died = function (killer) {
+    var room = this.environment;
+    var yg = room && room.find_obj_bypath && room.find_obj_bypath("gm2/yangguo");
+    if (!yg || yg.hp <= 0) return;
+    room.send_room("<hir>杨过悲呼一声「龙儿！」，双目尽赤，黯然销魂掌向你当胸拍来！</hir>");
+    for (var i = 0; i < room.items.length; i++) {
+        var p = room.items[i];
+        if (p && p.is_player && p.hp > 0) yg.do_kill(p);
+    }
+};

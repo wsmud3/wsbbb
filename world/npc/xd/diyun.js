@@ -28,16 +28,4 @@ this.set_drop(
     {obj: ["book/bc#shenzhaojing"], odds: 7620}
 );
 // 狄云是被囚禁的NPC，不主动攻击玩家
-
-this.on_died = function (killer, corpse) {
-    var room = this.environment;
-    if (!room) return;
-    // 找本副本里的忘忧谷（原写 xd/wangyougu 不存在；且要取玩家副本实例而非基础房间）
-    var base = ROOM.Get("xd/wangyou");
-    var b = base && room.owner ? base.query_copy(room.owner) : base;
-    if (!b) return;
-    for (var i = 0; i < b.items.length; i++) {
-        var o = b.items[i];
-        if (o && o.path === "xd/xuedaolaozu" && o.hp > 0 && o.xd_move_west) { o.xd_move_west(); break; }
-    }
-};
+// 原先这里死后会让血刀老祖往山谷走一步；按攻略老祖只在砍死「落花流水」四侠时才走（见 fb29.js）。

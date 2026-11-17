@@ -5,4 +5,4 @@ this.exits = {
     "north": "xd/shangu",
     "eastup": "xd/dongkou",
 };
-this.set_npc(["xd/xuedaolaozu", 1])
+this.set_npc([]);

@@ -4,4 +4,4 @@ this.desc = "这是一个小小的山洞，血刀老祖的藏身之地。由於�
 this.exits = {
     "out": "xd/dongkou",
 };
-this.set_npc([]);
+this.set_npc(["xd/xuedaolaozu", 1]);

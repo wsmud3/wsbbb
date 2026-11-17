@@ -33,4 +33,33 @@ this.set_drop(
     {obj: ["book/bc#anranxiaohunzhang"], odds: 13750},
     {obj: ["eq/lv4/bingpoyinzhen"], odds: 8250}
 );
-this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("杨过叹息一声，独臂缓缓抬起，黯然销魂掌的掌意已弥漫四周！"); this.do_kill(me); };
+// 攻略第 30 节：杨过「只能昏迷!!!」——杀不死；醒着时拦在琴室暗道口，要先把他打昏才能下暗河。
+// 之后在平台推石块时他会赶来，用「海潮汹涌」考校玩家（见 world/map/gm2/pingtai.js）。
+this.on_enter = function (me) { };
+this.on_kill = function (me) {
+    if (!me || !me.is_player) return true;
+    var room = this.environment;
+    var xln = room && room.find_obj_bypath && room.find_obj_bypath("gm2/xiaolongnv");
+    if (xln && xln.hp > 0 && !xln.is_fighting(me)) {
+        xln.gm2_hurt = true;
+        xln.call_out(function () {
+            if (xln.hp <= 0 || !me.environment || xln.environment !== me.environment || me.hp <= 0) return;
+            if (xln.environment.send_room) xln.environment.send_room("<hiy>小龙女玉手轻扬，银索金铃如灵蛇般向你卷来！</hiy>");
+            xln.do_kill(me);
+        }, 1500);
+    }
+    return true;
+};
+this.on_die = function (killer) {
+    if (this.environment && this.environment.send_room)
+        this.environment.send_room("<hiy>杨过身形一晃，独臂撑地又站了起来——这人是杀不死的，只能设法让他昏过去。</hiy>");
+    return false;
+};
+this.on_leave = function (me, dir) {
+    if (!me || !me.is_player || dir !== "down" || this.hp <= 0) return true;
+    var room = this.environment;
+    if (!room || room.path !== "gm2/qinshi") return true;
+    if (this.is_faint) return true;
+    me.notify("<hir>杨过横剑拦在暗道口：「古墓重地，岂容你下去！」——杨过杀不死，先设法把他打昏。</hir>");
+    return false;
+};

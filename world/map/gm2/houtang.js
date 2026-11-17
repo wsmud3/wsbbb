@@ -6,4 +6,5 @@ this.exits = {
     "north": "gm2/woshi",
     "east": "gm2/qinshi",
 };
-this.set_npc(["gm2/yangguo", 1], ["gm2/xiaolongnv", 1]);
+// 杨过、小龙女不在后堂常驻：攻略是去琴室弹古琴后二人才出来（见 qinshi.js）
+this.set_npc([]);
