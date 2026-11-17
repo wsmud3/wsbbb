@@ -26,7 +26,7 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 10, max: 100},
-		{obj: ["book/bc#shenghuoshengong"], odds: 9040}
+		{obj: ["book/bc#shenghuoshengong"], odds: 3000}
 	);
 	this.on_enter = function (me) {
 		me.notify("宗维侠双拳一振，喝道：「七伤拳下，无所不伤！接招！」");

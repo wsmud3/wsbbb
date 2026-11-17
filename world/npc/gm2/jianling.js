@@ -28,9 +28,9 @@ this.skill_map(
 // 盘龙簪仅普通、龙骨环仅困难：剑冢房间 on_set_difficulty 按模式过滤
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["eq/lv4/bingpoyinzhen"], odds: 11000},
-    {obj: ["eq/lv5/wushen/panlong_head"], odds: 8250},
-    {obj: ["eq/lv5/wushen/longgu_ring"], odds: 8250}
+    {obj: ["eq/lv4/bingpoyinzhen"], odds: 150},
+    {obj: ["eq/lv5/wushen/panlong_head"], odds: 30},
+    {obj: ["eq/lv5/wushen/longgu_ring"], odds: 30}
 );
 // 普通：剑灵不主动出手（「剑灵可以无缝控死，他很逊」）
 // 困难：剑魔——主动叫杀、控不住、绝对命中（凌波也躲不开，但仍可被招架）

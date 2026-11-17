@@ -28,7 +28,7 @@ this.skill_map(
     ["linjizhuang", 2151, "dodge"]
 );
 this.set_drop(
-    {obj: ["eq/lv5/wushen/yitian_sword"], odds: 17}
+    {obj: ["eq/lv5/wushen/yitian_sword"], odds: 20}
 );
 // [mech] 灭绝师太是被营救的 NPC（规则见 world/area/fb1/fb27.js）：不主动攻击玩家、不能被玩家杀，
 // 被说不得/彭莹玉围攻也不会死（攻略：她抗揍）。二人都死后脱困，并按上面的掉落表赠礼给救她的人。

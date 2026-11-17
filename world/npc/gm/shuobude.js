@@ -26,7 +26,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
-    {obj: ["book/bc#qiankundanuoyi"], odds: 11300}
+    {obj: ["book/bc#qiankundanuoyi"], odds: 3000}
 );
 // [mech] 光明顶上围攻灭绝师太，不理会玩家；与彭莹玉/说不得都死后灭绝脱困（规则见 world/area/fb1/fb27.js）
 this.on_enter = function (me) {

@@ -28,12 +28,15 @@ this.set_drop({
     min: 10,
     max: 30
 }, {
-    obj: ["eq/lv0/cloth", "eq/lv0/dao", "eq/lv0/jian", "eq/lv1/fuchen"],
-    odds: 8000
+    obj: ["eq/lv0/cloth", "eq/lv0/dao", "eq/lv0/jian"],
+    odds: 6000
+}, {
+    obj: ["eq/lv1/fuchen"],
+    odds: 3000
 },
     {
         obj: ["book/bc#shenxingbaibian", "book/bc#qiufengfuchen"],
-        odds: 5000
+        odds: 3000
     });
 this.on_checkskill = function (me) {
     if (me.query_temp("fb/tdh/dubi") == 2) {

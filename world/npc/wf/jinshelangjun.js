@@ -36,14 +36,17 @@ this.set_drop({
     min: 30,
     max: 80
 }, {
-    obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenzhang","book/bc#jinsheyoushenbu", "book/bc#jinshezhuifa"],   // 金蛇锥法残页（攻略列有）
-    odds: 6400
+    obj: ["book/bc#jinshejianfa", "book/bc#jinsheyoushenzhang", "book/bc#jinsheyoushenbu", "book/bc#jinshezhuifa"],   // 金蛇锥法残页（攻略列有）
+    odds: 5000
 }, {
-    obj: ["eq/lv2/js_pifeng", "eq/lv2/js_ring", "eq/lv2/js_nang", "eq/lv1/jinshezhui"],
-    odds: 3840
+    obj: ["eq/lv2/js_pifeng", "eq/lv2/js_ring", "eq/lv2/js_nang"],
+    odds: 1500
+}, {
+    obj: ["eq/lv1/jinshezhui"],
+    odds: 4000
 }, {
     obj: ["eq/lv2/js_pifeng"],
-    odds: 6400
+    odds: 1500
 });
 
 // 完成度改为死亡时明确结算（每人一次），避免引擎自动计分时漏算

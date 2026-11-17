@@ -28,7 +28,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 5, max: 15},
-    {obj: ["book/bc#songfengjianfa"], odds: 4260}
+    {obj: ["book/bc#songfengjianfa"], odds: 3000}
 );
 this.on_enter = function (me) {
     me.notify("外门弟子惊慌地看着你：你……你是什么人！师父说了，外人不得擅闯！");

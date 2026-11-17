@@ -28,7 +28,7 @@
 	);
 	this.set_drop(
 	    {obj: "money/silver", min: 10, max: 100},
-	    {obj: ["book/bc#duanjiajian"], odds: 9600}
+	    {obj: ["book/bc#duanjiajian"], odds: 3000}
 	);
 
 // 天龙寺机制见 world/area/fb1/fb28.js：拦路 / 背负段誉后追杀 / 死亡计数

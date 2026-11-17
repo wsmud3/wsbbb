@@ -41,10 +41,10 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#wudushengong", "book/bc#wudugoufa", "book/bc#wuduyanluobu"],
-    odds: 6750
+    odds: 5000
 }, {
     obj: ["eq/lv2/wd_gou"],
-    odds: 4050
+    odds: 1500
 });
 this.on_enter = function (me) {
     me.notify("何铁手冷冷地看着你，铁手发出咔咔的声响：能走到这里来，算你有几分本事。不过，到此为止了！");

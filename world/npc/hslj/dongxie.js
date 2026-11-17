@@ -30,10 +30,10 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#tanzhishengong"], odds: 14800},
-    {obj: ["book/bc#luoyingshenjian"], odds: 14800},
-    {obj: ["book/bc#biboshengong"], odds: 14800},
-    {obj: ["eq/lv4/yuxiao"], odds: 8880}
+    {obj: ["book/bc#tanzhishengong"], odds: 5000},
+    {obj: ["book/bc#luoyingshenjian"], odds: 5000},
+    {obj: ["book/bc#biboshengong"], odds: 5000},
+    {obj: ["eq/lv4/yuxiao"], odds: 150}
 );
 this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("黄药师轻抚玉箫，冷冷道：「能上得华山，也算一号人物。接我弹指神通！」"); this.do_kill(me); };
 

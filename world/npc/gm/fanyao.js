@@ -28,7 +28,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 30, max: 300},
-    {obj: ["book/bc#shenghuolingfa"], odds: 11300},
-    {obj: ["eq/lv4/zhouzhiruo_shouzhuo"], odds: 6780}
+    {obj: ["book/bc#shenghuolingfa"], odds: 3000},
+    {obj: ["eq/lv4/zhouzhiruo_shouzhuo"], odds: 100}
 );
 this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("范遥面沉如水，冷冷道：「苦头陀在此，休想再进一步！」"); this.do_kill(me); };

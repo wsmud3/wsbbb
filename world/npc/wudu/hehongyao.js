@@ -37,10 +37,10 @@ this.set_drop({
     max: 70
 }, {
     obj: ["book/bc#wudushengong", "book/bc#qianzhuwandushou", "book/bc#wuduyanluobu"],
-    odds: 6750
+    odds: 5000
 }, {
     obj: ["eq/lv2/wd_mianju"],
-    odds: 4050
+    odds: 1500
 });
 this.on_enter = function (me) {
     me.notify("何红药发出一阵刺耳的怪笑：哈哈哈哈！又一个不要命的！既然来了，就留下做我五毒教的药人吧！");

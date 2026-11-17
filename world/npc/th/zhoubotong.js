@@ -30,7 +30,7 @@ this.set_drop({
     max: 200
 }, {
     obj: ["book/bc#kongmingquan", "book/bc#jinyangong"],
-    odds: 8500
+    odds: 3000
 });
 
 // 原版机制（攻略第 19 节，普通模式）：桃林山洞里的老顽童。

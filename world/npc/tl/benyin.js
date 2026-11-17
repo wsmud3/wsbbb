@@ -30,7 +30,7 @@ this.set_drop({
     max: 150
 }, {
     obj: ["book/bc#kumushengong"],
-    odds: 8100
+    odds: 5000
 });
 // 天龙寺机制见 world/area/fb1/fb28.js：崇圣宝殿不在去牟尼堂的路上（攻略：不用管），
 // 平时不主动出手；背起段誉后与其余高僧一起追杀。背段誉前杀了他同样计入杀人数。

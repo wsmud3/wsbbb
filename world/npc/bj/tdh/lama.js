@@ -64,5 +64,5 @@ this.set_drop({
 },
     {
         obj: ["book/bc#mizongxinfa", "book/bc#dashouyin"],
-        odds: 3000
+        odds: 5000
     });

@@ -36,7 +36,7 @@ this.set_drop({
     max: 35
 }, {
     obj: ["book/bc#qianzhuwandushou", "book/bc#wudushengong"],
-    odds: 77490
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("沙千里冷笑一声：又一个不知死活的！看笔！");

@@ -27,7 +27,7 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 10, max: 100},
-		{obj: ["book/bc#shenghuolingfa"], odds: 9040}
+		{obj: ["book/bc#shenghuolingfa"], odds: 3000}
 	);
 	this.on_enter = function (me) {
 		me.notify("宋远桥长剑出鞘，叹道：「武当本不愿多造杀孽，但今日既已至此，便由不得你了！」");

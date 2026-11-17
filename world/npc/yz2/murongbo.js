@@ -26,13 +26,13 @@
 	    ["canhezhi", 2880, "unarmed"]);
 	this.set_drop({
 	    obj: ["book/bc#douzhuanxingyi"],
-	    odds: 9900
+	    odds: 5000
 	}, {
 	    obj: ["book/bc#canhezhi"],
-	    odds: 9900
+	    odds: 5000
 	}, {
 	    obj: ["eq/lv4/yirongmianju"],
-	    odds: 3960
+	    odds: 150
 	});
 	this.on_enter = function (me) {
 	    if (!me || !me.is_player) return;

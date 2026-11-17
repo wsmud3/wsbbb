@@ -36,16 +36,16 @@ this.set_drop({
     max: 300
 }, {
     obj: ["book/bc#anyingfuxiang", "book/bc#tanzhishengong"],
-    odds: 8500
+    odds: 5000
 }, {
     obj: ["book/bc#luoyingshenjian", "book/bc#biboshengong"],
-    odds: 8500
+    odds: 5000
 }, {
     obj: ["eq/lv4/yuxiao"],
-    odds: 5100
+    odds: 150
 }, {
     obj: ["eq/lv4/ruanjia"],
-    odds: 5100
+    odds: 150
 });
 // 困难模式卧室只有黄药师（普通模式由 th/woshi 的 on_set_difficulty 移除），主动叫杀，杀了就 100%
 this.on_enter = function (me) {

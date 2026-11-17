@@ -40,13 +40,13 @@ this.set_drop({
     max: 40
 }, {
     obj: ["book/bc#baguaquan", "book/bc#baguagunfa"],
-    odds: 47872
+    odds: 3000
 }, {
     obj: ["eq/lv0/cloth", "eq/lv0/shoes"],
     odds: 3840
 }, {
     obj: ["eq/lv1/qimeigun"],
-    odds: 9600
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("温方山喝道：来者何人！留下命来！");

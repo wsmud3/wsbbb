@@ -35,13 +35,13 @@ this.set_drop({
     max: 300
 }, {
     obj: ["book/bc#hamagong", "book/bc#lingshezhangfa"],
-    odds: 8500
+    odds: 5000
 }, {
     obj: ["book/bc#chanchubufa"],
-    odds: 6800
+    odds: 5000
 }, {
     obj: ["eq/lv4/lingshezhang"],
-    odds: 5100
+    odds: 150
 });
 this.on_enter = function (me) {
     me.notify("欧阳锋阴森森地说道：小辈，你既入白驼山，就别想活着出去了！");

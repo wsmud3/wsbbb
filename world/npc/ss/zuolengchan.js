@@ -36,19 +36,19 @@ this.set_drop({
     max: 150
 }, {
     obj: ["book/bc#dasongyangshenzhang"],
-    odds: 7800
+    odds: 5000
 }, {
     obj: ["book/bc#hanbingzhenqi"],
-    odds: 7800
+    odds: 5000
 }, {
     obj: ["book/bc#songshanjianfa"],
-    odds: 7800
+    odds: 5000
 }, {
     obj: ["eq/lv3/ss_lingqi"],
-    odds: 4680
+    odds: 500
 }, {
     obj: ["eq/lv3/ss_pifeng"],
-    odds: 4680
+    odds: 500
 });
 this.on_enter = function (me) {
     me.notify("左冷禅端坐盟主宝座，冷冷道：能闯到此处也算不易。可惜，你终究要死在这里！");

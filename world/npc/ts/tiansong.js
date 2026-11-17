@@ -34,10 +34,10 @@ this.set_drop({
     max: 50
 }, {
     obj: ["book/bc#taishanjianfa", "book/bc#taishanquanfa"],
-    odds: 7450
+    odds: 3000
 }, {
     obj: ["eq/lv3/ts_pao"],
-    odds: 4470
+    odds: 300
 }, {
     obj: ["eq/lv0/jian"],
     odds: 2980

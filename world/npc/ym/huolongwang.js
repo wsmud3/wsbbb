@@ -34,7 +34,7 @@ this.set_drop({
     odds: 6520
 }, {
     obj: ["eq/lv3/hl_jian", "eq/lv3/hl_dao", "eq/lv3/hl_bian", "eq/lv3/hl_gun", "eq/lv3/hl_quan"],
-    odds: 8150
+    odds: 500
 });
 this.on_enter = function (me) {
     me.notify("火龙王发出震天怒吼，整片沼泽都在颤抖！");

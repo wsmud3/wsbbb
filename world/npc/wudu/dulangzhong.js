@@ -34,7 +34,7 @@ this.set_drop({
     max: 30
 }, {
     obj: ["book/bc#wudushengong", "book/bc#qianzhuwandushou"],
-    odds: 6750
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("毒郎中阴森森地笑道：来得正好，试试我新配的毒药！");

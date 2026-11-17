@@ -37,8 +37,11 @@ this.set_drop({
     min: 20,
     max: 50
 }, {
-    obj: ["eq/lv0/cloth", "eq/lv1/qimeigun"],
-    odds: 4260
+    obj: ["eq/lv0/cloth"],
+    odds: 2130
+}, {
+    obj: ["eq/lv1/qimeigun"],
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("不戒和尚一拍肚皮，大笑道：哈哈，来了个找打的！看佛爷超度了你！");

@@ -34,11 +34,11 @@ this.set_drop({
     min: 15,
     max: 35
 }, {
-    obj: ["book/bc#songfengjianfa", ],
-    odds: 7100
+    obj: ["book/bc#songfengjianfa"],
+    odds: 3000
 }, {
     obj: ["eq/lv1/lm_cloth", "eq/lv1/lm_jian"],
-    odds: 4260
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("内门弟子拔出长剑，冷声道：擅闯青城派者，剑下领死！");

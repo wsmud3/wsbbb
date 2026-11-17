@@ -30,7 +30,7 @@ this.set_drop({
     max: 200
 }, {
     obj: ["book/bc#tianyuqijian"],
-    odds: 10600
+    odds: 3000
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

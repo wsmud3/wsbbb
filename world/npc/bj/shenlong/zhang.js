@@ -43,10 +43,10 @@ this.set_drop({
     odds: 8000
 }, {
     obj: ["eq/lv2/sl_cloth", "eq/lv2/sl_tou", "eq/lv2/sl_shoes", "eq/lv2/sl_shou", "eq/lv2/sl_yao"],
-    odds: 2000
+    odds: 1000
 }, {
     obj: ["book/bc#shenlongxinfa", "book/bc#yixingbufa", "book/bc#shedaoqigong", "book/bc#shenlongjian"],
-    odds: 5000
+    odds: 3000
 });
 this.on_kill = function (me) {
     this.send_room("洪安通喝到：来我们神龙教撒野？给我上！");

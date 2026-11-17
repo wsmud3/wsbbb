@@ -37,7 +37,7 @@ this.set_drop({
     max: 40
 }, {
     obj: ["book/bc#qianzhuwandushou", "book/bc#wudushengong"],
-    odds: 6750
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("岑其斯阴冷地盯着你：进了五毒教，就别想活着出去！");

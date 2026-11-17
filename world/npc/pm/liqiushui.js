@@ -29,11 +29,11 @@ this.skill_map(
 this.set_drop({
     obj: "money/silver", min: 50, max: 500
 }, {
-    obj: ["book/bc#bulaochangchungong"], odds: 10600
+    obj: ["book/bc#bulaochangchungong"], odds: 5000
 }, {
-    obj: ["book/bc#shenjianjue"], odds: 10600
+    obj: ["book/bc#shenjianjue"], odds: 5000
 }, {
-    obj: ["eq/lv5/wushen/tianlong_necklace"], odds: 6360, diff: 1   // 天龙遗珠仅困难
+    obj: ["eq/lv5/wushen/tianlong_necklace"], odds: 30, diff: 1   // 天龙遗珠仅困难
 });
 
 // [mech] 护送童姥（规则见 world/area/fb1/fb26.js）：李秋水不主动出手，只拦住上山的路；

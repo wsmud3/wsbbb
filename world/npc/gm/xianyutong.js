@@ -26,7 +26,7 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 10, max: 100},
-		{obj: ["book/bc#jiuyangshengong"], odds: 9040}
+		{obj: ["book/bc#jiuyangshengong"], odds: 3000}
 	);
 	this.on_enter = function (me) {
 		me.notify("鲜于通手中折扇一收，冷笑道：「区区小辈也敢闯我华山营地，今日便拿你祭旗！」");

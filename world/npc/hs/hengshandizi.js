@@ -29,7 +29,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 10, max: 30},
-    {obj: ["book/bc#hengshanjianfa", "book/bc#hengshanshenfa", "book/bc#baiyunxinfa"], odds: 4260}
+    {obj: ["book/bc#hengshanjianfa", "book/bc#hengshanshenfa", "book/bc#baiyunxinfa"], odds: 3000}
 );
 this.on_enter = function (me) {
     me.notify("恒山弟子拔出长剑，喝道：何方狂徒，擅闯恒山派！");

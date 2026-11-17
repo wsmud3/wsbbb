@@ -43,10 +43,10 @@ this.set_drop({
     odds: 8000
 }, {
     obj: ["eq/lv2/sl_cloth", "eq/lv2/sl_tou", "eq/lv2/sl_shoes", "eq/lv2/sl_shou", "eq/lv2/sl_yao"],
-    odds: 2000
+    odds: 1000
 }, {
     obj: ["book/bc#shenlongxinfa", "book/bc#yixingbufa", "book/bc#shedaoqigong", "book/bc#shenlongjian"],
-    odds: 5000
+    odds: 3000
 });
 this.set_chat_msg([
     "许雪亭忽然一怕脑袋，说：对了，可以用百花腹蛇膏！",

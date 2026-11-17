@@ -28,10 +28,10 @@ this.set_drop({
     max: 200
 }, {
     obj: ["eq/lv4/lihuozhu"],
-    odds: 7360
+    odds: 100
 }, {
     obj: ["eq/lv3/longhuozhi"],
-    odds: 7360
+    odds: 300
 });
 this.on_enter = function (me) {
     me.notify("炎龙王发出震天咆哮，金白色火焰席卷四方！");

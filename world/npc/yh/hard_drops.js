@@ -9,4 +9,4 @@ this.set({
     score: 0,
     hp: 1, max_hp: 1
 });
-this.set_drop({ obj: ["eq/lv5/wushen/bixue_sword"], odds: 3820 });
+this.set_drop({ obj: ["eq/lv5/wushen/bixue_sword"], odds: 30 });

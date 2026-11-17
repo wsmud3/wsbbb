@@ -30,10 +30,10 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#hamagong"], odds: 14800},
-    {obj: ["book/bc#lingshezhangfa"], odds: 14800},
-    {obj: ["book/bc#chanchubufa"], odds: 14800},
-    {obj: ["eq/lv4/lingshezhang"], odds: 8880}
+    {obj: ["book/bc#hamagong"], odds: 5000},
+    {obj: ["book/bc#lingshezhangfa"], odds: 5000},
+    {obj: ["book/bc#chanchubufa"], odds: 5000},
+    {obj: ["eq/lv4/lingshezhang"], odds: 150}
 );
 this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("欧阳锋怪眼一翻，蛤蟆功蓄势待发，灵蛇杖法如毒蛇吐信！"); this.do_kill(me); };
 

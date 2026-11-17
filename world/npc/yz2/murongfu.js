@@ -27,10 +27,10 @@
 	    ["canhezhi", 2010, "unarmed"]);
 	this.set_drop({
 	    obj: ["book/bc#douzhuanxingyi"],
-	    odds: 9900
+	    odds: 5000
 	}, {
 	    obj: ["book/bc#canhezhi"],
-	    odds: 9900
+	    odds: 5000
 	});
 	this.on_enter = function (me) {
 	    me.notify("慕容复冷哼一声：擅闯我慕容家书房，找死！");

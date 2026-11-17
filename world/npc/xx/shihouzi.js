@@ -29,7 +29,7 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#sanyinwugongzhao", "book/bc#huagongdafa"],
-    odds: 8850
+    odds: 3000
 });
 
 // 原版机制（攻略第 21 节）：必须击杀二师兄狮吼子，才能进日月洞打星宿老怪丁春秋。

@@ -29,9 +29,9 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#anyingfuxiang"], odds: 14800},
-    {obj: ["book/bc#kumushengong"], odds: 14800},
-    {obj: ["eq/lv4/yuzhuzhang"], odds: 8880}
+    {obj: ["book/bc#anyingfuxiang"], odds: 5000},
+    {obj: ["book/bc#kumushengong"], odds: 5000},
+    {obj: ["eq/lv4/yuzhuzhang"], odds: 150}
 );
 this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("洪七公哈哈大笑，声如洪钟：「小娃娃功夫不错，来陪老叫花走两招！」"); this.do_kill(me); };
 

@@ -27,7 +27,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 20, max: 200},
-    {obj: ["book/bc#qingfushenfa"], odds: 11300},
-    {obj: ["eq/lv4/weiyixiao_taomingshoe"], odds: 6780}
+    {obj: ["book/bc#qingfushenfa"], odds: 3000},
+    {obj: ["eq/lv4/weiyixiao_taomingshoe"], odds: 100}
 );
 this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("韦一笑如鬼魅般飘至，冷笑道：「让你见识什么叫真正的轻功！」"); this.do_kill(me); };

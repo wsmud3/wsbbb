@@ -30,7 +30,7 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#kongmingquan"],
-    odds: 8500
+    odds: 3000
 });
 
 // 原版机制（攻略第 19 节，普通模式；困难模式卧室没有黄蓉，见 th/woshi）：

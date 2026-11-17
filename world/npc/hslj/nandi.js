@@ -30,9 +30,9 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#yiyangzhi"], odds: 14800},
-    {obj: ["book/bc#duanjiajian"], odds: 14800},
-    {obj: ["book/bc#tiannanbu"], odds: 14800}
+    {obj: ["book/bc#yiyangzhi"], odds: 5000},
+    {obj: ["book/bc#duanjiajian"], odds: 5000},
+    {obj: ["book/bc#tiannanbu"], odds: 5000}
 );
 this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("一灯大师端坐不动，一阳指的无形指力已破空而至！"); this.do_kill(me); };
 

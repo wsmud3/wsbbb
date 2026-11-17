@@ -37,10 +37,10 @@ this.set_drop({
     max: 60
 }, {
     obj: ["eq/lv3/hs2_qinhuan"],
-    odds: 4470
+    odds: 300
 }, {
     obj: ["eq/lv2/hs_qin"],
-    odds: 4470
+    odds: 1000
 });
 this.on_enter = function (me) {
     me.notify("曲洋抚琴而坐，淡淡说道：老夫本是魔教中人，江湖上人人得而诛之。不过，能与刘兄琴箫相和，此生无憾矣。");

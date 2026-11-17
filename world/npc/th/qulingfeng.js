@@ -33,10 +33,10 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#tanzhishengong"],
-    odds: 8500
+    odds: 3000
 }, {
     obj: ["book/bc#anyingfuxiang"],
-    odds: 6800
+    odds: 3000
 });
 // 攻略：出了林子路上遇到的两个小弟「杀不杀无所谓」——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {

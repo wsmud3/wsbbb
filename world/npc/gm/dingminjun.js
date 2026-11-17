@@ -26,7 +26,7 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 10, max: 100},
-		{obj: ["book/bc#yingzhuagong"], odds: 9040}
+		{obj: ["book/bc#yingzhuagong"], odds: 3000}
 	);
 	this.on_enter = function (me) {
 		me.notify("丁敏君拔剑怒喝：「魔教妖人，纳命来！」");

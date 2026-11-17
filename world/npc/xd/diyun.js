@@ -25,7 +25,7 @@ this.skill_map(
     ["shenzhaojing", 600, "force"]
 );
 this.set_drop(
-    {obj: ["book/bc#shenzhaojing"], odds: 7620}
+    {obj: ["book/bc#shenzhaojing"], odds: 3000}
 );
 // 狄云是被囚禁的NPC，不主动攻击玩家
 // 原先这里死后会让血刀老祖往山谷走一步；按攻略老祖只在砍死「落花流水」四侠时才走（见 fb29.js）。

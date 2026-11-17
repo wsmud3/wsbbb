@@ -27,10 +27,10 @@ this.set_drop({
     max: 100
 }, {
     obj: ["eq/lv3/bilinzhen"],
-    odds: 8850
+    odds: 300
 }, {
     obj: ["book/bc#zhaixinggong"],
-    odds: 7080
+    odds: 3000
 });
 // 攻略第 21 节：此关只需击杀丁春秋和狮吼子，其他人不会拦你——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {

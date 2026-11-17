@@ -36,8 +36,8 @@ this.set_drop({
     min: 20,
     max: 50
 }, {
-    obj: ["book/bc#songfengjianfa",  "book/bc#tagexing"],
-    odds: 7100
+    obj: ["book/bc#songfengjianfa", "book/bc#tagexing"],
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("余人彦傲慢地瞥了你一眼：又一个不知死活的！看本少主取你狗命！");

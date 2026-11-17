@@ -29,7 +29,7 @@ this.set_drop({
     max: 100
 }, {
     obj: ["eq/lv4/zhuyandan"],
-    odds: 6360
+    odds: 100
 });
 // 叫杀由断魂崖 pm/ya.js 统一安排：先扑向童姥，再对付玩家（攻略：速度要快，否则女童会被两个小怪秒杀）
 this.on_enter = function (me) {

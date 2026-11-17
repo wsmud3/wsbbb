@@ -36,7 +36,7 @@ this.set_drop({
     max: 50
 }, {
     obj: ["eq/lv2/hs_qin"],
-    odds: 4470
+    odds: 1000
 });
 
 // 刘正风是友军：不会主动打玩家，但被费斌叫杀后会还手（do_kill 是双向的）

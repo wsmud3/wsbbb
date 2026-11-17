@@ -29,9 +29,9 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 40, max: 400},
-    {obj: ["book/bc#xuantiejianfa"], odds: 13750},
-    {obj: ["book/bc#anranxiaohunzhang"], odds: 13750},
-    {obj: ["eq/lv4/bingpoyinzhen"], odds: 8250}
+    {obj: ["book/bc#xuantiejianfa"], odds: 5000},
+    {obj: ["book/bc#anranxiaohunzhang"], odds: 5000},
+    {obj: ["eq/lv4/bingpoyinzhen"], odds: 150}
 );
 // 攻略第 30 节：杨过「只能昏迷!!!」——杀不死；醒着时拦在琴室暗道口，要先把他打昏才能下暗河。
 // 之后在平台推石块时他会赶来，用「海潮汹涌」考校玩家（见 world/map/gm2/pingtai.js）。

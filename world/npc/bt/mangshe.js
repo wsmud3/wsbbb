@@ -27,7 +27,7 @@ this.set_drop({
     max: 3
 }, {
     obj: ["book/bc#lingshezhangfa"],
-    odds: 5100
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("巨蟒从岩洞中窜出，张开血盆大口向你吞来！");

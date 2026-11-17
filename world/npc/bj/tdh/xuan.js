@@ -40,5 +40,5 @@ this.set_drop({
 },
     {
         obj: ["book/bc#yunlongjian"],
-        odds: 1000
+        odds: 3000
     });

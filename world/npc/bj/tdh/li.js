@@ -36,5 +36,5 @@ this.set_drop({
 },
     {
         obj: ["book/bc#wuhuduanmendao"],
-        odds: 5000
+        odds: 3000
     });

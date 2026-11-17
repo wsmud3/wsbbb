@@ -28,9 +28,9 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#jiuyangshengong"], odds: 11300},
-    {obj: ["book/bc#qiankundanuoyi"], odds: 11300},
-    {obj: ["eq/lv4/shenghuoling"], odds: 6780}
+    {obj: ["book/bc#jiuyangshengong"], odds: 5000},
+    {obj: ["book/bc#qiankundanuoyi"], odds: 5000},
+    {obj: ["eq/lv4/shenghuoling"], odds: 150}
 );
 // [mech] 张无忌（黄名）不主动叫杀（攻略：先秒左右光明使，再单挑张无忌）。
 // 六大门派弟子每死一人他多一层号令，攻击随层数上涨（规则见 world/area/fb1/fb27.js）。

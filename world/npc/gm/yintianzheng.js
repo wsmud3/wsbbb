@@ -27,7 +27,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 20, max: 200},
-    {obj: ["book/bc#yingzhuagong"], odds: 11300},
-    {obj: ["eq/lv4/zhaomin_jiezhi"], odds: 6780}
+    {obj: ["book/bc#yingzhuagong"], odds: 3000},
+    {obj: ["eq/lv4/zhaomin_jiezhi"], odds: 100}
 );
 this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("殷天正白眉一轩，喝道：「鹰爪功之下，从无活口！」"); this.do_kill(me); };

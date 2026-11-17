@@ -28,7 +28,7 @@ this.set_drop({
     max: 200
 }, {
     obj: ["eq/lv3/yanglianting_xiangquan"],
-    odds: 6150
+    odds: 300
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

@@ -28,7 +28,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 10, max: 30},
-    {obj: ["book/bc#songfengjianfa"], odds: 4260}
+    {obj: ["book/bc#songfengjianfa"], odds: 3000}
 );
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

@@ -27,7 +27,7 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 10, max: 100},
-		{obj: ["book/bc#qiankundanuoyi"], odds: 9040}
+		{obj: ["book/bc#qiankundanuoyi"], odds: 3000}
 	);
 	this.on_enter = function (me) {
 		me.notify("何太冲冷笑一声：「来的正好，昆仑剑下不死无名之鬼！」");

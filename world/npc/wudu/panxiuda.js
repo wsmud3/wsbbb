@@ -37,7 +37,7 @@ this.set_drop({
     max: 40
 }, {
     obj: ["book/bc#qianzhuwandushou", "book/bc#wudushengong"],
-    odds: 6750
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("潘秀达微微一笑，掌中已暗藏剧毒：得罪了！");

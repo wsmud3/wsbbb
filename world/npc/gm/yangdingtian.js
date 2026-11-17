@@ -29,9 +29,9 @@
 	);
 	this.set_drop(
 		{obj: "money/silver", min: 50, max: 500},
-		{obj: ["book/bc#qiankundanuoyi"], odds: 11300},
-		{obj: ["book/bc#shenghuolingfa"], odds: 11300},
-		{obj: ["eq/lv4/shenghuoling"], odds: 6780}
+		{obj: ["book/bc#qiankundanuoyi"], odds: 3000},
+		{obj: ["book/bc#shenghuolingfa"], odds: 3000},
+		{obj: ["eq/lv4/shenghuoling"], odds: 100}
 	);
 	this.on_enter = function (me) {
 		me.notify("阳顶天缓缓睁开双眼，沉声道：「老夫镇守此处数十载，今日岂容你放肆！乾坤大挪移！」");

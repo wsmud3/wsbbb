@@ -29,9 +29,9 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 30, max: 300},
-    {obj: ["book/bc#yunvxinjing"], odds: 13750},
-    {obj: ["book/bc#yinsuojinling"], odds: 13750},
-    {obj: ["eq/lv4/jinlingsuo"], odds: 8250}
+    {obj: ["book/bc#yunvxinjing"], odds: 3000},
+    {obj: ["book/bc#yinsuojinling"], odds: 3000},
+    {obj: ["eq/lv4/jinlingsuo"], odds: 100}
 );
 // 攻略第 30 节：弹琴后才出现，不主动出手；可以比试。
 // 「比试到剩一滴血 → 叫杀 → 凌波溜 → 死了复活 → 干掉小龙女」：她受伤后不会自行回血。

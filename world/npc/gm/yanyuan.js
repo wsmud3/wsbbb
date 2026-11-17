@@ -25,7 +25,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
-    {obj: ["book/bc#shenghuolingfa"], odds: 9040}
+    {obj: ["book/bc#shenghuolingfa"], odds: 3000}
 );
 // [mech] 明教高手（蓝名）：进门先向同房间的六大门派弟子下杀手，倒下即救下弟子（规则见 world/area/fb1/fb27.js）
 this.on_enter = function (me) {

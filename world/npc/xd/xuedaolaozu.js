@@ -30,11 +30,11 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
-    {obj: ["book/bc#xuehaimogong"], odds: 12700},
-    {obj: ["book/bc#xuedao"], odds: 12700},
-    {obj: ["book/bc#shenkongxing2"], odds: 12700},
-    {obj: ["eq/lv5/wushen/xuedao_blade"], odds: 7620},
-    {obj: ["eq/lv5/wushen/longxue_cape"], odds: 7620}   // 攻略列有龙血斗篷
+    {obj: ["book/bc#xuehaimogong"], odds: 5000},
+    {obj: ["book/bc#xuedao"], odds: 5000},
+    {obj: ["book/bc#shenkongxing2"], odds: 5000},
+    {obj: ["eq/lv5/wushen/xuedao_blade"], odds: 30},
+    {obj: ["eq/lv5/wushen/longxue_cape"], odds: 30}   // 攻略列有龙血斗篷
 );
 
 // 机制见 world/area/fb1/fb29.js：老祖坐镇山洞 xd/xuedao，与赶来的「落花流水」四侠混战，

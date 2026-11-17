@@ -27,7 +27,7 @@ this.skill_map(
 this.set_goods("sp/azhu_mask");
 this.set_drop({
     obj: ["eq/lv4/yirongmianju"],
-    odds: 3960
+    odds: 100
 });
 
 // 攻略：建议留着阿朱，在内堂与她「切磋」（比试）刷五神剑的祝融 buff。

@@ -35,16 +35,16 @@ this.set_drop({
     max: 300
 }, {
     obj: ["book/bc#huagongdafa", "book/bc#sanyinwugongzhao"],
-    odds: 8850
+    odds: 5000
 }, {
     obj: ["book/bc#feixingshu", "book/bc#zhaixinggong"],
-    odds: 8850
+    odds: 5000
 }, {
     obj: ["eq/lv4/shenmuwangding"],
-    odds: 5310
+    odds: 150
 }, {
     obj: ["eq/lv3/bilinzhen"],
-    odds: 5310
+    odds: 500
 });
 // 攻略第 21 节：丁春秋的化功没啥用，要小心他的三阴蜈蚣爪，和「飞星」叠加可是很痛的，
 // 可以比试骗掉飞星，然后击杀他。

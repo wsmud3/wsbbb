@@ -28,10 +28,10 @@ this.set_drop({
     max: 100
 }, {
     obj: ["eq/lv4/yihuagongzhuang"],
-    odds: 5730
+    odds: 100
 }, {
     obj: ["eq/lv4/yihuagonglv"],
-    odds: 5730
+    odds: 100
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

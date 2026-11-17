@@ -40,7 +40,7 @@ this.set_drop({
     odds: 5000
 }, {
     obj: ["eq/lv3/kw_dao"],
-    odds: 2000
+    odds: 500
 });
 this.on_enter = function (me) {
     me.notify("阎基狞笑道：嘿嘿，又来一个送死的！看刀！");

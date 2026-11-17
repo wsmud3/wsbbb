@@ -32,10 +32,10 @@ this.set_drop({
     max: 250
 }, {
     obj: ["book/bc#yifengjianfa"],
-    odds: 9550
+    odds: 5000
 }, {
     obj: ["eq/lv3/lianxing_bingyuzan"],
-    odds: 5730
+    odds: 500
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;

@@ -37,10 +37,10 @@ this.set_drop({
     max: 40
 }, {
     obj: ["book/bc#wudushengong", "book/bc#qianzhuwandushou"],
-    odds: 6750
+    odds: 3000
 }, {
     obj: ["eq/lv1/qimeigun"],
-    odds: 4050
+    odds: 3000
 });
 this.on_enter = function (me) {
     me.notify("齐云敖大吼一声：找死！吃我一杖！");

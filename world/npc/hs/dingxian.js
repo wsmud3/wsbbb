@@ -34,8 +34,8 @@ this.set_drop({
     min: 15,
     max: 40
 }, {
-    obj: ["book/bc#hengshanjianfa", ],
-    odds: 7100
+    obj: ["book/bc#hengshanjianfa"],
+    odds: 3000
 }, {
     obj: ["eq/lv0/cloth", "eq/lv0/shoes"],
     odds: 4260

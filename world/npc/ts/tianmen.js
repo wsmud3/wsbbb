@@ -35,13 +35,13 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#panshishengong", "book/bc#taishanjianfa"],
-    odds: 7450
+    odds: 5000
 }, {
     obj: ["eq/lv3/ts_hufu"],
-    odds: 4470
+    odds: 500
 }, {
     obj: ["eq/lv3/ts_pao"],
-    odds: 4470
+    odds: 500
 });
 this.on_enter = function (me) {
     me.notify("天门道人缓缓转身，沉声道：贫道镇守泰山数十年，今日便领教阁下高招！");

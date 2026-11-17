@@ -26,7 +26,7 @@ this.skill_map(
 );
 this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
-    {obj: ["book/bc#xuedao"], odds: 7620}
+    {obj: ["book/bc#xuedao"], odds: 3000}
 );
 this.on_enter = function (me) { me.notify("血刀弟子怪叫一声，举刀向你砍来！"); this.do_kill(me); };
 // 原先这里死后会让血刀老祖往山谷走一步；按攻略老祖只在砍死「落花流水」四侠时才走（见 fb29.js）。
