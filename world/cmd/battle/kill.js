@@ -49,6 +49,13 @@ this.enter = function (me, argid) {
         if (target.on_kill && target.on_kill(me) == false) return;
         target.do_kill(me);
         target.begin_kill && target.begin_kill(me);
+        // 战斗中叫杀新目标：do_kill 只把目标追加到敌人列表末尾，出招仍打 enemy[0]（原先的对手），
+        // 等于叫杀没反应（如血刀门叫杀四侠，刀刀都还砍在老祖身上）。和上面「已在列表里」一样挪到最前。
+        var idx = me.enemy ? me.enemy.indexOf(target) : -1;
+        if (idx > 0) {
+            me.enemy.splice(idx, 1);
+            me.enemy.splice(0, 0, target);
+        }
         return me.send_room("$N扑向$n！", target);
     }
     if (target.fight_type == 1) {

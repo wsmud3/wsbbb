@@ -781,7 +781,10 @@ ROOM.prototype.query_all_enemy = function (me) {
     var enemies = [];
     for (var i = 0; i < this.items.length; i++) {
         var item = this.items[i];
-        if (item != me && item.hp > 0 && item.fight_type && item.query_enemy && item.query_enemy() == me) {
+        // 与 me 互为敌人的都算（原先只认「当前目标是 me」的：混战里正在打别人的敌人——
+        // 如血刀门围攻四侠的血刀老祖——破碎九重天、定乾坤等全场技能永远打不到）
+        if (item != me && item.hp > 0 && item.fight_type && item.enemy
+            && (item.enemy.indexOf(me) >= 0 || (me.enemy && me.enemy.indexOf(item) >= 0))) {
             enemies.push(item);
         }
     }
