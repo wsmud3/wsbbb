@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 65,
     per: 8,
-    hp: 4172800,
-    max_hp: 4172800,
+    hp: 1495652,
+    max_hp: 1495652,
     mp: 946000,
     max_mp: 946000,
     score: 280,
-    gj: 300800,
-    fy: 125984,
-    mz: 292800,
-    ds: 121412,
-    zj: 2520
+    gj: 107500,
+    fy: 55900,
+    mz: 104641,
+    ds: 51800,
+    zj: 1118
 });
 // 手持血刀（NPC 专用，可被卸下；见 world/obj/xd/laozu_xuedao.js）
 this.set_objects(["eq/lv0/cloth", 1, 1], ["xd/laozu_xuedao", 1, 1]);

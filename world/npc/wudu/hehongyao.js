@@ -5,16 +5,16 @@ this.set({
     title: "<hir>五毒教主</hir>",
     gender: 2,
     age: 45,
-    hp: 255000,
-    max_hp: 255000,
+    hp: 173913,
+    max_hp: 173913,
     mp: 94600,
     max_mp: 94600,
     score: 55,
-    gj: 22185,
-    fy: 12690,
-    mz: 20925,
-    ds: 10098,
-    zj: 875
+    gj: 12500,
+    fy: 6500,
+    mz: 11790,
+    ds: 7000,
+    zj: 448
 });
 this.set_objects([
     "eq/lv2/hs_qin", 1, 1,

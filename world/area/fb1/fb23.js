@@ -10,6 +10,7 @@ this.set({
     expend: 10,
     is_multi: true,
     is_diffi: true,
+    hard_scale: 1.63,   // 困难模式 NPC 属性倍率（攻略：普通攻击 1.5 万，困难 2.45 万）
     exp: 30000,
     pot: 26000,
     room_path: "yh/",

@@ -5,16 +5,16 @@ this.set({
     gender: 1,
     age: 30,
     per: 10,
-    hp: 550000,
-    max_hp: 550000,   // 攻略：两名弟子 50w、60w 血
+    hp: 197136,
+    max_hp: 197136,   // 攻略：两名弟子 50w、60w 血
     mp: 302000,
     max_mp: 302000,
     score: 0,
-    gj: 112000,
-    fy: 78994,
-    mz: 113600,
-    ds: 76708,
-    zj: 1575
+    gj: 40027,
+    fy: 35050,
+    mz: 40598,
+    ds: 32727,
+    zj: 699
 });
 this.set_objects(["eq/lv0/cloth", 1, 1]);
 this.skill_map(

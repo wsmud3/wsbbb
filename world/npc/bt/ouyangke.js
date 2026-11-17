@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 26,
     per: 26,
-    hp: 600000,
-    max_hp: 600000,
+    hp: 279860,
+    max_hp: 279860,
     mp: 210000,
     max_mp: 210000,
     score: 20,   // 须击杀
-    gj: 45000,
-    fy: 26000,
-    mz: 34000,
-    ds: 27000,
-    zj: 1100
+    gj: 26605,
+    fy: 11228,
+    mz: 20101,
+    ds: 13401,
+    zj: 475
 });
 this.set_objects(["eq/lv0/cloth", 1, 1]);
 this.skill_map(

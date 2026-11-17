@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 50,
     per: 22,
-    hp: 4955200,
-    max_hp: 4955200,
+    hp: 1438367,
+    max_hp: 1438367,
     mp: 796000,
     max_mp: 796000,
     score: 50,   // 五绝依次出场，合计 300 = 100%
-    gj: 296400,
-    fy: 169312,
-    mz: 292600,
-    ds: 171088,
-    zj: 3360
+    gj: 175940,
+    fy: 86131,
+    mz: 173684,
+    ds: 73832,
+    zj: 1709
 });
 this.set_objects(["eq/lv0/cloth", 1, 1]);
 this.skill_map(

@@ -44,9 +44,16 @@ AREA.prototype.find_area = function (path) {
 AREA.prototype.is_record = function (diff) {
     return this["record_" + diff];
 }
+// 副本满完成度的经验/潜能奖励：读区域文件里配置的 exp / pot。
+// 原先固定为 1000 + 副本序号×100，区域文件里配的 exp/pot（500 → 46000）从未生效。
 AREA.prototype.query_exp = function () {
+    if (this.exp > 0) return this.exp;
     var lv = this.fb_index || 0;
     return 1000 + lv * 100;
+}
+AREA.prototype.query_pot = function () {
+    if (this.pot > 0) return this.pot;
+    return this.query_exp();
 }
 
 AREA.prototype.query_desc = function () {

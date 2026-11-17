@@ -5,16 +5,16 @@ this.set({
     gender: 0,
     age: 18,
     per: 28,
-    hp: 715200,
-    max_hp: 715200,
+    hp: 599839,
+    max_hp: 599839,
     mp: 149000,
     max_mp: 149000,
     score: 0,
-    gj: 41520,
-    fy: 25958,
-    mz: 41520,
-    ds: 25958,
-    zj: 85
+    gj: 40648,
+    fy: 20485,
+    mz: 40648,
+    ds: 19159,
+    zj: 67
 });
 this.skill_map(
     ["literate", 2109]);

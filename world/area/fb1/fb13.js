@@ -9,8 +9,8 @@
 	    is_copy: true,
 	    expend: 10,
 	    is_multi: false,
-	    exp: 10000,
-	    pot: 8000,
+	    exp: 12000,
+	    pot: 9000,
 	    room_path: "hs/",
 	    ss_title: "采花大盗"
 	});

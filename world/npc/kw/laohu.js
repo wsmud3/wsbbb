@@ -4,15 +4,15 @@ this.set({
     desc: "一只体型硕大的东北虎，通体雪白，獠牙外露，低吼声中充满杀意。",
     gender: 0,
     age: 6,
-    hp: 70000,
-    max_hp: 70000,
+    hp: 23949,
+    max_hp: 23949,
     mp: 39500,
     max_mp: 39500,
     score: 10,
-    gj: 5340,
-    fy: 3260,
-    mz: 4080,
-    ds: 3220,
+    gj: 1385,
+    fy: 568,
+    mz: 1058,
+    ds: 793,
     zj: -100
 });
 this.skill_map(

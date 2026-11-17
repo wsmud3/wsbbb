@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 999,
     per: 20,
-    hp: 5320000,
-    max_hp: 5320000,
+    hp: 1826524,
+    max_hp: 1826524,
     mp: 754000,
     max_mp: 754000,
     score: 205,
-    gj: 283500,
-    fy: 147950,
-    mz: 232750,
-    ds: 150700,
-    zj: 3375
+    gj: 142788,
+    fy: 67250,
+    mz: 117228,
+    ds: 81907,
+    zj: 1534
 });
 // 手持古剑（攻略：可以毒钩/折梅手下武器）
 this.set_objects(["eq/lv0/cloth", 1, 1], ["gm2/jianzhong_jian", 1, 1]);

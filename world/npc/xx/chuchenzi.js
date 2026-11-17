@@ -5,16 +5,16 @@ this.set({
     gender: 1,
     age: 28,
     per: 8,
-    hp: 499800,
-    max_hp: 499800,
+    hp: 288298,
+    max_hp: 288298,
     mp: 141000,
     max_mp: 141000,
     score: 0,
-    gj: 36540,
-    fy: 20479,
-    mz: 29190,
-    ds: 23329,
-    zj: 930
+    gj: 19151,
+    fy: 10056,
+    mz: 15299,
+    ds: 11976,
+    zj: 457
 });
 this.set_objects([
     "eq/lv3/bilinzhen", 1, 1

@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 35,
     per: 15,
-    hp: 444400,
-    max_hp: 444400,
+    hp: 199929,
+    max_hp: 199929,
     mp: 185000,
     max_mp: 185000,
     score: 65,
-    gj: 30580,
-    fy: 26183,
-    mz: 43340,
-    ds: 19228,
-    zj: 1440
+    gj: 14142,
+    fy: 11629,
+    mz: 20044,
+    ds: 9496,
+    zj: 640
 });
 this.set_objects(["eq/lv0/cloth", 1, 1], ["eq/lv0/jian", 1, 1]);
 // 攻略（困难）：张五侠会缠字诀、太极拳、真武除邪——

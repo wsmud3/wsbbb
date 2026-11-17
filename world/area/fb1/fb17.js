@@ -8,8 +8,8 @@
 		    is_show: true,
 		    is_copy: true,
 		    expend: 10,
-		    exp: 12000,
-		    pot: 10000,
+		    exp: 18500,
+		    pot: 14500,
 		    room_path: "ss/",
 		    ss_title: "五岳盟主"
 		});

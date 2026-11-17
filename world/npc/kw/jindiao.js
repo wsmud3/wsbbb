@@ -4,15 +4,15 @@ this.set({
     desc: "一只巨大的金雕，双翅展开足有一丈来长，利爪如钩，眼神锐利。",
     gender: 0,
     age: 5,
-    hp: 77000,
-    max_hp: 77000,
+    hp: 26344,
+    max_hp: 26344,
     mp: 27750,
     max_mp: 27750,
     score: 10,
-    gj: 5610,
-    fy: 3240,
-    mz: 4230,
-    ds: 3600,
+    gj: 1455,
+    fy: 564,
+    mz: 1097,
+    ds: 887,
     zj: -100
 });
 this.skill_map(

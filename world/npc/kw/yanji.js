@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 35,
     per: 8,
-    hp: 122000,
-    max_hp: 122000,
+    hp: 41739,
+    max_hp: 41739,
     mp: 88000,
     max_mp: 88000,
     score: 20,
-    gj: 11570,
-    fy: 8960,
-    mz: 14860,
-    ds: 6820,
-    zj: 400
+    gj: 3000,
+    fy: 1560,
+    mz: 3853,
+    ds: 1680,
+    zj: 70
 });
 this.set_objects([
     "eq/lv3/kw_dao", 1, 1

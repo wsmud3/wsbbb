@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 55,
     per: 5,
-    hp: 844200,
-    max_hp: 844200,
+    hp: 486957,
+    max_hp: 486957,
     mp: 249000,
     max_mp: 249000,
     score: 300,
-    gj: 66780,
-    fy: 37064,
-    mz: 58800,
-    ds: 38179,
-    zj: 1550
+    gj: 35000,
+    fy: 18200,
+    mz: 30818,
+    ds: 19600,
+    zj: 761
 });
 this.set_objects([
     "eq/lv4/shenmuwangding", 1, 1

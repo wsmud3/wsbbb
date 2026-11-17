@@ -211,6 +211,17 @@ NPC.prototype.heart_beat = function (dt) {
 
 
 
+// 困难模式属性倍率：区域设 hard_scale（>1）时，困难副本里的 NPC 气血与攻防命闪招按倍率放大。
+// 开副本时房间常驻的 NPC 在 ROOM.set_difficulty 里处理；之后动态刷出的在 NPC.CREATE 里处理。
+NPC.prototype.apply_hard_scale = function (k) {
+    if (this._hard_scaled || !(k > 1)) return;
+    this._hard_scaled = true;
+    var keys = ["max_hp", "gj", "fy", "mz", "ds", "zj"];
+    for (var i = 0; i < keys.length; i++) {
+        if (this[keys[i]] > 0) this[keys[i]] = Math.round(this[keys[i]] * k);
+    }
+    this.hp = this.max_hp;
+};
 NPC.CREATE = function (path, env, oncreate, count) {
     if (!path || !env) return;
 
@@ -218,9 +229,11 @@ NPC.CREATE = function (path, env, oncreate, count) {
     if (env.environment) env = env.environment;
     count = count || 1;
     let obj = null;
+    var hardK = (env.parent && env.parent.hard_scale > 1 && env.query_difficulty && env.query_difficulty() === 1) ? env.parent.hard_scale : 0;
     for (let i = 0; i < count; i++) {
         obj = NPC.CLONE(path);
         if (!obj) continue;
+        if (hardK) obj.apply_hard_scale(hardK);
         env.item_changed(obj, true);
         if (oncreate) oncreate(obj);
     }

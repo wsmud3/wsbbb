@@ -737,6 +737,14 @@ ROOM.prototype.query_difficulty = function () {
 };
 ROOM.prototype.set_difficulty = function (type) {
     this.on_set_difficulty && this.on_set_difficulty(type);
+    // 困难模式属性倍率（见 NPC.prototype.apply_hard_scale）
+    var k = this.parent && this.parent.hard_scale;
+    if (type === 1 && k > 1) {
+        for (var i = 0; i < this.items.length; i++) {
+            var o = this.items[i];
+            if (o && !o.is_player && o.apply_hard_scale) o.apply_hard_scale(k);
+        }
+    }
 }
 // 房间广播（房间脚本常写 this.send_room(...)，原先只有 CHARACTER 有这个方法，
 // 调用即 TypeError，后续逻辑全部中断）。房间没有发起者，$N 等占位不做替换。

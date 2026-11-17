@@ -6,16 +6,16 @@ this.set({
     gender: 1,
     age: 48,
     per: 10,
-    hp: 1044000,
-    max_hp: 1044000,
+    hp: 486957,
+    max_hp: 486957,
     mp: 253500,
     max_mp: 253500,
     score: 200,
-    gj: 59200,
-    fy: 42143,
-    mz: 55600,
-    ds: 36669,
-    zj: 1500
+    gj: 35000,
+    fy: 18200,
+    mz: 32872,
+    ds: 18200,
+    zj: 648
 });
 this.set_objects([
     "eq/lv4/lingshezhang", 1, 1

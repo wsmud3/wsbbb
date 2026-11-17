@@ -6,16 +6,16 @@ this.set({
     gender: 0,
     age: 35,
     per: 24,
-    hp: 1145400,
-    max_hp: 1145400,
+    hp: 521739,
+    max_hp: 521739,
     mp: 219000,
     max_mp: 219000,
     score: 90,
-    gj: 84180,
-    fy: 39594,
-    mz: 67160,
-    ds: 45744,
-    zj: 1815
+    gj: 37500,
+    fy: 19500,
+    mz: 29918,
+    ds: 19880,
+    zj: 894
 });
 this.set_objects(["eq/lv0/cloth", 1, 1]);
 this.skill_map(

@@ -8,8 +8,8 @@ this.set({
     is_show: true,
     is_copy: true,
     expend: 10,
-    exp: 10000,
-    pot: 8000,
+    exp: 17000,
+    pot: 13000,
     room_path: "ts/",
     ss_title: "阿西噶"
 });

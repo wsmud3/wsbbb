@@ -4,15 +4,15 @@ this.set({
     desc: "一位饱经风霜的老船夫，脸色黝黑，双手布满老茧，在此摆渡多年。",
     gender: 1,
     age: 55,
-    hp: 5000,
-    max_hp: 5000,
+    hp: 1711,
+    max_hp: 1711,
     mp: 2000,
     max_mp: 2000,
     score: 0,
-    gj: 200,
-    fy: 100,
-    mz: 100,
-    ds: 100,
+    gj: 52,
+    fy: 17,
+    mz: 26,
+    ds: 25,
     zj: -200
 });
 this.skill_map(

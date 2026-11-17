@@ -5,16 +5,16 @@ this.set({
     gender: 1,
     age: 30,
     per: 20,
-    hp: 500000,
-    max_hp: 500000,
+    hp: 281203,
+    max_hp: 281203,
     mp: 112000,
     max_mp: 112000,
     score: 0,
-    gj: 39400,
-    fy: 23715,
-    mz: 37800,
-    ds: 17765,
-    zj: 1200
+    gj: 20134,
+    fy: 10586,
+    mz: 19316,
+    ds: 9175,
+    zj: 536
 });
 this.set_objects([
     "eq/lv4/yuxiao", 1, 1

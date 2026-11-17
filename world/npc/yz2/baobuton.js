@@ -5,16 +5,16 @@
 	    gender: 1,
 	    age: 45,
 	    per: 8,
-	    hp: 600000,
-	    max_hp: 600000,
+	    hp: 503221,
+	    max_hp: 503221,
 	    mp: 112000,
 	    max_mp: 112000,
 	    score: 0,
-	    gj: 47280,
-	    fy: 27621,
-	    mz: 45360,
-	    ds: 29423,
-	    zj: 1190
+	    gj: 46288,
+	    fy: 21797,
+	    mz: 44408,
+	    ds: 21716,
+	    zj: 939
 	});
 	this.skill_map(
 	    ["dodge", 2109],

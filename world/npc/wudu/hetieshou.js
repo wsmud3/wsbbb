@@ -6,16 +6,16 @@ this.set({
     gender: 2,
     age: 32,
     per: 28,
-    hp: 202800,
-    max_hp: 202800,
+    hp: 138312,
+    max_hp: 138312,
     mp: 77200,
     max_mp: 77200,
     score: 0,
-    gj: 16095,
-    fy: 12474,
-    mz: 20505,
-    ds: 9936,
-    zj: 1063
+    gj: 9069,
+    fy: 6389,
+    mz: 11553,
+    ds: 6888,
+    zj: 544
 });
 this.set_objects([
     "eq/lv2/lm_cloth", 1, 1,

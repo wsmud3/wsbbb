@@ -8,8 +8,8 @@
 	    first: "bj/zhuang/xiaolu",
 	    is_copy: true,
 	    expend: 10,
-	    exp: 10000,
-	    pot: 6000,
+	    exp: 4000,
+	    pot: 3500,
 	    is_multi: false,
 	    room_path: "bj/zhuang/",
 	    ss_title: "天下无双"

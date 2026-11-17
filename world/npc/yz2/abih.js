@@ -5,16 +5,16 @@ this.set({
     gender: 0,
     age: 18,
     per: 20,
-    hp: 537600,
-    max_hp: 537600,
+    hp: 450886,
+    max_hp: 450886,
     mp: 144000,
     max_mp: 144000,
     score: 0,
-    gj: 47520,
-    fy: 27898,
-    mz: 47520,
-    ds: 27898,
-    zj: 510
+    gj: 46523,
+    fy: 22015,
+    mz: 46523,
+    ds: 20591,
+    zj: 402
 });
 this.skill_map(
     ["dodge", 1787],

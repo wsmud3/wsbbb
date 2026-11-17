@@ -5,16 +5,16 @@ this.set({
     title: "五毒教护法",
     gender: 1,
     age: 35,
-    hp: 145350,
-    max_hp: 145350,
+    hp: 99130,
+    max_hp: 99130,
     mp: 46700,
     max_mp: 46700,
     score: 35,
-    gj: 10425,
-    fy: 6345,
-    mz: 10125,
-    ds: 7749,
-    zj: 625
+    gj: 5874,
+    fy: 3250,
+    mz: 5705,
+    ds: 5372,
+    zj: 320
 });
 this.set_objects([
     "eq/lv1/lm_cloth", 1, 1,

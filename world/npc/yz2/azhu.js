@@ -5,17 +5,17 @@ this.set({
     gender: 0,
     age: 18,
     per: 26,
-    hp: 760000,
-    max_hp: 760000,
+    hp: 637413,
+    max_hp: 637413,
     mp: 150000,
     max_mp: 150000,
     // 攻略：杀不杀都不影响进度（建议留着刷祝融），所以不计分
     score: 0,
-    gj: 42000,
-    fy: 30000,
-    mz: 45000,
-    ds: 32000,
-    zj: 900
+    gj: 41118,
+    fy: 23674,
+    mz: 44055,
+    ds: 23618,
+    zj: 710
 });
 this.set_objects(["eq/lv0/cloth", 1, 1]);
 this.skill_map(

@@ -5,16 +5,16 @@ this.set({
     title: "五毒教毒郎中",
     gender: 1,
     age: 40,
-    hp: 97500,
-    max_hp: 97500,
+    hp: 66496,
+    max_hp: 66496,
     mp: 38500,
     max_mp: 38500,
     score: 63,
-    gj: 6435,
-    fy: 4698,
-    mz: 8910,
-    ds: 3672,
-    zj: 563
+    gj: 3626,
+    fy: 2406,
+    mz: 5020,
+    ds: 2545,
+    zj: 288
 });
 this.set_objects([
     "eq/lv1/lm_cloth", 1, 1
