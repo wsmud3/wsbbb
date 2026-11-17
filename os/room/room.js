@@ -727,6 +727,14 @@ ROOM.RANDOM = function () {
     }
     return this.public_rooms.random();
 }
+// 本副本实例的难度（0 普通 / 1 困难 / 2 组队）；不是副本实例返回 undefined
+ROOM.prototype.query_difficulty = function () {
+    if (!this.is_copy_room || !this.owner) return undefined;
+    var first = this.query_fb_first(this.owner);
+    var v = first && first.temp ? first.temp.diff : undefined;
+    if (v && typeof v === "object") v = v.v;
+    return v || 0;
+};
 ROOM.prototype.set_difficulty = function (type) {
     this.on_set_difficulty && this.on_set_difficulty(type);
 }

@@ -12,6 +12,8 @@ this.learn_condition = {
 
 // 九阴劲气被动：命中后叠加debuff（通过on_force_over确保每次攻击都触发）
 this.on_force_over = function (me, target, par, sh) {
+	// 原先直接用了未定义的 lv（ReferenceError: lv is not defined），王重阳等出招即报错
+	var lv = (me && me.query_skill) ? (me.query_skill("jiuyinshengong", 0) || 0) : 0;
 	if (sh > 0 && target && target.hp > 0) {
 		target.add_status({
 			id: "jiuyin_jq",

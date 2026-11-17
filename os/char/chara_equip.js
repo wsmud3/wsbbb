@@ -183,6 +183,9 @@ CHARACTER.prototype.set_drop = function () {
 }
 CHARACTER.prototype.query_drop = function () {
     if (!this.drop_list) return;
-    return OBJ.create_by_odds(this.drop_list);
+    // 按所在副本的难度过滤 diff 条目（非副本房间返回 undefined，不过滤）
+    var env = this.environment || this.die_room;
+    var diff = env && env.query_difficulty ? env.query_difficulty() : undefined;
+    return OBJ.create_by_odds(this.drop_list, diff);
 
 }

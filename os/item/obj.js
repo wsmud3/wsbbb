@@ -226,7 +226,13 @@ OBJ.prototype.set_temp = CHARACTER.prototype.set_temp;
 OBJ.prototype.remove_temp = CHARACTER.prototype.remove_temp;
 
 OBJ.prototype.add_temp = CHARACTER.prototype.add_temp;
-OBJ.create_by_odds = function (args) {
+// 掉落条目可带 diff：1 = 仅困难，0 = 仅普通（含组队）；不写 = 不分难度。
+// diff 参数为本次掉落所在的难度；未传（非副本场合）时不过滤。
+OBJ.drop_match = function (drop, diff) {
+    if (!drop || drop.diff === undefined || diff === undefined || diff === null) return true;
+    return drop.diff === 1 ? diff === 1 : diff !== 1;
+};
+OBJ.create_by_odds = function (args, diff) {
     var items = [];
     if (!args) return items;
     let drop = null, per = null,
@@ -234,6 +240,7 @@ OBJ.create_by_odds = function (args) {
     for (var i = 0; i < args.length; i++) {
         drop = args[i];
         if (!drop) continue;
+        if (!OBJ.drop_match(drop, diff)) continue;
 
         per = Math.random() * 10000;
         obj = (drop.odds || 10000) > per ? drop.obj : drop.fall_obj;

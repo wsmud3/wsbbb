@@ -99,15 +99,9 @@ this.gm_copy = function (room, path) {
     return null;
 };
 
-// 击杀者是 NPC（童姥/灭绝/六派弟子补了最后一刀）时，NPC.die 的通用加分会因 NPC 没有队伍 id 而丢失，
-// 这里把分数补记到本副本（与 add_fbscore 记在同一处）
-this.gm_credit = function (npc, killer) {
-    if (!npc || !(npc.score > 0)) return;
-    if (killer && killer.query_teamid && killer.query_teamid()) return;
-    var room = npc.environment || npc.die_room;
-    var fb = room && room.query_fb_first && room.query_fb_first(room.owner);
-    if (fb) fb.score = (fb.score || 0) + npc.score;
-};
+// NPC 补了最后一刀（童姥/灭绝/六派弟子等）不计副本分：只有玩家亲手击杀才算，
+// 否则玩家什么都不做也能满分。保留空函数以免旧调用报错。
+this.gm_credit = function (npc, killer) {};
 
 // 明教高手进门迎敌：先向同房间的六派弟子下杀手，再对付玩家（挂在 NPC 的 on_enter 上）
 this.gm_engage = function (npc, me) {

@@ -37,7 +37,7 @@ this.on_enter = function (me) {
     me.notify("卓不凡拔出长剑：「想过去，先接我天羽奇剑三招！」剑光霎时绽放！");
     this.do_kill(me);
 };
-// 童姥补了最后一刀时补记分数（见 world/area/fb1/fb26.js pm_credit）
+// NPC（如童姥）补刀不计分，只有玩家亲手击杀才算（见 world/area/fb1/fb26.js pm_credit）
 this.on_died = function (killer) {
     var room = this.environment, area = room && room.parent;
     if (area && area.pm_credit) area.pm_credit(this, killer);

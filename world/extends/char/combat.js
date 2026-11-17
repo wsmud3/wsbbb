@@ -418,8 +418,9 @@ CHARACTER.prototype.from_attack = function (sh, mz, gjmsg, shmsg, dsmsg, parryms
         if (this.fight_type === 1 && this.hp < 0) {
             this.hp = 1;
         } else if (this.hp <= 0) {
-            this.die();
-            this.end_fight();
+            // 只有真正死了才结束战斗：on_die 拒绝死亡（锁血 NPC，如血刀老祖血祭自损）时
+            // die() 返回 false 并把 hp 置 1，原先仍 end_fight，整场战斗会无故停下
+            if (this.die() !== false) this.end_fight();
         }
     }
     return is_dodge;

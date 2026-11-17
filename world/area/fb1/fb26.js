@@ -100,15 +100,9 @@ this.pm_find_alive = function (room, paths) {
     return out;
 };
 
-// 击杀者是 NPC（童姥/灭绝/六派弟子补了最后一刀）时，NPC.die 的通用加分会因 NPC 没有队伍 id 而丢失，
-// 这里把分数补记到本副本（与 add_fbscore 记在同一处）
-this.pm_credit = function (npc, killer) {
-    if (!npc || !(npc.score > 0)) return;
-    if (killer && killer.query_teamid && killer.query_teamid()) return;
-    var room = npc.environment || npc.die_room;
-    var fb = room && room.query_fb_first && room.query_fb_first(room.owner);
-    if (fb) fb.score = (fb.score || 0) + npc.score;
-};
+// NPC 补了最后一刀（童姥/灭绝/六派弟子等）不计副本分：只有玩家亲手击杀才算，
+// 否则玩家什么都不做也能满分。保留空函数以免旧调用报错。
+this.pm_credit = function (npc, killer) {};
 
 // 背负状态：攻击、防御、躲闪、命中、招架各 -50%
 this.pm_apply_carry_status = function (me) {

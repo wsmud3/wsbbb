@@ -13,12 +13,3 @@ this.add_action("zhua", "抓住段誉", function (me) {
     return true;
 });
 
-// 龙骨舍利仅困难模式掉落（攻略）：普通模式开副本时从枯荣的掉落表里去掉
-this.on_set_difficulty = function (type) {
-    if (type === 1) return;
-    var k = this.find_obj_bypath("tl/kurongdashi");
-    if (!k || !k.drop_list) return;
-    k.drop_list = k.drop_list.filter(function (d) {
-        return !(d && JSON.stringify(d.obj || "").indexOf("longgu") >= 0);
-    });
-};

@@ -33,12 +33,12 @@ this.set_drop({
 }, {
     obj: ["book/bc#shenjianjue"], odds: 10600
 }, {
-    obj: ["eq/lv5/wushen/tianlong_necklace"], odds: 6360
+    obj: ["eq/lv5/wushen/tianlong_necklace"], odds: 6360, diff: 1   // 天龙遗珠仅困难
 });
 
 // [mech] 护送童姥（规则见 world/area/fb1/fb26.js）：李秋水不主动出手，只拦住上山的路；
 // 童姥落地后她会叫杀童姥。计分只算她自己的 50 分，100% 要靠把童姥送进闭关室。
-// 天龙遗珠仅困难模式掉落：普通模式开副本时由 pm/xianchou.js 的 on_set_difficulty 从掉落表去掉。
+// 天龙遗珠仅困难模式掉落：掉落条目标 diff:1，由框架在击杀与扫荡时按难度过滤。
 this.on_leave = function (me, dir) {
     if (!me || !me.is_player || this.hp <= 0) return true;
     if (dir !== "northup") return true;

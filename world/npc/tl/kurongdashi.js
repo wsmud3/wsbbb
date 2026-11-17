@@ -30,7 +30,7 @@ this.set_drop(
     {obj: "money/silver", min: 40, max: 400},
     {obj: ["book/bc#kumushengong"], odds: 12000},
     {obj: ["book/bc#liumaishenjian"], odds: 12000},
-    {obj: ["eq/lv5/wushen/longgu_jewels"], odds: 7200}
+    {obj: ["eq/lv5/wushen/longgu_jewels"], odds: 7200, diff: 1}   // 龙骨舍利仅困难（diff:1，击杀与扫荡都按难度过滤）
 );
 // 天龙寺机制见 world/area/fb1/fb28.js
 var tlA = function (o) { var r = o.environment || o.die_room; return r && r.parent && r.parent.tl_carry ? r.parent : null; };

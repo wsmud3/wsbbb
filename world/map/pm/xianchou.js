@@ -23,12 +23,3 @@ this.on_enter = function (me) {
         me.send_commands("carry_tonglao", "背起童姥");
 };
 
-// 天龙遗珠仅困难模式掉落（攻略）：普通模式开副本时从李秋水的掉落表里去掉
-this.on_set_difficulty = function (type) {
-    if (type === 1) return;
-    var lqs = this.find_obj_bypath("pm/liqiushui");
-    if (!lqs || !lqs.drop_list) return;
-    lqs.drop_list = lqs.drop_list.filter(function (d) {
-        return !(d && JSON.stringify(d.obj || "").indexOf("tianlong_necklace") >= 0);
-    });
-};

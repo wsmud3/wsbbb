@@ -109,7 +109,7 @@ function fb_quick(me, area, isdiff) {
         me.add_temp("fbc_" + diff + "_" + area.fb_index, 1);
     }
     for (var j = 0; j < drops.length; j++) {
-        var items = OBJ.create_by_odds(drops[j]);
+        var items = OBJ.create_by_odds(drops[j], isdiff ? 1 : 0);   // 扫荡同样按难度过滤 diff 条目
         for (var i = 0; i < items.length; i++) {
             var item = me.add_obj(items[i]);
             if (item.is_equipment && item.grade >= 5) {

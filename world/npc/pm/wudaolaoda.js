@@ -36,7 +36,7 @@ this.on_enter = function (me) {
     if (!me || !me.is_player) return;
     me.notify("乌道老大喝道：「来者何人？敢坏我等大事！」");
 };
-// 童姥补了最后一刀时补记分数（见 world/area/fb1/fb26.js pm_credit）
+// NPC（如童姥）补刀不计分，只有玩家亲手击杀才算（见 world/area/fb1/fb26.js pm_credit）
 this.on_died = function (killer) {
     var room = this.environment, area = room && room.parent;
     if (area && area.pm_credit) area.pm_credit(this, killer);
