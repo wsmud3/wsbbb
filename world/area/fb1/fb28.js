@@ -109,7 +109,7 @@ this.tl_block = function (monk, me, dir) {
     if (this.tl_hard(me))
         me.notify("<hir>" + monk.name + "横身拦住：「寺中禁地，外人止步。」</hir>");
     else
-        me.notify("<hir>" + monk.name + "横身拦住：「施主请回。」不打倒他是过不去的。</hir>");
+        me.notify("<hir>" + monk.name + "横身拦住：「施主请回。」</hir>");
     return false;
 };
 

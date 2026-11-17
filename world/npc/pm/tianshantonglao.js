@@ -38,7 +38,7 @@ this.on_create = function() {
 
 // [mech] 童姥是护送目标（规则见 world/area/fb1/fb26.js）：可以切磋（攻略：和女童切磋开鹤翔），不能下杀手
 this.on_kill = function (me) {
-    if (me && me.is_player) return me.notify_fail("童姥冷笑：「凭你也想杀姥姥？」——她可是你要护送的人。");
+    if (me && me.is_player) return me.notify_fail("童姥冷笑：「凭你也想杀姥姥？少废话，还不快背我走！」");
     return true;
 };
 this.on_died = function (killer) {

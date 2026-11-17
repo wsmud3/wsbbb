@@ -29,7 +29,7 @@
 		{obj: ["book/bc#jiuyangshengong"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("鲜于通手中折扇一收，冷笑道：'区区小辈也敢闯我华山营地，今日便拿你祭旗！'");
+		me.notify("鲜于通手中折扇一收，冷笑道：「区区小辈也敢闯我华山营地，今日便拿你祭旗！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

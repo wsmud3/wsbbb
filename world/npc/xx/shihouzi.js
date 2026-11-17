@@ -42,6 +42,6 @@ this.on_enter = function (me) {
 };
 this.on_died = function (killer, corpse) {
     if (killer && killer.is_player) {
-        killer.notify("<hiy>狮吼子一倒，日月洞口再无人阻拦——可以进去找丁春秋了。</hiy>");
+        killer.notify("<hiy>狮吼子一倒，日月洞口再无人阻拦。洞里隐隐飘出一股药香。</hiy>");
     }
 };

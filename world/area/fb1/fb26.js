@@ -175,7 +175,7 @@ this.pm_put_down = function (me, room, msg) {
         tl.max_hp = tl.hp = 800000;
         tl.fy = 30000;
         tl.ds = 40000;
-        room.send_room("<hir>李秋水一见童姥，双目尽赤：「师姊，今日便是你的死期！」——李秋水向童姥下了杀手，快保护童姥！</hir>");
+        room.send_room("<hir>李秋水一见童姥，双目尽赤：「师姊，今日便是你的死期！」说罢便向童姥扑去！</hir>");
         lqs.do_kill(tl);
     } else {
         // 断魂崖等处：刺客还活着就继续追杀她
@@ -264,7 +264,7 @@ this.pm_deliver = function (room, me) {
     if (tl) tl.update_action({});
     room.refresh(me);
     me.add_fbscore(PM_DELIVER_SCORE);
-    me.notify("<hig>你把童姥送进闭关室。童姥盘膝坐下，淡淡道：「这份情，姥姥记下了。」护送完成！</hig>");
+    me.notify("<hig>你把童姥送进闭关室。童姥盘膝坐下，淡淡道：「这份情，姥姥记下了。」</hig>");
     var left = this.pm_find_alive(room, ["pm/zhuobufan"].concat(PM_ASSASSINS));
     if (left.length) me.notify("<hiy>童姥冷哼一声：「山下那几个叛徒还没收拾干净。」</hiy>");
 };

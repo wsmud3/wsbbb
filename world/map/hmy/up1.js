@@ -45,20 +45,20 @@ this.add_action("charu", null, function (me, arg) {
         this.lan_ready = true;
         this.lan_target = "hmy/damen";
         me.send_room("$N将三块令牌一并嵌入匣面，吊篮缓缓降下。");
-        me.notify("<hig>三令齐鸣，吊篮降下。坐上去便可直上崖顶——崖上有三位堂主候着。</hig>");
+        me.notify("<hig>三令齐鸣，一只吊篮从崖顶缓缓降了下来。</hig>");
         me.send_commands("hmy_lan 1", "乘坐吊篮上崖");
         return true;
     }
 
     it = this.hmy_have(me, "res/baihulingpai");
     if (!it) {
-        me.notify("<hir>你身上没有白虎令。白虎堂堂主上官云身上有一块。</hir>");
+        me.notify("<hir>匣面上有个虎形凹槽，须嵌入白虎令才行。听说白虎堂堂主上官云随身带着一块。</hir>");
         return true;
     }
     me.remove_obj(it);
     this.lan_ready = true;
     me.send_room("$N将白虎令嵌入匣中，咔的一声，一条吊篮自崖顶垂下。");
-    me.notify("<hig>白虎令入匣，吊篮垂下。坐上去便能到下一处悬崖。</hig>");
+    me.notify("<hig>白虎令入匣，一只吊篮从上方垂了下来。</hig>");
     me.send_commands("hmy_lan 1", "乘坐吊篮");
     return true;
 });

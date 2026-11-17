@@ -29,7 +29,7 @@
 		{obj: ["book/bc#shenghuoshengong"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("宗维侠双拳一振，喝道：'七伤拳下，无所不伤！接招！'");
+		me.notify("宗维侠双拳一振，喝道：「七伤拳下，无所不伤！接招！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

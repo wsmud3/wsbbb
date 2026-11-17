@@ -84,7 +84,7 @@ this.add_action("gei", "交石匣", function (me) {
     var area = this.environment && this.environment.parent;
     me.add_fbscore((area && area.score) || 180);
     me.send_room("$N把石匣交给黄蓉，黄蓉眼睛一亮，欢天喜地地收下了。");
-    me.notify("<hig>黄蓉笑道：多谢你啦！石匣回来了，这一趟就算你过关。</hig>");
+    me.notify("<hig>黄蓉笑道：多谢你啦！爹爹回来见石匣还在，定然高兴。</hig>");
     return true;
 });
 // 石匣交回之前不许杀黄蓉（否则剧情断掉、本轮永远到不了 100%）

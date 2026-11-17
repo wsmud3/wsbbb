@@ -35,7 +35,7 @@ this.set_drop(
     {obj: ["book/bc#biboshengong"], odds: 14800},
     {obj: ["eq/lv4/yuxiao"], odds: 8880}
 );
-this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("黄药师轻抚玉箫，冷冷道：'能上得华山，也算一号人物。接我弹指神通！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("黄药师轻抚玉箫，冷冷道：「能上得华山，也算一号人物。接我弹指神通！」"); this.do_kill(me); };
 
 // 依次出场：死后请下一位（world/area/fb1/fb31.js）
 this.on_died = function (killer) {

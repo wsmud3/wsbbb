@@ -49,7 +49,7 @@ this.set_drop({
     odds: 9600
 });
 this.on_enter = function (me) {
-    me.notify("温方达喝道：来者何人！留下命来！");
+    me.notify("温方施喝道：来者何人！留下命来！");
     this.do_kill(me);
 };
 

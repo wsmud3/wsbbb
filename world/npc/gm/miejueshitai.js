@@ -34,7 +34,7 @@ this.set_drop(
 // 被说不得/彭莹玉围攻也不会死（攻略：她抗揍）。二人都死后脱困，并按上面的掉落表赠礼给救她的人。
 // 倚天剑原写 odds 261482（必出），改为与副本扫荡表一致的 17。
 this.on_kill = function (me) {
-    if (me && me.is_player) return me.notify_fail("灭绝师太是来围攻光明顶的峨嵋掌门——你是来救她的。");
+    if (me && me.is_player) return me.notify_fail("灭绝师太正被明教高手围在当中，你此时向她出手，岂非乘人之危？");
     return true;
 };
 this.on_die = function () {

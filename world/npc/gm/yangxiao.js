@@ -31,4 +31,4 @@ this.set_drop(
     {obj: ["book/bc#qiankundanuoyi"], odds: 11300},
     {obj: ["eq/lv4/yangbuhui_xianglian"], odds: 6780}
 );
-this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("杨逍微微一笑，说道：'能到这里，你也算不错了。但到此为止！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("杨逍微微一笑，说道：「能到这里，你也算不错了。但到此为止！」"); this.do_kill(me); };

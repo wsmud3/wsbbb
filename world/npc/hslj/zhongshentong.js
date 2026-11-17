@@ -35,7 +35,7 @@ this.set_drop(
     {obj: ["book/bc#jinyangong"], odds: 14800},
     {obj: ["eq/lv5/wushen/tianlong_waist"], odds: 8880}
 );
-this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("王重阳缓缓睁开眼睛，先天功的真气如海啸般涌来：'贫道等这一战已经很久了！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("王重阳缓缓睁开眼睛，先天功的真气如海啸般涌来：「贫道等这一战已经很久了！」"); this.do_kill(me); };
 
 // 依次出场：死后请下一位（world/area/fb1/fb31.js）
 this.on_died = function (killer) {

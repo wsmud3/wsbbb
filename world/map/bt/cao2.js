@@ -19,5 +19,5 @@ this.on_enter = function (me) {
     // 刷在玩家进门之后，蛇自身的 on_enter（叫杀）不会触发，这里补上
     var snake = this.find_obj_bypath("bt/she");
     if (snake && snake.do_kill) snake.do_kill(me);
-    me.notify("<hiy>草丛里又是一条毒蛇拦路，杀之再向北，便是岩洞。</hiy>");
+    me.notify("<hiy>草丛里窸窸窣窣，又一条毒蛇昂首拦住了去路。北面隐约可见一处岩洞。</hiy>");
 };

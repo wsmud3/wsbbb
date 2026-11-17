@@ -14,7 +14,7 @@ function hmy_turn_bowl(me) {
     }
     this.add_exit("north", "hmy/midao1");
     me.send_room("$N转动瓷碗，桌下传来一阵机关响动，一道石阶显露出来。");
-    me.notify("<hig>碗底一转，后厅北面的地面裂开一道石阶——密道开了。</hig>");
+    me.notify("<hig>碗底一转，后厅北面的地面缓缓裂开，露出一道向下的石阶。</hig>");
     this.refresh(me);
     return true;
 }

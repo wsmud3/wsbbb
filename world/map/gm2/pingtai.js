@@ -47,7 +47,7 @@ this.add_action("ready", "我准备好了", function (me) {
     }
     var yg = this.find_obj_bypath("gm2/yangguo");
     if (!yg || yg.hp <= 0) {
-        me.notify("杨过不在这里，再推一下石块看看。");
+        me.notify("石台上空无一人，只有海风呼啸。也许该再推一推那块石块。");
         return true;
     }
     this.send_room("<hic>杨过长啸一声，玄铁重剑横扫而出，剑风卷起滔天巨浪——「海潮汹涌」！</hic>");

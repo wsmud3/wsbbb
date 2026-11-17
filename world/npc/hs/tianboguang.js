@@ -43,7 +43,7 @@ this.set_drop({
 // 只对玩家叫杀：他换房间时，房间里的 NPC 也会收到 on_enter，不能对 NPC 开战
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
-    me.notify("田伯光怪笑一声：嘿嘿，又来一个小娘们……哦不，是个男人？那也不妨，老子的刀可不挑人！");
+    me.notify("田伯光怪笑一声：嘿嘿，又来一个送死的！老子这「万里独行」的快刀，可不挑人！");
     this.do_kill(me);
 };
 

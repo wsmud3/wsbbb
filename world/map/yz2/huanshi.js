@@ -23,7 +23,7 @@ this.add_action("sousuo", null, function (me, arg) {
         me.notify("<hiw>你照王语嫣所说摸到书架最下层的暗格，又取出一份残页。</hiw>");
         me.add_obj(books[Math.floor(Math.random() * books.length)]);
     }
-    me.notify("<hig>搜查完毕。若再去后厅，恐有变故——慕容家的人不会放任外人拿走这些东西。</hig>");
+    me.notify("<hig>书架已被你翻了个遍。慕容家的人迟早会察觉，后厅那边只怕不会太平。</hig>");
     return true;
 });
 

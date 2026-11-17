@@ -134,7 +134,7 @@ this.hslj_on_enter = function (tai, me) {
     if (this.hslj_broken(tai) || this.hslj_done(tai)) return;
     if (!this.hslj_get(tai, "hslj_started", 0)) {
         this.hslj_set(tai, "hslj_started", 1);
-        me.notify("<hic>五绝齐聚华山之巅，将依次与你过招。论剑途中不可离开论剑台，否则论剑中断、前功尽弃！</hic>");
+        me.notify("<hic>五绝齐聚华山之巅，将依次与你过招。王重阳朗声道：「论剑台上，有进无退。中途下台者，便算认输。」</hic>");
     }
     var cur = this.hslj_current(tai);
     if (!cur) this.hslj_spawn(tai);

@@ -30,7 +30,7 @@
 		{obj: ["book/bc#qiankundanuoyi"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("何太冲冷笑一声：'来的正好，昆仑剑下不死无名之鬼！'");
+		me.notify("何太冲冷笑一声：「来的正好，昆仑剑下不死无名之鬼！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

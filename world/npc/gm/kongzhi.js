@@ -29,7 +29,7 @@
 		{obj: ["book/bc#shenghuoshengong"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("空智双掌合十，沉声道：'阿弥陀佛！魔教妖人，还不束手就擒！'");
+		me.notify("空智双掌合十，沉声道：「阿弥陀佛！魔教妖人，还不束手就擒！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

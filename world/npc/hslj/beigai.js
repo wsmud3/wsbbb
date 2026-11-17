@@ -33,7 +33,7 @@ this.set_drop(
     {obj: ["book/bc#kumushengong"], odds: 14800},
     {obj: ["eq/lv4/yuzhuzhang"], odds: 8880}
 );
-this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("洪七公哈哈大笑，声如洪钟：'小娃娃功夫不错，来陪老叫花走两招！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player || this.hp <= 0) return; me.notify("洪七公哈哈大笑，声如洪钟：「小娃娃功夫不错，来陪老叫花走两招！」"); this.do_kill(me); };
 
 // 依次出场：死后请下一位（world/area/fb1/fb31.js）
 this.on_died = function (killer) {

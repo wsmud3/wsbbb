@@ -70,6 +70,6 @@ this.yh_both_dead = function (me) {
 
 this.yh_can_push = function (me) {
     if (this.yh_both_dead(me)) return true;
-    me.notify("<red>床板纹丝不动——两位宫主都还在，这床不会开。</red>");
+    me.notify("<red>床板纹丝不动，像是被宫中另一处机关牵制着。</red>");
     return false;
 };

@@ -225,7 +225,7 @@ this.xd_npc_died = function (npc, killer) {
     if (XD_HEROES.indexOf(npc.path) >= 0 && !alive.length && !this.xd_get(room, "xd_failed", 0)
         && this.xd_get(room, "xd_steps", 0) < XD_STEPS) {
         this.xd_set(room, "xd_failed", 1);
-        this.xd_tell(room, "<hir>「落花流水」四侠尽数倒在血刀之下，血刀老祖却还没被引到山谷——他周身血光大盛，竟再也伤不了他分毫。</hir>");
+        this.xd_tell(room, "<hir>「落花流水」四侠尽数倒在血刀之下。血刀老祖周身血光大盛，刀剑再也伤他不得。</hir>");
     }
 };
 this.xd_hero_died = this.xd_npc_died;   // 兼容旧调用
@@ -249,9 +249,9 @@ this.xd_step = function (lz) {
         heroes[j].moveto(to, heroes[j].name + "紧追血刀老祖而去。", heroes[j].name + "追了过来。");
         if (heroes[j].environment === to && heroes[j].do_kill) heroes[j].do_kill(lz);
     }
-    this.xd_tell(to, "<hiy>血刀老祖退到了" + to.name + "，快跟上！</hiy>");
+    this.xd_tell(to, "<hiy>血刀老祖退到了" + to.name + "。</hiy>");
     if (to.path === XD_GOAL) {
         lz.min_hp = 0;   // 解除锁血
-        to.send_room("<hig>血刀老祖被逼进了雪山山谷，护体血光已散——现在可以杀他了！</hig>");
+        to.send_room("<hig>血刀老祖被逼进了雪山山谷，周身的护体血光渐渐散去。</hig>");
     }
 };

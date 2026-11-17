@@ -34,6 +34,6 @@
 		{obj: ["eq/lv4/shenghuoling"], odds: 6780}
 	);
 	this.on_enter = function (me) {
-		me.notify("阳顶天缓缓睁开双眼，沉声道：'老夫镇守此处数十载，今日岂容你放肆！乾坤大挪移！'");
+		me.notify("阳顶天缓缓睁开双眼，沉声道：「老夫镇守此处数十载，今日岂容你放肆！乾坤大挪移！」");
 		this.do_kill(me);
 	};

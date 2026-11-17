@@ -9,7 +9,7 @@ this.add_action("you", "游", function (me, arg) {
     if (!me.is_player) return true;
     var dir = this.query_temp(me, "gm2_sword_dir");
     if (!dir) {
-        me.notify("<red>你不知道该往哪个方向游——先去卧室看看那幅画。</red>");
+        me.notify("<red>暗河里漆黑一片，四面都是激流，你一时辨不清该往哪个方向游。</red>");
         return true;
     }
     if (!arg) {

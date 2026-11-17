@@ -31,4 +31,4 @@ this.set_drop(
     {obj: ["book/bc#shenghuolingfa"], odds: 11300},
     {obj: ["eq/lv4/zhouzhiruo_shouzhuo"], odds: 6780}
 );
-this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("范遥面沉如水，冷冷道：'苦头陀在此，休想再进一步！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("范遥面沉如水，冷冷道：「苦头陀在此，休想再进一步！」"); this.do_kill(me); };

@@ -36,7 +36,7 @@ this.on_enter = function (me) {
         me.notify(this.name + "正和同伴围攻灭绝师太，无暇理你。");
         return;
     }
-    me.notify("说不得笑呵呵地解下布袋，说道：'施主请进我这布袋一游！'");
+    me.notify("说不得笑呵呵地解下布袋，说道：「施主请进我这布袋一游！」");
     this.do_kill(me);
 };
 this.on_died = function (killer) {

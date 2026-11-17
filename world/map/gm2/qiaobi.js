@@ -13,7 +13,7 @@ this.add_action("climb_up", "纵身跃上", function (me) {
         return true;
     }
     if (me.hp < me.max_hp) {
-        me.notify("<red>你被暗流冲得气血翻涌，提不起这口气——先运功把气血回满再跳。</red>");
+        me.notify("<red>你被暗流冲得气血翻涌，提不起这口气，还是先运功调息，养足了气力再跳。</red>");
         return true;
     }
     me.notify("<hig>你提一口气，足尖在峭壁上连点数下，翻身跃上了平台。</hig>");

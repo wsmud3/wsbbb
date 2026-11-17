@@ -47,7 +47,7 @@ this.zbt_give = function (me, msg) {
     if (zbt_get(this, me, "th_done") || me.find_obj_bypath(ZBT_SHIXIA)) return false;
     me.add_obj(ZBT_SHIXIA, 1);
     if (msg) me.notify(msg);
-    me.notify("<hig>你得到了石匣，带回卧室交给黄蓉吧。</hig>");
+    me.notify("<hig>周伯通把石匣往你怀里一塞：「拿去拿去，给蓉儿那小丫头送回去吧！」</hig>");
     return true;
 };
 

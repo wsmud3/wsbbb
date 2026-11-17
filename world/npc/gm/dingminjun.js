@@ -29,7 +29,7 @@
 		{obj: ["book/bc#yingzhuagong"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("丁敏君拔剑怒喝：'魔教妖人，纳命来！'");
+		me.notify("丁敏君拔剑怒喝：「魔教妖人，纳命来！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

@@ -30,7 +30,7 @@
 		{obj: ["book/bc#shenghuolingfa"], odds: 9040}
 	);
 	this.on_enter = function (me) {
-		me.notify("宋远桥长剑出鞘，叹道：'武当本不愿多造杀孽，但今日既已至此，便由不得你了！'");
+		me.notify("宋远桥长剑出鞘，叹道：「武当本不愿多造杀孽，但今日既已至此，便由不得你了！」");
 		this.do_kill(me);
 	};
 	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」

@@ -36,7 +36,7 @@ this.add_action("dianliang", null, function (me, arg) {
     this.midao_lit = true;
     this.ring_found = true;
     me.send_room("$N吹亮火折子，密道里亮起一团昏黄的光。");
-    me.notify("<hig>火光亮起，你看见石壁凹处嵌着一枚锈铁环——看那铁环，可拉动。</hig>");
+    me.notify("<hig>火光亮起，你看见石壁凹处嵌着一枚锈迹斑斑的铁环。</hig>");
     me.send_commands("la 1", "拉动铁环");
     return true;
 });
@@ -54,7 +54,7 @@ this.hmy_pull_ring = function (me) {
     this.gate_open = true;
     this.add_exit("east", "hmy/huayuan");
     me.send_room("$N用力一拉铁环，石壁深处传来沉闷的轧轧声，一道石门缓缓移开。");
-    me.notify("<hig>铁环拉动，石门开启——东边便是小花园，东方不败的闺房就在花园之东。</hig>");
+    me.notify("<hig>石门洞开，门外隐隐飘来一阵花香。</hig>");
     this.refresh(me);
     return true;
 };

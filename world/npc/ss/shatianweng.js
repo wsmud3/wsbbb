@@ -58,7 +58,7 @@ this.on_died = function (killer, corpse) {
     var w = room.query_temp(killer, "ss_wave") || 1;
     if (w >= 4) {
         room.set_temp(killer, "ss_wave", 5);   // 四波打完记为完成（原先删掉标记，回头进中门会从第一波重刷）
-        killer.notify("<hiy>四波太保全部伏诛，会盟堂的左冷禅等着你了。</hiy>");
+        killer.notify("<hiy>四波太保尽数伏诛。会盟堂上，左冷禅已在等你。</hiy>");
         return;
     }
     w += 1;

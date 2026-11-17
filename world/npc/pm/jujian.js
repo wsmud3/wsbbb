@@ -24,5 +24,5 @@ this.skill_map(
     ["sword", 900]
 );
 this.on_enter = function (me) {
-    me.notify("菊剑抬头看了你一眼：「这里是 sisters 的寝阁，你走错门了。」");
+    me.notify("菊剑抬头看了你一眼：「这里是我们姐妹的寝阁，你走错门了。」");
 };

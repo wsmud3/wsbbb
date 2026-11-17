@@ -27,13 +27,13 @@ this.add_action("charu", null, function (me, arg) {
     }
     var it = this.hmy_have(me, "res/qinglonglingpai");
     if (!it) {
-        me.notify("<hir>你身上没有青龙令。青龙堂长老贾布身上有一块。</hir>");
+        me.notify("<hir>匣面上有个龙形凹槽，须嵌入青龙令才行。听说青龙堂长老贾布随身带着一块。</hir>");
         return true;
     }
     me.remove_obj(it);
     this.lan_ready = true;
     me.send_room("$N将青龙令嵌入匣中，绞索再响，吊篮向更高处升去。");
-    me.notify("<hig>青龙令入匣，吊篮垂下。坐上去便能到最后一处悬崖。</hig>");
+    me.notify("<hig>青龙令入匣，吊篮再一次从高处垂了下来。</hig>");
     me.send_commands("hmy_lan 1", "乘坐吊篮");
     return true;
 });
