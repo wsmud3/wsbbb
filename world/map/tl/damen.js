@@ -5,3 +5,9 @@ this.exits = {
     "south": "tl/talin",
 };
 this.set_npc([]);
+
+// 背着段誉、追兵全灭后回到大门 = 100%（world/area/fb1/fb28.js 的 tl_deliver）
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (this.parent && this.parent.tl_deliver) this.parent.tl_deliver(me);
+};

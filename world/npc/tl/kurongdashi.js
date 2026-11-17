@@ -10,7 +10,7 @@ this.set({
     max_hp: 1494000,
     mp: 202500,
     max_mp: 202500,
-    score: 95,
+    score: 0,   // 完成度只来自「背段誉回大门」（tl_deliver）；原先全杀不背也能 100%
     gj: 93600,
     fy: 57648,
     mz: 92400,
@@ -32,23 +32,18 @@ this.set_drop(
     {obj: ["book/bc#liumaishenjian"], odds: 12000},
     {obj: ["eq/lv5/wushen/longgu_jewels"], odds: 7200}
 );
+// 天龙寺机制见 world/area/fb1/fb28.js
+var tlA = function (o) { var r = o.environment || o.die_room; return r && r.parent && r.parent.tl_carry ? r.parent : null; };
 this.on_enter = function (me) {
-    if (!me.is_player) return;
-    if (me.query_temp('tl_carry_duanyu')) {
+    if (!me || !me.is_player) return;
+    var a = tlA(this);
+    if (a && a.tl_is_carrying(me)) {
         me.notify("枯荣大师半枯半荣的面容终于动容：「放下段誉！」六脉神剑的无形剑气已向你袭来！"); this.do_kill(me);
     } else {
         me.notify("枯荣大师正在入定，半枯半荣的面容毫无表情。");
     }
 };
-this.on_die = function(killer) { if (killer && killer.is_player) killer.set_temp('tl_killed_any', 1); };
-// 心跳检测：同房间有背负段誉的玩家就主动开杀
-this.on_heart_beat = function() {
-    if (this.hp <= 0 || !this.environment) return;
-    var room = this.environment;
-    for (var i = 0; i < room.items.length; i++) {
-        var p = room.items[i];
-        if (p && p.is_player && p.query_temp('tl_carry_duanyu') && !this.is_fighting(p)   /* 原为不存在的 query_enemy_of，每次心跳都抛错 */) {
-            this.do_kill(p);
-        }
-    }
+this.on_died = function (killer, corpse) {
+    var a = tlA(this);
+    if (a) a.tl_on_died(this, killer);
 };

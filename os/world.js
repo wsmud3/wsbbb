@@ -344,7 +344,11 @@ WORLD = {
     can_cross: function (id) {
         //允许跨服
     }, on_user_die: function (me, killer, corpse) {
-
+        // 分发给所在区域（副本机制：如天龙寺背负段誉时死亡则本轮失败）
+        var area = me && me.environment && me.environment.parent;
+        if (area && typeof area.on_user_die === "function") {
+            try { area.on_user_die(me, killer, corpse); } catch (e) { console.error("[area on_user_die]", area.id, e); }
+        }
     }, on_resource_loaded: function () {
 
     }

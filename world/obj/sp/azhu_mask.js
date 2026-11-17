@@ -19,6 +19,7 @@ this.on_use = function(me) {
     if (!targets.length) { me.notify('这里没有可以模仿的对象。'); return false; }
     var target = targets.random();
     me.set_temp('disguise_target', target.id);
+    me.set_temp('disguise_path', target.path || '');
     me.set_temp('disguise_name', me.name);
     me.set_temp('disguise_title', me.query_title ? me.query_title() : '');
     me.name = target.name;
@@ -32,6 +33,7 @@ this.on_remove = function(me) {
         me.remove_temp('disguise_target');
         me.remove_temp('disguise_name');
         me.remove_temp('disguise_title');
+        me.remove_temp('disguise_path');
         me.notify('易容面具脱落，你恢复了原本的容貌。');
     }
 };

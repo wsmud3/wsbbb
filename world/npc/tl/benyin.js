@@ -32,8 +32,19 @@ this.set_drop({
     obj: ["book/bc#kumushengong"],
     odds: 8100
 });
+// 天龙寺机制见 world/area/fb1/fb28.js：崇圣宝殿不在去牟尼堂的路上（攻略：不用管），
+// 平时不主动出手；背起段誉后与其余高僧一起追杀。背段誉前杀了他同样计入杀人数。
+var tlA = function (o) { var r = o.environment || o.die_room; return r && r.parent && r.parent.tl_carry ? r.parent : null; };
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
-    me.notify("本因合十道：「佛门清净地，施主不该来。」说罢并指为剑，剑气森然。");
-    this.do_kill(me);
+    var a = tlA(this);
+    if (a && a.tl_is_carrying(me)) {
+        me.notify("本因并指为剑：「放下段誉！」剑气森然。"); this.do_kill(me);
+    } else {
+        me.notify("本因合十道：「佛门清净地，施主请自重。」");
+    }
+};
+this.on_died = function (killer, corpse) {
+    var a = tlA(this);
+    if (a) a.tl_on_died(this, killer);
 };

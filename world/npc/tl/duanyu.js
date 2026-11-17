@@ -13,15 +13,8 @@ this.on_create = function() {
     this.actions = {};
     this.actions["carry_duanyu"] = { name: "背负段誉" };
 };
-
-// 玩家进入时检查是否杀过僧人
-this.on_enter = function(me) {
-    if (!me.is_player) return;
-    if (me.query_temp('tl_killed_any')) {
-        me.notify('段誉摇了摇头："你杀孽太重，我不能跟你走。"');
-        this.actions = {};
-        return;
-    }
-    this.actions = {};
-    this.actions["carry_duanyu"] = { name: "背负段誉" };
+// 能否背走（杀人数、是否已背、是否已失败）统一在 world/area/fb1/fb28.js 的 tl_carry 里判定
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    me.notify("段誉焦急地看着你：「兄台，能不能背我离开这里？」");
 };

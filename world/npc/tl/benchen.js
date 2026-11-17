@@ -9,7 +9,7 @@ this.set({
     max_hp: 858000,
     mp: 164000,
     max_mp: 164000,
-    score: 65,
+    score: 0,   // 完成度只来自「背段誉回大门」（tl_deliver）；原先全杀不背也能 100%
     gj: 62940,
     fy: 47424,
     mz: 60210,
@@ -29,17 +29,23 @@ this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
     {obj: ["book/bc#kumushengong"], odds: 9600}
 );
-this.on_enter = function (me) {
-    if (!me.is_player) return;
-    if (me.query_temp('tl_carry_duanyu')) {
-        me.notify("本尘眼中精光一闪，沉声道：'放下段公子！'"); this.do_kill(me);
-    } else {
-        me.notify("本尘双手合十：'阿弥陀佛，施主请便。'");
-    }
-}; this.on_die = function(killer) { if (killer && killer.is_player) killer.set_temp('tl_killed_any', 1); };
 
+// 天龙寺机制见 world/area/fb1/fb28.js：拦路 / 背负段誉后追杀 / 死亡计数
+var tlA = function (o) { var r = o.environment || o.die_room; return r && r.parent && r.parent.tl_carry ? r.parent : null; };
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    var a = tlA(this);
+    if (a && a.tl_is_carrying(me)) {
+        me.notify("本尘怒喝：「放下段公子！」"); this.do_kill(me);
+    } else {
+        me.notify("本尘看了你一眼，挡在通往寺内深处的路上。");
+    }
+};
+this.on_leave = function (me, dir) {
+    var a = tlA(this);
+    return a ? a.tl_block(this, me, dir) : true;
+};
 this.on_died = function (killer, corpse) {
-    if (!killer || !killer.is_player) return;
-    var room = this.environment;
-    if (room && room.on_monk_die && room.query_temp(killer, "tl_capture")) room.on_monk_die(killer);
+    var a = tlA(this);
+    if (a) a.tl_on_died(this, killer);
 };
