@@ -1,6 +1,7 @@
 // ────────────────────────────────────────────────────────────
 // 易直非·副本次数兑换
-//   用某个副本某个难度的副本次数（该难度的单人通关/扫荡次数），兑换该副本该难度掉落的橙装（eq/lv5）。
+//   用某个副本某个难度的副本次数（该难度的单人通关/扫荡次数），兑换该副本的掉落物。
+//   按类别分（FBX_CATS）：目前只有「装备」= 该难度掉落的橙装（eq/lv5），以后加别的类别往 FBX_CATS 里追加。
 //   普通、困难各算各的：普通次数只能换普通会掉的橙装，困难次数只能换困难会掉的橙装
 //   （如古墓派：普通只掉盘龙簪，困难只掉龙骨环）。每件统一 FBX_COST 次。
 //   已花掉的次数单独记在 fbx_spent_<难度>_<fb_index>，不会扣减真实的副本次数
@@ -9,17 +10,14 @@
 //     · 副本入口的易直非（install(npc)）：只换他所在的这个副本；
 //     · 赌场的易直非（install(npc, { all: true })）：所有能换的副本都能换，但只列出玩家在该难度有次数的。
 //   NPC 动作只能带 NPC 自己的 id 当参数，所以副本/难度/物品的序号编进动作名：
-//     fbx → 副本列表；fbx_a<副本序号*2+难度> → 该副本该难度的橙装；fbx_i<物品序号> → 详情；fbx_c<物品序号> → 确认兑换。
+//     fbx → 副本列表；fbx_a<副本序号*2+难度> → 类别；fbx_k<类别序号> → 物品；fbx_i<物品序号> → 详情；fbx_c<物品序号> → 确认兑换。
+//   全部用动作按钮浮窗（send_commands，persistent），每层都有「返回」。
 // ────────────────────────────────────────────────────────────
 var FBX_COST = 1000;
 var FBX_MAX_AREA = 64;
 var FBX_MAX_ITEM = 24;
 var FBX_DIFF_NAME = ["普通", "困难"];
-var FBX_CELL = "display:inline-block;width:46%;box-sizing:border-box;text-align:center;border:1px solid #b8943f;background:#151515;border-radius:0.4em;padding:0.55em 0;margin:0.4em 1%;cursor:pointer;vertical-align:top;";
 
-function fbx_click(cmd) {
-    return "onclick=\"window.SendCommand('" + cmd + "')\"";
-}
 function fbx_all_areas() {
     var jh = WORLD.COMMANDS && WORLD.COMMANDS.jh;
     return (jh && jh.fbs) || [];
@@ -83,73 +81,121 @@ function fbx_obj_name(path) {
     return { obj: obj, color: color, html: "<" + color + ">" + obj.name + "</" + color + ">" };
 }
 
-function fbx_show_areas(me, npc) {
+// ── 兑换类别 ──
+// 每个类别：name 按钮名；items(area, diff) 该副本该难度能换的物品；cost 每件花多少次。
+// 目前只有装备（橙装）；以后加别的（残页等）往这里追加一项即可，菜单自动多出一个二级选项。
+var FBX_CATS = [
+    { key: "eq", name: "装备", cost: FBX_COST, items: fbx_items }
+];
+function fbx_cat_items(cat, area, diff) {
+    try { return (cat.items(area, diff) || []).slice(0, FBX_MAX_ITEM); } catch (e) { return []; }
+}
+// 某副本某难度下有东西可换的类别序号
+function fbx_cats_of(area, diff) {
+    var out = [];
+    for (var i = 0; i < FBX_CATS.length; i++) if (fbx_cat_items(FBX_CATS[i], area, diff).length) out.push(i);
+    return out;
+}
+function fbx_label(area, d) { return area.name + "·" + FBX_DIFF_NAME[d]; }
+function fbx_send(me, buttons, text, feedback) {
+    var args = buttons.slice();
+    // 有按钮时常驻（多级菜单来回点不自动关）；没按钮的纯提示照常可关
+    args.push({ text: text, feedback: feedback || "", persistent: buttons.length > 0 });
+    me.send_commands.apply(me, args);
+}
+
+// 一级：副本（难度）列表
+function fbx_show_areas(me, npc, feedback) {
     var list = fbx_entries(me, npc), all = fbx_all_areas();
     if (!list.length) {
-        return me.notify(npc._fbx_all
+        return fbx_send(me, [], npc._fbx_all
             ? "易直非翻了翻账本，摇头道：「你还没在哪个能换东西的副本里留下过次数，先去跑几趟吧。」"
-            : "易直非摇头道：「这个副本里没有我能替你寻来的东西。」");
+            : "易直非摇头道：「这个副本里没有我能替你寻来的东西。」", feedback);
     }
-    var html = ["<hiy>易直非搓着手笑道：「副本跑得多了，总有些好东西从指缝里漏掉。拿你的副本次数来，我替你寻来——一件 " + FBX_COST + " 次。」</hiy>", '<div style="text-align:center;">'];
+    var btn = [];
     for (var i = 0; i < list.length; i++) {
         var a = all[list[i][0]], d = list[i][1];
-        html.push('<span ' + fbx_click("fbx_a" + (list[i][0] * 2 + d) + " " + npc.id) + ' style="' + FBX_CELL + '"><hiw>' + a.name + "（" + FBX_DIFF_NAME[d] + "）" + '</hiw><br><wht>可用次数 ' + fbx_avail(me, a, d) + '</wht></span>');
+        btn.push("fbx_a" + (list[i][0] * 2 + d) + " " + npc.id, fbx_label(a, d) + "（" + fbx_avail(me, a, d) + "次）");
     }
-    html.push("</div>");
-    me.notify(html.join(""));
+    fbx_send(me, btn, "易直非搓着手笑道：「副本跑得多了，总有些好东西从指缝里漏掉。拿你的副本次数来，我替你寻来。」", feedback);
 }
-function fbx_show_items(me, npc, code) {
+// 二级：类别
+function fbx_show_cats(me, npc, code, feedback) {
     var ai = code >> 1, d = code & 1;
     var a = fbx_all_areas()[ai];
     // 只能打开这个易直非会列出的副本/难度
     var ok = false, list = fbx_entries(me, npc);
     for (var i = 0; i < list.length; i++) if (list[i][0] === ai && list[i][1] === d) ok = true;
     if (!a || !ok) return fbx_show_areas(me, npc);
-    var items = fbx_items(a, d);
     me._fbx_pick = { npc: npc.id, area: ai, diff: d };
-    var html = ["<hiy>" + a.name + "（" + FBX_DIFF_NAME[d] + "）</hiy>：已完成 " + a.query_run_count(me, d) + " 次，可用 <hig>" + fbx_avail(me, a, d) + "</hig> 次。每件 " + FBX_COST + " 次。", '<div style="text-align:center;">'];
-    for (var k = 0; k < items.length; k++) {
-        html.push('<span ' + fbx_click("fbx_i" + k + " " + npc.id) + ' style="' + FBX_CELL + '">' + fbx_obj_name(items[k]).html + '</span>');
+    var btn = [], cats = fbx_cats_of(a, d);
+    for (var c = 0; c < cats.length; c++) {
+        var cat = FBX_CATS[cats[c]];
+        btn.push("fbx_k" + cats[c] + " " + npc.id, cat.name + "（" + fbx_cat_items(cat, a, d).length + "件）");
     }
-    html.push("</div>");
-    me.notify(html.join(""));
-    me.send_commands("fbx " + npc.id, "返回副本列表");
+    btn.push("fbx " + npc.id, "返回");
+    fbx_send(me, btn, fbx_label(a, d) + "：已完成 " + a.query_run_count(me, d) + " 次，可用 " + fbx_avail(me, a, d) + " 次。", feedback);
 }
+// 三级：物品
+function fbx_show_items(me, npc, ci, feedback) {
+    var pick = me._fbx_pick;
+    if (!pick || pick.npc !== npc.id || !FBX_CATS[ci]) return fbx_show_areas(me, npc);
+    var a = fbx_all_areas()[pick.area], d = pick.diff, cat = FBX_CATS[ci];
+    var items = fbx_cat_items(cat, a, d);
+    if (!items.length) return fbx_show_cats(me, npc, pick.area * 2 + d);
+    pick.cat = ci;
+    var btn = [];
+    for (var k = 0; k < items.length; k++) {
+        var o = fbx_obj_name(items[k]);
+        btn.push("fbx_i" + k + " " + npc.id, (o.obj ? o.obj.name : items[k]) + "（" + cat.cost + "次）");
+    }
+    btn.push("fbx_a" + (pick.area * 2 + d) + " " + npc.id, "返回");
+    fbx_send(me, btn, fbx_label(a, d) + " · " + cat.name + "：可用 " + fbx_avail(me, a, d) + " 次。", feedback);
+}
+// 四级：详情 / 确认兑换
 function fbx_pick(me, npc, k, confirm) {
     var pick = me._fbx_pick;
-    if (!pick || pick.npc !== npc.id) return fbx_show_areas(me, npc);
-    var a = fbx_all_areas()[pick.area], d = pick.diff;
-    var path = a && fbx_items(a, d)[k];
-    if (!path) return fbx_show_areas(me, npc);
-    var avail = fbx_avail(me, a, d);
-    var info = fbx_obj_name(path);
-    var label = a.name + "（" + FBX_DIFF_NAME[d] + "）";
-    if (!confirm) {
-        var lines = ["\n" + info.html];
-        if (info.obj && info.obj.desc) lines.push(info.obj.desc);
-        if (info.obj && info.obj.prop && UTIL.prop_toString) lines.push("<" + info.color + ">" + UTIL.prop_toString(info.obj.prop) + "</" + info.color + ">");
-        lines.push("\n<hiz>── 兑换需求 ──</hiz>");
-        lines.push("<hiw>" + label + "副本次数 ×" + FBX_COST + "（你可用 " + avail + " 次）</hiw>");
-        lines.push(avail >= FBX_COST ? "<hig>次数足够，可以兑换。</hig>" : "<hir>次数不足。</hir>");
-        me.notify(lines.join("\n"));
-        return me.send_commands("fbx_c" + k + " " + npc.id, "确认兑换", "fbx_a" + (pick.area * 2 + d) + " " + npc.id, "返回");
+    if (!pick || pick.npc !== npc.id || pick.cat === undefined) return fbx_show_areas(me, npc);
+    var a = fbx_all_areas()[pick.area], d = pick.diff, cat = FBX_CATS[pick.cat];
+    var path = a && cat && fbx_cat_items(cat, a, d)[k];
+    if (!path) return fbx_show_items(me, npc, pick.cat);
+    var label = fbx_label(a, d);
+    var feedback = "";
+    if (confirm) {
+        var avail0 = fbx_avail(me, a, d);
+        if (avail0 < cat.cost) {
+            feedback = "<hir>易直非摊手道：「" + label + "的次数还差 " + (cat.cost - avail0) + " 次，多跑几趟再来吧。」</hir>";
+        } else if (me.items && me.items.length > 204) {
+            feedback = "<hir>你背包的东西太多了。</hir>";
+        } else {
+            var got = me.add_obj(path, 1);
+            if (!got) {
+                feedback = "<hir>易直非挠头道：「哎呀，这件东西一时寻不着，换一件吧。」</hir>";
+            } else {
+                var key = "fbx_spent_" + d + "_" + a.fb_index;
+                me.set_temp(key, me.query_temp(key, 0) + cat.cost);
+                feedback = "<hig>易直非从身后的包袱里摸出" + (got.color_name || got.name) + "，郑重地交到你手上。</hig>";
+                me.notify(feedback);
+                if (got.is_equipment && got.grade >= 5 && typeof COMMAND !== "undefined" && COMMAND.DO) {
+                    COMMAND.DO("rumor", "听说有人得到了一" + got.unit + got.name + "。");
+                }
+            }
+        }
     }
-    if (avail < FBX_COST) {
-        return me.notify("<hiw>易直非摊手道：「" + label + "的次数还差 " + (FBX_COST - avail) + " 次，多跑几趟再来吧。」</hiw>");
-    }
-    if (me.items && me.items.length > 204) return me.notify("你背包的东西太多了。");
-    var got = me.add_obj(path, 1);
-    if (!got) return me.notify("易直非挠头道：哎呀，这件东西一时寻不着，换一件吧。");
-    var key = "fbx_spent_" + d + "_" + a.fb_index;
-    me.set_temp(key, me.query_temp(key, 0) + FBX_COST);
-    me.notify("<hig>易直非从身后的包袱里摸出" + (got.color_name || got.name) + "，郑重地交到你手上。</hig>\n<hiw>" + label + "可用次数还剩 " + fbx_avail(me, a, d) + " 次。</hiw>");
-    if (got.is_equipment && got.grade >= 5 && typeof COMMAND !== "undefined" && COMMAND.DO) {
-        COMMAND.DO("rumor", "听说有人得到了一" + got.unit + got.name + "。");
-    }
+    var info = fbx_obj_name(path), avail = fbx_avail(me, a, d);
+    var lines = [info.html];
+    if (info.obj && info.obj.desc) lines.push(info.obj.desc);
+    if (info.obj && info.obj.prop && UTIL.prop_toString) lines.push("<" + info.color + ">" + String(UTIL.prop_toString(info.obj.prop)).split("\n").join("<br>") + "</" + info.color + ">");
+    lines.push("兑换需要：" + label + "副本次数 ×" + cat.cost + "（你可用 " + avail + " 次）");
+    var btn = [];
+    if (avail >= cat.cost) btn.push("fbx_c" + k + " " + npc.id, "确认兑换");
+    btn.push("fbx_k" + pick.cat + " " + npc.id, "返回");
+    fbx_send(me, btn, lines.join("<br>"), feedback);
 }
 
 WORLD.FB_EXCHANGE = {
     COST: FBX_COST,
+    CATS: FBX_CATS,
     items: fbx_items,
     avail: fbx_avail,
     entries: fbx_entries,
@@ -159,8 +205,13 @@ WORLD.FB_EXCHANGE = {
         npc.add_action("fbx", "副本兑换", function (me) { fbx_show_areas(me, this); });
         for (var i = 0; i < FBX_MAX_AREA * 2; i++) {
             (function (code) {
-                npc.add_action("fbx_a" + code, null, function (me) { fbx_show_items(me, this, code); });
+                npc.add_action("fbx_a" + code, null, function (me) { fbx_show_cats(me, this, code); });
             })(i);
+        }
+        for (var c = 0; c < 16; c++) {
+            (function (ci) {
+                npc.add_action("fbx_k" + ci, null, function (me) { fbx_show_items(me, this, ci); });
+            })(c);
         }
         for (var k = 0; k < FBX_MAX_ITEM; k++) {
             (function (ki) {
