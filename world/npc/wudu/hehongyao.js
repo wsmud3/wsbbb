@@ -41,9 +41,6 @@ this.set_drop({
 }, {
     obj: ["eq/lv2/wd_mianju"],
     odds: 4050
-}, {
-    obj: ["eq/lv2/hs_qin"],
-    odds: 4050
 });
 this.on_enter = function (me) {
     me.notify("何红药发出一阵刺耳的怪笑：哈哈哈哈！又一个不要命的！既然来了，就留下做我五毒教的药人吧！");

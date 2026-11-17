@@ -29,11 +29,11 @@ this.set({
 	    { n: "卧室", id: "qc/woshi", p: [1, -7], exits: ["s"] },
 		];
 this.drops = [
-    "book/bc#tagexing", "book/bc#cuixinzhang", "book/bc#songfengjianfa"
+    "book/bc#tagexing", "book/bc#cuixinzhang2", "book/bc#songfengjianfa"
 ];
 
 	this.quick_drops = [
 	    { obj: "money/silver", min: 1, max: 10 },
 	    { obj: "book/bc#tagexing", odds: 2100 },
-	    { obj: ["book/bc#cuixinzhang", "book/bc#songfengjianfa"], odds: 2400 },
+	    { obj: ["book/bc#cuixinzhang2", "book/bc#songfengjianfa"], odds: 2400 },
 	];

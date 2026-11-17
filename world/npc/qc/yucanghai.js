@@ -39,9 +39,6 @@ this.set_drop({
 }, {
     obj: ["book/bc#songfengjianfa",  "book/bc#tagexing"],
     odds: 7100
-}, {
-    obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_tou", "eq/lv2/lm_shoes", "eq/lv2/lm_pifeng", "eq/lv2/lm_pei", "eq/lv2/jiangjunjian"],
-    odds: 4260
 });
 this.on_enter = function (me) {
     me.notify("余沧海阴沉着脸，缓缓拔出长剑：贫道在此清修，竟有人敢来滋扰。既然如此，便送你一程！");

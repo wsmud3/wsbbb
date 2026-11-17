@@ -37,13 +37,13 @@
 	    { n: "山神庙", id: "kw/shanshenmiao", p: [-2, -3], exits: [] },
 		];
 	this.drops = [
-	    "book/bc#lengyueshengong", "book/bc#hujiadaofa", "book/book#sixiangbu",
+	    "book/bc#lengyueshengong", "book/bc#hujiadaofa", "book/bc#sixiangbu",
 	    "eq/lv3/kw_dao", "res/xiongdan"
 	];
 
 		this.quick_drops = [
 	    { obj: "money/silver", min: 1, max: 10 },
-	    { obj: ["book/bc#hujiadaofa", "book/book#sixiangbu"], odds: 2100 },
+	    { obj: ["book/bc#hujiadaofa", "book/bc#sixiangbu"], odds: 2100 },
 	    { obj: "book/bc#lengyueshengong", odds: 2900 },
 	    { obj: "eq/lv3/kw_dao", odds: 250 },
 	];

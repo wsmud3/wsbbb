@@ -35,12 +35,6 @@ this.set_drop({
     obj: "money/silver",
     min: 30,
     max: 70
-}, {
-    obj: ["book/bc#songshanjianfa"],
-    odds: 7450
-}, {
-    obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_tou", "eq/lv2/lm_shoes", "eq/lv2/lm_pifeng", "eq/lv2/lm_jian"],
-    odds: 4470
 });
 
 // 原版机制（攻略第 15 节）：费斌是来杀刘正风的，不是来杀玩家的。

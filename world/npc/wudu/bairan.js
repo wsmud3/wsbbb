@@ -37,9 +37,6 @@ this.set_drop({
 }, {
     obj: ["book/bc#wudushengong", "book/bc#qianzhuwandushou"],
     odds: 50490
-}, {
-    obj: ["eq/lv1/lm_cloth", "eq/lv1/lm_head"],
-    odds: 4050
 });
 this.on_enter = function (me) {
     me.notify("白髯老者冷哼一声：擅闯我五毒教者，死！");

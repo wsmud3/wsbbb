@@ -33,12 +33,6 @@ this.set_drop({
     obj: "money/silver",
     min: 15,
     max: 40
-}, {
-    obj: ["book/bc#songshanjianfa", ],
-    odds: 7450
-}, {
-    obj: ["eq/lv1/lm_cloth", "eq/lv1/lm_jian"],
-    odds: 4470
 });
 this.on_enter = function (me) {
     me.notify("嵩山弟子拔出长剑，厉声喝道：嵩山派办事，闲杂人等回避！想死的尽管上来！");

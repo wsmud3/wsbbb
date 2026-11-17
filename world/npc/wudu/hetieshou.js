@@ -45,9 +45,6 @@ this.set_drop({
 }, {
     obj: ["eq/lv2/wd_gou"],
     odds: 4050
-}, {
-    obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_tou", "eq/lv2/lm_shoes"],
-    odds: 4050
 });
 this.on_enter = function (me) {
     me.notify("何铁手冷冷地看着你，铁手发出咔咔的声响：能走到这里来，算你有几分本事。不过，到此为止了！");

@@ -34,13 +34,10 @@ this.set_drop({
     min: 30,
     max: 80
 }, {
-    obj: ["book/bc#kuangfengkuaidao", "book/bc#yanxingbu"],
+    obj: ["book/bc#kuangfengkuaidao"],
     odds: 7100
 }, {
     obj: ["eq/lv3/hs_dao", "eq/lv3/hs_mianzhao"],
-    odds: 4260
-}, {
-    obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_shoes"],
     odds: 4260
 });
 // 只对玩家叫杀：他换房间时，房间里的 NPC 也会收到 on_enter，不能对 NPC 开战
