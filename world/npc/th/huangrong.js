@@ -33,48 +33,67 @@ this.set_drop({
     odds: 8500
 });
 
-// 原版机制（攻略第 19 节，普通）：
-//   卧室碰到黄蓉，一定要与她对话（否则无法触发剧情），点询问石匣，
-//   黄蓉叫你去找周伯通，和他切磋后拿到石匣，回来给她 → 再走迷阵 → 山洞 → 完成副本 100%。
+// 原版机制（攻略第 19 节，普通模式；困难模式卧室没有黄蓉，见 th/woshi）：
+//   卧室碰到黄蓉，一定要与她对话（点「询问石匣」，否则无法触发剧情），黄蓉叫你去找周伯通；
+//   自行返回渔夫处再走一遍迷阵，迷阵里会多出一条路通往山洞（th/tao0），
+//   在山洞比试或者杀掉周伯通拿到石匣（th/zhoubotong），回来交给黄蓉 → 完成副本 100%。
+// 进度存副本存储（room.set_temp(me, …)），随副本销毁：
+//   th_ask 已询问石匣；th_done 已交回石匣。
+var HR_SHIXIA = "res/shixia";
+function hr_room(npc) { return npc.environment; }
+function hr_get(npc, me, k) { var r = hr_room(npc); return r ? r.query_temp(me, k, 0) : 0; }
+function hr_set(npc, me, k, v) { var r = hr_room(npc); if (r) r.set_temp(me, k, v); }
+
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    if (hr_get(this, me, "th_done")) return;
+    me.notify("黄蓉托着腮坐在窗前，见你进来，眼珠一转，笑道：「你来得正好，我正有件事要找人帮忙呢。」");
+};
+
 this.add_action("xunwen", "询问石匣", function (me) {
-    if (me.query_temp("th_done")) {
+    if (!me.is_player) return true;
+    if (hr_get(this, me, "th_done")) {
         me.notify("黄蓉笑道：石匣已经回来了，多谢你啦。");
         return true;
     }
-    if (me.query_temp("th_shixia")) {
-        me.notify("黄蓉伸手：石匣呢？快给我呀。");
-        me.notify("<hiy>（点击「交石匣」把石匣给她）</hiy>");
+    if (me.find_obj_bypath(HR_SHIXIA)) {
+        me.notify("黄蓉眼睛一亮：石匣拿到啦？快给我呀。");
+        me.send_commands("gei " + this.id, "交石匣");
         return true;
     }
-    me.set_temp("th_ask", 1, 7200000);
-    me.notify("黄蓉说道：我爹有个石匣，锁在洞里，钥匙在後山老顽童周伯通手里。");
-    me.notify("黄蓉说道：你去后山山洞找他，跟他切磋切磋，他高兴了自然会把石匣给你。");
+    var first = !hr_get(this, me, "th_ask");
+    hr_set(this, me, "th_ask", 1);
+    me.notify("黄蓉说道：我爹有只石匣，被老顽童周伯通拿去玩了，他就躲在桃林里的一个山洞里。");
+    me.notify("黄蓉说道：那山洞藏在桃花阵里，你回到海边渔夫那儿，再走一遍桃林，留心路上的变化，自然看得见。");
+    me.notify("黄蓉说道：老顽童最爱跟人打架，你跟他比试比试，赢了他自然会把石匣给你。");
+    if (first) me.notify("<hiy>（返回海滩重走桃林迷阵，途中会多出一条通往山洞的路。）</hiy>");
     return true;
 });
 this.add_action("gei", "交石匣", function (me) {
-    if (me.query_temp("th_done")) {
+    if (!me.is_player) return true;
+    if (hr_get(this, me, "th_done")) {
         me.notify("黄蓉笑道：已经收下啦。");
         return true;
     }
-    if (!me.query_temp("th_shixia")) {
-        me.notify("黄蓉歪着头：你手上没有石匣呀。");
-        return true;
-    }
-    var has = null;
-    if (me.items) {
-        for (var i = 0; i < me.items.length; i++) {
-            if (me.items[i] && me.items[i].path === "res/shixia") { has = me.items[i]; break; }
-        }
-    }
+    var has = me.find_obj_bypath(HR_SHIXIA);
     if (!has) {
-        me.notify("黄蓉歪着头：石匣不在你身上。");
+        me.notify("黄蓉歪着头：你手上没有石匣呀。" + (hr_get(this, me, "th_ask") ? "" : "（先点「询问石匣」）"));
         return true;
     }
     me.remove_obj(has, 1);
-    me.remove_temp("th_shixia");
-    me.set_temp("th_done", 1, 7200000);
-    me.add_fbscore(180);
+    hr_set(this, me, "th_done", 1);
+    var area = this.environment && this.environment.parent;
+    me.add_fbscore((area && area.score) || 180);
     me.send_room("$N把石匣交给黄蓉，黄蓉眼睛一亮，欢天喜地地收下了。");
     me.notify("<hig>黄蓉笑道：多谢你啦！石匣回来了，这一趟就算你过关。</hig>");
+    me.notify("<hig>可以点「完成副本」结算了。</hig>");
     return true;
 });
+// 石匣交回之前不许杀黄蓉（否则剧情断掉、本轮永远到不了 100%）
+this.on_kill = function (me) {
+    if (me && me.is_player && !hr_get(this, me, "th_done")) {
+        me.notify("黄蓉身形一晃躲到屏风后，嘻嘻笑道：「石匣还没拿回来呢，你打我做什么？」");
+        return false;
+    }
+    return true;
+};

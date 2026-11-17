@@ -9,7 +9,7 @@ this.set({
     max_hp: 735000,
     mp: 154400,
     max_mp: 154400,
-    score: 140,
+    score: 0,
     gj: 42966,
     fy: 33276,
     mz: 55797,
@@ -35,7 +35,8 @@ this.set_drop({
     obj: ["book/bc#huagongdafa"],
     odds: 5310
 });
+// 攻略第 21 节：此关只需击杀丁春秋和狮吼子，其他人不会拦你——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {
-    me.notify("摘星子冷冷道：连我三师弟都打不过，也敢来星宿海？");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("摘星子斜眼打量了你一番，冷冷哼了一声，并不理会。");
 };

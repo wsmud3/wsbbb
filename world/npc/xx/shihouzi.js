@@ -31,15 +31,17 @@ this.set_drop({
     obj: ["book/bc#sanyinwugongzhao", "book/bc#huagongdafa"],
     odds: 8850
 });
+
+// 原版机制（攻略第 21 节）：必须击杀二师兄狮吼子，才能进日月洞打星宿老怪丁春秋。
+// 门禁看 xx/xxh1 里狮吼子是否还活着（见 xx/xxh1 on_leave），这里只做提示，
+// 不再往玩家身上挂 2 小时的 xx_shihouzi（无人读取、还会跨副本残留）。
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("狮吼子怒吼道：想过此处，先接我一招三阴蜈蚣爪！");
     this.do_kill(me);
 };
-
-// 原版机制（攻略第 21 节）：必须击杀二师兄狮吼子，才能进日月洞打星宿老怪丁春秋。
 this.on_died = function (killer, corpse) {
     if (killer && killer.is_player) {
-        killer.set_temp("xx_shihouzi", 1, 7200000);
-        killer.notify("<hiy>狮吼子一倒，日月洞口的守卫散了——可以进去找丁春秋了。</hiy>");
+        killer.notify("<hiy>狮吼子一倒，日月洞口再无人阻拦——可以进去找丁春秋了。</hiy>");
     }
 };

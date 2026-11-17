@@ -20,8 +20,11 @@ this.set_drop({
     min: 30,
     max: 80
 }, {
+    // 攻略：蟒蛇随机掉落怪蟒蛇血（小青那里 10 份蛇血配一份药剂）
     obj: ["res/shexue"],
-    odds: 322320
+    odds: 6000,
+    min: 1,
+    max: 3
 }, {
     obj: ["book/bc#lingshezhangfa"],
     odds: 5100
@@ -32,10 +35,10 @@ this.on_enter = function (me) {
 };
 
 // [mech] 蟒蛇：击杀后副本完成（攻略：杀了之后，完成度100%）
+// 原来写在 on_die 里并往玩家身上挂一个无人读取的 bt_mangshe_dead 标记，改为死后提示。
 this.score = 90;
-this.on_die = function (killer) {
+this.on_died = function (killer) {
     if (killer && killer.is_player) {
-        killer.set_temp("bt_mangshe_dead", 1);
         killer.notify("<hio>巨蟒轰然倒地，白驼山一行就此了结。</hio>");
         killer.notify("<hig>可回动作栏点「完成副本」结算。</hig>");
     }

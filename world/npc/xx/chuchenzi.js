@@ -9,7 +9,7 @@ this.set({
     max_hp: 499800,
     mp: 141000,
     max_mp: 141000,
-    score: 110,
+    score: 0,
     gj: 36540,
     fy: 20479,
     mz: 29190,
@@ -35,7 +35,8 @@ this.set_drop({
     obj: ["book/bc#feixingshu"],
     odds: 7080
 });
+// 攻略第 21 节：此关只需击杀丁春秋和狮吼子，其他人不会拦你——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {
-    me.notify("出尘子尖声道：右星宿海是我和阿紫师妹的地盘，别人不许进！");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("出尘子尖声道：右星宿海是我和阿紫师妹的地盘……算了，懒得理你。");
 };

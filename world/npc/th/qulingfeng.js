@@ -9,7 +9,7 @@ this.set({
     max_hp: 548000,
     mp: 122000,
     max_mp: 122000,
-    score: 160,
+    score: 0,
     gj: 28400,
     fy: 18241,
     mz: 34800,
@@ -38,7 +38,8 @@ this.set_drop({
     obj: ["book/bc#anyingfuxiang"],
     odds: 6800
 });
+// 攻略：出了林子路上遇到的两个小弟「杀不杀无所谓」——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {
-    me.notify("曲灵风踏前一步，喝道：站住！桃花岛前院，岂容外人放肆！");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("曲灵风踏前一步，喝道：桃花岛前院，岂容外人放肆！");
 };

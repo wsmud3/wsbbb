@@ -47,7 +47,9 @@ this.set_drop({
     obj: ["eq/lv4/ruanjia"],
     odds: 5100
 });
+// 困难模式卧室只有黄药师（普通模式由 th/woshi 的 on_set_difficulty 移除），主动叫杀，杀了就 100%
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("黄药师负手而立，淡然道：能到此处，也算有缘。可惜，桃花岛不是你该来的地方。");
     this.do_kill(me);
 };

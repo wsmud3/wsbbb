@@ -9,7 +9,7 @@ this.set({
     max_hp: 487198,
     mp: 101000,
     max_mp: 101000,
-    score: 120,
+    score: 0,
     gj: 35070,
     fy: 19488,
     mz: 38010,
@@ -34,7 +34,8 @@ this.set_drop({
     obj: ["book/bc#zhaixinggong"],
     odds: 7080
 });
+// 攻略第 21 节：此关只需击杀丁春秋和狮吼子，其他人不会拦你——不主动叫杀、score 为 0，不卡完成度
 this.on_enter = function (me) {
-    me.notify("天狼子阴笑道：星宿海你也敢闯？活得不耐烦了！");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("天狼子阴笑道：星宿海你也敢闯？哼，自有师父收拾你。");
 };

@@ -9,6 +9,7 @@ this.set({
     is_copy: true,
     expend: 10,
     is_multi: false,
+    is_diffi: true,
     exp: 22000,
     pot: 18000,
     room_path: "th/",
@@ -26,6 +27,8 @@ this.set({
 	    { n: "大厅", id: "th/dating", p: [3, 4], exits: ["e","n"] },
 	    { n: "书房", id: "th/shufang", p: [4, 4], exits: [] },
 	    { n: "卧室", id: "th/woshi", p: [3, 3], exits: [] },
+	    // 第二遍走迷阵才露出的山洞（周伯通，普通模式）
+	    { n: "山洞", id: "th/shandong", p: [1, 1], exits: ["w"] },
 		];
 this.drops = [
     "book/bc#jinyangong","book/bc#anyingfuxiang",
