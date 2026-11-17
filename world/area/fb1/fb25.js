@@ -45,7 +45,8 @@ this.set({
 //         依次插令乘吊篮到大门 → 杨莲亭拦路 → 后厅转碗开密道 → 火折子点亮找铁环 → 小花园 → 闺房。
 //   闺房：杨莲亭与东方不败一起叫杀。杨莲亭活着时替东方不败挡刀；杨莲亭死后东方不败狂暴 + 鬼魅约 30 秒。
 //         跑路后再进闺房、或天师符原地复活，杨莲亭都会复活。
-//         唐诗剑法「躺尸」成功后：东方不败罢手失神（不再主动攻击你），杨莲亭不再复活、不再挡刀。
+//         杨莲亭只有在与你交战时才挡刀。唐诗剑法「躺尸」会消除二人的仇恨（引擎通用规则，见
+//         CHARACTER.do_kill），之后他们不再主动攻击你，可以单独叫杀东方不败来避开挡刀。
 //   困难：三堂大厅没有堂主；要带着三块令牌（在普通模式刷）在第一处悬崖一并插入，直上崖顶，
 //         三位堂主在大门一起出战（1v3），之后与普通相同。
 // ────────────────────────────────────────────────────────────
@@ -63,7 +64,6 @@ this.hmy_key = function (room) {
 };
 this.hmy_get = function (room, k, d) { return room.query_temp(this.hmy_key(room), k, d); };
 this.hmy_set = function (room, k, v) { room.set_temp(this.hmy_key(room), k, v); };
-this.hmy_tangshi = function (room) { return !!this.hmy_get(room, "hmy_tangshi", 0); };
 
 // 东方不败狂暴 + 鬼魅。NPC 的 gj/ds/mz 在模板里写死，recount 不会按 *_per 重算，
 // 所以直接改数值、30 秒后还原（状态只用于显示和攻速，gjsd 每次 recount 都会重算）。
@@ -90,23 +90,8 @@ this.hmy_kuangbao = function (df) {
         df.environment.send_room("<hir>杨莲亭倒在血泊之中，东方不败厉啸一声，双目尽赤——狂暴！鬼魅身法随之展开！</hir>");
 };
 
-// 唐诗剑法躺尸成功：东方不败罢手、失神一阵（期间不出手），杨莲亭此后不再复活、不再挡刀
-this.hmy_on_tangshi = function (room) {
-    if (this.hmy_tangshi(room)) return;
-    this.hmy_set(room, "hmy_tangshi", 1);
-    var df = this.hmy_alive(room, "hmy/dongfangbubai");
-    var ylt = this.hmy_alive(room, "hmy/yanglianting");
-    if (ylt) ylt.end_fight();
-    if (df) {
-        df.end_fight();
-        df.add_status({ id: "hmy_shishen", name: "<hiw>失神</hiw>", desc: "以为对手已死，心神松懈，无法出手", duration: 30000, is_busy: true, no_diff: true, override: 2 });
-    }
-    room.send_room("<hiy>东方不败见你倒地不动，冷笑一声收针罢手，竟不再看你一眼；杨莲亭也松了口气退到一旁——此时正是你的机会！</hiy>");
-};
-
 // 闺房里的杨莲亭复活（跑路回来 / 天师符原地复活都会重新进入闺房）
 this.hmy_revive_ylt = function (room, me) {
-    if (this.hmy_tangshi(room)) return;
     if (!this.hmy_get(room, "hmy_ylt_killed", 0)) return;
     if (!this.hmy_alive(room, "hmy/dongfangbubai")) return;
     if (this.hmy_alive(room, "hmy/yanglianting")) return;
@@ -118,13 +103,14 @@ this.hmy_revive_ylt = function (room, me) {
     if (ylt && me) ylt.do_kill(me);
 };
 
-// 杨莲亭挡刀：玩家打在东方不败身上的伤害七成转到杨莲亭身上（他不会因此而死，须先杀他）
+// 杨莲亭挡刀：他正在与该玩家交战时，玩家打在东方不败身上的伤害七成转到杨莲亭身上
+// （他不会因此而死，须先杀他；躺尸消除仇恨后单独叫杀东方不败，杨莲亭不在战斗中便不挡）
 this.hmy_shield = function (df, from, sh) {
     var room = df.environment;
     if (!room || !from || !from.is_player || !(sh > 0)) return;
-    if (this.hmy_tangshi(room)) return;
     var ylt = this.hmy_alive(room, "hmy/yanglianting");
     if (!ylt || ylt.hp <= 1) return;
+    if (!ylt.is_fighting(from)) return;
     var take = Math.min(Math.floor(sh * 0.7), ylt.hp - 1);
     if (take <= 0) return;
     df.add_hp(take);

@@ -74,6 +74,19 @@
                 }
                 if (me.environment && me.environment.path) {
                     me.end_fight();
+                    // 消除仇恨：同房间的 NPC 放弃对你的敌意，此后不再主动攻击你，
+                    // 直到你自己再对它出手（门派战等 ignore_feign 的 NPC 除外）
+                    var items = me.environment.items || [];
+                    for (var fi = 0; fi < items.length; fi++) {
+                        var npc = items[fi];
+                        if (!npc || npc.is_player || npc === me || npc.ignore_feign) continue;
+                        if (!npc._feign_forgive) npc._feign_forgive = {};
+                        npc._feign_forgive[me.id] = true;
+                        if (npc.enemy && npc.enemy.contain(me)) {
+                            npc.enemy.remove(me);
+                            if (!npc.enemy.length) npc.end_fight();
+                        }
+                    }
                 }
                 let time = 8000 - me.query_prop('tsjf_cd');
                 if (time < 2000) time = 2000;

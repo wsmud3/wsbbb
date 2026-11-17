@@ -4,7 +4,8 @@ this.set({
 				name: "屠龙刀",
 				desc: "武林至尊，宝刀屠龙。号令天下，莫敢不从。倚天不出，谁与争锋！这就是武林至尊屠龙宝刀！",
 				unit: "把",
-				eq_type: EQUIP_TYPE.BLADE,
+				eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.BLADE（常量不存在 → 装备栏 undefined，装不上）
+				weapon_type: WEAPON_TYPE.BLADE,
 				hole_count: 4,
 				prop: {
 								gj: 450,

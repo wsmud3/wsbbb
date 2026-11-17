@@ -31,7 +31,6 @@ this.add_action("dianliang", null, function (me, arg) {
     }
     if (!this.hmy_have(me, "res/huozhezi", "火折子")) {
         me.notify("<hir>密道中一片漆黑，你需要火折子才能照亮。</hir>");
-        me.notify("<hiy>（承德殿的烛台下放着教众点灯用的火折子）</hiy>");
         return true;
     }
     this.midao_lit = true;

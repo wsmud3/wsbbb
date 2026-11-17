@@ -151,7 +151,7 @@ this.tl_carry = function (me) {
     me.add_status({
         id: "carry_duanyu", name: "背负段誉", duration: 0, no_clear: true,
         desc: "背着段誉，全身内力都用来保护他：攻击、防御、躲闪、命中、招架各减少50%。",
-        prop: { gj_per: -50, fy_per: -50, ds_per: -50, mz_per: -50, zj_per: -50 }
+        prop: { total_per: -50 }   // 总减（最终值整体乘 0.5，见 USER.recount），不是 buff 那种加算百分比
     });
     var foes = this.tl_find_alive(me, TL_PURSUERS);
     me.notify("<hig>段誉爬上了你的背。</hig><hir>寺中还剩的 " + foes.length + " 位高僧一齐朝你扑了过来！</hir>");

@@ -4,7 +4,8 @@ this.set({
 				name: "血刀",
 				desc: "血刀老祖的武器，刀身暗红，犹有血迹！\n特效：命中后触发「血祭」，10秒内命中+10%",
 				unit: "把",
-				eq_type: EQUIP_TYPE.BLADE,
+				eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.BLADE（常量不存在 → 装备栏 undefined，装不上）
+				weapon_type: WEAPON_TYPE.BLADE,
 				hole_count: 4,
 				prop: {
 								gj: 430,

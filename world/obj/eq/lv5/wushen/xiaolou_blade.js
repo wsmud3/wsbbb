@@ -4,7 +4,9 @@ this.set({
     name: "小楼一夜听春雨",
     desc: "青青的弯刀，刀锋也是青青的",
     unit: "把",
-    eq_type: EQUIP_TYPE.BLADE,
+    eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.BLADE（常量不存在 → 装备栏 undefined，装不上）
+
+    weapon_type: WEAPON_TYPE.BLADE,
     hole_count: 4,
     prop: { gj: 627, str: 55, releasetime_per: 4, gjsd_per: 4, expend_mp_per: 4 },
 });

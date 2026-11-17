@@ -4,7 +4,7 @@ this.set({
 				name: "倚天剑",
 				desc: "武林至尊，宝刀屠龙。号令天下，莫敢不从。倚天不出，谁与争锋！这就是号令天下的倚天剑",
 				unit: "把",
-				eq_type: EQUIP_TYPE.SWORD,
+				eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.SWORD（常量不存在 → 装备栏 undefined，装不上）
 				weapon_type: WEAPON_TYPE.SWORD,
 				hole_count: 4,
 				prop: {

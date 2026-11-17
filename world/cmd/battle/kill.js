@@ -13,6 +13,8 @@ this.enter = function (me, argid) {
         return me.notify("你要攻击谁？");
     }
     if (target === me) return me.notify("你要攻击谁？");
+    // 主动出手即重新结仇：解除该 NPC 因「躺尸」而放弃的敌意（见 CHARACTER.do_kill）
+    if (target._feign_forgive) delete target._feign_forgive[me.id];
     if (target.is_player) {
 
         // me.add_temp('k_ss', 1, UTIL.diff_time());

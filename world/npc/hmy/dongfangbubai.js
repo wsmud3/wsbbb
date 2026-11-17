@@ -41,12 +41,7 @@ this.set_drop({
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
-    var room = this.environment, area = room && room.parent;
-    // 唐诗剑法躺尸之后，东方不败以为你已死，不再主动攻击你（攻略）
-    if (area && area.hmy_tangshi && area.hmy_tangshi(room)) {
-        me.notify("东方不败斜倚绣榻，正低头绣花，竟没把你放在眼里。");
-        return;
-    }
+    // 躺尸消除仇恨后不再主动攻击由引擎处理（do_kill 内拦截）
     me.notify("东方不败翘起兰花指，绣花针快如闪电：「日出东方，唯我不败！」");
     this.do_kill(me);
 };

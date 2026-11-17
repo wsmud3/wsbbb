@@ -4,7 +4,7 @@
 					name: "八卦棍",
 					desc: "以八卦方位演化的棍法配套兵器，棍身刻有八卦纹路，坚不可摧",
 					unit: "根",
-					eq_type: EQUIP_TYPE.STAFF,
+					eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.STAFF（常量不存在 → 装备栏 undefined，装不上）
 					weapon_type: WEAPON_TYPE.STAFF,
 					hole_count: 2,
 					prop: {

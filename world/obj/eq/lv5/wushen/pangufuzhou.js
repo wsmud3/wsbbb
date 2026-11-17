@@ -4,7 +4,8 @@ this.set({
 	name: "盘古斧胄",
 	desc: "传说中盘古大神开天辟地所用巨斧的残片所铸，斧身上仍残留着一丝混沌之力。",
 	unit: "柄",
-	eq_type: EQUIP_TYPE.BLADE,
+	eq_type: EQUIP_TYPE.WEAPON,   // 原写 EQUIP_TYPE.BLADE（常量不存在 → 装备栏 undefined，装不上）
+	weapon_type: WEAPON_TYPE.BLADE,
 	hole_count: 4,
 	prop: {
 		str: 120,

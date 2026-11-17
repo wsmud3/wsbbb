@@ -41,6 +41,11 @@ CHARACTER.prototype.do_fight = function (target) {
     this.begin_attack(target, 1);
 }
 CHARACTER.prototype.do_kill = function (target) {
+    // 唐诗剑法「躺尸」消除仇恨：NPC 对已放弃敌意的玩家不再主动叫杀（on_enter、助战等）。
+    // 玩家自己用 kill 出手时，kill 命令会先解除该 NPC 的放弃标记，不受这里影响。
+    // 门派战这类见人就打的 NPC 设 ignore_feign = true 豁免。
+    if (!this.is_player && target && target.is_player && this._feign_forgive
+        && this._feign_forgive[target.id] && !this.ignore_feign) return;
     if (this.fight_type == 2 && this.query_enemy() == target) return;
     this.begin_attack(target, 2);
     target.begin_attack(this, 2);

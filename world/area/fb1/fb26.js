@@ -117,7 +117,7 @@ this.pm_apply_carry_status = function (me) {
     me.add_status({
         id: "carry_tonglao", name: "背负童姥", duration: 0, no_clear: true,
         desc: "背着童姥，全身内力都用来支撑她：攻击、防御、躲闪、命中、招架各减少50%。",
-        prop: { gj_per: -50, fy_per: -50, ds_per: -50, mz_per: -50, zj_per: -50 }
+        prop: { total_per: -50 }   // 总减（最终值整体乘 0.5，见 USER.recount），不是 buff 那种加算百分比
     });
 };
 // 躺尸、天师符等会清空状态；还背着就补回去（过铁索桥前也会检查）

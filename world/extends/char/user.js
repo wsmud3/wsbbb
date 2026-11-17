@@ -38,6 +38,17 @@ USER.prototype.recount = function () {
     if (this.parry_skill && this.parry_skill.on_recount_parry) {
         this.zj += this.parry_skill.on_recount_parry(this);
     }
+    // 总加/总减（total_per）：攻击、防御、命中、躲闪、招架各自算完（含 *_per 加算百分比、技能加成）后
+    // 再整体乘一次，与 buff 的加算百分比不同。例：背负段誉/童姥 total_per = -50 → 五项最终值各减半。
+    var totalPer = this.query_prop("total_per") || 0;
+    if (totalPer) {
+        var tf = Math.max(0, 100 + totalPer) / 100;
+        this.gj = parseInt(this.gj * tf);
+        this.fy = parseInt(this.fy * tf);
+        this.mz = parseInt(this.mz * tf);
+        this.ds = parseInt(this.ds * tf);
+        this.zj = parseInt(this.zj * tf);
+    }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
     this.diff_sh_per = this.query_prop('diff_sh_per');
 

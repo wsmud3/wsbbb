@@ -20,37 +20,4 @@ this.on_enter = function (me) {
         // 跑路回来 / 天师符原地复活（复活流程会让玩家重新进入本房间）
         area.hmy_revive_ylt(this, me);
     }
-    this.hmy_watch();
-};
-
-// 躺尸检测：唐诗剑法「躺尸」成功会给玩家加一个名为「装死」的忙乱状态，最短只有 2 秒，
-// 比房间心跳（5 秒）还短，所以有玩家在房里时用 0.5 秒的轮询来看。
-this.hmy_watch = function () {
-    if (this._hmy_watch) return;
-    var self = this;
-    var tick = function () {
-        self._hmy_watch = null;
-        var area = self.parent;
-        if (!area || !area.hmy_tangshi || !self.items || !self.items.length) return;
-        if (area.hmy_tangshi(self)) return;
-        if (!area.hmy_alive(self, "hmy/dongfangbubai")) return;
-        var anyone = false;
-        for (var i = 0; i < self.items.length; i++) {
-            var p = self.items[i];
-            if (!p || !p.is_player) continue;
-            anyone = true;
-            if (p.hp > 0 && p.status) {
-                for (var j = 0; j < p.status.length; j++) {
-                    var st = p.status[j];
-                    if (st && st.id === "busy" && st.name === "装死") {
-                        area.hmy_on_tangshi(self);
-                        return;
-                    }
-                }
-            }
-        }
-        if (!anyone) return;
-        self._hmy_watch = setTimeout(tick, 500);
-    };
-    this._hmy_watch = setTimeout(tick, 500);
 };

@@ -32,9 +32,6 @@ this.set_drop({
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
-    var room = this.environment, area = room && room.parent;
-    // 闺房里躺尸之后杨莲亭不再出手
-    if (room && room.path === "hmy/guifang" && area && area.hmy_tangshi && area.hmy_tangshi(room)) return;
     me.notify("杨莲亭冷笑一声：「擅闯日月神教，待教主来了，你便死无葬身之地！」");
     this.do_kill(me);
 };
