@@ -47,6 +47,9 @@ this.set_drop({
 }, {
     obj: ["eq/lv3/jingzhilvbaoshi"],
     odds: 3680
+}, {
+    obj: ["eq/lv3/jingzhihuangbaoshi"],   // 攻略列有精致的黄宝石（与蓝/绿同掉率）
+    odds: 3680
 });
 this.on_enter = function (me) {
     me.notify("炎龙喷出一口烈焰，热浪扑面而来！");

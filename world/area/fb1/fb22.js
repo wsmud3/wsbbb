@@ -154,7 +154,7 @@ this.drops = [
 	    "eq/lv2/hongbaoshi",
 	    "eq/lv2/lvbaoshi",
 	    "eq/lv2/huangbaoshi",
-	    "eq/lv3/jingzhihongbaoshi",
+	    "eq/lv3/jingzhihuangbaoshi",
 	    "eq/lv3/jingzhilanbaoshi",
 	    "eq/lv3/jingzhilvbaoshi"
 	];
@@ -164,7 +164,7 @@ this.drops = [
 	    { obj: ["book/bc#qingfushenfa", "st/xuanjing"], odds: 2100 },
 	    { obj: "book/bc#qishangquan", odds: 2400 },
 	    { obj: ["eq/lv2/lanbaoshi", "eq/lv2/hongbaoshi", "eq/lv2/lvbaoshi", "eq/lv2/huangbaoshi"], odds: 9300 },
-	    { obj: ["eq/lv3/longhuozhi", "eq/lv3/jingzhihongbaoshi", "eq/lv3/jingzhilanbaoshi", "eq/lv3/jingzhilvbaoshi"], odds: 250 },
+	    { obj: ["eq/lv3/longhuozhi", "eq/lv3/jingzhihuangbaoshi", "eq/lv3/jingzhilanbaoshi", "eq/lv3/jingzhilvbaoshi"], odds: 250 },
 	    { obj: "eq/lv4/lihuozhu", odds: 90 },
 	    { obj: "eq/lv5/wushen/tulong_blade", odds: 17 },
 	];

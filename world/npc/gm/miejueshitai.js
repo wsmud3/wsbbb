@@ -28,7 +28,6 @@ this.skill_map(
     ["linjizhuang", 2151, "dodge"]
 );
 this.set_drop(
-    {obj: ["book/bc#yitianjianfa"], odds: 9040},
     {obj: ["eq/lv5/wushen/yitian_sword"], odds: 17}
 );
 // [mech] 灭绝师太是被营救的 NPC（规则见 world/area/fb1/fb27.js）：不主动攻击玩家、不能被玩家杀，
