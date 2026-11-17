@@ -35,6 +35,9 @@ this.set_drop(
 );
 // 攻略第 30 节：杨过「只能昏迷!!!」——杀不死；醒着时拦在琴室暗道口，要先把他打昏才能下暗河。
 // 之后在平台推石块时他会赶来，用「海潮汹涌」考校玩家（见 world/map/gm2/pingtai.js）。
+// 锁血用 min_hp：扣血到 1 为止、不进死亡判定，昏迷才能打得上
+// （原先只靠 on_die 拒死，致命一击先把气血打到 0 以下，同招的昏迷被 add_status 拒掉）
+this.min_hp = 1;
 this.on_enter = function (me) { };
 this.on_kill = function (me) {
     if (!me || !me.is_player) return true;
@@ -52,7 +55,7 @@ this.on_kill = function (me) {
 };
 this.on_die = function (killer) {
     if (this.environment && this.environment.send_room)
-        this.environment.send_room("<hiy>杨过身形一晃，独臂撑地又站了起来——这人是杀不死的，只能设法让他昏过去。</hiy>");
+        this.environment.send_room("<hiy>杨过身形一晃，独臂撑地又站了起来。</hiy>");
     return false;
 };
 this.on_leave = function (me, dir) {
@@ -60,6 +63,6 @@ this.on_leave = function (me, dir) {
     var room = this.environment;
     if (!room || room.path !== "gm2/qinshi") return true;
     if (this.is_faint) return true;
-    me.notify("<hir>杨过横剑拦在暗道口：「古墓重地，岂容你下去！」——杨过杀不死，先设法把他打昏。</hir>");
+    me.notify("<hir>杨过横剑拦在暗道口：「古墓重地，岂容你下去！」</hir>");
     return false;
 };

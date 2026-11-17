@@ -1,7 +1,6 @@
 this.inherits(NPC);
-// 「落花流水」四侠之一。原版采集数据里这四人在雪山山谷（这里原先误套了词条石商人模板，不能打）。
-// 机制（world/area/fb1/fb29.js）：玩家在山洞惊动血刀老祖后，四侠赶去与老祖混战；
-// 老祖每砍死一人就往山谷退一步。四侠是友军：不攻击玩家，也不能被玩家杀，不计完成度、不掉落。
+// 「落花流水」四侠之一。一开始就在山洞里与血刀老祖对峙，可被玩家叫杀。
+// 机制（world/area/fb1/fb29.js）：开战后副本里每死一个 NPC，老祖就往山谷退一步；四侠跟着他走。
 this.set({
     name: "花铁干",
     title: "<hic>中平无敌</hic>",
@@ -27,15 +26,7 @@ this.skill_map(
     ["force", 3865],
     ["unarmed", 3865]
 );
-this.on_kill = function (me) {
-    if (me && me.notify) me.notify("花铁干怒道：「我等是来诛杀血刀恶僧的，你分不清敌友么？」");
-    return false;
-};
 this.on_died = function (killer, corpse) {
     var room = this.environment;
     if (room && room.parent && room.parent.xd_npc_died) room.parent.xd_npc_died(this, killer);
-};
-this.on_before_fight = function (me) {
-    if (me && me.notify) me.notify(this.name + "摆手道：「大敌当前，哪有工夫和你切磋！」");
-    return false;
 };

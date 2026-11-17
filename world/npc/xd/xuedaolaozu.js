@@ -57,6 +57,9 @@ this.on_kill = function (me) {
     if (a && me && me.is_player) a.xd_engage(this, me);
     return true;
 };
+// 到山谷前锁血用 min_hp（扣血到 1 为止，控制类状态照样能挂上——攻略的「无缝控」打法）；
+// 被引进雪山山谷时由 fb29.js xd_step 改为 0。on_die 只作兜底（非玩家击杀、血祭自损）。
+this.min_hp = 1;
 this.on_die = function (me) {
     var here = this.environment;
     var a = xd_area(this);
@@ -67,9 +70,7 @@ this.on_die = function (me) {
     if (!me || !(me.is_player || me.master)) lock = true;
     if (lock) {
         if (me && me.is_player && here && here.send_room && here.path !== "xd/shangu") {
-            here.send_room(a && a.xd_is_failed(here)
-                ? "<hiy>四侠已死，血刀老祖没被引进山谷，护体血光牢不可破——这一轮已经杀不死他了。</hiy>"
-                : "<hiy>血刀老祖身上一层血光护体，此时根本打不死——得先把他引到雪山山谷。</hiy>");
+            here.send_room("<hiy>血刀老祖周身血光缭绕，刀剑及体竟似砍在铁石之上。</hiy>");
         }
         // from_attack 在 die() 被拒后仍会 end_fight()，混战会整个停下：稍后把战场重新接上
         var self = this;

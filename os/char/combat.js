@@ -98,6 +98,9 @@ CHARACTER.prototype.add_hp = function (v) {
 
     if (v > this.max_hp - this.hp) v = this.max_hp - this.hp;
     else if (v < -this.hp) v = -this.hp;
+    // min_hp：锁血。扣血最多扣到 min_hp，气血不会掉到 0（不触发死亡判定），
+    // 这样同一招里随后的昏迷/忙乱等状态仍能挂上（add_status 对 hp<=0 的目标一律拒绝）。
+    if (v < 0 && this.min_hp > 0 && this.hp + v < this.min_hp) v = Math.min(0, this.min_hp - this.hp);
     if (!v) return 0;
 
     this.hp += v;

@@ -6,4 +6,4 @@ this.exits = {
     "east": "xd/shandong",
     "south": "xd/wangyou",
 };
-this.set_npc(["xd/auto_1", 1], ["xd/auto_2", 1], ["xd/auto_3", 1], ["xd/auto_4", 1])
+this.set_npc([]);
