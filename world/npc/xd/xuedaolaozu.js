@@ -32,7 +32,8 @@ this.set_drop(
     {obj: ["book/bc#xuehaimogong"], odds: 12700},
     {obj: ["book/bc#xuedao"], odds: 12700},
     {obj: ["book/bc#shenkongxing2"], odds: 12700},
-    {obj: ["eq/lv5/wushen/xuedao_blade"], odds: 7620}
+    {obj: ["eq/lv5/wushen/xuedao_blade"], odds: 7620},
+    {obj: ["eq/lv5/wushen/longxue_cape"], odds: 7620}   // 攻略列有龙血斗篷，物品已存在但原先没人掉
 );
 this.on_enter = function (me) { me.notify("血刀老祖狞笑道：'天堂有路你不走，地狱无门你闯进来！准备受死吧！'"); this.do_kill(me); };
 

@@ -37,7 +37,7 @@
 		    "book/bc#liuyunzhang",
 		    "book/bc#zhenyuejue",
 		    "book/bc#hengshanwushenjian",
-		    "eq/lv2/hs2_qin",
+		    "eq/lv2/hs_qin",
 		    "eq/lv3/hs2_qinhuan",
 		    "eq/lv3/hs2_pao"
 		];
@@ -46,6 +46,6 @@
 	    { obj: "money/silver", min: 1, max: 10 },
 	    { obj: ["book/bc#chuanyunzong", "book/bc#liuyunzhang"], odds: 2100 },
 	    { obj: ["book/bc#zhenyuejue", "book/bc#hengshanwushenjian"], odds: 2400 },
-	    { obj: "eq/lv2/hs2_qin", odds: 9300 },
+	    { obj: "eq/lv2/hs_qin", odds: 9300 },
 	    { obj: ["eq/lv3/hs2_qinhuan", "eq/lv3/hs2_pao"], odds: 250 },
 	];

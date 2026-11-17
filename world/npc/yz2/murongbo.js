@@ -31,7 +31,7 @@
 	    obj: ["book/bc#canhezhi"],
 	    odds: 9900
 	}, {
-	    obj: ["eq/lv3/yirongmianju"],
+	    obj: ["eq/lv4/yirongmianju"],
 	    odds: 3960
 	});
 	this.on_enter = function (me) {

@@ -37,7 +37,7 @@ this.set_drop({
     obj: ["book/bc#kuangfengkuaidao", "book/bc#yanxingbu"],
     odds: 7100
 }, {
-    obj: ["eq/lv3/kuangfengdao", "eq/lv3/mianzhao"],
+    obj: ["eq/lv3/hs_dao", "eq/lv3/hs_mianzhao"],
     odds: 4260
 }, {
     obj: ["eq/lv2/lm_cloth", "eq/lv2/lm_shoes"],

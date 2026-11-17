@@ -42,7 +42,7 @@ this.set_drop({
     obj: ["eq/lv2/js_pifeng", "eq/lv2/js_ring", "eq/lv2/js_nang", "eq/lv1/jinshezhui"],
     odds: 3840
 }, {
-    obj: ["eq/lv3/js_pifeng"],
+    obj: ["eq/lv2/js_pifeng"],
     odds: 6400
 });
 

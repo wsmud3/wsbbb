@@ -20,7 +20,7 @@ this.set({
 this.set_objects([
     "eq/lv0/cloth", 1, 1,
     "eq/lv0/shoes", 1, 1,
-    "eq/lv3/qimeigun", 1, 1
+    "eq/lv1/qimeigun", 1, 1
 ]);
 this.skill_map(
     ["dodge", 992],
@@ -45,7 +45,7 @@ this.set_drop({
     obj: ["eq/lv0/cloth", "eq/lv0/shoes"],
     odds: 3840
 }, {
-    obj: ["eq/lv3/qimeigun"],
+    obj: ["eq/lv1/qimeigun"],
     odds: 9600
 });
 this.on_enter = function (me) {

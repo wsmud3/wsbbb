@@ -18,7 +18,7 @@ this.set({
 });
 this.set_objects([
     "eq/lv0/cloth", 1, 1,
-    "eq/lv4/jian", 1, 1
+    "eq/lv0/jian", 1, 1
 ]);
 this.skill_map(
     ["dodge", 1304],
