@@ -36,8 +36,9 @@
 				distime: 10000,
 				enable_skill: "throwing",
 				release_time: 4000,
-				// 面板：968 级内力消耗 622。显示值 = mp × (1 + 等级/20)，12.6 × 49.4 ≈ 622
-				mp: 12.6,
+				// 内力消耗 = mp × (1 + 等级/20) × (1 − 内力消耗减少%)
+				//   100 级、无减免：20 × 6 = 120；968 级、减免 37%：20 × 49.4 × 0.63 ≈ 622
+				mp: 20,
 				use: function (me, target, lv) {
 					var t = target || (me.query_enemy && me.query_enemy());
 					if (!t || t === me) return me.notify("你要对谁使用？");
