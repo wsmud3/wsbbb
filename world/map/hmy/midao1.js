@@ -1,6 +1,6 @@
 this.inherits(ROOM);
 this.name = "密道";
-this.desc = "一条黑暗的密道，伸手不见五指。石壁上湿漉漉的，脚下是粗糙的石阶，不知通向何处。";
+this.desc = "一条黑暗的密道，伸手不见五指。石壁上湿漉漉的，凹处似乎嵌着一枚<span cmd='look tiexuan'>铁环</span>，脚下是粗糙的石阶，不知通向何处。";
 this.exits = { "south": "hmy/houdian" };
 
 // [mech] 密道：火折子点亮 → 找到铁环 → 拉动打开小花园（攻略原文）
@@ -20,7 +20,7 @@ this.hmy_have = function (me, p, name) {
 };
 
 this.set_item("tiexuan", "铁环", "石壁上一枚锈迹斑斑的铁环，藏在凹处，暗里看不真切。", [
-    ["la", "拉动铁环", null]
+    ["la", "拉动铁环", function (me) { return this.hmy_pull_ring(me); }]
 ]);
 
 this.add_action("dianliang", null, function (me, arg) {
@@ -37,10 +37,11 @@ this.add_action("dianliang", null, function (me, arg) {
     this.ring_found = true;
     me.send_room("$N吹亮火折子，密道里亮起一团昏黄的光。");
     me.notify("<hig>火光亮起，你看见石壁凹处嵌着一枚锈铁环——看那铁环，可拉动。</hig>");
+    me.send_commands("la 1", "拉动铁环");
     return true;
 });
 
-this.add_action("la", null, function (me, arg) {
+this.hmy_pull_ring = function (me) {
     if (!me.is_player) return true;
     if (!this.midao_lit) {
         me.notify("<hir>太黑了，你摸不到什么铁环。先点亮火折子。</hir>");
@@ -54,10 +55,9 @@ this.add_action("la", null, function (me, arg) {
     this.add_exit("east", "hmy/huayuan");
     me.send_room("$N用力一拉铁环，石壁深处传来沉闷的轧轧声，一道石门缓缓移开。");
     me.notify("<hig>铁环拉动，石门开启——东边便是小花园，东方不败的闺房就在花园之东。</hig>");
-    this.exits_changed();
     this.refresh(me);
     return true;
-});
+};
 
 this.on_enter = function (me) {
     if (!me.is_player) return;
