@@ -10,25 +10,25 @@ this.set_npc([]);
 // 泰山「验轻功」（原版机制）
 //
 //   每次往上走都要过一次检验：
-//     取 玩家基础轻功 与 轻功部位（鞋）装备带的特殊轻功 中较低的那个 L
+//     取 玩家基础轻功 与 轻功栏启用的特殊轻功 中较低的那个 L
 //       L < 801        → 必定摔回出发点（岱宗坊）
 //       L = 801        → 50% 摔
 //       每高 1 级      → 摔的概率再降 1%（851 级及以上不再摔）
 //
 //   检验本身放在 WORLD 上，全山共用一份，避免十个房间各写一遍。
 // ────────────────────────────────────────────────────────────
-if (!WORLD.ts_climb) {
+// 每次加载都覆盖（不判断是否已存在），热更新本文件后新规则立即生效
+{
     WORLD.ts_climb = function (me) {
         if (!me || !me.is_player) return true;
         var base = me.query_skill("dodge") || 0;
+        // 特殊轻功 = 轻功栏（dodge）当前启用的那门技能的等级。
+        // 旧实现去读鞋子装备的 prop.skill，而全项目没有任何装备带这个字段，
+        // special 恒为 0 → 永远 <801 → 无论轻功多高都必摔，泰山完全上不去。
         var special = 0;
-        var shoe = me.get_equipment ? me.get_equipment(EQUIP_TYPE.SHOES) : null;
-        if (shoe && shoe.prop && shoe.prop.skill) {
-            for (var sk in shoe.prop.skill) {
-                var lv = me.query_skill(sk, 0) || 0;
-                if (lv > special) special = lv;
-            }
-        }
+        var dodge = me.skills && me.skills.dodge;
+        if (dodge && dodge.enable_skill && me.skills[dodge.enable_skill])
+            special = me.query_skill(dodge.enable_skill, 0) || 0;
         var lv2 = Math.min(base, special);
         var p;
         if (lv2 < 801) p = 100;
@@ -37,6 +37,8 @@ if (!WORLD.ts_climb) {
         if (p > 100) p = 100;
         if (Math.random() * 100 >= p) return true;
         me.notify("<hir>石阶又陡又滑，你脚下一个没踩稳，整个人顺着台阶摔了下去！</hir>");
+        if (lv2 < 801)
+            me.notify("<hiy>（登泰山需要基础轻功与轻功栏启用的特殊轻功都达到801级，851级以上不会再摔。你当前按" + lv2 + "级计。）</hiy>");
         me.moveto("ts/daizong", me.name + "脚下一滑摔了下去。", me.name + "从石阶上滚了下来。");
         return false;
     };
