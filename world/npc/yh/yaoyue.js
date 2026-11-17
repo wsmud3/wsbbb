@@ -49,3 +49,16 @@ this.on_enter = function (me) {
     me.notify("邀月宫主冷若冰霜地注视着你，明玉功真气四溢，寒意刺骨！");
     this.do_kill(me);
 };
+
+// 宫主机制（world/area/fb1/fb23.js）：
+//   死后自己宫里露出花丛、定下花数；困难模式另一位宫主会来帮忙。
+this.on_died = function (killer) {
+    var room = this.environment;
+    var area = room && room.parent;
+    if (area && area.yh_master_died) area.yh_master_died(this, killer);
+};
+this.on_heart_beat = function () {
+    var room = this.environment;
+    var area = room && room.parent;
+    if (area && area.yh_assist_tick) area.yh_assist_tick(this);
+};

@@ -37,12 +37,18 @@ this.set_item("bed", "床(bed)", "一张华丽的花床，但是你仔细的看�
     }]
 ]);
 
-this.yh_check = function (me) {
+// 花数在宫主死时已定下（world/area/fb1/fb23.js yh_master_died），这里按同一规则取用
+this.yh_want = function (me) {
+    return [this.parent.yh_flowers(this, me, "yh_hua_yue"), this.parent.yh_flowers(this, me, "yh_hua_xing")];
+};
+this.yh_matched = function (me) {
     var l = this.query_temp(me, "yh_push_left") || 0;
     var r = this.query_temp(me, "yh_push_right") || 0;
-    var wantL = this.query_temp(me, "yh_hua_yue");
-    var wantR = this.query_temp(me, "yh_hua_xing");
-    if (l === wantL && r === wantR) {
+    var w = this.yh_want(me);
+    return l === w[0] && r === w[1];
+};
+this.yh_check = function (me) {
+    if (this.yh_matched(me) && !(this.exits && this.exits.down)) {
         me.send_room("床板忽然发出轧轧的声音，缓缓向两边移动著，露出一个洞口。");
         me.notify("<hig>床下露出一条向下的密道。</hig>");
         this.add_exit("down", "yh/midao");
@@ -52,30 +58,14 @@ this.yh_check = function (me) {
 
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    if (this.query_temp(me, "yh_push_left") !== undefined && this.query_temp(me, "yh_hua_yue") !== undefined) {
-        var l = this.query_temp(me, "yh_push_left") || 0;
-        var r = this.query_temp(me, "yh_push_right") || 0;
-        if (l === this.query_temp(me, "yh_hua_yue") && r === this.query_temp(me, "yh_hua_xing")) this.add_exit("down", "yh/midao");
-    }
+    if (this.yh_both_dead(me) && this.yh_matched(me) && !(this.exits && this.exits.down)) this.add_exit("down", "yh/midao");
 };
 
-// 两位宫主是否都已伏诛（没杀完谁都别想进卧室、也别想推床）
+// 两位宫主是否都已伏诛（没杀完谁都别想推床）
 this.yh_both_dead = function (me) {
-    var area = this.parent;   // 房间的区域在 parent 上（房间没有 environment，原写法恒为 false → 进宫出不来）
-    if (!area || !area.rooms) return false;
-    var team = me && me.query_teamid ? me.query_teamid() : null;
-    var yue = false, xing = false;
-    for (var i = 0; i < area.rooms.length; i++) {
-        var cp = area.rooms[i].query_copy(team);
-        if (!cp || !cp.items) continue;
-        for (var j = 0; j < cp.items.length; j++) {
-            var o = cp.items[j];
-            if (!o || o.is_player) continue;
-            if (o.path === "yh/yaoyue" && o.hp > 0) yue = true;
-            if (o.path === "yh/lianxing" && o.hp > 0) xing = true;
-        }
-    }
-    return !yue && !xing;
+    var area = this.parent;
+    if (!area || !area.yh_find_npc) return false;
+    return !area.yh_find_npc(this.owner, "yh/yaoyue") && !area.yh_find_npc(this.owner, "yh/lianxing");
 };
 
 this.yh_can_push = function (me) {

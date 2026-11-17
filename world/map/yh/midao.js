@@ -1,6 +1,6 @@
 this.inherits(ROOM);
 this.name = "暗道";
-this.desc = "一条幽暗的密道，火折子的微光照亮了前方的路。墙上挂着一只小匣子。";
+this.desc = "一条幽暗的密道，潮气扑面，伸手不见五指，只有点起火来才看得清前方的路。";
 this.exits = { "up": "yh/woshi" };
 this.set_npc([]);
 

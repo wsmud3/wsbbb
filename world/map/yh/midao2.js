@@ -1,9 +1,53 @@
 this.inherits(ROOM);
 this.name = "密室";
-this.desc = "你正处在一个密洞中。这里光线很暗，只能隐隐约约看出地上有些其花异草。花丛之中的一块石头上好象放着一个宝匣(xia)。";
+this.desc = "你正处在一个密洞中。这里光线很暗，只能隐隐约约看出地上有些奇花异草。洞壁上嵌着一只<cmd cmd='look xia'>小匣子</cmd>，匣上积满了灰尘。";
 this.exits = {
     "east": "yh/midao",
     "west": "yh/xiaojing",
 };
 this.set_npc(["yh/huawuque", 1]);
-this.set_item("xia", "宝匣", "石头上放着一个宝匣，看起来有些年头了。", []);
+
+// 攻略：在花无缺这个暗道中，注意墙上有个小匣子，打开会有秘籍、黄金等。
+//   花无缺守在匣前，须先打倒他；每个副本只能开一次（副本存储）。
+//   必得黄金 5~20 两；移花宫残页：普通 60%（绝情掌/移风剑法）+15%（明玉功/移花接木），困难翻倍。
+this.yh_open_xia = function (me) {
+    if (!me || !me.is_player) return true;
+    var hwq = this.find_obj_bypath("yh/huawuque");
+    if (hwq && hwq.hp > 0) {
+        me.notify("花无缺负手立在小匣子前，淡淡道：「这是移花宫之物。」——不打倒他是碰不到匣子的。");
+        return true;
+    }
+    if (this.query_temp(me, "yh_xia_opened")) {
+        me.notify("小匣子已经空了。");
+        return true;
+    }
+    this.set_temp(me, "yh_xia_opened", 1);
+    me.send_room("$N拂去灰尘，轻轻打开了洞壁上的小匣子。");
+    var gold = 5 + Math.floor(Math.random() * 16);
+    me.add_obj("money/gold", gold);
+    me.notify("<hiy>匣中整整齐齐码着 " + gold + " 两黄金。</hiy>");
+    var mul = this.query_temp(me, "diff", 0) === 1 ? 2 : 1;
+    var got = false;
+    if (Math.random() < 0.6 * mul) {
+        me.add_obj(["book/bc#jueqingzhang", "book/bc#yifengjianfa"][Math.floor(Math.random() * 2)]);
+        got = true;
+    }
+    if (Math.random() < 0.15 * mul) {
+        me.add_obj(["book/bc#mingyugong", "book/bc#yihuajiemu"][Math.floor(Math.random() * 2)]);
+        got = true;
+    }
+    me.notify(got ? "<hig>黄金底下还压着几页泛黄的武功残页！</hig>" : "匣底空空如也，除了黄金再无他物。");
+    return true;
+};
+this.set_item("xia", "小匣子", "洞壁上嵌着的一只小匣子，做工精巧，似乎可以打开。", [
+    ["yh_open", "打开", function (me) { return this.yh_open_xia(me); }]
+]);
+
+// 碧血照丹青仅困难掉落；困难其余掉落约为普通两倍
+this.on_set_difficulty = function (type) {
+    if (type !== 1) return;
+    var hwq = this.find_obj_bypath("yh/huawuque");
+    if (!hwq) return;
+    if (this.parent && this.parent.yh_hard_drops) this.parent.yh_hard_drops(hwq);
+    hwq.drop_list = (hwq.drop_list || []).concat([hwq.YH_HARD_DROP]);
+};

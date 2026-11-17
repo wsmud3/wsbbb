@@ -36,10 +36,10 @@ this.set_drop({
 }, {
     obj: ["book/bc#qingfushenfa"],
     odds: 9200
-}, {
-    obj: ["eq/lv5/wushen/tulong_blade"],
-    odds: 3680
 });
+// 屠龙刀仅困难掉落：困难副本开启时由 bh/xiaodong 的 on_set_difficulty 加进本实例的掉落表；
+// 困难扫荡走 fb22 的 drop_npcs1（bh/hard_drops）。
+this.BH_HARD_DROP = { obj: ["eq/lv5/wushen/tulong_blade"], odds: 3680 };
 this.on_enter = function (me) {
     me.notify("金毛狮王谢逊睁开血红的双目，屠龙刀虎虎生风，七伤拳气劲激荡！");
     this.do_kill(me);

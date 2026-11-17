@@ -5,4 +5,12 @@ this.exits = {
     "east": "bh/yslu1",
     "west": "bh/huoshanjiao",
 };
-this.set_npc(["bh/yanlong", 1]);
+this.set_npc(["bh/yanlong", 2]);
+
+// 冰火岛环境：进入/心跳叠加灼热或冰寒（规则见 world/area/fb1/fb22.js）
+this.on_enter = function (me) {
+    if (this.parent && this.parent.bh_env) this.parent.bh_env(this, me, true);
+};
+this.on_heart_beat = function () {
+    if (this.is_copy_room && this.parent && this.parent.bh_env_tick) this.parent.bh_env_tick(this);
+};

@@ -18,6 +18,11 @@ this.add_action("sousuo", null, function (me, arg) {
     me.send_room("$N在书架间翻检良久，终于抽出几页残页。");
     me.notify("<hiw>你在书架深处摸到一叠残页，墨迹犹新。</hiw>");
     me.add_obj(books[Math.floor(Math.random() * books.length)]);
+    // 王语嫣指点过书架暗格（yz2/xiaoting 给她秘籍）：多得一份
+    if (this.query_temp(me, "yz2_wyy_gift")) {
+        me.notify("<hiw>你照王语嫣所说摸到书架最下层的暗格，又取出一份残页。</hiw>");
+        me.add_obj(books[Math.floor(Math.random() * books.length)]);
+    }
     me.notify("<hig>搜查完毕。若再去后厅，恐有变故——慕容家的人不会放任外人拿走这些东西。</hig>");
     return true;
 });

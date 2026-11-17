@@ -8,6 +8,8 @@ this.set({
     first: "yz2/anbian",
     is_copy: true,
     expend: 10,
+    // 攻略：普通困难一样打法（机制完全相同，见各房间/NPC 注释）
+    is_diffi: true,
     exp: 32000,
     pot: 28000,
     room_path: "yz2/",

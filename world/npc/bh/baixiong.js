@@ -28,7 +28,7 @@ this.set_drop({
     max: 100
 }, {
     obj: ["book/bc#qingfushenfa"],
-    odds: 348864
+    odds: 3680
 }, {
     obj: ["eq/lv2/lanbaoshi"],
     odds: 5520
