@@ -66,7 +66,6 @@ this.add_action("xunwen", "询问石匣", function (me) {
     me.notify("黄蓉说道：我爹有只石匣，被老顽童周伯通拿去玩了，他就躲在桃林里的一个山洞里。");
     me.notify("黄蓉说道：那山洞藏在桃花阵里，你回到海边渔夫那儿，再走一遍桃林，留心路上的变化，自然看得见。");
     me.notify("黄蓉说道：老顽童最爱跟人打架，你跟他比试比试，赢了他自然会把石匣给你。");
-    if (first) me.notify("<hiy>（返回海滩重走桃林迷阵，途中会多出一条通往山洞的路。）</hiy>");
     return true;
 });
 this.add_action("gei", "交石匣", function (me) {
@@ -77,7 +76,7 @@ this.add_action("gei", "交石匣", function (me) {
     }
     var has = me.find_obj_bypath(HR_SHIXIA);
     if (!has) {
-        me.notify("黄蓉歪着头：你手上没有石匣呀。" + (hr_get(this, me, "th_ask") ? "" : "（先点「询问石匣」）"));
+        me.notify("黄蓉歪着头：你手上没有石匣呀。");
         return true;
     }
     me.remove_obj(has, 1);
@@ -86,7 +85,6 @@ this.add_action("gei", "交石匣", function (me) {
     me.add_fbscore((area && area.score) || 180);
     me.send_room("$N把石匣交给黄蓉，黄蓉眼睛一亮，欢天喜地地收下了。");
     me.notify("<hig>黄蓉笑道：多谢你啦！石匣回来了，这一趟就算你过关。</hig>");
-    me.notify("<hig>可以点「完成副本」结算了。</hig>");
     return true;
 });
 // 石匣交回之前不许杀黄蓉（否则剧情断掉、本轮永远到不了 100%）

@@ -130,7 +130,7 @@ this.pm_carry = function (me) {
     var room = me.environment;
     if (!room || room.parent !== this) return me.notify("童姥不在这里。");
     if (this.pm_get(room, "pm_done", 0)) return me.notify("童姥已经回闭关室了。");
-    if (this.pm_get(room, "pm_failed", 0)) return me.notify("童姥已经死了，本轮无法完成护送，出副本重来吧。");
+    if (this.pm_get(room, "pm_failed", 0)) return me.notify("童姥已经死了。");
     if (this.pm_carrying(me)) {
         this.pm_apply_carry_status(me);
         return me.notify("你已经背着童姥了。");
@@ -154,7 +154,7 @@ this.pm_carry = function (me) {
     }
     if (foes.length) me.notify("<hir>童姥一上背，" + foes.map(function (x) { return x.name; }).join("、") + "便朝你扑了过来！</hir>");
     for (var j = 0; j < foes.length; j++) foes[j].do_kill(me);
-    if (this.pm_get(room, "pm_lqs_dead", 0)) me.notify("<hiy>童姥：「去闭关室！」（一路向北，到闭关室即可）</hiy>");
+    if (this.pm_get(room, "pm_lqs_dead", 0)) me.notify("<hiy>童姥：「去闭关室！」</hiy>");
     return true;
 };
 
@@ -199,7 +199,7 @@ this.pm_arrive_xianchou = function (room, me) {
     if (!this.pm_alive(room, PM_LQS)) return;
     if (room._pm_down_timer) return;
     if (this.pm_hard(room))
-        me.notify("<hiy>童姥在你背上低声道：「李秋水那贱人就在前面……」（困难：趁童姥还没下来，立刻叫杀李秋水！她一落地就会被李秋水打死）</hiy>");
+        me.notify("<hiy>童姥在你背上低声道：「李秋水那贱人就在前面……别放我下来，她会趁机要了我的命！」</hiy>");
     else
         me.notify("<hiy>童姥在你背上动了动：「放我下来，我要亲眼看着那贱人死！」</hiy>");
     var self = this;
@@ -252,7 +252,7 @@ this.pm_on_tl_died = function (tl) {
     var room = tl.environment;
     if (!room) return;
     this.pm_set(room, "pm_failed", 1);
-    room.send_room("<red>天山童姥死了！护送失败——本轮已无法拿到 100%，出副本重来吧。</red>");
+    room.send_room("<red>天山童姥死了！</red>");
 };
 
 // 闭关室：背着童姥、李秋水已在童姥面前伏诛 → 100%
@@ -272,7 +272,7 @@ this.pm_deliver = function (room, me) {
     me.add_fbscore(PM_DELIVER_SCORE);
     me.notify("<hig>你把童姥送进闭关室。童姥盘膝坐下，淡淡道：「这份情，姥姥记下了。」护送完成！</hig>");
     var left = this.pm_find_alive(room, ["pm/zhuobufan"].concat(PM_ASSASSINS));
-    if (left.length) me.notify("<hiy>山下还有" + left.map(function (x) { return x.name; }).join("、") + "未除，不杀干净完成度只有 99%。</hiy>");
+    if (left.length) me.notify("<hiy>童姥冷哼一声：「山下那几个叛徒还没收拾干净。」</hiy>");
 };
 
 // 背着童姥的人倒下：童姥摔落在原地

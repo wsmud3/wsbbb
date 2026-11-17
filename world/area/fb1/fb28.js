@@ -107,7 +107,7 @@ this.tl_block = function (monk, me, dir) {
     if (here && TL_BACK[here.path] === dir) return true;
     if (this.tl_hard(me) && this.tl_disguised(me)) return true;
     if (this.tl_hard(me))
-        me.notify("<hir>" + monk.name + "横身拦住：「寺中禁地，外人止步。」——硬闯就得动手，可困难模式下一旦伤人，段誉便不会跟你走。或许该想办法扮成寺里的人。</hir>");
+        me.notify("<hir>" + monk.name + "横身拦住：「寺中禁地，外人止步。」</hir>");
     else
         me.notify("<hir>" + monk.name + "横身拦住：「施主请回。」不打倒他是过不去的。</hir>");
     return false;
@@ -121,8 +121,7 @@ this.tl_on_died = function (npc, killer) {
     if (!me) return;
     if (this.tl_is_carrying(me)) {
         var left = this.tl_find_alive(me, TL_PURSUERS).length;
-        if (left > 0) me.notify("<hiy>追兵还剩 " + left + " 人。</hiy>");
-        else me.notify("<hig>追兵尽数倒下！背着段誉回到大门，本关便算圆满。</hig>");
+        if (left === 0) me.notify("<hig>追兵尽数倒下！段誉在你背上长长舒了一口气。</hig>");
         return;
     }
     if (TL_KILL_COUNTED.indexOf(npc.path) < 0) return;
@@ -130,7 +129,7 @@ this.tl_on_died = function (npc, killer) {
     this.tl_set(me, "tl_kills", n);
     var lim = this.tl_kill_limit(me);
     if (n > lim) {
-        me.notify("<hir>你在寺中已伤了 " + n + " 人" + (lim === 0 ? "（困难模式一个都不能杀）" : "（最多只能杀一路的两人）") + "——段誉见你杀孽太重，不会再跟你走了。</hir>");
+        me.notify("<hir>寺中钟声骤响，远远传来一片诵经之声——这一路上你伤的人，已经太多了。</hir>");
     }
 };
 
@@ -138,7 +137,7 @@ this.tl_on_died = function (npc, killer) {
 this.tl_carry = function (me) {
     var room = this.tl_room(me);
     if (!room) return me.notify("这里没有段誉。");
-    if (this.tl_get(me, "tl_failed", 0)) return me.notify("段誉已经死了，本轮无法再完成，出副本重来吧。");
+    if (this.tl_get(me, "tl_failed", 0)) return me.notify("段誉已经死了。");
     if (this.tl_is_carrying(me)) return me.notify("你已经背着段誉了。");
     var dy = room.find_obj_bypath("tl/duanyu");
     if (!dy) return me.notify("段誉不在这里。");
@@ -167,12 +166,12 @@ this.tl_carry = function (me) {
 this.tl_deliver = function (me) {
     if (!this.tl_is_carrying(me)) return;
     var left = this.tl_find_alive(me, TL_PURSUERS).length;
-    if (left > 0) return me.notify("<hiy>身后还有 " + left + " 名追兵，段誉不肯就此离开：「他们会追到大理的！」</hiy>");
+    if (left > 0) return me.notify("<hiy>段誉在你背上急道：「后面还有人追着呢，他们会追到大理的！」</hiy>");
     this.tl_set(me, "tl_carry", 0);
     this.tl_set(me, "tl_done", 1);
     me.remove_status("carry_duanyu");
     me.add_fbscore(this.score || 270);
-    me.notify("<hig>你背着段誉走出天龙寺大门。段誉跳下地来，长揖到地：「多谢兄台救命之恩！」本关圆满完成。</hig>");
+    me.notify("<hig>你背着段誉走出天龙寺大门。段誉跳下地来，长揖到地：「多谢兄台救命之恩！」</hig>");
 };
 
 // 背负期间死亡：段誉也死
@@ -180,7 +179,7 @@ this.on_user_die = function (me) {
     if (!this.tl_is_carrying(me)) return;
     this.tl_set(me, "tl_carry", 0);
     this.tl_set(me, "tl_failed", 1);
-    me.notify("<hir>你倒下的同时，背上的段誉也被乱剑击中，再无声息……本轮已无法完成，不必浪费天师符，出副本重来吧。</hir>");
+    me.notify("<hir>你倒下的同时，背上的段誉也被乱剑击中，再无声息……</hir>");
 };
 
 // 离开副本时清理背负状态

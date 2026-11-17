@@ -16,7 +16,7 @@ this.set_item("tiesuo", "铁索桥", "一条横跨深涧的铁索，山风一吹
         // 面板闪避（含身法、ds_per 等加成）；原先读的是装备原始加成 query_prop("ds")
         var ds = Math.floor(me.ds || 0);
         if (ds < 10000) {
-            me.notify("<red>铁索在风里晃得厉害，你的闪避（" + ds + "）不足 10000，踏上去就要掉下去。</red>");
+            me.notify("<red>铁索在风里晃得厉害，以你现在的身法，踏上去就要掉下深涧。</red>");
             return true;
         }
         me.moveto("pm/xianchou", me.name + "踏索而过。", me.name + "从铁索桥上落了地。");

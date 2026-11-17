@@ -16,7 +16,7 @@ this.set_item("gui", "柜子", "一个黑乎乎的柜子，里面不知道放了
             if (!me.query_temp("cuifu_box")) {
                 me.set_temp("cuifu_box", 1);
                 me.add_fbscore(10);
-                me.notify("<hiy>你从小箱子里摸出几件值钱的物事，悄悄揣进怀里。(副本完成度 +10)</hiy>");
+                me.notify("<hiy>你从小箱子里摸出几件值钱的物事，悄悄揣进怀里。</hiy>");
             }
             var obj = me.add_obj("sp/yz/box1", 1);
             if (obj) {

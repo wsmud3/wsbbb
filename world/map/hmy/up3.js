@@ -28,7 +28,6 @@ this.add_action("charu", null, function (me, arg) {
     var it = this.hmy_have(me, "res/fengleilingpai");
     if (!it) {
         me.notify("<hir>你身上没有风雷令。风雷堂长老童百熊身上有一块。</hir>");
-        me.notify("<hiy>三位长老并非必爆令牌，缺了哪一块，只能出副本重打。</hiy>");
         return true;
     }
     me.remove_obj(it);

@@ -115,7 +115,7 @@ this.gm_engage = function (npc, me) {
     if (!room || !me || !me.is_player || npc.hp <= 0) return;
     var dz = this.gm_alive_list(room, GM_DIZI);
     if (dz.length) {
-        if (!npc._gm_engaged) me.notify("<hir>" + npc.name + "正与" + dz.length + "名六大门派弟子激斗，见你闯入，下手更狠了！（六派弟子每死一人，张无忌便多一层号令——速杀" + npc.name + "！）</hir>");
+        if (!npc._gm_engaged) me.notify("<hir>" + npc.name + "正与" + dz.length + "名六大门派弟子激斗，见你闯入，下手更狠了！</hir>");
         for (var i = 0; i < dz.length; i++) npc.do_kill(dz[i]);
     }
     npc._gm_engaged = true;
@@ -144,7 +144,7 @@ this.gm_on_dizi_died = function (dz) {
     var n = this.gm_get(room, "gm_haoling", 0);
     if (n < GM_MAX_HAOLING) n++;
     this.gm_set(room, "gm_haoling", n);
-    room.send_room("<hiy>一名六大门派弟子倒下了……远处圣火堂传来号角声，张无忌的号令已有 " + n + " 层。</hiy>");
+    room.send_room("<hiy>一名六大门派弟子倒下了……远处圣火堂方向，隐隐传来一声号角。</hiy>");
     var sht = this.gm_copy(room, "gm/shenghuotang");
     var zwj = sht && this.gm_alive_list(sht, "gm/zhangwuji")[0];
     if (zwj) this.gm_apply_haoling(zwj);

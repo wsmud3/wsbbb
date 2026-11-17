@@ -28,7 +28,6 @@ this.set_item("qin", "古琴", "石桌上放着一把古琴，琴身温润。", 
         NPC.CREATE("gm2/xiaolongnv", this);
         this.refresh(me);
         this.send_room("<hiy>小龙女和杨过闻声从内室走了出来。杨过对你说道：「阁下请离开古墓。」</hiy>");
-        me.notify("（小龙女可以比试；杨过杀不死，只能设法打昏他，他醒着就会拦在暗道口。）");
         return true;
     }]
 ]);

@@ -89,7 +89,7 @@ this.dcq_feixing = function (me) {
     });
     this.end_attack(me);
     if (this.fight_type === 1 || me.fight_type === 1)
-        me.notify("<hiy>丁春秋的碧磷针已经打空，一时半会儿发不出第二轮飞星了（约" + (DCQ_FX_CD / 1000) + "秒）。</hiy>");
+        me.notify("<hiy>丁春秋的碧磷针已经打空，一时半会儿发不出第二轮飞星了。</hiy>");
     return true;
 };
 // 开打后定时检查：冷却好了就打飞星，直到这场战斗结束

@@ -45,7 +45,7 @@ this.add_action("yz2_ask", "询问还施水阁", function (me) {
         seen[it.id] = 1;
         cmds.push("yz2_give " + it.id, "给她" + it.name);
     }
-    if (!cmds.length) me.notify("<hiy>（你身上没有武功秘籍可给。）</hiy>");
+    if (!cmds.length) me.notify("<hiy>你翻遍行囊，也找不出一本武功秘籍。</hiy>");
     cmds.push("yz2_give none", "不给");
     me.send_commands.apply(me, cmds);
     return true;

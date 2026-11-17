@@ -21,7 +21,7 @@ this.add_action("you", "游", function (me, arg) {
         return true;
     }
     if (me.hp < me.max_hp) {
-        me.notify("<red>水势太急，你气血未满，游不出去（要满血才能游）。</red>");
+        me.notify("<red>水势太急，以你眼下的气力，根本游不出去。</red>");
         return true;
     }
     var dmg = Math.floor(me.max_hp * 0.5);

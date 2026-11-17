@@ -30,7 +30,7 @@ this.bh_search = function (me) {
     if (me.hp < BH_SEARCH_HP) {
         var burn = Math.floor(me.hp * 0.2);
         if (burn > 0) me.add_hp(-burn);
-        me.notify("<hir>你刚靠近火山口，一股岩浆热浪迎面扑来，将你逼了回来！（搜索火山口至少要有 50 万气血）</hir>");
+        me.notify("<hir>你刚靠近火山口，一股岩浆热浪迎面扑来，将你逼了回来！以你此刻的气血，根本近不得火山口。</hir>");
         return true;
     }
     this.set_temp(me, "bh_huoshan_searched", 1);

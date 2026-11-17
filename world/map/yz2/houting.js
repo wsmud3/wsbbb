@@ -21,7 +21,7 @@ this.set_item("lingpai", "灵位牌子", "神龛上供着一块灵位牌子，�
         }
         var n = this.add_temp(me, "yz2_bai", 1);
         if (n < 3) {
-            me.send_room("$N对着灵位牌子拜了三拜（第 " + n + " 次）。");
+            me.send_room("$N对着灵位牌子恭恭敬敬地拜了下去。");
             me.notify("<hiy>香火晃动了一下，似乎还差几拜。</hiy>");
             return true;
         }

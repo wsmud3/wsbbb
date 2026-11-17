@@ -33,6 +33,6 @@ this.add_action("yz2_give", null, function (me, arg) {
     this.set_temp(me, "yz2_wyy_gift", 1);
     me.send_room("$N把一本" + bname + "递给了王语嫣。");
     me.notify("王语嫣接过" + bname + "，翻了几页便看得入了神，半晌才抬头道：「多谢。还施水阁就在后厅灵位之后，对着灵位拜上三拜，门户自开。」");
-    me.notify("<hig>她又压低声音：「书架最下层有个暗格，表哥最好的几页残谱都藏在那里。」（在还施水阁搜索时可多得一份残页）</hig>");
+    me.notify("<hig>她又压低声音：「书架最下层有个暗格，表哥最好的几页残谱都藏在那里。」</hig>");
     return true;
 });

@@ -86,13 +86,13 @@ this.bh_env = function (room, me, entering) {
         if (me.query_status("bh_fire") < BH_MAX_STACK) me.add_status(bh_fire_buff());
         cnt = me.query_status("bh_fire");
         if (entering) {
-            me.notify("<hir>热浪滚滚，你只觉全身都要被烤熟了！（灼热 " + cnt + " 层）</hir>");
+            me.notify("<hir>热浪滚滚，你只觉全身都要被烤熟了！</hir>");
         } else if (cnt > 0) {
             var burn = Math.floor(me.max_hp * 0.01 * cnt);
             if (burn > me.hp - 1) burn = me.hp - 1;
             if (burn > 0) {
                 me.add_hp(-burn);
-                me.notify("<hir>炙热的气浪灼伤了你，你损失了 " + burn + " 点气血。（灼热 " + cnt + " 层）</hir>");
+                me.notify("<hir>炙热的气浪灼伤了你，你损失了 " + burn + " 点气血。</hir>");
             }
         }
     } else {
@@ -103,13 +103,13 @@ this.bh_env = function (room, me, entering) {
         if (me.query_status("bh_ice") < BH_MAX_STACK) me.add_status(bh_ice_buff());
         cnt = me.query_status("bh_ice");
         if (entering) {
-            me.notify("<hic>一股刺骨的寒气从脚底升起，你忍不住打了个寒战。（冰寒 " + cnt + " 层）</hic>");
+            me.notify("<hic>一股刺骨的寒气从脚底升起，你忍不住打了个寒战。</hic>");
         } else if (cnt > 0) {
             var cost = Math.floor((me.max_mp || 0) * 0.01 * cnt);
             if (cost > me.mp) cost = me.mp;
             if (cost > 0) {
                 me.add_mp(-cost);
-                me.notify("<hic>寒气侵入经脉，你耗费了 " + cost + " 点内力抵御。（冰寒 " + cnt + " 层）</hic>");
+                me.notify("<hic>寒气侵入经脉，你耗费了 " + cost + " 点内力抵御。</hic>");
             }
         }
     }

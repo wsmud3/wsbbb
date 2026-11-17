@@ -62,6 +62,14 @@ this.set_npc([]);
 // 本房间临时多出 enter 出口通往 th/shandong；离开迷阵（出阵/被弹回/进洞）就收起来。
 // 步数、是否问过都存在副本存储（this.set_temp(me, …)），随副本销毁，不会带到下一轮。
 var TAO_CAVE_STEP = 6;
+// 走对一步时的景物描写（不显示步数，原先的「（3/11）」等于把破阵进度直接告诉玩家）
+var TAO_WALK = [
+    "你拨开低垂的桃枝，又往桃林深处走了几步。",
+    "落英纷纷扬扬，你踏着满地花瓣继续前行。",
+    "四下里桃树一株挨着一株，你辨了辨方向，走了过去。",
+    "一阵风过，花瓣迷了眼，你定了定神，接着往前走。",
+    "桃花香气浓得化不开，你屏住呼吸，绕过一株老桃树。"
+];
 var TAO_DESC = this.desc;
 
 this.tao_show_cave = function (me) {
@@ -115,7 +123,7 @@ this.on_leave = function (me, dir) {
     if (step < 11) {
         if (dir === pat.steps[step]) {
             this.set_temp(me, "th_tao_step", step + 1);
-            me.notify("<hiy>你顺着桃林间的小径往前走。（" + (step + 1) + "/11）</hiy>");
+            me.notify("<hiy>" + TAO_WALK[Math.floor(Math.random() * TAO_WALK.length)] + "</hiy>");
             if (step + 1 === TAO_CAVE_STEP && this.tao_want_cave(me)) this.tao_show_cave(me);
             return false;      // 原地推进计数，不真的移动
         }

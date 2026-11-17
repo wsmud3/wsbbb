@@ -39,7 +39,7 @@ this.on_enter = function (me) {
     var room = this.environment, area = room && room.parent;
     if (area && area.gm_apply_haoling) area.gm_apply_haoling(this);
     var n = area && area.gm_get ? area.gm_get(room, "gm_haoling", 0) : 0;
-    me.notify("张无忌立在圣火之前，并不出手，只淡淡看着你。" + (n ? "（号令 " + n + " 层）" : ""));
+    me.notify("张无忌立在圣火之前，并不出手，只淡淡看着你。");
 };
 this.on_kill = function (me) {
     var room = this.environment, area = room && room.parent;

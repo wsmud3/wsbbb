@@ -35,7 +35,7 @@ this.on_enter = function (me) {
     me.notify("六大门派弟子喊道：「这位朋友，快助我们一臂之力！」");
 };
 this.on_kill = function (me) {
-    if (me && me.is_player) me.notify("<hiy>你对六大门派弟子下了杀手——他们每死一人，张无忌便多一层号令！</hiy>");
+    if (me && me.is_player) me.notify("<hiy>六大门派弟子又惊又怒：「你……你也是魔教的人？！」</hiy>");
     return true;
 };
 this.on_died = function () {

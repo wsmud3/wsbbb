@@ -29,7 +29,7 @@ this.yh_pick = function (me) {
     if (hurt > me.hp - 1) hurt = me.hp - 1;
     if (hurt > 0) me.add_hp(-hurt);
     me.send_room("<hir>$N脚下一滑，扑通一声跌进了莲花池，呛了好几口水才狼狈地爬上岸来！</hir>");
-    me.notify("<hir>你损失了 " + hurt + " 点气血。（还能再试 " + (YH_LIAN_TRIES - n - 1) + " 次）</hir>");
+    me.notify("<hir>你损失了 " + hurt + " 点气血。</hir>");
     return true;
 };
 this.set_item("lian", "莲花", "满池莲花开得正盛，池心有一朵通体碧绿、花心殷红的莲花，格外显眼。", [

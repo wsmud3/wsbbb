@@ -15,7 +15,6 @@ this.on_enter = function (me) {
     if (!area.hmy_get(this, "hmy_guifang_entered", 0)) {
         area.hmy_set(this, "hmy_guifang_entered", 1);
         me.notify("<hir>绣帷无风自动，杨莲亭与东方不败已在房中：「来得好，正好试试我的绣花针。」</hir>");
-        me.notify("<hiw>（杨莲亭在时会替东方不败挡刀；杨莲亭倒下后，东方不败会立时狂暴并展开鬼魅身法，约三十息）</hiw>");
     } else {
         // 跑路回来 / 天师符原地复活（复活流程会让玩家重新进入本房间）
         area.hmy_revive_ylt(this, me);

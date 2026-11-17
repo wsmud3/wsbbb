@@ -37,8 +37,6 @@ this.set_npc([]);
         if (p > 100) p = 100;
         if (Math.random() * 100 >= p) return true;
         me.notify("<hir>石阶又陡又滑，你脚下一个没踩稳，整个人顺着台阶摔了下去！</hir>");
-        if (lv2 < 801)
-            me.notify("<hiy>（登泰山需要基础轻功与轻功栏启用的特殊轻功都达到801级，851级以上不会再摔。你当前按" + lv2 + "级计。）</hiy>");
         me.moveto("ts/daizong", me.name + "脚下一滑摔了下去。", me.name + "从石阶上滚了下来。");
         return false;
     };

@@ -15,7 +15,6 @@ this.on_enter = function (me) {
     }
     if (!has) {
         me.notify("<red>暗道里一片漆黑，没有火折子什么也看不见。</red>");
-        me.notify("<hiy>（出去重进一次吧，记得先去弄个火折子。）</hiy>");
         return;
     }
     // 只是提示可以点火，灯亮不亮要等玩家真的点火

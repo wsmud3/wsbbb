@@ -171,7 +171,7 @@ this.xd_xuemo_add = function (lz) {
         id: "xd_xuemo", name: "血魔", duration: 0, override: 2, no_diff: true,
         desc: "血刀饮血，攻击、命中各增加" + (n * XD_XUEMO) + "。"
     });
-    if (lz.environment) lz.environment.send_room("<hir>血刀饮了人血，刀上血光大盛！血刀老祖身上的血魔之力又涨了一层（" + n + "层）。</hir>");
+    if (lz.environment) lz.environment.send_room("<hir>血刀饮了人血，刀上血光大盛！血刀老祖身上的血魔之力又涨了一层。</hir>");
 };
 this.xd_xuemo_check = function (lz) {
     if (!lz.xd_xuemo) return;
@@ -198,7 +198,7 @@ this.xd_hero_died = function (hero, killer) {
             if (!this.xd_players(here).length) {
                 this.xd_tell(room, "<hir>血刀老祖砍倒了" + hero.name + "，四下张望，见没人追来，便在" + here.name + "原地守着——你没跟上他！</hir>");
             } else if (gap < (this.XD_MIN_GAP || XD_MIN_GAP)) {
-                here.send_room("<hir>血刀老祖杀得太快，血气翻涌，竟站在原地狞笑不动！（这一下没能把他往山谷引）</hir>");
+                here.send_room("<hir>血刀老祖杀得太快，血气翻涌，竟站在原地狞笑不动！</hir>");
             } else {
                 this.xd_set(room, "xd_last_step", Date.now());
                 this.xd_set(room, "xd_steps", this.xd_get(room, "xd_steps", 0) + 1);   // 决定要走时就记步，翻车判定以此为准
@@ -211,7 +211,7 @@ this.xd_hero_died = function (hero, killer) {
     // 四侠死光而老祖走不到山谷（已走 + 已排程的步数不足）→ 翻车
     if (!alive.length && !this.xd_get(room, "xd_failed", 0) && this.xd_get(room, "xd_steps", 0) < XD_STEPS) {
         this.xd_set(room, "xd_failed", 1);
-        this.xd_tell(room, "<hir>「落花流水」四侠尽数倒在血刀之下，血刀老祖却还没被引到山谷——他护体血光不散，再也杀不死了。本轮翻车，出副本重来吧。</hir>");
+        this.xd_tell(room, "<hir>「落花流水」四侠尽数倒在血刀之下，血刀老祖却还没被引到山谷——他周身血光大盛，竟再也伤不了他分毫。</hir>");
     }
 };
 this.xd_is_failed = function (room) { return !!this.xd_get(room, "xd_failed", 0); };

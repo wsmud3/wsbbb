@@ -64,5 +64,4 @@ this.on_died = function (killer, corpse) {
     var inZhen = killer.query_temp("wf_zhuang_spawned");
     killer.add_fbscore(inZhen ? 16 : 15);
     killer.set_temp("wf_fangda_dead", 1, 7200000);
-    if (!inZhen) killer.notify("<hir>温方达死于阵外——这一趟最多 99%。</hir>");
 };

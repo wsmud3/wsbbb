@@ -40,6 +40,5 @@ this.score = 90;
 this.on_died = function (killer) {
     if (killer && killer.is_player) {
         killer.notify("<hio>巨蟒轰然倒地，白驼山一行就此了结。</hio>");
-        killer.notify("<hig>可回动作栏点「完成副本」结算。</hig>");
     }
 };

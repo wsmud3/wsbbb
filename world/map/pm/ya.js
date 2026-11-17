@@ -25,7 +25,7 @@ this.on_enter = function (me) {
     if (tl && !area.pm_get(this, "pm_ya_started", 0)) {
         area.pm_set(this, "pm_ya_started", 1);
         me.notify("<hir>" + foes.map(function (x) { return x.name; }).join("、") + "正围着一个女童，一见有人上来，抢先向女童下了杀手！</hir>");
-        me.notify("<hiy>（女童便是天山童姥：赶快杀掉二人，或先背起她）</hiy>");
+        me.notify("<hiy>那女童厉声喝道：「还愣着做什么？快替姥姥挡住这两个叛徒！」</hiy>");
         for (var j = 0; j < foes.length; j++) foes[j].do_kill(tl);
     }
     for (var k = 0; k < foes.length; k++) foes[k].do_kill(me);

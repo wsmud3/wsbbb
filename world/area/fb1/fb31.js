@@ -122,7 +122,7 @@ this.hslj_spawn = function (tai) {
     if (cur) return cur;
     var npc = NPC.CREATE(HSLJ_ORDER[idx], tai);
     if (!npc) return null;
-    tai.send_room("<hiy>" + (npc.title ? npc.title + " " : "") + npc.name + "飘然落在论剑台上。（第 " + (idx + 1) + "/" + HSLJ_ORDER.length + " 位）</hiy>");
+    tai.send_room("<hiy>" + (npc.title ? npc.title + " " : "") + npc.name + "飘然落在论剑台上。</hiy>");
     for (var i = 0; i < tai.items.length; i++) {
         var p = tai.items[i];
         if (p && p.is_player && p.hp > 0) npc.do_kill(p);
@@ -165,5 +165,5 @@ this.hslj_on_leave = function (tai, me, dir) {
     if (f) f.score = 0;
     if (cur.end_fight) cur.end_fight();
     cur.destroy("<hiy>" + cur.name + "冷笑一声：「临阵脱逃，也配论剑？」拂袖而去。</hiy>");
-    me.notify("<hir>你在论剑途中离开了论剑台——论剑中断，本次完成度清零（0%）。出副本重来吧。</hir>");
+    me.notify("<hir>你在论剑途中离开了论剑台。台上群雄相顾冷笑，这一场华山论剑，已没有你的份了。</hir>");
 };

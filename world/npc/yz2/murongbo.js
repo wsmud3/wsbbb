@@ -105,6 +105,6 @@ this.on_died = function (killer) {
     var room = this.environment;
     if (room && room.send_room) {
         room.send_room("<hio>慕容博缓缓倒下，燕国复辟的旧梦也随之散尽。</hio>");
-        room.send_room("<hig>燕子坞旧事已了，可回动作栏点「完成副本」结算。</hig>");
+        room.send_room("<hig>燕子坞旧事已了。</hig>");
     }
 };
