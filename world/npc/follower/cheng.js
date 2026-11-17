@@ -2,7 +2,7 @@
 this.set({
     name: "程灵素",
     desc: "她相貌似乎已有十六七岁，身形却如是个十四五岁的幼女，一双眼睛黑如点漆，朗似秋水",
-    title: "药王",
+    title: "<hic>药王</hic>",
     gender: 2,
     age: 16,
     per: 36,

@@ -2,7 +2,7 @@
 this.set({
     name: "王语嫣",
     desc: "她似有烟霞轻笼，恍入仙境，当真非尘世中人。",
-    title: "神仙姐姐",
+    title: "<him>神仙姐姐</him>",
     gender: 2,
     age: 20,
     per: 42,

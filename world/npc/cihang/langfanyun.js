@@ -1,7 +1,7 @@
 	this.inherits(NPC);
 	this.name = "浪翻云";
 	this.desc = "一位中年男子，身着青色长衫，负手而立。他看似平凡，周身却散发出一股难以言喻的剑意——仿佛他本身便是一柄绝世好剑。黑榜第一高手，「覆雨剑」浪翻云，传说中已达「唯能极于情，故能极于剑」的境界。";
-	this.title = "覆雨剑";
+	this.title = "<hio>覆雨剑</hio>";
 	this.gender = 1;
 	this.age = 45;
 	this.per = 80;

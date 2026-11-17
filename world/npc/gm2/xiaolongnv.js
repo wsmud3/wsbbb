@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "小龙女",
     desc: "古墓派传人，一袭白衣如雪，清冷脱俗。玉女剑法出神入化，银索金铃独步武林。",
-    title: "古墓仙子",
+    title: "<hiy>古墓仙子</hiy>",
     gender: 2,
     age: 22,
     per: 30,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "<hiy>张无忌</hiy>",
     desc: "明教教主，身怀九阳神功和乾坤大挪移两大绝学，武功当世无敌。",
-    title: "明教教主",
+    title: "<hiy>明教教主</hiy>",
     gender: 1,
     age: 22,
     per: 24,
