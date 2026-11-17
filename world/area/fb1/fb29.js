@@ -131,7 +131,8 @@ this.xd_engage = function (lz, me) {
     if (!room || lz.hp <= 0) return;
     if (!this.xd_get(room, "xd_started", 0)) {
         this.xd_set(room, "xd_started", 1);
-        this.xd_set(room, "xd_last_step", Date.now());
+        // 第一次走位前没有「上一步」，不受 10 秒间隔限制（原先从开战算起，进洞 10 秒内杀第一个人老祖不动）
+        this.xd_set(room, "xd_last_step", 0);
         var heroes = this.xd_find_alive(room, XD_HEROES);
         for (var i = 0; i < heroes.length; i++) {
             var h = heroes[i];
