@@ -17,9 +17,9 @@
 			"$n手中金蛇锥一点，正撞在$N的招式上，将来势轻轻带偏",
 			"$n以金蛇锥护住要害，$N的攻势被锥尖逼得半途收回"
 		];
+		// 学习条件：仅需内力上限 1000，无技能等级要求
 		this.learn_condition = {
-			max_mp: 3000,
-			skill: { throwing: 300 }
+			max_mp: 1000
 		};
 		// 面板（968级）：装备为基本暗器时 攻击 +978  →  攻击 = 等级 + 10
 		this.query_enable_prop = function (lv) {
