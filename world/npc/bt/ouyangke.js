@@ -6,8 +6,8 @@ this.set({
     gender: 1,
     age: 26,
     per: 26,
-    hp: 279860,
-    max_hp: 279860,
+    hp: 600000,
+    max_hp: 600000,
     mp: 210000,
     max_mp: 210000,
     score: 20,   // 须击杀

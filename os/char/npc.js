@@ -211,16 +211,15 @@ NPC.prototype.heart_beat = function (dt) {
 
 
 
-// 困难模式属性倍率：区域设 hard_scale（>1）时，困难副本里的 NPC 气血与攻防命闪招按倍率放大。
+// 困难模式属性倍率：区域设 hard_scale（>1）时，困难副本里的 NPC 五维（攻防命闪招）按倍率放大，气血不变。
 // 开副本时房间常驻的 NPC 在 ROOM.set_difficulty 里处理；之后动态刷出的在 NPC.CREATE 里处理。
 NPC.prototype.apply_hard_scale = function (k) {
     if (this._hard_scaled || !(k > 1)) return;
     this._hard_scaled = true;
-    var keys = ["max_hp", "gj", "fy", "mz", "ds", "zj"];
+    var keys = ["gj", "fy", "mz", "ds", "zj"];
     for (var i = 0; i < keys.length; i++) {
         if (this[keys[i]] > 0) this[keys[i]] = Math.round(this[keys[i]] * k);
     }
-    this.hp = this.max_hp;
 };
 NPC.CREATE = function (path, env, oncreate, count) {
     if (!path || !env) return;
