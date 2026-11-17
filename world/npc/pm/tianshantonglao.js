@@ -36,19 +36,12 @@ this.on_create = function() {
     this.actions["carry_tonglao"] = { name: "背负童姥" };
 };
 
-// 在李秋水战斗中死亡 = 任务失败
-this.on_die = function(killer) {
-    var room = this.environment;
-    if (room) {
-        for (var i = 0; i < room.items.length; i++) {
-            var p = room.items[i];
-            if (p && p.is_player) {
-                p.notify('<red>天山童姥被李秋水杀死了！保护任务失败……</red>');
-                // 将童姥的分数结算给玩家，防止NPC击杀NPC时分数丢失
-                p.add_fbscore(this.score || 70);
-            }
-        }
-    }
-    // 清空自身分数，防止NPC.die通用逻辑向NPC killer重复加分（NPC.query_teamid()返回null会导致加分静默失败）
-    this.score = 0;
+// [mech] 童姥是护送目标（规则见 world/area/fb1/fb26.js）：可以切磋（攻略：和女童切磋开鹤翔），不能下杀手
+this.on_kill = function (me) {
+    if (me && me.is_player) return me.notify_fail("童姥冷笑：「凭你也想杀姥姥？」——她可是你要护送的人。");
+    return true;
+};
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.pm_on_tl_died) area.pm_on_tl_died(this, killer);
 };

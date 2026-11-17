@@ -1,6 +1,6 @@
 this.inherits(NPC);
 this.set({
-    name: "张无忌",
+    name: "<hiy>张无忌</hiy>",
     desc: "明教教主，身怀九阳神功和乾坤大挪移两大绝学，武功当世无敌。",
     title: "<hiy>明教教主</hiy>",
     gender: 1,
@@ -32,4 +32,18 @@ this.set_drop(
     {obj: ["book/bc#qiankundanuoyi"], odds: 11300},
     {obj: ["eq/lv4/shenghuoling"], odds: 6780}
 );
-this.on_enter = function (me) { me.notify("张无忌缓缓站起，九阳神功真气鼓荡，沉声道：'明教存亡，在此一战！'"); this.do_kill(me); };
+// [mech] 张无忌（黄名）不主动叫杀（攻略：先秒左右光明使，再单挑张无忌）。
+// 六大门派弟子每死一人他多一层号令，攻击随层数上涨（规则见 world/area/fb1/fb27.js）。
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_apply_haoling) area.gm_apply_haoling(this);
+    var n = area && area.gm_get ? area.gm_get(room, "gm_haoling", 0) : 0;
+    me.notify("张无忌立在圣火之前，并不出手，只淡淡看着你。" + (n ? "（号令 " + n + " 层）" : ""));
+};
+this.on_kill = function (me) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_apply_haoling) area.gm_apply_haoling(this);
+    if (me && me.is_player) me.notify("张无忌缓缓站起，九阳神功真气鼓荡，沉声道：「明教存亡，在此一战！」");
+    return true;
+};

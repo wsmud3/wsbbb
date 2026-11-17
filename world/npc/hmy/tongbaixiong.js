@@ -34,6 +34,7 @@ this.set_drop({
     odds: 10250
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("童百熊双掌推出，风雷之声大作：「风雷堂不是你放肆的地方！」");
     this.do_kill(me);
 };

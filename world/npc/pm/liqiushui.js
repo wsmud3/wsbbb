@@ -10,7 +10,7 @@ this.set({
     max_hp: 1294800,
     mp: 210000,
     max_mp: 210000,
-    score: 112,
+    score: 50,
     gj: 95160,
     fy: 43948,
     mz: 96720,
@@ -36,67 +36,16 @@ this.set_drop({
     obj: ["eq/lv5/wushen/tianlong_necklace"], odds: 6360
 });
 
-// 战斗由房间 on_enter 触发，NPC 不自动攻击
-
-// 李秋水死亡
-this.on_die = function(killer) {
-    var room = this.environment;
-    if (!room) return;
-    // 检查童姥是否还活着（优先用房间引用，回退到遍历查找）
-    var tonglaoAlive = false;
-    if (room._tonglao && room._tonglao.hp > 0) {
-        tonglaoAlive = true;
-    } else {
-        for (var k = 0; k < room.items.length; k++) {
-            var it = room.items[k];
-            if (it && it.path === 'pm/tianshantonglao' && it.hp > 0) {
-                tonglaoAlive = true;
-                break;
-            }
-        }
-    }
-
-    // 先中和副本所有存活NPC的分数，确保无论死亡顺序如何，NPC.die的通用加分都不会干扰
-    var area = room.parent;
-    if (area && area.rooms) {
-        for (var i = 0; i < room.items.length; i++) {
-            var p = room.items[i];
-            if (!p || !p.is_player) continue;
-            var tid = p.query_teamid();
-            for (var ri = 0; ri < area.rooms.length; ri++) {
-                var cp = area.rooms[ri].query_copy(tid);
-                if (!cp) continue;
-                for (var ci = 0; ci < cp.items.length; ci++) {
-                    var it2 = cp.items[ci];
-                    if (it2 && !it2.is_player && it2.hp > 0 && it2.score > 0) {
-                        it2.score = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    // 统一计分并通知玩家
-    for (var i = 0; i < room.items.length; i++) {
-        var p = room.items[i];
-        if (p && p.is_player) {
-            if (tonglaoAlive) {
-                p.add_fbscore(250);
-                p.notify('<hio>李秋水倒下了！天山童姥得以手刃宿敌，缥缈峰试炼完成！</hio>');
-                if (!p.titles) p.titles = [];
-                var hasTitle = false;
-                for (var j = 0; j < p.titles.length; j++) {
-                    if (p.titles[j].title === '灵鹫宫主') { hasTitle = true; break; }
-                }
-                if (!hasTitle) {
-                    p.add_title('灵鹫宫主', 'fb');
-                    p.notify('<hig>你获得了新称号：「灵鹫宫主」！</hig>');
-                }
-            } else {
-                // 保护失败但击杀了李秋水，结算李秋水自身分数作为部分完成度
-                p.add_fbscore(this.score || 90);
-                p.notify('<red>天山童姥已死，虽然李秋水倒下了，但保护任务失败了……</red>');
-            }
-        }
-    }
+// [mech] 护送童姥（规则见 world/area/fb1/fb26.js）：李秋水不主动出手，只拦住上山的路；
+// 童姥落地后她会叫杀童姥。计分只算她自己的 50 分，100% 要靠把童姥送进闭关室。
+// 天龙遗珠仅困难模式掉落：普通模式开副本时由 pm/xianchou.js 的 on_set_difficulty 从掉落表去掉。
+this.on_leave = function (me, dir) {
+    if (!me || !me.is_player || this.hp <= 0) return true;
+    if (dir !== "northup") return true;
+    me.notify("<hir>李秋水衣袖一拂，挡在山道正中：「想上缥缈峰？先过我这一关。」</hir>");
+    return false;
+};
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.pm_on_lqs_died) area.pm_on_lqs_died(this, killer);
 };

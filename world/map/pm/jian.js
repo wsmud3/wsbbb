@@ -11,6 +11,8 @@ this.set_npc([]);
 this.set_item("tiesuo", "铁索桥", "一条横跨深涧的铁索，山风一吹便晃晃悠悠。", [
     ["guoqiao", "过铁索桥", function (me) {
         if (!me.is_player) return true;
+        // 背着童姥时状态被躺尸/复活清掉的，先补回背负减益再判定
+        if (this.parent && this.parent.pm_ensure_carry_status) this.parent.pm_ensure_carry_status(me);
         // 面板闪避（含身法、ds_per 等加成）；原先读的是装备原始加成 query_prop("ds")
         var ds = Math.floor(me.ds || 0);
         if (ds < 10000) {

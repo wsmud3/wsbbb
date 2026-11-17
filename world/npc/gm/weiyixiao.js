@@ -1,8 +1,8 @@
 this.inherits(NPC);
 this.set({
-    name: "韦一笑",
+    name: "<hig>韦一笑</hig>",
     desc: "青翼蝠王韦一笑，轻功天下无双。",
-    title: "<hiy>青翼蝠王</hiy>",
+    title: "<hig>青翼蝠王</hig>",
     gender: 1,
     age: 50,
     per: 16,
@@ -30,4 +30,4 @@ this.set_drop(
     {obj: ["book/bc#qingfushenfa"], odds: 11300},
     {obj: ["eq/lv4/weiyixiao_taomingshoe"], odds: 6780}
 );
-this.on_enter = function (me) { me.notify("韦一笑如鬼魅般飘至，冷笑道：'让你见识什么叫真正的轻功！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("韦一笑如鬼魅般飘至，冷笑道：'让你见识什么叫真正的轻功！'"); this.do_kill(me); };

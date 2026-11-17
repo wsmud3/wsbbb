@@ -9,6 +9,7 @@ this.set({
     is_copy: true,
     expend: 10,
     is_multi: true,
+    is_diffi: true,
     exp: 34000,
     pot: 30000,
     room_path: "hmy/",
@@ -37,29 +38,104 @@ this.set({
 	    { n: "小花园", id: "hmy/huayuan", p: [5, 0], exits: ["w","e"] },
 	    { n: "闺房", id: "hmy/guifang", p: [6, 0], exits: ["w"] },
 		];
-// 闺房令牌检查（同时检查temp标记和背包中的令牌物品）
-this.check_tokens = function(me) {
-    function _hasToken(me, tokenName) {
-        // 方式1: temp标记
-        if (me.query_temp(tokenName)) return true;
-        // 方式2: 背包中搜索令牌物品
-        if (me.items) {
-            for (var i = 0; i < me.items.length; i++) {
-                var it = me.items[i];
-                if (it && it.name && it.name.indexOf('令') >= 0) {
-                    // 检查令牌名称匹配：白虎令/青龙令/风雷令
-                    if (tokenName === 'hmy_baihu_token' && it.name === '白虎令') return true;
-                    if (tokenName === 'hmy_qinglong_token' && it.name === '青龙令') return true;
-                    if (tokenName === 'hmy_fenglei_token' && it.name === '风雷令') return true;
-                }
-            }
-        }
-        return false;
+
+// ────────────────────────────────────────────────────────────
+// 黑木崖机制（闺房 / 杨莲亭 / 东方不败共用；进度存副本存储 room.set_temp，随副本销毁）
+//   普通：山谷北白虎堂(上官云)、南青龙堂(贾布)、树林北风雷堂(童百熊)各取一令，悬崖三处匣子
+//         依次插令乘吊篮到大门 → 杨莲亭拦路 → 后厅转碗开密道 → 火折子点亮找铁环 → 小花园 → 闺房。
+//   闺房：杨莲亭与东方不败一起叫杀。杨莲亭活着时替东方不败挡刀；杨莲亭死后东方不败狂暴 + 鬼魅约 30 秒。
+//         跑路后再进闺房、或天师符原地复活，杨莲亭都会复活。
+//         唐诗剑法「躺尸」成功后：东方不败罢手失神（不再主动攻击你），杨莲亭不再复活、不再挡刀。
+//   困难：三堂大厅没有堂主；要带着三块令牌（在普通模式刷）在第一处悬崖一并插入，直上崖顶，
+//         三位堂主在大门一起出战（1v3），之后与普通相同。
+// ────────────────────────────────────────────────────────────
+this.hmy_alive = function (room, path) {
+    if (!room || !room.items) return null;
+    for (var i = 0; i < room.items.length; i++) {
+        var o = room.items[i];
+        if (o && !o.is_player && o.path === path && o.hp > 0) return o;
     }
-    return _hasToken(me, 'hmy_baihu_token') &&
-           _hasToken(me, 'hmy_qinglong_token') &&
-           _hasToken(me, 'hmy_fenglei_token');
+    return null;
 };
+// 副本存储的钥匙：NPC 回调里未必有玩家在场，用房间 owner（即队伍 id）充当
+this.hmy_key = function (room) {
+    return { query_teamid: function () { return room.owner; } };
+};
+this.hmy_get = function (room, k, d) { return room.query_temp(this.hmy_key(room), k, d); };
+this.hmy_set = function (room, k, v) { room.set_temp(this.hmy_key(room), k, v); };
+this.hmy_tangshi = function (room) { return !!this.hmy_get(room, "hmy_tangshi", 0); };
+
+// 东方不败狂暴 + 鬼魅。NPC 的 gj/ds/mz 在模板里写死，recount 不会按 *_per 重算，
+// 所以直接改数值、30 秒后还原（状态只用于显示和攻速，gjsd 每次 recount 都会重算）。
+this.hmy_kuangbao = function (df) {
+    if (!df || df.hp <= 0) return;
+    if (!df._hmy_base) df._hmy_base = { gj: df.gj, ds: df.ds, mz: df.mz };
+    var b = df._hmy_base;
+    df.gj = Math.floor(b.gj * 1.6);
+    df.ds = Math.floor(b.ds * 1.5);
+    df.mz = Math.floor(b.mz * 1.2);
+    if (df._hmy_kb_timer) clearTimeout(df._hmy_kb_timer);
+    df._hmy_kb_timer = df.call_out(function () {
+        this._hmy_kb_timer = null;
+        if (!this._hmy_base) return;
+        this.gj = this._hmy_base.gj;
+        this.ds = this._hmy_base.ds;
+        this.mz = this._hmy_base.mz;
+        if (this.hp > 0 && this.environment && this.environment.send_room)
+            this.environment.send_room("<hiy>东方不败眼中血色渐退，狂暴与鬼魅身法都消散了。</hiy>");
+    }, 30000);
+    df.add_status({ id: "hmy_kuangbao", name: "<hir>狂暴</hir>", desc: "攻击暴涨，悍不畏死", duration: 30000, override: 2, prop: { gjsd: 1200 } });
+    df.add_status({ id: "hmy_guimei", name: "<hiw>鬼魅</hiw>", desc: "身法快如鬼魅，难以捉摸", duration: 30000, override: 2 });
+    if (df.environment && df.environment.send_room)
+        df.environment.send_room("<hir>杨莲亭倒在血泊之中，东方不败厉啸一声，双目尽赤——狂暴！鬼魅身法随之展开！</hir>");
+};
+
+// 唐诗剑法躺尸成功：东方不败罢手、失神一阵（期间不出手），杨莲亭此后不再复活、不再挡刀
+this.hmy_on_tangshi = function (room) {
+    if (this.hmy_tangshi(room)) return;
+    this.hmy_set(room, "hmy_tangshi", 1);
+    var df = this.hmy_alive(room, "hmy/dongfangbubai");
+    var ylt = this.hmy_alive(room, "hmy/yanglianting");
+    if (ylt) ylt.end_fight();
+    if (df) {
+        df.end_fight();
+        df.add_status({ id: "hmy_shishen", name: "<hiw>失神</hiw>", desc: "以为对手已死，心神松懈，无法出手", duration: 30000, is_busy: true, no_diff: true, override: 2 });
+    }
+    room.send_room("<hiy>东方不败见你倒地不动，冷笑一声收针罢手，竟不再看你一眼；杨莲亭也松了口气退到一旁——此时正是你的机会！</hiy>");
+};
+
+// 闺房里的杨莲亭复活（跑路回来 / 天师符原地复活都会重新进入闺房）
+this.hmy_revive_ylt = function (room, me) {
+    if (this.hmy_tangshi(room)) return;
+    if (!this.hmy_get(room, "hmy_ylt_killed", 0)) return;
+    if (!this.hmy_alive(room, "hmy/dongfangbubai")) return;
+    if (this.hmy_alive(room, "hmy/yanglianting")) return;
+    NPC.CREATE("hmy/yanglianting", room);
+    var ylt = this.hmy_alive(room, "hmy/yanglianting");
+    this.hmy_set(room, "hmy_ylt_killed", 0);
+    room.refresh(me);
+    if (me) me.notify("<hir>帐后人影一闪，杨莲亭竟又站到了东方不败身前：「有我在，谁也伤不了教主！」</hir>");
+    if (ylt && me) ylt.do_kill(me);
+};
+
+// 杨莲亭挡刀：玩家打在东方不败身上的伤害七成转到杨莲亭身上（他不会因此而死，须先杀他）
+this.hmy_shield = function (df, from, sh) {
+    var room = df.environment;
+    if (!room || !from || !from.is_player || !(sh > 0)) return;
+    if (this.hmy_tangshi(room)) return;
+    var ylt = this.hmy_alive(room, "hmy/yanglianting");
+    if (!ylt || ylt.hp <= 1) return;
+    var take = Math.min(Math.floor(sh * 0.7), ylt.hp - 1);
+    if (take <= 0) return;
+    df.add_hp(take);
+    ylt.add_hp(-take);
+    var now = Date.now();
+    if (!df._hmy_shield_msg || now - df._hmy_shield_msg > 8000) {
+        df._hmy_shield_msg = now;
+        room.send_room("<hiy>杨莲亭合身扑上，替东方不败挡下了大半力道！</hiy>");
+    }
+};
+
 this.drops = [
     "book/bc#kuihuashengong",
     "book/bc#pixiejianfa",

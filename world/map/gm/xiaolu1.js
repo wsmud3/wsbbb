@@ -6,4 +6,4 @@ this.exits = {
     "north": "gm/guangmingding",
     "south": "gm/banshanyao",
 };
-this.set_npc(["gm/zhoudian", 1], ["gm/liumendizi", 1]);
+this.set_npc(["gm/zhoudian", 1], ["gm/liumendizi", 3]);

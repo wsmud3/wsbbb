@@ -5,3 +5,9 @@ this.exits = {
     "south": "pm/xiaodao",
 };
 this.set_npc([]);
+
+// [mech] 背着童姥、且李秋水已在童姥面前伏诛 → 送达 +100 分（规则见 world/area/fb1/fb26.js pm_deliver）
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    if (this.parent && this.parent.pm_deliver) this.parent.pm_deliver(this, me);
+};

@@ -35,6 +35,7 @@ this.set_drop({
     odds: 10250
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("上官云喝道：「擅闯白虎堂者，死！」掌力如山压来！");
     this.do_kill(me);
 };

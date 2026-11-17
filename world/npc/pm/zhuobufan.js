@@ -9,7 +9,7 @@ this.set({
     max_hp: 676000,
     mp: 189200,
     max_mp: 189200,
-    score: 81,
+    score: 40,
     gj: 68068,
     fy: 41891,
     mz: 62322,
@@ -33,6 +33,12 @@ this.set_drop({
     odds: 10600
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("卓不凡拔出长剑：「想过去，先接我天羽奇剑三招！」剑光霎时绽放！");
     this.do_kill(me);
+};
+// 童姥补了最后一刀时补记分数（见 world/area/fb1/fb26.js pm_credit）
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.pm_credit) area.pm_credit(this, killer);
 };

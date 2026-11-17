@@ -32,13 +32,5 @@
 		me.notify("丁敏君拔剑怒喝：'魔教妖人，纳命来！'");
 		this.do_kill(me);
 	};
-	this.on_die = function (killer) {
-		if (killer && killer.is_player) {
-			var cur = killer.query_temp("gm_gates_clear") || 0;
-			killer.set_temp("gm_gates_clear", cur + 1);
-			killer.notify("<hiy>你击败了峨嵋派高手！六派已破" + (cur + 1) + "/6。</hiy>");
-			if (cur + 1 >= 6) {
-				killer.notify("<hio>六派高手尽数败退，光明顶大殿的入口已经开启！</hio>");
-			}
-		}
-	};
+	// 未投放到任何房间（攻略的光明顶没有六派高手关卡）。原 on_die 用 me.set_temp 记「六派已破 n/6」
+	// 但没有任何地方读取，属于死代码，已删除。

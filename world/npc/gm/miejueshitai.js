@@ -29,6 +29,15 @@ this.skill_map(
 );
 this.set_drop(
     {obj: ["book/bc#yitianjianfa"], odds: 9040},
-    {obj: ["eq/lv5/wushen/yitian_sword"], odds: 261482}
+    {obj: ["eq/lv5/wushen/yitian_sword"], odds: 17}
 );
-// 灭绝师太是被营救的NPC，不主动攻击玩家
+// [mech] 灭绝师太是被营救的 NPC（规则见 world/area/fb1/fb27.js）：不主动攻击玩家、不能被玩家杀，
+// 被说不得/彭莹玉围攻也不会死（攻略：她抗揍）。二人都死后脱困，并按上面的掉落表赠礼给救她的人。
+// 倚天剑原写 odds 261482（必出），改为与副本扫荡表一致的 17。
+this.on_kill = function (me) {
+    if (me && me.is_player) return me.notify_fail("灭绝师太是来围攻光明顶的峨嵋掌门——你是来救她的。");
+    return true;
+};
+this.on_die = function () {
+    return false;
+};

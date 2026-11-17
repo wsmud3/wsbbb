@@ -40,6 +40,18 @@ this.set_drop({
     odds: 6150
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    var room = this.environment, area = room && room.parent;
+    // 唐诗剑法躺尸之后，东方不败以为你已死，不再主动攻击你（攻略）
+    if (area && area.hmy_tangshi && area.hmy_tangshi(room)) {
+        me.notify("东方不败斜倚绣榻，正低头绣花，竟没把你放在眼里。");
+        return;
+    }
     me.notify("东方不败翘起兰花指，绣花针快如闪电：「日出东方，唯我不败！」");
     this.do_kill(me);
+};
+// [mech] 杨莲亭挡刀（规则见 world/area/fb1/fb25.js hmy_shield）
+this.on_damage = function (from, sh) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.hmy_shield) area.hmy_shield(this, from, sh);
 };

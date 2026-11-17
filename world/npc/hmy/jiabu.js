@@ -34,6 +34,7 @@ this.set_drop({
     odds: 10250
 });
 this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
     me.notify("贾布阴森一笑：「青龙堂前，有来无回！」暗器如雨袭来！");
     this.do_kill(me);
 };

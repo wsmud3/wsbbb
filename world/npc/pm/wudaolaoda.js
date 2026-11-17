@@ -9,7 +9,7 @@ this.set({
     max_hp: 717600,
     mp: 176000,
     max_mp: 176000,
-    score: 55,
+    score: 30,
     gj: 52182,
     fy: 40534,
     mz: 71786,
@@ -31,7 +31,13 @@ this.set_drop({
     obj: ["eq/lv4/zhuyandan"],
     odds: 6360
 });
+// 叫杀由断魂崖 pm/ya.js 统一安排：先扑向童姥，再对付玩家（攻略：速度要快，否则女童会被两个小怪秒杀）
 this.on_enter = function (me) {
-    me.notify("乌道老大喝道：「来者何人？敢坏我等大事！」挥掌向你攻来！");
-    this.do_kill(me);
+    if (!me || !me.is_player) return;
+    me.notify("乌道老大喝道：「来者何人？敢坏我等大事！」");
+};
+// 童姥补了最后一刀时补记分数（见 world/area/fb1/fb26.js pm_credit）
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.pm_credit) area.pm_credit(this, killer);
 };

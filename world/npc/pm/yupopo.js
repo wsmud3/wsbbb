@@ -30,6 +30,12 @@ this.set_drop({
 });
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
+    var room = this.environment, area = room && room.parent;
+    // 背着宫主回来的人，余婆婆不拦
+    if (area && area.pm_carrying && area.pm_carrying(me)) {
+        me.notify("余婆婆一见你背上的童姥，慌忙拄杖跪下：「恭迎尊主回宫！」");
+        return;
+    }
     me.notify("余婆婆把铁杖往地上一顿：「哪里来的野人，也敢闯灵鹫宫？」");
     this.do_kill(me);
 };

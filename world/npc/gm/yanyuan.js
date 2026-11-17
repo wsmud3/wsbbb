@@ -1,6 +1,6 @@
 this.inherits(NPC);
 this.set({
-    name: "颜垣",
+    name: "<hib>颜垣</hib>",
     desc: "明教五行旗之厚土旗掌旗使，精通土行之术和阵法。",
     gender: 1,
     age: 43,
@@ -27,4 +27,15 @@ this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
     {obj: ["book/bc#shenghuolingfa"], odds: 9040}
 );
-this.on_enter = function (me) { me.notify("颜垣双掌拍地，厚土阵拔地而起！"); this.do_kill(me); };
+// [mech] 明教高手（蓝名）：进门先向同房间的六大门派弟子下杀手，倒下即救下弟子（规则见 world/area/fb1/fb27.js）
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    me.notify("颜垣双掌拍地，厚土阵拔地而起！");
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_engage) area.gm_engage(this, me);
+    else this.do_kill(me);
+};
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_rescue) area.gm_rescue(this, killer);
+};

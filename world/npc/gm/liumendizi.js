@@ -28,8 +28,17 @@ this.set_drop({
     min: 10,
     max: 60
 });
+// [mech] 六大门派弟子是自己人：不主动攻击玩家，0 分不计完成度；
+// 每死一人张无忌号令 +1，救下（杀掉同房间的明教高手）后自行下山（规则见 world/area/fb1/fb27.js）
 this.on_enter = function (me) {
     if (!me || !me.is_player) return;
-    me.notify("六大门派弟子喝道：「魔教妖人，人人得而诛之！」提剑便攻。");
-    this.do_kill(me);
+    me.notify("六大门派弟子喊道：「这位朋友，快助我们一臂之力！」");
+};
+this.on_kill = function (me) {
+    if (me && me.is_player) me.notify("<hiy>你对六大门派弟子下了杀手——他们每死一人，张无忌便多一层号令！</hiy>");
+    return true;
+};
+this.on_died = function () {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_on_dizi_died) area.gm_on_dizi_died(this);
 };

@@ -1,8 +1,8 @@
 this.inherits(NPC);
 this.set({
-    name: "范遥",
+    name: "<hib>范遥</hib>",
     desc: "明教光明右使，与杨逍齐名，号称'逍遥二仙'中的'苦头陀'。他英俊的外表下隐藏着极强的实力，精通各家武学。",
-    title: "<hiy>光明右使</hiy>",
+    title: "<hib>光明右使</hib>",
     gender: 1,
     age: 40,
     per: 26,
@@ -31,4 +31,4 @@ this.set_drop(
     {obj: ["book/bc#shenghuolingfa"], odds: 11300},
     {obj: ["eq/lv4/zhouzhiruo_shouzhuo"], odds: 6780}
 );
-this.on_enter = function (me) { me.notify("范遥面沉如水，冷冷道：'苦头陀在此，休想再进一步！'"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("范遥面沉如水，冷冷道：'苦头陀在此，休想再进一步！'"); this.do_kill(me); };

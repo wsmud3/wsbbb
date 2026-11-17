@@ -1,6 +1,6 @@
 this.inherits(NPC);
 this.set({
-    name: "冷谦",
+    name: "<hib>冷谦</hib>",
     desc: "明教五散人之一，性格冷傲寡言，武功高强。",
     gender: 1,
     age: 40,
@@ -27,4 +27,15 @@ this.set_drop(
     {obj: "money/silver", min: 10, max: 100},
     {obj: ["book/bc#shenghuoshengong"], odds: 11300}
 );
-this.on_enter = function (me) { me.notify("冷谦冷眼盯着你，一言不发地冲了过来！"); this.do_kill(me); };
+// [mech] 明教高手（蓝名）：进门先向同房间的六大门派弟子下杀手，倒下即救下弟子（规则见 world/area/fb1/fb27.js）
+this.on_enter = function (me) {
+    if (!me || !me.is_player) return;
+    me.notify("冷谦冷眼盯着你，一言不发地冲了过来！");
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_engage) area.gm_engage(this, me);
+    else this.do_kill(me);
+};
+this.on_died = function (killer) {
+    var room = this.environment, area = room && room.parent;
+    if (area && area.gm_rescue) area.gm_rescue(this, killer);
+};
