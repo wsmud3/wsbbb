@@ -147,17 +147,11 @@ this.tl_carry = function (me) {
     if (this.tl_disguised(me)) this.tl_undisguise(me);
     dy.destroy("段誉跳上了" + me.name + "的背。");
     this.tl_set(me, "tl_carry", 1);
-    // 攻略：抓人 debuff 和缥缈峰的背负一样 —— 后天臂力/根骨/身法/悟性 -100%。
-    // 原先写的 str_per 等属性在属性重算里不存在，减益从未生效；改为直接抵消当前后天值（同 fb26 pm_apply_carry_status）。
-    var cprop = {}, ckeys = ["str", "con", "dex", "int"];
-    for (var ck = 0; ck < ckeys.length; ck++) {
-        var cv = me.query_prop(ckeys[ck]) || 0;
-        if (cv > 0) cprop[ckeys[ck]] = -cv;
-    }
+    // 背负减益（与缥缈峰背负童姥一致）：攻击、防御、躲闪、命中、招架各 -50%
     me.add_status({
         id: "carry_duanyu", name: "背负段誉", duration: 0, no_clear: true,
-        desc: "背着段誉，全身内力都用来保护他：后天臂力、根骨、身法、悟性 -100%。",
-        prop: cprop
+        desc: "背着段誉，全身内力都用来保护他：攻击、防御、躲闪、命中、招架各减少50%。",
+        prop: { gj_per: -50, fy_per: -50, ds_per: -50, mz_per: -50, zj_per: -50 }
     });
     var foes = this.tl_find_alive(me, TL_PURSUERS);
     me.notify("<hig>段誉爬上了你的背。</hig><hir>寺中还剩的 " + foes.length + " 位高僧一齐朝你扑了过来！</hir>");
