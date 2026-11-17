@@ -268,6 +268,52 @@ function zc_send(me, html, feedback) {
     me.send_commands({ html: html, size: "lg", persistent: true, feedback: feedback || "" });
 }
 
+// 词条按类别分组渲染成一段 HTML（每类一行：类别名 + 该类所有词条按钮）。
+// words: get_available_words 的结果；skip: {词条index: true} 需跳过的；cmdOf(w): 按钮命令。
+var ZC_CAT_ORDER = [0, 1, 2, 3, 4, "passive"];
+var ZC_CAT_NAMES = { 0: "基础", 1: "后天", 2: "高级", 3: "稀有", 4: "特殊", passive: "被动" };
+function zc_word_label(w) {
+    if (w.category === "passive") {
+        var pdef = SKILL.ZC_WORDS[w.index - 500];
+        if (pdef) return pdef.format(pdef.value(1, 0, 1));
+    }
+    return w.name;
+}
+function zc_word_groups_html(words, skip, cmdOf) {
+    var byCat = {};
+    for (var i = 0; i < words.length; i++) {
+        var w = words[i];
+        if (skip && skip[w.index]) continue;
+        if (!byCat[w.category]) byCat[w.category] = [];
+        byCat[w.category].push(w);
+    }
+    var html = "";
+    for (var ci = 0; ci < ZC_CAT_ORDER.length; ci++) {
+        var ck = ZC_CAT_ORDER[ci];
+        var list = byCat[ck];
+        if (!list || !list.length) continue;
+        var btns = [];
+        for (var k = 0; k < list.length; k++) btns.push(zc_btn_html(cmdOf(list[k]), zc_word_label(list[k])));
+        html += '<div class="zc-group"><hic>' + (ZC_CAT_NAMES[ck] || ck) + '</hic></div>' + zc_row('', btns);
+    }
+    return html;
+}
+// 底部操作行（返回上级 / 放弃等）
+function zc_tabs_html(btns) {
+    return '<div class="zc-tabs">' + btns.join('') + '</div>';
+}
+// 已选词条一览（只读）
+function zc_selected_words_html(book, position_key) {
+    var ws = book.zc_words[position_key] || [];
+    if (!ws.length) return '<div class="zc-row"><hic>（尚未选择词条）</hic></div>';
+    var names = [];
+    for (var i = 0; i < ws.length; i++) {
+        var wd = book.get_word_def(ws[i]);
+        names.push(wd ? wd.name : String(ws[i]));
+    }
+    return '<div class="zc-row">已选：<hig>' + names.join('、') + '</hig></div>';
+}
+
 function find_book(me, book_id) {
     if (!book_id) {
         var items = me.items;
@@ -576,9 +622,10 @@ this.cmd_deduce = function (me, book_id) {
         var dp = book._deducing_position;
         var dpLabel = ZC_POSITIONS[dp] ? ZC_POSITIONS[dp].label : dp;
         if (book.zc_state === "deducing") {
-
-            me.notify("<hiy>你正在推演" + dpLabel + "部位，当前状态：</hiy>");
-            me.send_commands("zc select " + book.id + " " + dp, "继续推演", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
+            zc_send(me, zc_selected_words_html(book, dp) + zc_tabs_html([
+                zc_btn_html("zc select " + book.id + " " + dp, "继续推演"),
+                zc_btn_html("zc abandon " + book.id, "放弃推演")
+            ]), "<hiy>你正在推演" + dpLabel + "部位</hiy>");
             return;
         }
         if (book.zc_state === "completed")
@@ -663,103 +710,62 @@ this.cmd_select = function (me, book_id, position_key) {
     var pos = ZC_POSITIONS[position_key];
     if (!pos) return me.notify("无效部位。");
 
-    // 内功部位：预选内力上限(506)，进入词条选择流程
-    if (position_key === "内功") {
-        if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
-        // Avoid duplicate word 506 on re-entry
-        if (book.zc_words[position_key].indexOf(506) < 0) {
-            book.zc_words[position_key].push(506);
-            set_wl(book.zc_word_levels, 506, 0, "内功");
-        }
-        // 保存原始状态，供 addword_done 判断是否需要增量更新
-        book._was_completed = (book.zc_state === "completed");
-        // 先不加入zc_positions，等addword_done统一处理
-        book.zc_state = "deducing";
-        book._deducing_position = position_key;
-        var forceWords = get_available_words(pos.base);
+    // 同一部位推演中再次进入（「继续推演」/返回）：保留已选词条，只重新渲染
+    if (book.zc_state === "deducing" && book._deducing_position === position_key)
+        return self.render_deduce_words(me, book, position_key);
 
-        me.notify("<hiy>为内功选择词条（内力上限已自动添加，每个词条消耗1本武道书，最多6个）：</hiy>");
-
-        me.notify("<hic>内功特性：内力上限" + (39 + 0) + "%转化为气血上限（随内力词条升级成长）</hic>");
-        // Group words by category
-        var fByCat = {};
-        for (var fi = 0; fi < forceWords.length; fi++) {
-            var fw = forceWords[fi];
-            if (fw.index === 506) continue;
-            var fck = fw.category;
-            if (!fByCat[fck]) fByCat[fck] = [];
-            fByCat[fck].push(fw);
-        }
-        var fCatOrder = [0, 1, 2, 3, 4, "passive"];
-        for (var fci = 0; fci < fCatOrder.length; fci++) {
-            var fck2 = fCatOrder[fci];
-            var fcws = fByCat[fck2];
-            if (!fcws || fcws.length === 0) continue;
-            var fcArgs = [];
-            for (var fwi = 0; fwi < fcws.length; fwi++) {
-                var fw2 = fcws[fwi];
-                var flabel = fw2.name;
-                if (fck2 === "passive") {
-                    var fpdef = SKILL.ZC_WORDS[fw2.index - 500];
-                    if (fpdef) flabel = fpdef.format(fpdef.value(1, 0, 1));
-                }
-                fcArgs.push("zc addword " + book.id + " " + position_key + " " + fw2.index);
-                fcArgs.push(flabel);
-            }
-            if (fcArgs.length > 0) { fcArgs.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, fcArgs); }
-        }
-
-        me.notify("<hiy>选择完成后点击：</hiy>");
-        me.send_commands("zc addword_done " + book.id, "完成推演", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
-        return;
-    }
-
-    // 其他部位：显示词条选择
-    // 清理该部位旧数据（如重新选择）
-    var oldWords = book.zc_words[position_key] || [];
-    for (var oi = 0; oi < oldWords.length; oi++) {
-        del_wl(book.zc_word_levels, oldWords[oi], position_key);
-    }
     // 保存原始状态，供 addword_done 判断是否需要增量更新已学习技能
     book._was_completed = (book.zc_state === "completed");
+
+    if (position_key === "内功") {
+        // 内功部位：预选内力上限(506)；先不加入zc_positions，等addword_done统一处理
+        if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
+        if (book.zc_words[position_key].indexOf(506) < 0) {
+            book.zc_words[position_key].unshift(506);
+            set_wl(book.zc_word_levels, 506, 0, "内功");
+        }
+    } else {
+        // 其他部位：清理该部位旧数据（如重新选择）
+        var oldWords = book.zc_words[position_key] || [];
+        for (var oi = 0; oi < oldWords.length; oi++) {
+            del_wl(book.zc_word_levels, oldWords[oi], position_key);
+        }
+        delete book.zc_words[position_key];
+    }
     book.zc_state = "deducing";
     book._deducing_position = position_key;
-    delete book.zc_words[position_key];
-    var words = get_available_words(pos.base);
-
-
-    me.notify("<hiy>为" + pos.label + "选择词条（每词条1本武道书，最多6个）：</hiy>");
-    // Group words by category
-    var gByCat = {};
-    for (var i = 0; i < words.length; i++) {
-        var w = words[i];
-        var gck = w.category;
-        if (!gByCat[gck]) gByCat[gck] = [];
-        gByCat[gck].push(w);
-    }
-    var gCatOrder = [0, 1, 2, 3, 4, "passive"];
-    for (var gci = 0; gci < gCatOrder.length; gci++) {
-        var gck2 = gCatOrder[gci];
-        var gcws = gByCat[gck2];
-        if (!gcws || gcws.length === 0) continue;
-        var gcArgs = [];
-        for (var gwi = 0; gwi < gcws.length; gwi++) {
-            var gw = gcws[gwi];
-            var glabel = gw.name;
-            if (gck2 === "passive") {
-                var gpdef = SKILL.ZC_WORDS[gw.index - 500];
-                if (gpdef) glabel = gpdef.format(gpdef.value(1, 0, 1));
-            }
-            gcArgs.push("zc addword " + book.id + " " + position_key + " " + gw.index);
-            gcArgs.push(glabel);
-        }
-        if (gcArgs.length > 0) { gcArgs.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, gcArgs); }
-    }
-
-
-    me.notify("<hiy>选择完成后点击：</hiy>");
-    me.send_commands("zc addword_done " + book.id, "完成推演", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
+    return self.render_deduce_words(me, book, position_key);
 };
+
+// 新部位推演的词条选择面板：整块一次成型发出（持久浮窗每条报文都会替换窗口，
+// 分多条发只剩最后一条「完成推演/放弃推演」，玩家看不到任何词条可选）。
+this.render_deduce_words = function (me, book, position_key, feedback) {
+    var pos = ZC_POSITIONS[position_key];
+    var current = book.zc_words[position_key] || [];
+    var skip = {};
+    for (var i = 0; i < current.length; i++) skip[current[i]] = true;
+
+    var head = "<hiy>推演 · " + book.color_name + " · " + pos.label + "部位</hiy>"
+        + "（" + current.length + "/6，每个词条耗武道书1本，现有" + query_wudao_count(me) + "本）";
+    if (position_key === "内功")
+        head += "<br><hic>内功特性：内力上限39%转化为气血上限（随内力词条升级成长），「内力上限」已自动添加。</hic>";
+
+    var html = zc_selected_words_html(book, position_key);
+    if (current.length < 6) {
+        html += zc_word_groups_html(get_available_words(pos.base), skip, function (w) {
+            return "zc addword " + book.id + " " + position_key + " " + w.index;
+        });
+    } else {
+        html += '<div class="zc-row"><hic>（词条已满 6/6，请点「完成推演」）</hic></div>';
+    }
+    var tabs = [];
+    if (current.length) tabs.push(zc_btn_html("zc addword_done " + book.id, "<hig>完成推演</hig>"));
+    // 新部位尚未付费：返回上级即放弃本部位（不扣武道书），回到推演主页
+    tabs.push(zc_btn_html("zc abandon " + book.id, "返回（放弃本部位）"));
+    html += zc_tabs_html(tabs);
+    zc_send(me, html, feedback ? feedback + "<br>" + head : head);
+};
+
 
 // ===== addword: 添加单个词条 =====
 this.cmd_addword = function (me, book_id, position_key_and_word) {
@@ -780,26 +786,31 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
 
     var pos = ZC_POSITIONS[position_key];
     if (!pos) return me.notify("无效部位。");
+    if (book._deducing_position !== position_key)
+        return me.notify("你正在推演的不是这个部位。");
+
+    // 校验失败时留在同一面板，把原因显示在浮窗提示行
+    var fail = function (msg) { return self.render_deduce_words(me, book, position_key, msg); };
 
     // Check word exists and matches position
     var wdef = book.get_word_def(word_index);
-    if (!wdef) return me.notify("词条" + word_index + "不存在。");
+    if (!wdef) return fail("词条" + word_index + "不存在。");
 
     var pos_keys = POSITION_TO_KEY[pos.base] || [pos.base];
     var supported = false;
     for (var j = 0; j < wdef.positions.length; j++) {
         if (pos_keys.indexOf(wdef.positions[j]) >= 0) { supported = true; break; }
     }
-    if (!supported) return me.notify("词条「" + wdef.name + "」不能用在这个部位。");
+    if (!supported) return fail("词条「" + wdef.name + "」不能用在这个部位。");
 
     // Check duplicates
     var existing = book.zc_words[position_key] || [];
     if (existing.indexOf(word_index) >= 0)
-        return me.notify("该部位已选择过此词条。");
+        return fail("该部位已选择过此词条。");
 
     // Check count limit
     if (existing.length >= 6)
-        return me.notify("该部位最多选择6个词条。");
+        return fail("该部位最多选择6个词条。");
 
     // Passive limit: one passive per position, and no duplicate passive across positions
     if (wdef.category === "passive") {
@@ -807,20 +818,20 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
         for (var passPk in book.zc_words) {
             if (passPk === position_key) continue;
             if ((book.zc_words[passPk] || []).indexOf(word_index) >= 0)
-                return me.notify("该被动词条已在其他部位存在，不可重复选择。");
+                return fail("该被动词条已在其他部位存在，不可重复选择。");
         }
         // Check one passive per position
         for (var ei = 0; ei < existing.length; ei++) {
             var ew = book.get_word_def(existing[ei]);
             if (ew && ew.category === "passive")
-                return me.notify("每个部位只能选择一个被动词条。");
+                return fail("每个部位只能选择一个被动词条。");
         }
     }
 
     // Check wudao book availability
     var wudaoCount = query_wudao_count(me);
     if (wudaoCount < existing.length + 1)
-        return me.notify("<red>武道书不足！需要至少" + (existing.length + 1) + "本，当前" + wudaoCount + "本。</red>");
+        return fail("<red>武道书不足！需要至少" + (existing.length + 1) + "本，当前" + wudaoCount + "本。</red>");
 
     // Add word
     if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
@@ -830,9 +841,8 @@ this.cmd_addword = function (me, book_id, position_key_and_word) {
     me.items_changed(book);
 
     var current = book.zc_words[position_key];
-
-    me.notify("已添加词条：" + wdef.name + " [" + word_index + "]（当前" + current.length + "/6个）。<hiy>可继续选择或点击完成：</hiy>");
-    me.send_commands("zc addword_done " + book.id, "完成推演", { persistent: true, size: "lg" });
+    return self.render_deduce_words(me, book, position_key,
+        "已添加词条：" + wdef.name + "（当前" + current.length + "/6个）。");
 };
 
 // ===== addword_done: 完成词条选择 =====
@@ -844,23 +854,25 @@ this.cmd_addword_done = function (me, book_id) {
     var position_key = book._deducing_position;
     if (!position_key) return me.notify("你还没选定要推演的部位。");
 
+    var fail = function (msg) { return self.render_deduce_words(me, book, position_key, msg); };
     var words = book.zc_words[position_key] || [];
     if (words.length === 0)
-        return me.notify("请至少选择一个词条。");
+        return fail("请至少选择一个词条。");
     if (position_key === "内功" && words[0] !== 506)
-        return me.notify("内功部位必须以内力上限作为首个词条。");
-
-    var wasCompleted = book._was_completed === true;
-    delete book._was_completed;
+        return fail("内功部位必须以内力上限作为首个词条。");
 
     // Deduct wudao books
     var wudao = me.find_obj_bypath("book/wudao");
-    if (!wudao) return me.notify("<red>你的武道书不够！</red>");
+    if (!wudao) return fail("<red>你的武道书不够！</red>");
     if (wudao.count < words.length)
-        return me.notify("<red>武道书不足！需要" + words.length + "本，当前" + wudao.count + "本。</red>");
+        return fail("<red>武道书不足！需要" + words.length + "本，当前" + wudao.count + "本。</red>");
 
     if (!me.remove_obj(wudao, words.length))
-        return me.notify("<red>武道书扣除失败，本次推演未生效。</red>");
+        return fail("<red>武道书扣除失败，本次推演未生效。</red>");
+
+    // 扣费成功后才消费该标记：失败重试时仍需要它
+    var wasCompleted = book._was_completed === true;
+    delete book._was_completed;
 
     // Confirm position (may already be added for 内功 which pre-adds in cmd_select)
     if (book.zc_positions.indexOf(position_key) < 0)
@@ -1085,18 +1097,18 @@ this.cmd_addpfm = function (me, book_id, position_key) {
             { persistent: true, size: "lg", feedback: "该部位已有 3 个 PFM，无法再添加。请先「移除」一个。" });
 
 
-    me.notify("<hiy>为" + pos.label + "选择PFM（武道书消耗见标注）：</hiy>");
-    var args = [];
+    // 整块一次成型（持久浮窗每条报文都会替换窗口）
+    var html = "";
     for (var i = 0; i < pfms.length; i++) {
         var p = pfms[i];
-        args.push("zc addpfm_ok " + book.id + " " + position_key + " " + p.skill_id + "." + p.pfm_key);
-        args.push(p.pfm_name + "(" + p.skill_name + ") 消耗" + p.cost + "本");
+        html += zc_row(p.pfm_name + " <hik>（" + p.skill_name + "）</hik>　耗" + p.cost + "本",
+            [zc_btn_html("zc addpfm_ok " + book.id + " " + position_key + " " + p.skill_id + "." + p.pfm_key, "添加")]);
     }
-    if (args.length > 0) { args.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, args); }
-
-
-    me.notify("<hiy>返回：</hiy>");
-    me.send_commands("zc deduce " + book.id, "返回推演主页", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
+    html += zc_tabs_html([
+        zc_btn_html("zc posmenu " + book.id + " " + position_key, "返回部位管理"),
+        zc_btn_html("zc deduce " + book.id, "返回推演主页")
+    ]);
+    zc_send(me, html, "<hiy>为" + pos.label + "选择PFM（" + existing.length + "/3，武道书现有" + query_wudao_count(me) + "本）</hiy>");
 };
 
 // ===== addpfm_ok: 确认添加PFM =====
@@ -1412,7 +1424,7 @@ this.create_or_update_skill = function (book, me) {
 };
 
 // ===== wordselect: 词条推演（仅选择新词条，按类别分组） =====
-this.cmd_wordselect = function (me, book_id, position_key) {
+this.cmd_wordselect = function (me, book_id, position_key, feedback) {
     var book = find_book(me, book_id);
     if (!book || book.path.indexOf("zc/blank_book") < 0)
         return me.notify("你身上没有自创秘籍。");
@@ -1424,72 +1436,48 @@ this.cmd_wordselect = function (me, book_id, position_key) {
     var existing = book.zc_words[position_key] || [];
     if (existing.length >= 6)
         return me.send_commands("zc posmenu " + book.id + " " + position_key, "返回部位管理",
-            { persistent: true, size: "lg", feedback: "该部位词条已满（6/6），无法继续添加。" });
+            { persistent: true, size: "lg", feedback: (feedback ? feedback + "<br>" : "") + "该部位词条已满（6/6），无法继续添加。" });
 
     if (!book.zc_skill_id) {
         self.create_or_update_skill(book, me);
     }
 
-    var wudaoCount = query_wudao_count(me);
+    var head = "<hiy>词条推演 · " + book.color_name + " · " + pos.label + "（" + existing.length + "/6）</hiy>"
+        + "<br>武道书：" + query_wudao_count(me) + "本，每添加一个词条耗一本。";
+    if (feedback) head = feedback + "<br>" + head;
 
-    me.notify("<hiy>══ 词条推演 · " + book.color_name + "</hiy> · " + pos.label + " (" + existing.length + "/6) ══");
-
-    me.notify("武道书：" + wudaoCount + "本，每添加一个词条耗一本。");
+    // 整块一次成型（持久浮窗每条报文都会替换窗口，分多条发只剩最后一条）
+    var html = "";
 
     // 部位切换
     if (book.zc_positions.length > 1) {
-        var tabArgs = [];
+        var tabs = [];
         for (var ti = 0; ti < book.zc_positions.length; ti++) {
             var tpk = book.zc_positions[ti];
             var tlabel = (ZC_POSITIONS[tpk] && ZC_POSITIONS[tpk].label) || tpk;
-            tabArgs.push("zc wordselect " + book.id + " " + tpk);
-            tabArgs.push(position_key === tpk ? "<HIG>" + tlabel + "</HIG>" : tlabel);
+            tabs.push(zc_btn_html("zc wordselect " + book.id + " " + tpk,
+                position_key === tpk ? "<HIG>" + tlabel + "</HIG>" : tlabel));
         }
-        tabArgs.push({ persistent: true, size: "lg" });
-        me.send_commands.apply(me, tabArgs);
+        html += '<div class="zc-tabs">' + tabs.join('') + '</div>';
     }
 
-    // 同部位已用词条（同部位不可重复）
-    var globalExisting = {};
-    var ws = book.zc_words[position_key] || [];
-    for (var ei = 0; ei < ws.length; ei++) globalExisting[ws[ei]] = true;
+    html += zc_selected_words_html(book, position_key);
 
-    // 获取可选词条
-    var words = get_available_words(pos.base);
-    var unaddedByCat = {};
-    for (var ui = 0; ui < words.length; ui++) {
-        var uw = words[ui];
-        if (!globalExisting[uw.index]) {
-            var uck = uw.category;
-            if (!unaddedByCat[uck]) unaddedByCat[uck] = [];
-            unaddedByCat[uck].push(uw);
-        }
-    }
+    // 同部位已用词条不可重复
+    var skip = {};
+    for (var ei = 0; ei < existing.length; ei++) skip[existing[ei]] = true;
+    var groups = zc_word_groups_html(get_available_words(pos.base), skip, function (w) {
+        return "zc wordadd " + book.id + " " + position_key + " " + w.index + " select";
+    });
+    html += groups || '<div class="zc-row"><hic>（没有更多可选的词条了）</hic></div>';
 
-    var hasAny = false;
-    var catOrder = [0, 1, 2, 3, 4, "passive"];
-    for (var ci = 0; ci < catOrder.length; ci++) {
-        var ck = catOrder[ci];
-        var cws = unaddedByCat[ck];
-        if (!cws || cws.length === 0) continue;
-        hasAny = true;
-        var cArgs = [];
-        for (var wi = 0; wi < cws.length; wi++) {
-            var cw = cws[wi];
-            var clabel = cw.name;
-            if (ck === "passive") {
-                var cpdef = SKILL.ZC_WORDS[cw.index - 500];
-                if (cpdef) clabel = cpdef.format(cpdef.value(1, 0, 1));
-            }
-            cArgs.push("zc wordadd " + book.id + " " + position_key + " " + cw.index + " select");
-            cArgs.push(clabel);
-        }
-        if (cArgs.length > 0) { cArgs.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, cArgs); }
-    }
-    if (!hasAny) me.notify("（没有更多可选的词条了）");
-
-    me.send_commands("zc posmenu " + book.id + " " + position_key, "返回部位管理", "zc abandon " + book.id, "放弃推演", { persistent: true, size: "lg" });
+    html += zc_tabs_html([
+        zc_btn_html("zc posmenu " + book.id + " " + position_key, "返回部位管理"),
+        zc_btn_html("zc deduce " + book.id, "返回推演主页")
+    ]);
+    zc_send(me, html, head);
 };
+
 
 // ===== words: 查看/推演词条 (部位筛选 + 紧凑一行一词条) =====
 
@@ -1512,7 +1500,6 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
         if (!book.zc_positions || book.zc_positions.length === 0)
             return me.notify("请先推演至少一个部位。");
 
-        me.notify("<hiy>选择要管理词条的部位：</hiy>");
         var tabArgs = [];
         for (var ti = 0; ti < book.zc_positions.length; ti++) {
             var tpk = book.zc_positions[ti];
@@ -1520,7 +1507,8 @@ this.cmd_words = function (me, skill_id, book_id_and_pos, extraFeedback) {
             tabArgs.push("zc words " + skill_id + " " + book.id + " " + tpk);
             tabArgs.push(tlabel);
         }
-        tabArgs.push({ persistent: true, size: "lg" });
+        tabArgs.push("zc deduce " + book.id, "返回推演主页");
+        tabArgs.push({ persistent: true, size: "lg", text: "<hiy>选择要管理词条的部位：</hiy>" });
         me.send_commands.apply(me, tabArgs);
         return;
     }
@@ -1969,8 +1957,14 @@ this.cmd_wordadd = function (me, book_id, arg2) {
     var pos = ZC_POSITIONS[position_key];
     if (!pos) return me.notify("无效部位。");
 
+    // 从「词条推演」面板发起时，失败原因留在同一面板的提示行里
+    var fail = function (msg) {
+        if (mode === "select") return self.cmd_wordselect(me, book_id, position_key, msg);
+        return me.notify(msg);
+    };
+
     var wdef = book.get_word_def(word_index);
-    if (!wdef) return me.notify("词条" + word_index + "不存在。");
+    if (!wdef) return fail("词条" + word_index + "不存在。");
 
     // Check word supports this position
     var pos_keys = POSITION_TO_KEY[pos.base] || [pos.base];
@@ -1978,14 +1972,14 @@ this.cmd_wordadd = function (me, book_id, arg2) {
     for (var j = 0; j < wdef.positions.length; j++) {
         if (pos_keys.indexOf(wdef.positions[j]) >= 0) { supported = true; break; }
     }
-    if (!supported) return me.notify("词条「" + wdef.name + "」不能用在这个部位。");
+    if (!supported) return fail("词条「" + wdef.name + "」不能用在这个部位。");
 
     // Check duplicates
     var existing = book.zc_words[position_key] || [];
     if (existing.indexOf(word_index) >= 0)
-        return me.notify("该部位已选择过此词条。");
+        return fail("该部位已选择过此词条。");
     if (existing.length >= 6)
-        return me.notify("该部位最多选择6个词条。");
+        return fail("该部位最多选择6个词条。");
 
     // Passive limit: one passive per position, and no duplicate passive across positions
     if (wdef.category === "passive") {
@@ -1993,24 +1987,24 @@ this.cmd_wordadd = function (me, book_id, arg2) {
         for (var passPk in book.zc_words) {
             if (passPk === position_key) continue;
             if ((book.zc_words[passPk] || []).indexOf(word_index) >= 0)
-                return me.notify("该被动词条已在其他部位存在，不可重复选择。");
+                return fail("该被动词条已在其他部位存在，不可重复选择。");
         }
         // Check one passive per position
         for (var ei = 0; ei < existing.length; ei++) {
             var ew = book.get_word_def(existing[ei]);
             if (ew && ew.category === "passive")
-                return me.notify("每个部位只能选择一个被动词条。");
+                return fail("每个部位只能选择一个被动词条。");
         }
     }
 
     // Check wudao books
     var wudao = me.find_obj_bypath("book/wudao");
     if (!wudao || wudao.count < 1)
-        return me.notify("<red>武道书不足！需要1本。</red>");
+        return fail("<red>武道书不足！需要1本。</red>");
 
     // Add word and deduct wudao
     if (!me.remove_obj(wudao, 1))
-        return me.notify("<red>武道书扣除失败，词条未添加。</red>");
+        return fail("<red>武道书扣除失败，词条未添加。</red>");
     if (!book.zc_words[position_key]) book.zc_words[position_key] = [];
     book.zc_words[position_key].push(word_index);
     set_wl(book.zc_word_levels, word_index, 0, position_key);
@@ -2050,10 +2044,11 @@ this.cmd_wordadd = function (me, book_id, arg2) {
     }
 
 
-    me.notify("已添加词条：" + wdef.name + " [" + word_index + "]（当前" + (existing.length + 1) + "/6个）。消耗1本武道书。");
+    var addedMsg = "已添加词条：" + wdef.name + "（当前" + book.zc_words[position_key].length + "/6个）。消耗1本武道书。";
     notify_skill_update(me, skill_id);
     if (mode === "select")
-        return self.cmd_wordselect(me, book_id, position_key);
+        return self.cmd_wordselect(me, book_id, position_key, addedMsg);
+    me.notify(addedMsg);
     return self.cmd_words(me, skill_id, book_id + " " + position_key);
 };
 
@@ -2098,41 +2093,16 @@ this.cmd_replaceword = function (me, book_id, arg2) {
                 candidates.push(words[wi]);
         }
 
-        if (candidates.length === 0) {
-
-            me.notify("没有可替换的词条。（该部位所有词条已添加）");
-            return;
-        }
+        var backToWords = zc_btn_html("zc words " + book.zc_skill_id + " " + book.id + " " + position_key, "返回词条管理");
+        if (candidates.length === 0)
+            return zc_send(me, zc_tabs_html([backToWords]), "没有可替换的词条。（该部位所有词条已添加）");
 
         // 内功部位特殊词条也可选
 
-        me.notify("<hiy>替换词条「" + (old_wdef ? old_wdef.name : "旧词条") + "」，选择新词条：</hiy>");
-        var rByCat = {};
-        for (var ri = 0; ri < candidates.length; ri++) {
-            var rc = candidates[ri];
-            var rck = rc.category;
-            if (!rByCat[rck]) rByCat[rck] = [];
-            rByCat[rck].push(rc);
-        }
-        var rCatOrder = [0, 1, 2, 3, 4, "passive"];
-        for (var rci = 0; rci < rCatOrder.length; rci++) {
-            var rck2 = rCatOrder[rci];
-            var rcws = rByCat[rck2];
-            if (!rcws || rcws.length === 0) continue;
-            var rArgs = [];
-            for (var rwi = 0; rwi < rcws.length; rwi++) {
-                var rw = rcws[rwi];
-                var rlabel = rw.name;
-                if (rck2 === "passive") {
-                    var rpdef = SKILL.ZC_WORDS[rw.index - 500];
-                    if (rpdef) rlabel = rpdef.format(rpdef.value(1, 0, 1));
-                }
-                rArgs.push("zc replaceword " + book.id + " " + position_key + " " + old_word_index + " " + rw.index);
-                rArgs.push(rlabel);
-            }
-            if (rArgs.length > 0) { rArgs.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, rArgs); }
-        }
-        return;
+        var rhtml = zc_word_groups_html(candidates, null, function (w) {
+            return "zc replaceword " + book.id + " " + position_key + " " + old_word_index + " " + w.index;
+        }) + zc_tabs_html([backToWords]);
+        return zc_send(me, rhtml, "<hiy>替换词条「" + (old_wdef ? old_wdef.name : "旧词条") + "」，选择新词条：</hiy>");
     }
 
     // 执行替换
@@ -2141,11 +2111,11 @@ this.cmd_replaceword = function (me, book_id, arg2) {
 
     // 确认步骤
     if (!confirmed) {
-
-        me.notify("<hiy>确认用「" + new_wdef.name + "」替换「" + (old_wdef ? old_wdef.name : "旧词条") + "」？原有的<HIG>" + get_wl(book.zc_word_levels, old_word_index, position_key) + "级</HIG>会转给新词条。</hiy>");
-        me.send_commands("zc replaceword " + book.id + " " + position_key + " " + old_word_index + " " + new_word_index + " ok", "确认替换", { persistent: true, size: "lg" });
-        me.send_commands("zc words " + book.zc_skill_id + " " + book.id + " " + position_key, "取消", { persistent: true, size: "lg" });
-        return;
+        return zc_send(me, zc_tabs_html([
+            zc_btn_html("zc replaceword " + book.id + " " + position_key + " " + old_word_index + " " + new_word_index + " ok", "确认替换"),
+            zc_btn_html("zc replaceword " + book.id + " " + position_key + " " + old_word_index, "返回重选"),
+            zc_btn_html("zc words " + book.zc_skill_id + " " + book.id + " " + position_key, "取消")
+        ]), "<hiy>确认用「" + new_wdef.name + "」替换「" + (old_wdef ? old_wdef.name : "旧词条") + "」？原有的<HIG>" + get_wl(book.zc_word_levels, old_word_index, position_key) + "级</HIG>会转给新词条。</hiy>");
     }
 
     // 验证新词条支持该部位
@@ -2378,16 +2348,14 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
             return self.cmd_pfms(me, book_id);
         }
 
-
-        me.notify("<hiy>替换PFM「" + old_name + "」，选择新PFM：</hiy>");
-        var args = [];
+        var phtml = "";
         for (var ci = 0; ci < candidates.length; ci++) {
             var c = candidates[ci];
-            args.push("zc replacepfm " + book.id + " " + position_key + " " + pfm_index + " " + c.skill_id + "." + c.pfm_key);
-            args.push(c.pfm_name + "(" + c.skill_name + ")");
+            phtml += zc_row(c.pfm_name + " <hik>（" + c.skill_name + "）</hik>",
+                [zc_btn_html("zc replacepfm " + book.id + " " + position_key + " " + pfm_index + " " + c.skill_id + "." + c.pfm_key, "选择")]);
         }
-        if (args.length > 0) { args.push({ persistent: true, size: "lg" }); me.send_commands.apply(me, args); }
-        return;
+        phtml += zc_tabs_html([zc_btn_html("zc pfms " + book.id, "返回技能管理")]);
+        return zc_send(me, phtml, "<hiy>替换PFM「" + old_name + "」，选择新PFM：</hiy>");
     }
 
     // 解析新PFM引用
@@ -2408,11 +2376,11 @@ this.cmd_replacepfm = function (me, book_id, arg2) {
 
     // 确认
     if (!confirmed) {
-
-        me.notify("<hiy>确认用「" + new_name + "」（" + new_src.name + "）替换「" + old_name + "」？</hiy>");
-        me.send_commands("zc replacepfm " + book.id + " " + position_key + " " + pfm_index + " " + new_skill_id + "." + new_pfm_key + " ok", "确认替换", { persistent: true, size: "lg" });
-        me.send_commands("zc pfms " + book.id, "取消", { persistent: true, size: "lg" });
-        return;
+        return zc_send(me, zc_tabs_html([
+            zc_btn_html("zc replacepfm " + book.id + " " + position_key + " " + pfm_index + " " + new_skill_id + "." + new_pfm_key + " ok", "确认替换"),
+            zc_btn_html("zc replacepfm " + book.id + " " + position_key + " " + pfm_index, "返回重选"),
+            zc_btn_html("zc pfms " + book.id, "取消")
+        ]), "<hiy>确认用「" + new_name + "」（" + new_src.name + "）替换「" + old_name + "」？</hiy>");
     }
 
     // 执行替换
