@@ -32,10 +32,10 @@
 		this.pfm = {
 			pfm1: {
 				name: "千蛇出洞",
-				// 面板：冷却 3 秒（注意：引擎 query_distime 对所有绝招有 4 秒下限，实际显示/生效为 4 秒）
-				distime: 3000,
+				// 初始冷却 10 秒、出招 4 秒（面板上的 3 秒/0 秒是角色减冷却、减出招后的结果）
+				distime: 10000,
 				enable_skill: "throwing",
-				release_time: 0,
+				release_time: 4000,
 				// 面板：968 级内力消耗 622。显示值 = mp × (1 + 等级/20)，12.6 × 49.4 ≈ 622
 				mp: 12.6,
 				use: function (me, target, lv) {
