@@ -1,7 +1,7 @@
 // 血刀老祖手中的血刀（副本 NPC 专用，不进入任何掉落表）。
 // 注意：玩家装备 eq/lv5/wushen/xuedao_blade 写的是 EQUIP_TYPE.BLADE（该常量不存在 → eq_type 为 undefined），
 // 装不到武器栏上；老祖要能被「卸下兵刃」（折梅手 / 独孤九剑破字诀 / 五毒钩法），必须真正拿在武器栏里，
-// 所以单独做一把 NPC 用的。血魔加成（每杀一人 +4000 攻命）的逻辑在 world/area/fb1/fb29.js。
+// 所以单独做一把 NPC 用的。血魔加成（每杀一人叠一层，每层五维 +10%）的逻辑在 world/area/fb1/fb29.js。
 this.inherits(EQUIPMENT);
 this.set({
     grade: 5,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "血刀老祖",
     desc: "血刀门掌门，一身血海魔功歹毒无比。他血刀在手，越战越勇，刀下每多一条人命，刀上血光便盛一分。",
-    title: "<hir>血刀门掌门</hir>",
+    title: "血刀门掌门",
     gender: 1,
     age: 65,
     per: 8,
@@ -86,8 +86,10 @@ this.do_attack = function (par) {
         var before = this.xd_xuemo;
         a.xd_xuemo_check(this);
         if (!this.xd_xuemo && par) {
-            if (par.gj !== undefined) par.gj -= before * a.XD_XUEMO;
-            if (par.mz !== undefined) par.mz -= before * a.XD_XUEMO;
+            // 本招已按叠层后的攻击/命中算好，血刀脱手要把这一招的血魔加成也扣回去
+            var base = this._xd_base || {};
+            if (par.gj !== undefined) par.gj -= Math.floor((base.gj || 0) * before * a.XD_XUEMO / 100);
+            if (par.mz !== undefined) par.mz -= Math.floor((base.mz || 0) * before * a.XD_XUEMO / 100);
         }
     }
     return CHARACTER.prototype.do_attack.call(this, par);

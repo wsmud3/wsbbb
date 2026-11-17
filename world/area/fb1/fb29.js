@@ -52,7 +52,7 @@ this.set({
 //   四侠只有 4 人、要走 3 步，最多只能浪费 1 次；四侠死光老祖还没到山谷 = 翻车（他永远杀不死）。
 //   老祖到山谷前护体血光锁血（hp 最低 1），到了山谷才能杀；一路上被四侠/玩家打掉的血不会回，
 //   所以「到山谷时的血量由杀人快慢决定」。
-//   血魔：老祖持血刀时每砍死一人，攻击、命中各 +4000（可叠加）；血刀被卸下后血魔之力全部消散，
+//   血魔：老祖持血刀时每砍死一人叠一层，每层五维 +10%（层数相加）；血刀被卸下后血魔之力全部消散，
 //   之后再杀人也不再叠加。打死老祖 = 100%。
 //   进度全部存在副本存储（入口房间 temp），随副本销毁。
 // ────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ var XD_ROUTE = {
 var XD_GOAL = "xd/shangu";
 var XD_STEPS = 3;            // 山洞 → 雪山山谷 要走的步数
 var XD_MIN_GAP = 10000;      // 两次「走一步」之间至少间隔 10 秒，杀得比这快老祖就站住不动
-var XD_XUEMO = 4000;         // 血魔每层攻击/命中加成
+var XD_XUEMO = 10;           // 血魔每层五维加成（%）
 this.XD_MIN_GAP = XD_MIN_GAP;
 this.XD_XUEMO = XD_XUEMO;
 this.XD_HEROES = XD_HEROES;
@@ -160,26 +160,37 @@ this.xd_reengage = function (lz) {
     }
 };
 
-// 血魔：持血刀时每杀一人 +4000 攻命；没有血刀则清空
+// 血魔：持血刀时每杀一人叠一层，每层五维（攻击/防御/命中/躲闪/招架）+10%（按叠层前的基础值算，层数相加）；
+// 血刀被卸下则全部消散。NPC 的五维是模板定值，*_per 类 buff 不会重算，所以这里直接按基础值改写。
+var XD_XUEMO_KEYS = ["gj", "fy", "mz", "ds", "zj"];
+this.xd_xuemo_apply = function (lz) {
+    if (!lz._xd_base) {
+        lz._xd_base = {};
+        for (var i = 0; i < XD_XUEMO_KEYS.length; i++) lz._xd_base[XD_XUEMO_KEYS[i]] = lz[XD_XUEMO_KEYS[i]] || 0;
+    }
+    var mul = 1 + (lz.xd_xuemo || 0) * XD_XUEMO / 100;
+    for (var j = 0; j < XD_XUEMO_KEYS.length; j++) {
+        var k = XD_XUEMO_KEYS[j];
+        lz[k] = Math.floor(lz._xd_base[k] * mul);
+    }
+};
 this.xd_xuemo_add = function (lz) {
     if (!lz.query_weapon || !lz.query_weapon()) return;
     lz.xd_xuemo = (lz.xd_xuemo || 0) + 1;
-    lz.gj += XD_XUEMO;
-    lz.mz += XD_XUEMO;
+    this.xd_xuemo_apply(lz);
     var n = lz.xd_xuemo;
     lz.remove_status && lz.remove_status("xd_xuemo");
     lz.add_status && lz.add_status({
         id: "xd_xuemo", name: "血魔", duration: 0, override: 2, no_diff: true,
-        desc: "血刀饮血，攻击、命中各增加" + (n * XD_XUEMO) + "。"
+        desc: "血刀饮血" + n + "层，攻击、防御、命中、躲闪、招架各增加" + (n * XD_XUEMO) + "%。"
     });
     if (lz.environment) lz.environment.send_room("<hir>血刀饮了人血，刀上血光大盛！血刀老祖身上的血魔之力又涨了一层。</hir>");
 };
 this.xd_xuemo_check = function (lz) {
     if (!lz.xd_xuemo) return;
     if (lz.query_weapon && lz.query_weapon()) return;
-    lz.gj -= lz.xd_xuemo * XD_XUEMO;
-    lz.mz -= lz.xd_xuemo * XD_XUEMO;
     lz.xd_xuemo = 0;
+    this.xd_xuemo_apply(lz);
     lz.remove_status && lz.remove_status("xd_xuemo");
     if (lz.environment) lz.environment.send_room("<hig>血刀脱手，血刀老祖身上的血魔之力随之消散！</hig>");
 };
