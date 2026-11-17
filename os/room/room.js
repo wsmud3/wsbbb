@@ -730,6 +730,14 @@ ROOM.RANDOM = function () {
 ROOM.prototype.set_difficulty = function (type) {
     this.on_set_difficulty && this.on_set_difficulty(type);
 }
+// 房间广播（房间脚本常写 this.send_room(...)，原先只有 CHARACTER 有这个方法，
+// 调用即 TypeError，后续逻辑全部中断）。房间没有发起者，$N 等占位不做替换。
+ROOM.prototype.send_room = function (text) {
+    if (!text) return;
+    for (var i = 0; i < this.items.length; i++) {
+        if (this.items[i] && this.items[i].is_player) this.items[i].notify(text);
+    }
+};
 ROOM.prototype.send = function (msg) {
     for (var i = 0; i < this.items.length; i++) {
         if (this.items[i].is_player) {

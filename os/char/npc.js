@@ -146,7 +146,14 @@ NPC.prototype.die = function (killer) {
     if (!isinfb && !this.no_refresh && !this.master && !this.die_room.is_shadow) {
         this.call_out(this.relive, this.on_master ? 60000 : 300000);
     }
-    this.on_died && this.on_died(killer, corpse);
+    // item_changed(this,false) 已把 environment 置空；大量 on_died 脚本要读所在房间
+    // （记分、开门、通知同房间），这里在回调期间临时指回死亡房间。
+    if (this.on_died) {
+        var restore = !this.environment;
+        if (restore) this.environment = this.die_room;
+        try { this.on_died(killer, corpse); }
+        finally { if (restore && this.environment === this.die_room) this.environment = null; }
+    }
     WORLD.auto_get(killer, corpse, this);
     if (killer && killer.attack_skill && killer.attack_skill.on_enemy_die) {
         killer.attack_skill.on_enemy_die(killer, this);
