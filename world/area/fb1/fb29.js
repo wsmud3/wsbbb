@@ -43,11 +43,12 @@ this.set({
 // 血刀门机制（攻略第 29 节）
 //   路线：山口 → 山谷 → 忘忧谷 → (东上)洞口(两名血刀弟子) → (enter)山洞(血刀老祖)。
 //   进山洞后老祖主动叫杀；原本守在山谷的「落花流水」四侠（陆天抒、花铁干、刘乘风、水岱）
-//   闻声赶来与老祖混战。老祖优先砍四侠，每砍死一人就带着血刀往西（山谷方向）走一步：
+//   闻声赶来与老祖混战。开战后副本里每死一个 NPC（不论是玩家还是老祖杀的），老祖就往西
+//   （山谷方向）走一步：
 //       山洞 →(out) 洞口 →(westdown) 忘忧谷 →(north) 雪山山谷，共 3 步。
 //   四侠也会跟着他走，玩家必须跟上：
-//     · 老祖杀人时房间里没有活着的玩家 → 这一杀不算，老祖原地不动；
-//     · 老祖杀人太快（距上一步不足 XD_MIN_GAP）→ 血气翻涌，原地不动。
+//     · 有人死时老祖身边没有活着的玩家 → 这一次不算，老祖原地不动；
+//     · 杀得太快（距上一步不足 10 秒）→ 血气翻涌，原地不动。
 //   四侠只有 4 人、要走 3 步，最多只能浪费 1 次；四侠死光老祖还没到山谷 = 翻车（他永远杀不死）。
 //   老祖到山谷前护体血光锁血（hp 最低 1），到了山谷才能杀；一路上被四侠/玩家打掉的血不会回，
 //   所以「到山谷时的血量由杀人快慢决定」。
@@ -64,7 +65,7 @@ var XD_ROUTE = {
 };
 var XD_GOAL = "xd/shangu";
 var XD_STEPS = 3;            // 山洞 → 雪山山谷 要走的步数
-var XD_MIN_GAP = 12000;      // 两次「走一步」之间至少间隔（毫秒），杀得比这快老祖就站住不动
+var XD_MIN_GAP = 10000;      // 两次「走一步」之间至少间隔 10 秒，杀得比这快老祖就站住不动
 var XD_XUEMO = 4000;         // 血魔每层攻击/命中加成
 this.XD_MIN_GAP = XD_MIN_GAP;
 this.XD_XUEMO = XD_XUEMO;
@@ -137,7 +138,7 @@ this.xd_engage = function (lz, me) {
             if (h.environment !== room) h.moveto(room, h.name + "听到远处的厮杀声，提剑奔了过去。", h.name + "大喝一声冲了进来：「血刀恶僧，往哪里走！」");
             if (h.environment === room && h.do_kill) h.do_kill(lz);
         }
-        if (heroes.length) room.send_room("<hiy>「落花流水」四侠闻声赶到，将血刀老祖团团围住！——老祖每砍倒一人便会往山谷方向退一步，紧紧跟上他。</hiy>");
+        if (heroes.length) room.send_room("<hiy>「落花流水」四侠闻声赶到，将血刀老祖团团围住！</hiy>");
     }
     lz.xd_engaged = true;
     // on_enter 触发时玩家的 environment 还没切过来，这里不校验所在房间
@@ -183,20 +184,19 @@ this.xd_xuemo_check = function (lz) {
     if (lz.environment) lz.environment.send_room("<hig>血刀脱手，血刀老祖身上的血魔之力随之消散！</hig>");
 };
 
-// 四侠之一死亡（挂在四侠的 on_died 上）
-this.xd_hero_died = function (hero, killer) {
-    var room = hero.environment;
+// 副本里任一 NPC 死亡（四侠、血刀弟子、狄云的 on_died 都接到这里；不论是玩家还是老祖杀的）
+this.xd_npc_died = function (npc, killer) {
+    var room = npc.environment || npc.die_room;
     if (!room) return;
-    var lz = killer && killer.path === XD_LAOZU ? killer : null;
-    var alive = this.xd_find_alive(room, XD_HEROES);
-    if (lz) {
-        this.xd_xuemo_add(lz);
+    var lz = this.xd_find_alive(room, [XD_LAOZU])[0];
+    if (lz && killer === lz) this.xd_xuemo_add(lz);          // 血魔：血刀砍人才加
+    if (lz && lz.xd_engaged && !this.xd_get(room, "xd_failed", 0)) {
         var here = lz.environment;
         var route = here && XD_ROUTE[here.path];
-        if (route && !this.xd_get(room, "xd_failed", 0)) {
+        if (route) {
             var gap = Date.now() - this.xd_get(room, "xd_last_step", 0);
             if (!this.xd_players(here).length) {
-                this.xd_tell(room, "<hir>血刀老祖砍倒了" + hero.name + "，四下张望，见没人追来，便在" + here.name + "原地守着——你没跟上他！</hir>");
+                this.xd_tell(room, "<hir>" + npc.name + "倒下了。血刀老祖四下张望，见没人追来，便在" + here.name + "原地守着。</hir>");
             } else if (gap < (this.XD_MIN_GAP || XD_MIN_GAP)) {
                 here.send_room("<hir>血刀老祖杀得太快，血气翻涌，竟站在原地狞笑不动！</hir>");
             } else {
@@ -209,11 +209,14 @@ this.xd_hero_died = function (hero, killer) {
         }
     }
     // 四侠死光而老祖走不到山谷（已走 + 已排程的步数不足）→ 翻车
-    if (!alive.length && !this.xd_get(room, "xd_failed", 0) && this.xd_get(room, "xd_steps", 0) < XD_STEPS) {
+    var alive = this.xd_find_alive(room, XD_HEROES);
+    if (XD_HEROES.indexOf(npc.path) >= 0 && !alive.length && !this.xd_get(room, "xd_failed", 0)
+        && this.xd_get(room, "xd_steps", 0) < XD_STEPS) {
         this.xd_set(room, "xd_failed", 1);
         this.xd_tell(room, "<hir>「落花流水」四侠尽数倒在血刀之下，血刀老祖却还没被引到山谷——他周身血光大盛，竟再也伤不了他分毫。</hir>");
     }
 };
+this.xd_hero_died = this.xd_npc_died;   // 兼容旧调用
 this.xd_is_failed = function (room) { return !!this.xd_get(room, "xd_failed", 0); };
 
 // 老祖往西走一步，活着的四侠跟着走并继续缠斗

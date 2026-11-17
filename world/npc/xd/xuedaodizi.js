@@ -30,3 +30,9 @@ this.set_drop(
 );
 this.on_enter = function (me) { me.notify("血刀弟子怪叫一声，举刀向你砍来！"); this.do_kill(me); };
 // 原先这里死后会让血刀老祖往山谷走一步；按攻略老祖只在砍死「落花流水」四侠时才走（见 fb29.js）。
+
+// 开战后副本里每死一个 NPC，血刀老祖就往山谷走一步（规则见 world/area/fb1/fb29.js xd_npc_died）
+this.on_died = function (killer, corpse) {
+    var room = this.environment || this.die_room;
+    if (room && room.parent && room.parent.xd_npc_died) room.parent.xd_npc_died(this, killer);
+};

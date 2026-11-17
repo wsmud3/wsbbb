@@ -33,7 +33,7 @@ this.on_kill = function (me) {
 };
 this.on_died = function (killer, corpse) {
     var room = this.environment;
-    if (room && room.parent && room.parent.xd_hero_died) room.parent.xd_hero_died(this, killer);
+    if (room && room.parent && room.parent.xd_npc_died) room.parent.xd_npc_died(this, killer);
 };
 this.on_before_fight = function (me) {
     if (me && me.notify) me.notify(this.name + "摆手道：「大敌当前，哪有工夫和你切磋！」");
