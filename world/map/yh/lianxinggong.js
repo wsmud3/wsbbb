@@ -10,8 +10,9 @@ this.set_npc(["yh/lianxing", 1]);
 // 原版机制：两宫各自房间描述里有「花丛」，可以点开，记下花朵的数量。
 this.set_item("hua", "花丛", "宫墙边一片花丛，花开得正盛。", [
     ["chakan", "查看花丛", function (me) {
-        var n = 3 + Math.floor(Math.random() * 5);   // 3~7 朵
-        me.set_temp("yh_hua_xing", n, 7200000);
+        // 每个副本实例只随机一次，存在副本存储里（原来每看一次重随机、且挂在玩家身上跨副本残留）
+        var n = this.query_temp(me, "yh_hua_xing");
+        if (!n) { n = 3 + Math.floor(Math.random() * 5); this.set_temp(me, "yh_hua_xing", n); }   // 3~7 朵
         me.notify("<hiy>你拨开花丛细数，共有 " + n + " 朵花。</hiy>");
         return true;
     }]
@@ -19,7 +20,7 @@ this.set_item("hua", "花丛", "宫墙边一片花丛，花开得正盛。", [
 
 // 两位宫主是否都已伏诛（没杀完谁都别想进卧室、也别想推床）
 this.yh_both_dead = function (me) {
-    var area = this.environment && this.environment.parent;
+    var area = this.parent;   // 房间的区域在 parent 上（房间没有 environment，原写法恒为 false → 进宫出不来）
     if (!area || !area.rooms) return false;
     var team = me && me.query_teamid ? me.query_teamid() : null;
     var yue = false, xing = false;
@@ -39,6 +40,8 @@ this.yh_both_dead = function (me) {
 this.on_leave = function (me, dir) {
     if (!me.is_player) return true;
     if (!dir) return true;
+    // 只拦通往卧室的方向；原来任何方向都拦，杀完一位宫主就去不了另一宫（死锁）
+    if (dir !== "southwest") return true;
     if (this.yh_both_dead(me)) return true;
     me.notify("<red>两宫之主尚未伏诛，你过不去。</red>");
     return false;

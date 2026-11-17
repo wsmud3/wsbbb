@@ -5,9 +5,9 @@ this.exits = {};
 this.set_npc([]);
 
 // 原版机制：向前面剑指的方向游（这时候必须满血），游出去后回血，跳上去。
-this.add_action("you", null, function (me, arg) {
+this.add_action("you", "游", function (me, arg) {
     if (!me.is_player) return true;
-    var dir = me.query_temp("gm2_sword_dir");
+    var dir = this.query_temp(me, "gm2_sword_dir");
     if (!dir) {
         me.notify("<red>你不知道该往哪个方向游——先去卧室看看那幅画。</red>");
         return true;
@@ -30,3 +30,9 @@ this.add_action("you", null, function (me, arg) {
     me.moveto("gm2/qiaobi", me.name + "顺流游出了暗河。", me.name + "从暗河里钻出来。");
     return true;
 });
+
+// 暗河没有出口，原先也没有任何按钮提示，玩家不知道要输入 you <方向>
+this.on_enter = function (me) {
+    if (!me.is_player) return;
+    me.send_commands("you north", "向北游", "you south", "向南游", "you east", "向东游", "you west", "向西游");
+};

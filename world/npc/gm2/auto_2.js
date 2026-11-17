@@ -1,32 +1,52 @@
 this.inherits(NPC);
+// 古墓入口商人。原文件误抄了剑灵数据（532万血、205分、进门叫杀），与各副本入口的易直非统一。
 this.set({
+    score: 0,
     name: "神秘商人 易直非",
-    desc: "剑冢中守护神剑的剑灵，剑气纵横，威力无穷。",
+    desc: "一位贩卖各种属性词条石的商人，据说他的石头可以镶嵌到自制装备上。他常年游走于各大副本，也收副本次数换些东西。",
     title: "",
     gender: 1,
-    age: 999,
-    per: 20,
-    hp: 5320000,
-    max_hp: 5320000,
-    mp: 754000,
-    max_mp: 754000,
-    score: 205,
-    gj: 283500,
-    fy: 147950,
-    mz: 232750,
-    ds: 150700,
-    zj: 3375
+    age: 40,
+    per: 25,
+    mp: 10000, max_mp: 10000,
+    hp: 10000, max_hp: 10000,
 });
-this.set_objects(["eq/lv0/cloth", 1, 1]);
-this.skill_map(
-    ["dodge", 5850],
-    ["parry", 4775],
-    ["force", 5375],
-    ["sword", 5375]
-);
-this.set_drop(
-    {obj: "money/silver", min: 50, max: 500},
-    {obj: ["eq/lv4/bingpoyinzhen"], odds: 11000},
-    {obj: ["eq/lv5/wushen/panlong_head"], odds: 8250}
-);
-this.on_enter = function (me) { me.notify("剑灵眼中剑光一闪，万道剑气铺天盖地而来！"); this.do_kill(me); };
+
+// 商人：不主动叫杀、打不死
+this.add_action("list", "购买词条石", function (me) {
+    me.do_command("list", this.id);
+});
+
+this.on_kill = function (me) {
+    return me.notify_fail("竖子尔敢？光天化日朗朗乾坤，竟敢如此！");
+};
+
+this.on_die = function () {
+    return false;
+};
+
+this._goodsCache = null;
+
+this.on_sell = function (me) {
+    if (this._goodsCache) return this._goodsCache;
+
+    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
+    if (!duanzao || !duanzao.PROPS) {
+        me.notify("锻造系统未加载，无法出售词条石。");
+        return [];
+    }
+
+    this._goodsCache = [];
+    for (var propKey in duanzao.PROPS) {
+        var propInfo = duanzao.PROPS[propKey];
+        if (!propInfo || !propInfo.name) continue;
+
+        var stone = OBJ.CREATE("st/p#" + propKey);
+        if (!stone) continue;
+
+        stone.count = -1;   // 充足库存
+        stone.value = 50000; // 单价 5 两黄金（5万铜板）
+        this._goodsCache.push(stone);
+    }
+    return this._goodsCache;
+};

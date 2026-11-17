@@ -31,6 +31,6 @@ this.set_drop(
     {obj: "money/silver", min: 50, max: 500},
     {obj: ["book/bc#anyingfuxiang"], odds: 14800},
     {obj: ["book/bc#kumushengong"], odds: 14800},
-    {obj: ["eq/lv5/wushen/yuzhu_zhang"], odds: 8880}
+    {obj: ["eq/lv4/yuzhuzhang"], odds: 8880}
 );
 this.on_enter = function (me) { me.notify("洪七公哈哈大笑，声如洪钟：'小娃娃功夫不错，来陪老叫花走两招！'"); this.do_kill(me); };

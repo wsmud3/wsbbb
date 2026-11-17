@@ -15,33 +15,33 @@ this.set_item("bed", "床(bed)", "一张华丽的花床，但是你仔细的看�
     ["pushleft", "向左移动", function (me) {
         if (!me.is_player) return true;
         if (!this.yh_can_push(me)) return true;
-        var n = (me.query_temp("yh_push_left") || 0) + 1;
-        me.set_temp("yh_push_left", n, 7200000);
+        var n = (this.query_temp(me, "yh_push_left") || 0) + 1;
+        this.set_temp(me, "yh_push_left", n);
         me.send_room("$N将床板往左移...，忽然轧轧几声，床板又移回原位。");
         return this.yh_check(me);
     }],
     ["pushright", "向右移动", function (me) {
         if (!me.is_player) return true;
         if (!this.yh_can_push(me)) return true;
-        var n = (me.query_temp("yh_push_right") || 0) + 1;
-        me.set_temp("yh_push_right", n, 7200000);
+        var n = (this.query_temp(me, "yh_push_right") || 0) + 1;
+        this.set_temp(me, "yh_push_right", n);
         me.send_room("$N将床板往右移...，忽然轧轧几声，床板又移回原位。");
         return this.yh_check(me);
     }],
     ["pushstart", "还原", function (me) {
         if (!me.is_player) return true;
-        me.set_temp("yh_push_left", 0, 7200000);
-        me.set_temp("yh_push_right", 0, 7200000);
+        this.set_temp(me, "yh_push_left", 0);
+        this.set_temp(me, "yh_push_right", 0);
         me.notify("你把床板推回了原位。");
         return true;
     }]
 ]);
 
 this.yh_check = function (me) {
-    var l = me.query_temp("yh_push_left") || 0;
-    var r = me.query_temp("yh_push_right") || 0;
-    var wantL = me.query_temp("yh_hua_yue");
-    var wantR = me.query_temp("yh_hua_xing");
+    var l = this.query_temp(me, "yh_push_left") || 0;
+    var r = this.query_temp(me, "yh_push_right") || 0;
+    var wantL = this.query_temp(me, "yh_hua_yue");
+    var wantR = this.query_temp(me, "yh_hua_xing");
     if (l === wantL && r === wantR) {
         me.send_room("床板忽然发出轧轧的声音，缓缓向两边移动著，露出一个洞口。");
         me.notify("<hig>床下露出一条向下的密道。</hig>");
@@ -52,16 +52,16 @@ this.yh_check = function (me) {
 
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    if (me.query_temp("yh_push_left") !== undefined && me.query_temp("yh_hua_yue") !== undefined) {
-        var l = me.query_temp("yh_push_left") || 0;
-        var r = me.query_temp("yh_push_right") || 0;
-        if (l === me.query_temp("yh_hua_yue") && r === me.query_temp("yh_hua_xing")) this.add_exit("down", "yh/midao");
+    if (this.query_temp(me, "yh_push_left") !== undefined && this.query_temp(me, "yh_hua_yue") !== undefined) {
+        var l = this.query_temp(me, "yh_push_left") || 0;
+        var r = this.query_temp(me, "yh_push_right") || 0;
+        if (l === this.query_temp(me, "yh_hua_yue") && r === this.query_temp(me, "yh_hua_xing")) this.add_exit("down", "yh/midao");
     }
 };
 
 // 两位宫主是否都已伏诛（没杀完谁都别想进卧室、也别想推床）
 this.yh_both_dead = function (me) {
-    var area = this.environment && this.environment.parent;
+    var area = this.parent;   // 房间的区域在 parent 上（房间没有 environment，原写法恒为 false → 进宫出不来）
     if (!area || !area.rooms) return false;
     var team = me && me.query_teamid ? me.query_teamid() : null;
     var yue = false, xing = false;

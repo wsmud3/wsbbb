@@ -10,12 +10,13 @@ this.set_npc(["tl/kurongdashi", 1], ["tl/duanyu", 1]);
 //   牟尼堂里有枯荣大师和段誉。先比试枯荣、把他血量打低，再抓段誉（背负 debuff），
 //   杀枯荣 → 三个和尚一轮六脉神剑昏迷攻击（1v3）→ 抗住并杀完 → 带着段誉回大门 = 100%。
 this.add_action("zhua", "抓住段誉", function (me) {
-    if (me.query_temp("tl_capture")) {
+    // 进度存副本存储：原先挂在玩家身上 2 小时，中途退出后下一轮一直提示「已经抓着了」
+    if (this.query_temp(me, "tl_capture")) {
         me.notify("段誉已经被你抓着了。");
         return true;
     }
-    me.set_temp("tl_capture", 1, 7200000);
-    me.set_temp("tl_monks", 3, 7200000);
+    this.set_temp(me, "tl_capture", 1);
+    this.set_temp(me, "tl_monks", 3);
     me.send_room("$N一把扣住段誉的手腕，将他负在背上——身子顿时沉了几分。");
     me.notify("<hir>背负段誉：行动不便，三位本字辈高僧已经围了上来！</hir>");
     var monks = ["tl/bencan", "tl/benchen", "tl/benguan"];
@@ -26,14 +27,14 @@ this.add_action("zhua", "抓住段誉", function (me) {
     return true;
 });
 this.on_monk_die = function (me) {
-    var n = (me.query_temp("tl_monks") || 0) - 1;
-    me.set_temp("tl_monks", n, 7200000);
+    var n = (this.query_temp(me, "tl_monks") || 0) - 1;
+    this.set_temp(me, "tl_monks", n);
     if (n > 0) {
         me.notify("<hiy>还剩 " + n + " 位本字辈高僧。</hiy>");
         return;
     }
-    me.remove_temp("tl_monks");
-    me.remove_temp("tl_capture");
+    this.set_temp(me, "tl_monks", 0);
+    this.set_temp(me, "tl_capture", 0);
     me.add_fbscore(270);
     me.notify("<hig>三位高僧尽数退去。带着段誉回到大门，本关便算圆满。</hig>");
 };

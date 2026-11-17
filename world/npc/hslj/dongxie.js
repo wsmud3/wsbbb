@@ -33,6 +33,6 @@ this.set_drop(
     {obj: ["book/bc#tanzhishengong"], odds: 14800},
     {obj: ["book/bc#luoyingshenjian"], odds: 14800},
     {obj: ["book/bc#biboshengong"], odds: 14800},
-    {obj: ["eq/lv5/wushen/yuxiao"], odds: 8880}
+    {obj: ["eq/lv4/yuxiao"], odds: 8880}
 );
 this.on_enter = function (me) { me.notify("黄药师轻抚玉箫，冷冷道：'能上得华山，也算一号人物。接我弹指神通！'"); this.do_kill(me); };

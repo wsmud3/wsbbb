@@ -47,7 +47,7 @@ this.on_heart_beat = function() {
     var room = this.environment;
     for (var i = 0; i < room.items.length; i++) {
         var p = room.items[i];
-        if (p && p.is_player && p.query_temp('tl_carry_duanyu') && !p.query_enemy_of(this)) {
+        if (p && p.is_player && p.query_temp('tl_carry_duanyu') && !this.is_fighting(p)   /* 原为不存在的 query_enemy_of，每次心跳都抛错 */) {
             this.do_kill(p);
         }
     }

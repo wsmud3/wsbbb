@@ -9,12 +9,12 @@ this.set_item("shujia", "书架", "一架连着一架的书架，卷帙浩繁，
 
 this.add_action("sousuo", null, function (me, arg) {
     if (!me.is_player) return true;
-    if (me.query_temp("yz2_huanshi_searched")) {
+    if (this.query_temp(me, "yz2_searched")) {
         me.notify("书架已被你翻遍，再无所得。");
         return true;
     }
     var books = ["book/bc#canhezhi", "book/bc#douzhuanxingyi", "book/bc#tiannanbu", "book/bc#chanchubufa"];
-    me.set_temp("yz2_huanshi_searched", 1);
+    this.set_temp(me, "yz2_searched", 1);   // 慕容博只在「搜索过」之后才出现
     me.send_room("$N在书架间翻检良久，终于抽出几页残页。");
     me.notify("<hiw>你在书架深处摸到一叠残页，墨迹犹新。</hiw>");
     me.add_obj(books[Math.floor(Math.random() * books.length)]);
@@ -24,12 +24,8 @@ this.add_action("sousuo", null, function (me, arg) {
 
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    if (!me.query_temp("yz2_huanshi_searched")) {
+    if (!this.query_temp(me, "yz2_searched")) {
         me.notify("<hiy>水阁中寂静无声，只闻水响。四壁书架密密排开，或有武功残页藏于其中。</hiy>");
     }
 };
-// 搜索过还施水阁后打标记，回后厅会触发慕容博
-this.on_enter = function (me) {
-    if (!me.is_player) return;
-    me.set_temp("yz2_shushi", 1, 7200000);
-};
+// （原先这里还有第二个 on_enter，覆盖了上面那个，一进水阁不搜索也会触发慕容博——已删）

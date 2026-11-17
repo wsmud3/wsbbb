@@ -68,7 +68,10 @@ this.tao_move = function (me, path, msg) {
 
 this.on_leave = function (me, dir) {
     if (!me.is_player) return true;
-    if (!dir) return true;                            // 不是走方向（例如 cr over 离开副本），一律放行
+    if (!dir) {                                       // 不是走方向（例如 cr over 离开副本），一律放行
+        me.remove_temp("th_tao_step");                // 步数不能带到下一个副本（迷阵是重新随机的）
+        return true;
+    }
     if (me.query_temp("th_tao_leave")) return true;   // 我们自己放行的那一次
     var pat = TAO_PAT[this.tao_n];
     if (!pat) return true;

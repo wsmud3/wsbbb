@@ -33,4 +33,4 @@ this.set_drop(
     {obj: ["book/bc#anranxiaohunzhang"], odds: 13750},
     {obj: ["eq/lv4/bingpoyinzhen"], odds: 8250}
 );
-this.on_enter = function (me) { me.notify("杨过叹息一声，独臂缓缓抬起，黯然销魂掌的掌意已弥漫四周！"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("杨过叹息一声，独臂缓缓抬起，黯然销魂掌的掌意已弥漫四周！"); this.do_kill(me); };

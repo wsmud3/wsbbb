@@ -5,10 +5,4 @@ this.exits = {
     "south": "xx/xxh1",
 };
 this.set_npc(["xx/dingchunqiu", 1]);
-
-this.on_enter = function (me) {
-    if (!me.is_player) return;
-    if (me.query_temp("xx_shihouzi")) return;
-    me.notify("<red>洞口被星宿派弟子拦住：二师兄狮吼子不放行，谁也进不了日月洞。</red>");
-    me.moveto("xx/xxh1", null, null);
-};
+// 狮吼子门禁在 xx/xxh1 的 on_leave 里：进洞前拦住，不再进洞后弹回

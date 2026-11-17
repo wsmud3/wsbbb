@@ -33,4 +33,4 @@ this.set_drop(
     {obj: ["book/bc#yinsuojinling"], odds: 13750},
     {obj: ["eq/lv4/jinlingsuo"], odds: 8250}
 );
-this.on_enter = function (me) { me.notify("小龙女冷冷地看着你，玉手轻扬，银索金铃已如灵蛇般袭来！"); this.do_kill(me); };
+this.on_enter = function (me) { if (!me || !me.is_player) return; me.notify("小龙女冷冷地看着你，玉手轻扬，银索金铃已如灵蛇般袭来！"); this.do_kill(me); };

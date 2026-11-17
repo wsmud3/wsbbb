@@ -9,9 +9,15 @@ this.exits = {
 // [mech] 北面草丛又有一条毒蛇，再往北走到底便是岩洞（攻略原文）
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    if (me.query_temp("bt_she2_dead")) return;
+    // 每个副本实例只刷一次：原来判断的 bt_she2_dead 无人设置，蛇死后（尸体替换本体）
+    // 再进草丛又刷一条，回程经过就多出活蛇 → 结算卡 99%，还能反复刷分刷掉落。
+    if (this._she_spawned) return;
     if (this.find_obj_bypath("bt/she")) return;
+    this._she_spawned = true;
     NPC.CREATE("bt/she", this);
     this.refresh(me);
+    // 刷在玩家进门之后，蛇自身的 on_enter（叫杀）不会触发，这里补上
+    var snake = this.find_obj_bypath("bt/she");
+    if (snake && snake.do_kill) snake.do_kill(me);
     me.notify("<hiy>草丛里又是一条毒蛇拦路，杀之再向北，便是岩洞。</hiy>");
 };

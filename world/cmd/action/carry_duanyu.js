@@ -15,7 +15,7 @@ this.enter = function(me) {
     me.notify('<hig>段誉爬上了你的背。一瞬间，周围所有的僧人全都朝你扑了过来！</hig>');
 
     var MONKS = ['tl/benchen','tl/benxiang','tl/benguan','tl/bencan','tl/kurongdashi'];
-    var ROOM_IDS = ['tl/wule','tl/wuwo','tl/wujing','tl/wuchang','tl/muni'];
+    var ROOM_IDS = ['tl/wule','tl/wuwo','tl/wujing','tl/wuchang','tl/munitang'];   // 原为地图外的 tl/muni：会现场造一间孤儿房间，再把那里的第二个枯荣拖过来
     var tid = me.query_teamid();
     var found = 0;
 

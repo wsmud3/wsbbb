@@ -42,5 +42,5 @@
 this.on_died = function (killer, corpse) {
     if (!killer || !killer.is_player) return;
     var room = this.environment;
-    if (room && room.on_monk_die && killer.query_temp("tl_capture")) room.on_monk_die(killer);
+    if (room && room.on_monk_die && room.query_temp(killer, "tl_capture")) room.on_monk_die(killer);
 };

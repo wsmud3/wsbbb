@@ -28,7 +28,7 @@ this.set_drop({
     min: 15,
     max: 150
 }, {
-    obj: ["eq/lv3/shangguanyunpifeng"],
+    obj: ["eq/lv3/shangguanyun_pifeng"],
     odds: 6150
 }, {
     obj: ["res/baihulingpai"],

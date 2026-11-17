@@ -39,23 +39,18 @@ this.on_enter = function (me) { me.notify("血刀老祖狞笑道：'天堂有路
 // 原版机制（攻略第 29 节）：
 //   老祖会主动叫杀；他每杀掉一个人就向西走一步，玩家跟着走；
 //   在他走到雪山山谷之前**打不死**（锁血），到了山谷才可以被干掉。
+// 老祖刷在忘忧谷 xd/wangyou（原先四处写成不存在的 xd/wangyougu → 永远不移动、永远打不死，完成度 0%）。
+// 雪山山谷在忘忧谷北面。用 moveto 走：同一副本内会自动落到本副本的山谷实例，
+// 原先 ROOM.Get 拿到的是基础房间，会把老祖移出玩家的副本。
 this.xd_move_west = function () {
     var here = this.environment;
-    if (!here) return;
-    if (here.path === "xd/wangyougu") {
-        var room = ROOM.Get("xd/shangu");
-        if (room) {
-            here.send_room("$N提刀向西掠去，脚步极快。");
-            here.item_changed(this, false);
-            room.item_changed(this, true);
-            if (room && typeof room.send_room === "function") room.send_room("$N大步踏进山谷，血刀上还滴着血。");
-        }
-    }
+    if (!here || here.path !== "xd/wangyou") return;
+    this.moveto("xd/shangu", "<hir>血刀老祖提刀向北掠去，脚步极快。</hir>", "<hir>血刀老祖大步踏进山谷，血刀上还滴着血。</hir>");
 };
 this.on_die = function (me) {
     var here = this.environment;
     if (here && here.path !== "xd/shangu") {
-        me.notify("<hiy>血刀老祖身上一层血光护着，此时根本打不死——他还没走到山谷。</hiy>");
+        if (me && me.notify) me.notify("<hiy>血刀老祖身上一层血光护着，此时根本打不死——他还没走到山谷。</hiy>");
         return false;
     }
     return true;

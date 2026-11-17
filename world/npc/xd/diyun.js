@@ -32,7 +32,9 @@ this.set_drop(
 this.on_died = function (killer, corpse) {
     var room = this.environment;
     if (!room) return;
-    var b = ROOM.Get("xd/wangyougu");
+    // 找本副本里的忘忧谷（原写 xd/wangyougu 不存在；且要取玩家副本实例而非基础房间）
+    var base = ROOM.Get("xd/wangyou");
+    var b = base && room.owner ? base.query_copy(room.owner) : base;
     if (!b) return;
     for (var i = 0; i < b.items.length; i++) {
         var o = b.items[i];
