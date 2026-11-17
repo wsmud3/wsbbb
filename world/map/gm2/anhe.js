@@ -34,5 +34,6 @@ this.add_action("you", "游", function (me, arg) {
 // 暗河没有出口，原先也没有任何按钮提示，玩家不知道要输入 you <方向>
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    me.send_commands("you north", "向北游", "you south", "向南游", "you east", "向东游", "you west", "向西游");
+    // 持久浮窗（点「忽略」才收起）：一次性浮窗在战斗中被挡掉后会消失，玩家就再也点不到方向了
+    me.send_commands("you north", "向北游", "you south", "向南游", "you east", "向东游", "you west", "向西游", { persistent: true });
 };
