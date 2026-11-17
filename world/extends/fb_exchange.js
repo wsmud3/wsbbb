@@ -210,7 +210,7 @@ WORLD.FB_EXCHANGE = {
     // opts.all：赌场的易直非，能换所有副本（只列出有次数的）
     install: function (npc, opts) {
         npc._fbx_all = !!(opts && opts.all);
-        // 赌场易直非的「兑换」已用于神器兑换，所以那里仍叫「副本兑换」；副本入口的易直非直接叫「兑换」
+        // 赌场易直非同时有「神器兑换」，所以那里叫「副本兑换」以示区分；副本入口的易直非直接叫「兑换」
         npc.add_action("fbx", npc._fbx_all ? "副本兑换" : "兑换", function (me) { fbx_show_areas(me, this); });
         for (var i = 0; i < FBX_MAX_AREA * 2; i++) {
             (function (code) {
