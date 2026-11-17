@@ -19,3 +19,37 @@ this.set_chat_msg([
 	"钱眼开笑着说道：当年雾中楼在本银号存的钱可以说是最多的了。",
 	"钱眼开笑着说道：在本店存钱无利息，存物不收手续费，客官你看着办吧。"
 ]);
+
+// 词条石：钱眼开兼卖各种属性词条石（原先由副本入口的易直非兼卖）
+this.add_action("list", "购买词条石", function (me) {
+    me.do_command("list", this.id);
+});
+
+this._goodsCache = null;
+
+this.on_sell = function (me) {
+    if (this._goodsCache) return this._goodsCache;
+
+    var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
+    if (!duanzao || !duanzao.PROPS) {
+        me.notify("锻造系统未加载，无法出售词条石。");
+        return [];
+    }
+
+    this._goodsCache = [];
+    for (var propKey in duanzao.PROPS) {
+        var propInfo = duanzao.PROPS[propKey];
+        if (!propInfo || !propInfo.name) continue;
+
+        var stone = OBJ.CREATE("st/p#" + propKey);
+        if (!stone) continue;
+
+        stone.count = -1;   // 充足库存
+        stone.value = 50000; // 单价 5 两黄金（5万铜板），可根据稀有度调整
+        // 可选：根据属性类别调整价格
+        // if (propInfo.category >= 3) stone.value = 100000;
+
+        this._goodsCache.push(stone);
+    }
+    return this._goodsCache;
+};

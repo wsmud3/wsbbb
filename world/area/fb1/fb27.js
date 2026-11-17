@@ -182,7 +182,7 @@ this.gm_on_siege_died = function (npc, killer) {
     var me = killer && killer.is_player ? killer : (room.find_me ? room.find_me() : null);
     if (me && mj.drop_list && typeof OBJ !== "undefined" && OBJ.create_by_odds) {
         var items = OBJ.create_by_odds(mj.drop_list, room.query_difficulty ? room.query_difficulty() : undefined);
-        if (AREA.filter_orange) items = AREA.filter_orange(this, me, items);   // 副本次数不到 800 不出倚天剑
+        if (AREA.filter_orange) items = AREA.filter_orange(this, me, items, room.query_difficulty ? room.query_difficulty() : 0);   // 该难度副本次数不到 800 不出倚天剑
         for (var i = 0; i < items.length; i++) {
             if (!items[i]) continue;
             me.add_obj(items[i]);

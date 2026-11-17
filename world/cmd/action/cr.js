@@ -105,7 +105,7 @@ function fb_quick(me, area, isdiff) {
 
     var diff = isdiff ? 1 : 0;
     // 橙装门槛按本次之前的次数判断（与手动一致：第 801 次起才可能出橙装）
-    var orange_ok = !(area.orange_locked && area.orange_locked(me));
+    var orange_ok = !(area.orange_locked && area.orange_locked(me, diff));
     if (area.is_record(diff)) {
         ''
         me.add_temp("fbc_" + diff + "_" + area.fb_index, 1);

@@ -11,6 +11,10 @@ this.set({
     max_hp: 400
 });
 
+// ============ 副本次数兑换 ============
+// 赌场的易直非：所有能换橙装的副本都能换，只列出玩家在该难度有次数的副本（逻辑见 world/extends/fb_exchange.js）
+if (WORLD.FB_EXCHANGE) WORLD.FB_EXCHANGE.install(this, { all: true });
+
 // ============ 神器兑换 ============
 // 可用神魂碎片、神器碎片兑换的 lv6 神器装备（不含神魂碎片/神器碎片本身）
 var SHENQI_LIST = [

@@ -199,7 +199,7 @@ CHARACTER.prototype.query_drop = function () {
     var items = OBJ.create_by_odds(this.drop_list, diff);
     // 副本里：击杀者（随从算主人）该副本次数不到 800 次不出橙装（AREA.filter_orange）
     if (env && env.is_fb && env.is_fb() && typeof AREA !== "undefined" && AREA.filter_orange) {
-        items = AREA.filter_orange(env.parent, query_drop_owner(this._drop_killer, env), items);
+        items = AREA.filter_orange(env.parent, query_drop_owner(this._drop_killer, env), items, diff);
     }
     return items;
 
