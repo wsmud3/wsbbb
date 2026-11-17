@@ -2,7 +2,7 @@
 	this.set({
 	    name: "慕容复",
 	    desc: "姑苏慕容家的家主，以彼之道还施彼身。此人心高气傲，图谋复国，武功深不可测。",
-	    title: "<hiy>姑苏慕容</hiy>",
+	    title: "姑苏慕容",
 	    gender: 1,
 	    age: 30,
 	    per: 20,

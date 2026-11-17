@@ -1,7 +1,7 @@
 this.inherits(NPC);
 this.name = "心魔";
 this.desc = "它与你形貌别无二致，却周身缠绕着黑红色的煞气。双目空洞而冰冷，嘴角挂着一丝诡异的笑意——这正是你内心深处所有恐惧、执念与阴暗所化的心魔。";
-this.title = "<hir>心魔</hir>";
+this.title = "心魔";
 this.gender = 1;
 this.age = 0;
 this.per = 50;

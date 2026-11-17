@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "洪七公",
     desc: "丐帮帮主，降龙十八掌刚猛无匹，打狗棒法精妙绝伦。",
-    title: "<hiy>北丐</hiy>",
+    title: "北丐",
     gender: 1,
     age: 60,
     per: 12,

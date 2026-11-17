@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "武道塔主",
     desc: "一位白发苍苍的老者，眼神深邃如星空，周身散发着若有若无的气息。他便是武道塔的主人，传说中已经守护此塔数百年。",
-    title: "<hir>武道塔主</hir>",
+    title: "武道塔主",
     gender: 1,
     age: 99,
     per: 50,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "欧阳锋",
     desc: "白驼山庄庄主，手持灵蛇杖，蛤蟆功蓄势待发。",
-    title: "<hiy>西毒</hiy>",
+    title: "西毒",
     gender: 1,
     age: 52,
     per: 14,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "东方不败",
     desc: "日月神教教主，一代枭雄。手持绣花针，身法快如鬼魅，葵花神功独步天下。",
-    title: "<hiy>日出东方，唯我不败</hiy>",
+    title: "日出东方，唯我不败",
     gender: 0,
     age: 35,
     per: 5,

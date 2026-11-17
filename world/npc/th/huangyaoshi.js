@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "黄药师",
     desc: "桃花岛主，面容清瘦，双目如电，一袭青袍飘飘若仙，举手投足间自有一股宗师气度。",
-    title: "<hiy>东邪</hiy>",
+    title: "东邪",
     gender: 1,
     age: 50,
     per: 25,

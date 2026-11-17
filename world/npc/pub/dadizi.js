@@ -2,7 +2,7 @@
 this.set({
     name: "大师兄",
     desc: "他就是你们门派的首席大弟子",
-    title: "<hig>首席弟子</hig>",
+    title: "首席弟子",
     gender: 1,
     age: 25,
     per: 18,

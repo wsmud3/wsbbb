@@ -2,7 +2,7 @@
 this.set({
     name: "逃犯",
     desc: "他是衙门正在追捕的逃犯",
-    title: "<red>衙门逃犯</red>",
+    title: "衙门逃犯",
     gender: 1,
     age: 25,
     per: 18,

@@ -2,7 +2,7 @@
 this.set({
     name: "洪七公",
     desc: "他就是丐帮第十七任帮主，号称“北丐”的洪七公老爷子",
-    title: "<hiy>北丐</hiy>",
+    title: "北丐",
     gender: 1,
     age: 65,
     per: 33,

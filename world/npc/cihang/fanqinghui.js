@@ -1,7 +1,7 @@
 this.inherits(NPC);
 this.name = "梵清惠";
 this.desc = "慈航静斋当代斋主，风姿绰约，气质超凡脱俗。她目光平静如水，却蕴含着无上剑意。作为慈航剑典的当代守护者，她已守护此地数十载。";
-this.title = "<hig>慈航斋主</hig>";
+this.title = "慈航斋主";
 this.gender = 0;
 this.age = 38;
 this.per = 85;

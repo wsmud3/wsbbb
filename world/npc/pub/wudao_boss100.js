@@ -24,7 +24,7 @@ this.init_from = function (player) {
         ["xuantiejianfa", 5000, "sword"], ["xuantiejianfa", 5000, "parry"], ["lingboweibu", 5000, "dodge"],
         ["xuedao", 5000, "blade"]
     );
-    this.title = "<ord>武道守护者</ord>";
+    this.title = "武道守护者";
 
     this.hp = this.max_hp = 20000000;
     this.mp = this.max_mp = 100000000;

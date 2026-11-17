@@ -3,7 +3,7 @@ this.inherits(NPC);
 // 机制（world/area/fb1/fb29.js）：开战后副本里每死一个 NPC，老祖就往山谷退一步；四侠跟着他走。
 this.set({
     name: "刘乘风",
-    title: "<hic>柔云剑</hic>",
+    title: "柔云剑",
     desc: "「落花流水」四侠之一，一路追杀血刀老祖至此，誓要为江湖除此大害。",
     gender: 1,
     age: 45,

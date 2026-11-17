@@ -1,7 +1,7 @@
 	this.inherits(NPC);
 	this.name = "庞斑";
 	this.desc = "一个身材魁梧的大汉，赤着上身，古铜色的皮肤上布满了狰狞的旧伤。他双目如电，周身散发着毁灭性的霸道气息——魔师庞斑，黑榜排名第一的绝世凶人。传说其魔功已臻化境，举手投足间皆有毁天灭地之威。";
-	this.title = "<hir>魔师</hir>";
+	this.title = "魔师";
 	this.gender = 1;
 	this.age = 50;
 	this.per = 30;

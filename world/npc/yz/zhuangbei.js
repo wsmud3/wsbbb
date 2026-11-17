@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "装备商人",
     desc: "一位装备商人，专门贩卖各种装备。",
-    title: "<hiy>装备商人</hiy>",
+    title: "装备商人",
     gender: 1, age: 40, per: 15,
     no_refresh: true,
     no_fight: true,

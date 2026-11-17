@@ -3,7 +3,7 @@
 this.inherits(NPC);
 this.set({
     name: "试炼引路人",
-    title: "<hic>真意试炼</hic>",
+    title: "真意试炼",
     gender: 1,
     age: 50,
     desc: "一道守在石台旁的武意化身。它只引门人入试，并非可以在此处挑战的活物。",

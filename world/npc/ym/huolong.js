@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "火龙",
     desc: "一条通体赤红的巨龙，口中喷吐烈焰，双翼遮天蔽日。龙鳞在火光下闪烁着妖异的光芒。",
-    title: "<hir>洪荒火龙</hir>",
+    title: "洪荒火龙",
     gender: 1,
     age: 500,
     per: 5,

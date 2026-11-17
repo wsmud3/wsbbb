@@ -2,7 +2,7 @@
 this.set({
     name: "青青",
     desc: "她是一个梳着高髻，身着羽衣的绝色美人，如同壁画上的仙子。",
-    title: "<hiw>狐女</hiw>",
+    title: "狐女",
     gender: 2,
     age: 20,
     per: 38,

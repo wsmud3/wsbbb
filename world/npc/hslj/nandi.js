@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "一灯大师",
     desc: "大理国前皇帝段智兴，出家后法号一灯，一阳指造诣天下无双。",
-    title: "<hiy>南帝</hiy>",
+    title: "南帝",
     gender: 1,
     age: 55,
     per: 20,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "李秋水",
     desc: "西夏皇太妃，天山童姥的宿敌。白虹掌力惊天动地，容颜虽毁，武功犹在。",
-    title: "<hiy>西夏皇太妃</hiy>",
+    title: "西夏皇太妃",
     gender: 2,
     age: 88,
     per: 10,

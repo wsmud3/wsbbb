@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "邀月",
     desc: "移花宫大宫主，冷若冰霜，武功盖世。明玉功第九重，举手投足皆有宗师风范。",
-    title: "<hiy>移花大宫主</hiy>",
+    title: "移花大宫主",
     gender: 0,
     age: 35,
     per: 24,

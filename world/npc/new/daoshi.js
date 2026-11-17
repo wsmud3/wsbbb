@@ -2,7 +2,7 @@
 this.set({
     name: "<hic>指引者</hic>",
     desc: "她是一位漂亮的女性，脸上笑眯眯的",
-    title: "<hig>新手导师</hig>",
+    title: "新手导师",
     gender: 2,
     age: 20,
     per: 41,

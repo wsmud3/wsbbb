@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
 	name: "禅宗护法僧",
 	desc: "净念禅宗的护法高僧，身披袈裟，手持金刚伏魔杖，面容严肃。五位护法僧共修无念禅功，结成伏魔大阵，寻常高手难以近身。",
-	title: "<hiy>护法僧</hiy>",
+	title: "护法僧",
 	gender: 1,
 	age: 60,
 	per: 15,

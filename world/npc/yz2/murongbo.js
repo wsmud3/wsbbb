@@ -2,7 +2,7 @@
 	this.set({
 	    name: "慕容博",
 	    desc: "慕容复之父，诈死多年隐居在还施水阁之中。此人武功已臻化境，参合指威力无匹。",
-	    title: "<hiy>前燕后裔</hiy>",
+	    title: "前燕后裔",
 	    gender: 1,
 	    age: 55,
 	    per: 15,

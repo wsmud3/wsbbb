@@ -2,7 +2,7 @@
 this.set({
     name: "守卫",
     desc: "襄阳城的守卫者，常年驻守襄阳，勇猛异常",
-    title: "<hiy>都头</hiy>",
+    title: "都头",
     gender: 1,
     age: 45,
     per: 27,

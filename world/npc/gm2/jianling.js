@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "剑灵",
     desc: "剑冢中守护神剑的剑灵，剑气纵横，威力无穷。",
-    title: "<hiy>剑灵</hiy>",
+    title: "剑灵",
     gender: 1,
     age: 999,
     per: 20,
@@ -42,7 +42,7 @@ this.on_enter = function (me) {
 this.gm2_make_jianmo = function () {
     this.gm2_jianmo = true;
     this.name = "剑魔";
-    this.title = "<hir>剑魔</hir>";
+    this.title = "剑魔";
     this.desc = "剑冢中积郁千年的剑气化成的魔物，剑势诡异莫测，出手必中，任何控制手段都奈何不了它。";
     this.add_prop("ig_control", 1);
     this.ig_control = 1;

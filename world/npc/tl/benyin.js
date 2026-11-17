@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "天龙寺主持 本因",
     desc: "天龙寺住持，枯荣大师的师侄，一手六脉神剑中的商阳剑已有相当火候。他为人持重，护寺心切，见外人窥探六脉神剑谱便不再留手。",
-    title: "<hiy>天龙寺主持</hiy>",
+    title: "天龙寺主持",
     gender: 1,
     age: 55,
     per: 10,

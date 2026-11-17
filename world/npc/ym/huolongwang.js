@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "火龙王",
     desc: "洪荒火龙之王，体型是普通火龙的数倍，龙威浩荡，不可一世。",
-    title: "<hiy>火龙王</hiy>",
+    title: "火龙王",
     gender: 1,
     age: 1000,
     per: 3,

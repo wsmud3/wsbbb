@@ -2,7 +2,7 @@
 this.set({
     name: "小昭",
     desc: "她因年纪幼小，身材尚未长成，但更显得娇小玲珑、甜美可爱。",
-    title:"<hiw>明教圣女</hiw>",
+    title:"明教圣女",
     gender: 2,
     age: 14,
     per: 38,

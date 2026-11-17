@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "丁春秋",
     desc: "星宿老仙，一派宗师。他面容枯槁，眼神阴鸷，周身环绕着碧绿色的毒雾。化功大法威力无穷，三阴蜈蚣爪歹毒无比。",
-    title: "<hiy>星宿老仙</hiy>",
+    title: "星宿老仙",
     gender: 1,
     age: 55,
     per: 5,

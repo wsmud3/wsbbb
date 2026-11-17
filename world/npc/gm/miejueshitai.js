@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "灭绝师太",
     desc: "峨嵋派掌门，脾气刚烈，嫉恶如仇。她手持倚天剑，剑法凌厉狠辣，对明教深恶痛绝。此次率领峨嵋弟子攻打光明顶，誓要铲除魔教。",
-    title: "<hir>峨嵋派掌门</hir>",
+    title: "峨嵋派掌门",
     gender: 2,
     age: 50,
     per: 16,

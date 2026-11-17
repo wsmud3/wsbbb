@@ -2,7 +2,7 @@
 this.set({
     name: "蒙古兵",
     desc: "蒙古兵的千夫长，狡勇善战",
-    title: "<hiz>千夫长</hiz>",
+    title: "千夫长",
     gender: 1,
     age: 65,
     per: 27,

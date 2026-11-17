@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "谢逊",
     desc: "金毛狮王谢逊，满头金发，双目虽盲，但武功盖世。他手持屠龙宝刀，七伤拳刚猛无匹。",
-    title: "<hiy>金毛狮王</hiy>",
+    title: "金毛狮王",
     gender: 1,
     age: 50,
     per: 12,

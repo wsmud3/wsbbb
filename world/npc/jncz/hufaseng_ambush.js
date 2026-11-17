@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
 	name: "护宝僧",
 	desc: "净念禅宗的护宝高僧，身披金色袈裟，手持金刚伏魔杖，面容威严。他们专门守护和氏璧，任何觊觎至宝之人都将面临他们的怒火。",
-	title: "<hir>护宝僧</hir>",
+	title: "护宝僧",
 	gender: 1,
 	age: 50,
 	per: 15,

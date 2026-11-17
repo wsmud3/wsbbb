@@ -2,7 +2,7 @@
 this.set({
     name: "郭靖",
     desc: "被尊为“天下第一侠士”,率领群雄守护着南宋襄阳城的前线边境",
-    title: "<hio>北侠</hio>",
+    title: "北侠",
     gender: 1,
     age: 45,
     per: 27,

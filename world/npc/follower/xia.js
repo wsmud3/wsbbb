@@ -2,7 +2,7 @@
 this.set({
     name: "夏雪宜",
     desc: "他就是人称“金蛇郎君”的一代怪杰——夏雪宜。",
-    title: "<hiy>金蛇郎君</hiy>",
+    title: "金蛇郎君",
     gender: 1,
     age: 25,
     per: 36,

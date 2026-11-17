@@ -1,7 +1,7 @@
 this.inherits(NPC);
 this.name = "师妃暄";
 this.desc = "一位白衣如雪的女子，气质清冷如霜，眉宇间带着淡淡的出尘之意。她手持一柄古朴长剑，正是慈航静斋当代最杰出的传人——师妃暄。传闻其剑法已得慈航剑典真传，剑心通明之境已臻化境。";
-this.title = "<hiw>慈航传人</hiw>";
+this.title = "慈航传人";
 this.gender = 0;
 this.age = 22;
 this.per = 90;

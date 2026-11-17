@@ -1,6 +1,6 @@
 this.inherits(NPC);
 this.set({
-    name: "武意化身", title: "<hiy>真意试炼</hiy>", gender: 1, age: 40,
+    name: "武意化身", title: "真意试炼", gender: 1, age: 40,
     desc: "一道由历代门人武意凝成的身影。它并非活物，却能看破招式中的虚实。",
     no_refresh: true, no_fight: false, is_zhenyi_trial: true, pfm_rate: 0.25
 });

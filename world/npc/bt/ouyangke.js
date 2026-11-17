@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "欧阳克",
     desc: "白驼山少主，欧阳锋之子，一身白衣，手摇折扇，风流自赏。他自幼修习白驼山内功与灵蛇拳，掌法阴柔狠辣，最会趁人不备下毒手。",
-    title: "<hiy>白驼山少主</hiy>",
+    title: "白驼山少主",
     gender: 1,
     age: 26,
     per: 26,

@@ -2,7 +2,7 @@
 	this.name = "金古易";
 
 	this.desc = "当代武林泰斗金古易，有时候猛的一看，你还以为是三个人。";
-	this.title = "<hic>武林泰斗</hic>";
+	this.title = "武林泰斗";
 	this.max_hp = 8000000;
 	this.hp = 8000000;
 	this.max_mp = 1000000;

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "枯荣大师",
     desc: "天龙寺第一高僧，枯荣禅功已臻化境，面容半枯半荣，佛法武功皆深不可测。",
-    title: "<hiy>枯荣大师</hiy>",
+    title: "枯荣大师",
     gender: 1,
     age: 80,
     per: 8,

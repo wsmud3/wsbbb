@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "王重阳",
     desc: "全真教创教祖师，武功冠绝天下，先天功已臻化境。",
-    title: "<hiy>中神通</hiy>",
+    title: "中神通",
     gender: 1,
     age: 58,
     per: 24,

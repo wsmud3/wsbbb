@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "欧阳锋",
     desc: "白驼山庄庄主，西域第一高手。他身材高大，面目阴沉，手持灵蛇杖，蛤蟆功威震武林。",
-    title: "<hiy>西毒</hiy>",
+    title: "西毒",
     gender: 1,
     age: 48,
     per: 10,

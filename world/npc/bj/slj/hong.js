@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "洪安通",
     desc: "神龙教教主，身材魁梧，双目如电，举手投足间霸气外露。他武功深不可测，教中弟子对其奉若神明。",
-    title: "<hib>神龙教主</hib>",
+    title: "神龙教主",
     gender: 1,
     age: 50,
     per: 25,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "花无缺",
     desc: "移花宫的少主，英俊潇洒，剑法精妙。",
-    title: "<hiy>花无缺</hiy>",
+    title: "花无缺",
     gender: 1,
     age: 22,
     per: 22,

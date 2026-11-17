@@ -1,7 +1,7 @@
 ﻿this.inherits(NPC);
 this.set({
     name: "小龙女",
-    title: "<wht>玉女素心</wht>",
+    title: "玉女素心",
     desc: "她清丽异常，但也许是长居古墓之故，面色略白。",
     gender: 2,
     age: 20,

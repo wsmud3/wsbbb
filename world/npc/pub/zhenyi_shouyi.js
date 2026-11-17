@@ -1,6 +1,6 @@
 this.inherits(NPC);
 this.set({
-    name: "守意人", title: "<hic>禁地引路</hic>", gender: 1, age: 70,
+    name: "守意人", title: "禁地引路", gender: 1, age: 70,
     desc: "此人守在试炼石壁之前，衣袍古旧，目光却清澈如初。历代门人留下的武意，都由其照看。",
     hp: 1000000, max_hp: 1000000, mp: 1000000, max_mp: 1000000,
     no_fight: true, no_refresh: true

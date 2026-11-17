@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "杨过",
     desc: "独臂大侠杨过，虽然身有残疾，但武功盖世。黯然销魂掌和玄铁剑法威震天下。",
-    title: "<hiy>神雕大侠</hiy>",
+    title: "神雕大侠",
     gender: 1,
     age: 30,
     per: 26,

@@ -2,7 +2,7 @@
 this.set({
     name: "蒙哥",
     desc: "蒙古国的大汉，拖雷长子，率领蒙古大军南征北战，屡立战功",
-    title: "<hio>蒙古大汗</hio>",
+    title: "蒙古大汗",
     gender: 1,
     age: 55,
     per: 27,

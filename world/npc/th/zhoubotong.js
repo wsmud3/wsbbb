@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "周伯通",
     desc: "一个白发白须的老顽童，虽年过花甲却童心未泯，嬉皮笑脸，武功却是当世绝顶。",
-    title: "<hiy>老顽童</hiy>",
+    title: "老顽童",
     gender: 1,
     age: 65,
     per: 12,

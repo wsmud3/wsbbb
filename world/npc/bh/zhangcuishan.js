@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "张翠山",
     desc: "武当张五侠，手持长剑，面容坚毅。他与谢逊结义为兄弟，在冰火岛上相依多年。",
-    title: "<hic>武当张五侠</hic>",
+    title: "武当张五侠",
     gender: 1,
     age: 35,
     per: 15,

@@ -2,7 +2,7 @@ this.inherits(NPC);
 this.set({
     name: "胡斐",
     desc: "一位英气勃发的年轻刀客，背负一柄单刀，目光如电。他是胡一刀之子，为报父仇隐居于此。",
-    title: "<hiy>雪山飞狐</hiy>",
+    title: "雪山飞狐",
     gender: 1,
     age: 22,
     per: 28,
