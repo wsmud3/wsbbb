@@ -8,15 +8,16 @@ this.exits = {
 this.set_npc([]);
 
 // 原版：雪地里连续西行五次才能走出去（前四次都会绕回原处）。
+// 步数存副本存储（随副本销毁）；原先挂在玩家身上 2 小时，中途离开会带到下一轮。
 this.on_leave = function (me, dir) {
     if (!me.is_player) return true;
     if (dir !== "west") return true;
-    var n = (me.query_temp("kw_snow_west") || 0) + 1;
+    var n = (this.query_temp(me, "kw_snow_west") || 0) + 1;
     if (n < 5) {
-        me.set_temp("kw_snow_west", n, 7200000);
+        this.set_temp(me, "kw_snow_west", n);
         me.notify("<hib>你在风雪里绕了一圈，又回到了原处。</hib>");
         return false;
     }
-    me.remove_temp("kw_snow_west");
+    this.set_temp(me, "kw_snow_west", 0);
     return true;
 };

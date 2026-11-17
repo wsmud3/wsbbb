@@ -12,16 +12,16 @@ this.set_npc([]);
 var TAIBO = ["ss/dengbagong", "ss/shatianweng", "ss/tangyinge", "ss/bochen"];
 this.on_enter = function (me) {
     if (!me.is_player) return;
-    if (me.query_temp("ss_wave")) return;
-    me.set_temp("ss_wave", 1, 7200000);
+    // 波次存副本存储（随副本销毁）；原先挂在玩家身上 2 小时，下一轮会从上一轮的波次接着算
+    if (this.query_temp(me, "ss_wave")) return;
+    this.set_temp(me, "ss_wave", 1);
     this.spawn_wave(me, 1);
 };
 this.spawn_wave = function (me, n) {
     var names = TAIBO.slice(0, n);
-    this.send_room("$N一声长啸，嵩山太保应声而出！");
+    this.send_room("<hir>中门后一声长啸，嵩山太保应声而出！</hir>");
     for (var i = 0; i < names.length; i++) {
         var e = NPC.CREATE(names[i], this);
         if (e) e.do_kill(me);
     }
-    me.notify("<hir>第 " + n + " 波：共 " + n + " 个嵩山太保。</hir>");
 };

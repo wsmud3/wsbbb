@@ -54,8 +54,8 @@ this.on_died = function (killer, corpse) {
     for (var i = 0; i < room.items.length; i++) {
         var p = room.items[i];
         if (p && p.is_player) {
-            p.set_temp("hs2_lz_dead", 1, 7200000);
-            p.notify("<red>刘正风倒下了，费斌还没除掉——这一趟救不出他了。</red>");
+            room.set_temp(p, "hs2_lz_dead", 1);   // 副本存储：原先挂玩家身上 2 小时，下一轮必定 99%
+            p.notify("<red>刘正风倒下了，费斌却还活着……</red>");
         }
     }
 };

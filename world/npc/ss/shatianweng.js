@@ -55,13 +55,13 @@ this.on_died = function (killer, corpse) {
             ["ss/dengbagong", "ss/shatianweng", "ss/tangyinge", "ss/bochen"].indexOf(o.path) >= 0) alive++;
     }
     if (alive > 0) return;
-    var w = killer.query_temp("ss_wave") || 1;
+    var w = room.query_temp(killer, "ss_wave") || 1;
     if (w >= 4) {
-        killer.remove_temp("ss_wave");
+        room.set_temp(killer, "ss_wave", 5);   // 四波打完记为完成（原先删掉标记，回头进中门会从第一波重刷）
         killer.notify("<hiy>四波太保全部伏诛，会盟堂的左冷禅等着你了。</hiy>");
         return;
     }
     w += 1;
-    killer.set_temp("ss_wave", w, 7200000);
+    room.set_temp(killer, "ss_wave", w);
     room.spawn_wave(killer, w);
 };

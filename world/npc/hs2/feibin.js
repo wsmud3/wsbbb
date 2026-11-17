@@ -61,7 +61,8 @@ this.on_enter = function (me) {
 // 结算：刘正风还活着 → 160（100%）；刘正风先死 → 159（99%）
 this.on_die = function (me) {
     if (!me || !me.is_player) return true;
-    var failed = !!me.query_temp("hs2_lz_dead");
+    var room = this.environment;
+    var failed = !!(room && room.query_temp(me, "hs2_lz_dead"));
     me.add_fbscore(failed ? 159 : 160);
     if (failed)
         me.notify("<red>费斌伏诛，可刘正风已经先一步毙命……这一趟终究没能救出他。</red>");
