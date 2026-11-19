@@ -75,13 +75,16 @@ assert.deepStrictEqual([finalTrial.max_hp, finalTrial.gj, finalTrial.skill], [30
 assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "jz/jianyi_yeling"), false, "禁地旧 NPC 不应继续生成");
 assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "pub/zhenyi_shiyantai#jz_1"), true, "正式试炼引导 NPC 必须保留");
 
+// 华山已改为 v2 机制型真意（见 tools/test_zhenyi_huashan_v2.js），通用「增伤 + 忽视防御」路径改用峨眉倚天破魔校验。
 const combatant = player();
-combatant.temp.zy_level_jz_1 = 1;
-combatant.temp.zy_active = "jz_1";
+combatant.family = { id: "EMEI" };
+combatant.temp.zy_jdfg_4 = 1;
+combatant.temp.zy_level_jdfg_4 = 1;
+combatant.temp.zy_active = "jdfg_4";
 const combatSkill = { grade: 5, family: combatant.family };
-const combatPfm = { id: "dugujiujian/pojian" };
+const combatPfm = { id: "yitianjianfa/yi" };
 assert.ok(WORLD.ZHENYI.begin_pfm(combatant, combatPfm, combatSkill), "绑定绝招应建立本次释放上下文");
-const combatValues = WORLD.ZHENYI.values_for(WORLD.ZHENYI.DATA.HUASHAN, WORLD.ZHENYI.DATA.HUASHAN.list[0], 1);
+const combatValues = WORLD.ZHENYI.values_for(WORLD.ZHENYI.DATA.EMEI, WORLD.ZHENYI.DATA.EMEI.list[3], 1);
 const combatPar = { diff_fy: 10 };
 const modifiedDamage = WORLD.ZHENYI.modify_attack(combatant, { hp: 100, max_hp: 100 }, combatPar, 100, combatSkill);
 assert.strictEqual(combatPar.diff_fy, 10 + combatValues.ignore, "忽视防御应按百分比在原值上加算");

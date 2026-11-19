@@ -11,15 +11,19 @@
     // balance 是门派补强系数。强势门派较克制，弱势门派获得更明显的成长。
     var DATA = {
         HUASHAN: {
+            // v2 试点：机制型真意 + 品质主导数值 + 机制化试炼 + 禁地解谜前置。其余门派仍走旧公式。
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
+            v2: true, trialHpScale: 0.8,
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             guideNames: ["守剑老人", "回锋剑客", "负剑道人", "洗剑客", "无剑客"],
+            // 首次挑战第 N 项试炼前，须先解开禁地中对应的机关（按玩家记录，公共地图互不影响）。
+            puzzles: { 1: "jz/lijiange", 2: "jz/ruanjiange", 3: "jz/zhongjiandian", 4: "jz/mujiange", 5: "jz/wujianxukong" },
             list: [
-                zy(1, "利剑·争锋", "破式", "利剑问锋", "precision", ["dugujiujian/pojian", "dugujiujian/poqi"], "jz_edge"),
-                zy(2, "软剑·回锋", "反击", "软剑回环", "counter", ["dugujiujian/wu", "kuangfengkuaijian/duoming"], "jz_counter"),
-                zy(3, "重剑·崩岳", "破坚", "重剑负山", "burst", ["dugujiujian/poqi", "huashanjianfa/jiang"], "jz_heavy"),
-                zy(4, "木剑·养意", "生息", "木剑守拙", "endure", ["zixiashengong/xi"], "jz_wood"),
-                zy(5, "无剑·无招", "剑势", "无剑胜有", "master", ["dugujiujian/wu"], "jz_formless")
+                zy(1, "利剑·争锋", "封招", "利剑问锋", "precision", [], "jz_seal"),
+                zy(2, "软剑·缠丝", "缠兵", "软剑回环", "counter", ["dugujiujian/poqi", "dugujiujian2/poqi", "kuangfengkuaijian/duoming", "kuangfengkuaijian2/duoming", "huashanjianfa/jiang"], "jz_bind"),
+                zy(3, "重剑·崩岳", "内伤", "重剑负山", "burst", ["dugujiujian/poqi", "dugujiujian2/poqi", "huashanjianfa/jiang"], "jz_rupture"),
+                zy(4, "木剑·养意", "护体", "木剑守拙", "endure", ["zixiashengong/xi", "zixiashengong2/xi"], "jz_armor"),
+                zy(5, "无剑·无招", "剑境", "无剑胜有", "master", [], "jz_domain")
             ]
         },
         WUDANG: {
@@ -145,6 +149,12 @@
     function gradeForLevel(level) { return LEVEL_GRADES[Math.max(0, Math.min(MAX_LEVEL, parseInt(level) || 0))]; }
     function scaleFor(data, level) {
         var grade = gradeForLevel(level);
+        if (data.v2) {
+            // v2：强度只由品质决定，同品质内第二重 +4%。基础值里不再含 level 斜率，
+            // 避免旧公式中重数被计算两次（旧公式十重约为一重的 5 倍，v2 约 2 倍）。
+            var first = LEVEL_GRADES.indexOf(grade);
+            return data.balance * GRADE_SCALES[grade] * (1 + 0.04 * (level - first));
+        }
         return data.balance * (0.85 + level * 0.05) * GRADE_SCALES[grade];
     }
     function publicOwner(key) { return "zhenyi_public:" + key; }
@@ -161,13 +171,23 @@
         return "<" + tag + ">" + intent.name + "</" + tag + ">";
     }
     function hasTower100(me) { return me.query_temp("wd_level", 0) >= 100 || !!me.query_temp("wd100", 0); }
-    function canUnlock(me, data) { return !!(me && data && familyId(me) === KEY_TO_FAMILY[data.key] && me.level >= 5 && hasTower100(me)); }
+    // GM 测试旁路：仅 user_level >= 5 且手动开启 zytest bypass 时，视为已满足境界与武道塔条件（门派仍须匹配）。
+    function gmBypass(me) { return !!(me && (me.user_level || 0) >= 5 && me.query_temp("zy_gm_bypass", 0)); }
+    function realmReady(me) { return gmBypass(me) || me.level >= 5; }
+    function towerReady(me) { return gmBypass(me) || hasTower100(me); }
+    function canUnlock(me, data) { return !!(me && data && familyId(me) === KEY_TO_FAMILY[data.key] && realmReady(me) && towerReady(me)); }
 
     // 所有玩家可见数字和战斗结算都只读取这里生成的整数，避免描述与实装分叉。
     function valuesFor(data, intent, level) {
         level = Math.max(1, Math.min(MAX_LEVEL, parseInt(level) || 1));
         var s = scaleFor(data, level), e = intent.effect;
         switch (e) {
+            // 华山 v2：机制为主，数值只缩放持续时间/比例，冷却与触发门槛固定。
+            case "jz_seal": return { hits: 3, window: 5, seal: secondValue(2000 * s), cooldown: 20 };
+            case "jz_bind": return { window: 4, duration: 5, weaken: percentValue(0.15 * s), reflect: percentValue(0.10 * s), cooldown: 15 };
+            case "jz_rupture": return { duration: 8, pct: 2, cap: percentValue(1.8 * s), cooldown: 25 };
+            case "jz_armor": return { shield: percentValue(0.08 * s), duration: 10 };
+            case "jz_domain": return { threshold: 20, duration: 10, counter: percentValue(0.40 * s) };
             case "jz_edge": return { damage: percentValue((0.025 + level * 0.004) * s), ignore: percentPointValue((5 + level) * s) };
             case "jz_counter": return { damage: percentValue((0.08 + level * 0.008) * s) };
             case "jz_heavy": return { damage: percentValue((0.035 + level * 0.004) * s) };
@@ -227,6 +247,44 @@
         return stats;
     }
 
+    // —— 禁地机关（v2）——
+    // 进度一律记在玩家 temp 上：公共禁地是同门共享实例，房间字段会被所有人共用。
+    // 已领悟该真意的老角色视为已解，不会被新机关卡住。
+    function puzzleKey(key, id) { return "zy_pz_" + token(key, id); }
+    function puzzleRoom(data, id) { return data && data.puzzles && data.puzzles[id]; }
+    function puzzleSolved(me, data, id) {
+        if (!puzzleRoom(data, id)) return true;
+        return !!me.query_temp(puzzleKey(data.key, id), 0) || getLevel(me, data.key, id) > 0;
+    }
+    function solvePuzzle(me, key, id, opts) {
+        opts = opts || {};
+        me.set_temp(puzzleKey(key, id), 1);
+        if (opts.hp) me.set_temp("zy_pzhp_" + token(key, id), opts.hp); else me.remove_temp("zy_pzhp_" + token(key, id));
+        if (opts.bonus) me.set_temp("zy_pzbonus_" + token(key, id), opts.bonus); else me.remove_temp("zy_pzbonus_" + token(key, id));
+        var data = findDataByKey(key), intent = findIntent(data, id);
+        if (intent && !getLevel(me, key, id)) me.notify("<him>机关已解，【" + intent.trial + "】的试炼石门为你开启。</him>");
+        return true;
+    }
+    // 房间 on_leave 调用：未解机关时拦住往深处走的出口（默认 north）。
+    function puzzleGate(me, key, id, dir, gateDir) {
+        if (!me || !me.is_player || dir !== (gateDir || "north")) return true;
+        var data = findDataByKey(key);
+        if (!data || puzzleSolved(me, data, id)) return true;
+        me.notify("前路被一股剑意封住。你须先参透此处的机关。");
+        return false;
+    }
+    function puzzleCommand(me, arg) {
+        var env = me && me.environment;
+        if (!env || !env.zy_puzzle) return me.notify("此处没有可解的机关。"), false;
+        return env.zy_puzzle(me, String(arg || "").trim());
+    }
+    function trialHpScale(me, data, intent) {
+        var scale = data.trialHpScale || 1;
+        var pct = parseInt(me && me.query_temp("zy_pzhp_" + token(data.key, intent.id), 0)) || 0;
+        if (pct > 0) scale *= pct / 100;
+        return scale;
+    }
+
     // 八处真意禁地只保留正式试炼引导 NPC；旧敌人脚本留档但不再生成。
     function allowPublicNpc(roomPath, npcPath) {
         var key = String(roomPath || "").replace(/\\/g, "/").split("/")[0];
@@ -238,6 +296,11 @@
     function describeIntent(data, intent, level) {
         var v = valuesFor(data, intent, level), e = intent.effect;
         switch (e) {
+            case "jz_seal": return "以本门武学在" + secondsText(v.window) + "内对同一目标命中" + v.hits + "次，封锁其绝招" + secondsText(v.seal) + "；" + secondsText(v.cooldown) + "冷却。";
+            case "jz_bind": return "剑法绝招成功后" + secondsText(v.window) + "内以普通攻击命中，使目标陷入缠兵" + secondsText(v.duration) + "：其对你造成的伤害降低" + percentText(v.weaken) + "，且每次攻击你都会被反震自身攻击力" + percentText(v.reflect) + "的伤害（按其防御结算，每秒至多一次）；" + secondsText(v.cooldown) + "冷却。";
+            case "jz_rupture": return "破气诀或剑掌五连环命中后，目标受内伤" + secondsText(v.duration) + "：其每施展一次绝招，失去最大气血" + percentText(v.pct) + "（不超过你攻击力的" + percentText(v.cap) + "，无视防御）；" + secondsText(v.cooldown) + "冷却。";
+            case "jz_armor": return "紫气东来成功后，剑意护体" + secondsText(v.duration) + "，吸收相当于最大气血" + percentText(v.shield) + "的伤害。";
+            case "jz_domain": return "每场战斗首次气血低于" + percentText(v.threshold) + "时，清除负面状态并进入无剑之境" + secondsText(v.duration) + "：免疫控制，每次受击自动还击攻击力" + percentText(v.counter) + "的伤害（按其防御结算，每秒至多一次）。";
             case "jz_edge": return "绑定绝招命中时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
             case "jz_counter": return "成功招架后获得10秒回锋；下一次技能伤害提高" + percentText(v.damage) + "，触发后消耗。";
             case "jz_heavy": return "目标当前气血高于70%时，技能伤害提高" + percentText(v.damage) + "。";
@@ -291,6 +354,7 @@
         me.remove_temp("zy_trial_return");
         me.remove_temp("zy_trial_deadline");
         me.remove_temp("zy_trial_exiting");
+        me.remove_temp("zy_trial_entering");
         me.remove_temp("zy_trial_control_cd");
         if (me.remove_status) me.remove_status("zy_trial_control", true);
     }
@@ -308,6 +372,9 @@
         if (!me) return false;
         var active = me.query_temp("zy_trial_active", "");
         if (!active) {
+            // startTrial 先写 owner 再 moveto，而 moveto 进入禁地时会经 can_enter_area → migrate 回到这里；
+            // 进场途中 active 尚未写入，不能把刚写的 owner 当作残留清掉，否则开打即被判失效送回。
+            if (me.query_temp("zy_trial_entering", 0)) return false;
             if (me.query_temp("zy_trial_owner", "") || me.query_temp("zy_trial_return", "")) clearTrialTemps(me);
             return false;
         }
@@ -415,8 +482,8 @@
         var data = findDataByKey(key), msg = "";
         if (!data) msg = "此处并无可寻的门派禁地。";
         else if (familyId(me) !== KEY_TO_FAMILY[key]) msg = "此地只接纳" + FAMILIES[KEY_TO_FAMILY[key]].name + "弟子。";
-        else if (me.level < 5) msg = "你境界未到武帝，尚不足以承受禁地真意。";
-        else if (!hasTower100(me)) msg = "你尚未通过武道塔第一百层，禁地不会为你开启。";
+        else if (!realmReady(me)) msg = "你境界未到武帝，尚不足以承受禁地真意。";
+        else if (!towerReady(me)) msg = "你尚未通过武道塔第一百层，禁地不会为你开启。";
         if (msg) { if (notify !== false && me) me.notify(msg); return false; }
         checkUnlock(me, true);
         return true;
@@ -451,7 +518,7 @@
     }
     function clearCombatState(me) {
         var keys = ["zy_pfm", "zy_pfm_id", "zy_counter", "zy_borrow", "zy_lingbo", "zy_tail",
-            "zy_twin", "zy_twin_last", "zy_charm", "zy_six", "zy_shadow_ready"];
+            "zy_twin", "zy_twin_last", "zy_charm", "zy_six", "zy_shadow_ready", "zy_bind_ready"];
         for (var i = 0; i < keys.length; i++) me.remove_temp(keys[i]);
     }
     function forgetFamily(me, oldFamilyId) {
@@ -466,6 +533,7 @@
         for (var i = 1; i <= 7; i++) {
             me.remove_temp(acquiredKey(data.key, i)); me.remove_temp(levelKey(data.key, i));
             me.remove_temp(clearKey(data.key, i)); me.remove_temp(matKey(data.key, i)); me.remove_temp(dailyKey(data.key, i));
+            me.remove_temp(puzzleKey(data.key, i)); me.remove_temp("zy_pzhp_" + token(data.key, i)); me.remove_temp("zy_pzbonus_" + token(data.key, i));
             removeAllMaterial(me, data.key, i);
         }
         var active = me.query_temp("zy_active", "");
@@ -570,6 +638,10 @@
         ensureTrialState(me, !!me.query_temp("zy_trial_active", ""));
         if (me.query_temp("zy_trial_active", "")) return me.notify("你已有一项真意试炼尚未结束。"), false;
         if (getLevel(me, data.key, intent.id)) return me.notify("你已解锁【" + intent.name + "】，无法进入试炼。"), false;
+        if (!puzzleSolved(me, data, intent.id)) {
+            var pzRoom = typeof ROOM !== "undefined" && ROOM.Get(puzzleRoom(data, intent.id));
+            return me.notify("【" + intent.trial + "】的试炼石门紧闭。你须先在【" + (pzRoom ? pzRoom.name : data.area) + "】中参透机关。"), false;
+        }
         if (dailyCount(me, data.key, intent.id) >= DAILY_LIMIT) return me.notify("这项试炼今日已达十次。"), false;
         var baseRoom = ROOM.Get(data.trialRoom);
         if (!baseRoom) return me.notify("试炼场暂不可用，请联系管理员。"), false;
@@ -591,6 +663,7 @@
             energySpent = true;
             me.set_temp("zy_trial_owner", owner);
             me.set_temp("zy_trial_return", oldRoom.path);
+            me.set_temp("zy_trial_entering", 1, 10000);
             if (me.moveto(room, me.name + "步入试炼石门。", me.name + "踏入了试炼场。") === false)
                 throw new Error("trial move failed");
             for (var i = room.items.length - 1; i >= 0; i--) {
@@ -598,6 +671,7 @@
                 if (!old.is_player && old.is_zhenyi_trial) room.item_changed(old, false);
             }
             me.set_temp("zy_trial_active", token(data.key, intent.id));
+            me.remove_temp("zy_trial_entering");
             me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
             npc.init_trial(me, data, intent);
             room.item_changed(npc, true);
@@ -718,6 +792,11 @@
         if (!getLevel(me, key, intent.id)) {
             me.set_temp(acquiredKey(key, intent.id), 1); me.set_temp(levelKey(key, intent.id), 1); me.set_temp(clearKey(key, intent.id), 1);
             me.notify("<him>试炼石壁上道韵流转，你领悟了【" + intent.name + "】！</him>");
+            var pzBonus = parseInt(me.query_temp("zy_pzbonus_" + trialToken, 0)) || 0;
+            if (pzBonus > 0) {
+                me.remove_temp("zy_pzbonus_" + trialToken);
+                if (addMaterial(me, key, intent.id, pzBonus)) me.notify("<hig>你在机关中所做的抉择得到回应：另得" + intent.name + "悟痕×" + pzBonus + "。</hig>");
+            }
         }
         me.notify("<hiy>今日完成次数" + dailyCount(me, key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
         me.notify("<hig>试炼目标已完成，请点击动作栏“完成副本”确认离场。</hig>");
@@ -914,8 +993,22 @@
             // 魅魂在容貌高于目标时不走攻击公式，但属于原技能明示的条件必然命中。
             if (effect === "sn_charm" && target && me.per > target.per) hit = true;
             var needsHit = effect === "zw_stick" || effect === "sl_roar" || effect === "sl_prajna" ||
-                effect === "gb_tail" || effect === "xy_beiming" || effect === "sn_charm";
+                effect === "gb_tail" || effect === "xy_beiming" || effect === "sn_charm" || effect === "jz_rupture";
             if (needsHit && !hit) return false;
+            if (effect === "jz_bind") { me.set_temp("zy_bind_ready", 1, v.window * 1000); return true; }
+            if (effect === "jz_rupture" && target) {
+                if (me.query_temp("zy_rupture_cd")) return true;
+                me.set_temp("zy_rupture_cd", 1, v.cooldown * 1000);
+                target._zy_rupture = { by: me, until: Date.now() + v.duration * 1000, pct: v.pct, cap: v.cap };
+                if (target.add_status) target.add_status({ id: "zy_rupture", name: "内伤", desc: "每施展一次绝招都会牵动内伤", duration: v.duration * 1000, downside: true, no_diff: true });
+                if (me.send_combat) me.send_combat("<hir>$N重剑无锋，劲力透体而入，$n脏腑受震，已受内伤！</hir>\n", target);
+                return true;
+            }
+            if (effect === "jz_armor") {
+                me._zy_armor = { amount: Math.floor(me.max_hp * v.shield / 100), until: Date.now() + v.duration * 1000 };
+                if (me.add_status) me.add_status({ id: "zy_armor", name: "剑意护体", desc: "紫气化剑意护住周身，吸收伤害", duration: v.duration * 1000, override: 2 });
+                return true;
+            }
             if (effect === "jz_wood") { me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.set_temp("zy_wood_guard", 1, 8000); }
             else if (effect === "em_mercy") me.do_recover(Math.floor(me.max_hp * v.heal / 100));
             else if (effect === "xy_beiming" && target) { var drain = Math.min(Math.floor(target.max_mp * v.drain / 100), Math.floor(me.max_mp * v.cap / 100)); if (drain > 0) { target.add_mp(-drain); me.add_mp(drain); } }
@@ -1008,10 +1101,20 @@
         }
     }
     function afterAttack(me, target, par, dealt, skill) {
+        // 试炼化身需要感知玩家的每次命中（区分绝招/普攻），用于护体、破绽等考题。
+        if (target && target.is_zhenyi_trial && target.trial_on_hit && dealt > 0)
+            target.trial_on_hit(me, !!(me && me._zy_casting));
         var active = getActive(me);
         if (!active || !allowedSkill(skill, me) || !(dealt > 0)) return;
         var e = active.intent.effect, v = active.values, inPfm = pfmContextMatches(me, active);
         if (inPfm) me._zy_pfm_hit = true;
+        if (e === "jz_seal") sealOnHit(me, target, v);
+        else if (e === "jz_bind" && !inPfm && !me._zy_casting && me.query_temp("zy_bind_ready") && !me.query_temp("zy_bind_cd")) {
+            me.remove_temp("zy_bind_ready"); me.set_temp("zy_bind_cd", 1, v.cooldown * 1000);
+            target._zy_bind = { by: me, until: Date.now() + v.duration * 1000, weaken: v.weaken, reflect: v.reflect };
+            if (target.add_status) target.add_status({ id: "zy_bind", name: "缠兵", desc: "兵刃被软剑缠住", duration: v.duration * 1000, downside: true, no_diff: true });
+            if (me.send_combat) me.send_combat("<hic>$N剑势一软，如丝如缕缠上$n的兵刃！</hic>\n", target);
+        }
         if (e === "gb_flying" && inPfm) me.set_temp("zy_flying", Math.min(5, (parseInt(me.query_temp("zy_flying", 0)) || 0) + 1), 12000);
         else if (e === "sn_thunder" && inPfm) me.set_temp("zy_thunder", Math.min(5, (parseInt(me.query_temp("zy_thunder", 0)) || 0) + 1), 12000);
         if (e === "ss_shadow" && me.query_temp("zy_shadow_ready")) {
@@ -1023,6 +1126,74 @@
             target.set_temp("zy_purple_cd", 1, 9000); var burn = Math.min(Math.floor(me.gj * v.extra / 100), Math.floor(dealt * v.cap / 100)); if (burn > 0) target.damage(burn, me, 0);
         }
     }
+    // 利剑·争锋：同一目标短时间内被连续命中即封招。命中记录挂在目标运行时字段上，不落库。
+    function sealOnHit(me, target, v) {
+        if (!target) return;
+        var now = Date.now(), rec = target._zy_seal_hits;
+        if (!rec || rec.by !== me) rec = target._zy_seal_hits = { by: me, times: [] };
+        rec.times.push(now);
+        while (rec.times.length && now - rec.times[0] > v.window * 1000) rec.times.shift();
+        if (rec.times.length < v.hits || me.query_temp("zy_seal_cd")) return;
+        rec.times = [];
+        me.set_temp("zy_seal_cd", 1, v.cooldown * 1000);
+        // 已有更长的封招（如阴阳九转）时不缩短。
+        if (!target.query_temp("sealed_pfm")) target.set_temp("sealed_pfm", 1, v.seal * 1000);
+        if (me.send_combat) me.send_combat("<hic>$N剑锋连闪，快得$n来不及变招——$n的绝招路数被尽数封住！</hic>\n", target);
+    }
+    // 重剑·崩岳：身负内伤者每施展一次绝招受一次无视防御的伤害。由 pfm.js 与 auto_combat.js 在绝招成功后调用。
+    function onUsePfm(caster) {
+        var r = caster && caster._zy_rupture;
+        if (!r) return;
+        if (Date.now() > r.until || !r.by || !(r.by.hp > 0)) { delete caster._zy_rupture; return; }
+        var dmg = Math.floor(Math.min(caster.max_hp * r.pct / 100, (r.by.gj || 0) * r.cap / 100));
+        if (!(dmg > 0) || reflecting) return;
+        reflecting = true;
+        try { caster.damage(dmg, r.by, 100, { kind: "reflect" }); } finally { reflecting = false; }
+        if (caster.send_combat) caster.send_combat("<hir>$N强运绝招，牵动内伤，口中溢出一缕鲜血！</hir>\n");
+    }
+    var reflecting = false;
+    // 华山 v2 的受击处理：缠兵（攻击者身上）、剑意护体、无剑之境。
+    function jzDefense(me, from, sh, active) {
+        var now = Date.now();
+        var bind = from && from._zy_bind;
+        if (bind && bind.by === me) {
+            if (now > bind.until) delete from._zy_bind;
+            else {
+                sh *= (1 - bind.weaken / 100);
+                if (!reflecting && from.hp > 0 && !(bind.lastReflect && now - bind.lastReflect < 1000)) {
+                    bind.lastReflect = now;
+                    reflecting = true;
+                    try { from.damage(Math.floor((me.gj || 0) * bind.reflect / 100), me, 0, { kind: "reflect" }); } finally { reflecting = false; }
+                }
+            }
+        }
+        var armor = me._zy_armor;
+        if (armor && sh > 0) {
+            if (now > armor.until || armor.amount <= 0) delete me._zy_armor;
+            else {
+                var absorb = Math.min(sh, armor.amount);
+                armor.amount -= absorb; sh -= absorb;
+                if (armor.amount <= 0) { delete me._zy_armor; if (me.remove_status) me.remove_status("zy_armor"); me.notify && me.notify("<hiy>你周身的护体剑意被击散了。</hiy>"); }
+            }
+        }
+        if (active && active.intent.effect === "jz_domain" && sh > 0) {
+            var v = active.values;
+            if (!me._zy_domain_used && me.max_hp && (me.hp - sh) / me.max_hp < v.threshold / 100) {
+                me._zy_domain_used = true;
+                me._zy_domain_until = now + v.duration * 1000;
+                if (me.clear_downside) me.clear_downside(true);
+                if (me.add_status) me.add_status({ id: "zy_domain", name: "无剑之境", desc: "免疫控制，受击自动还击", duration: v.duration * 1000, override: 2, prop: { ig_control: 1 } });
+                if (me.send_combat) me.send_combat("<him>$N身形一定，手中有剑似无剑——草木竹石，皆可为剑！</him>\n");
+            }
+            if (me._zy_domain_until && now < me._zy_domain_until && from && from.hp > 0 && !reflecting &&
+                !(me._zy_domain_last && now - me._zy_domain_last < 1000)) {
+                me._zy_domain_last = now;
+                reflecting = true;
+                try { from.damage(Math.floor((me.gj || 0) * v.counter / 100), me, 0, { kind: "reflect" }); } finally { reflecting = false; }
+            }
+        }
+        return sh;
+    }
     function onParry(me) {
         var active = getActive(me); if (!active) return;
         if (active.intent.effect === "jz_counter") me.set_temp("zy_counter", 1, 10000);
@@ -1031,7 +1202,13 @@
     }
     function onDodge(me) { var active = getActive(me); if (active && (active.intent.effect === "xy_lingbo" || active.intent.effect === "ss_step")) me.set_temp("zy_lingbo", 1, 10000); }
     function modifyDamage(me, from, sh) {
-        var active = getActive(me); if (!active || !(sh > 0)) return sh;
+        if (!(sh > 0)) return sh;
+        // 试炼化身的机制（护体、破绽等）在真意结算前处理。
+        if (me && me.is_zhenyi_trial && me.trial_on_damage) sh = me.trial_on_damage(from, sh);
+        var active = getActive(me);
+        // 缠兵记录在攻击者身上、护体记录在自身，与当前启用项无关，须在早退前结算。
+        if (me && (me._zy_armor || (from && from._zy_bind) || (active && active.intent.effect === "jz_domain"))) sh = jzDefense(me, from, sh, active);
+        if (!active || !(sh > 0)) return Math.max(0, sh);
         var e = active.intent.effect, v = active.values, reduction = 0;
         if (e === "jz_wood" && me.query_temp("zy_wood_guard")) reduction = v.reduction / 100;
         else if (e === "zw_yield" && !me.query_temp("zy_yield_cd")) { reduction = v.reduction / 100; me.set_temp("zy_yield_cd", 1, 8000); }
@@ -1041,7 +1218,8 @@
         else if (e === "sn_guard" && me.mp > 0) { var convert = Math.min(sh * v.convert / 100, sh * v.cap / 100, me.mp); me.add_mp(-Math.floor(convert)); sh -= convert; }
         sh *= (1 - reduction);
         if (e === "sl_vajra" && sh >= me.hp && me.hp > 1 && !me.query_temp("zy_vajra_cd")) { sh = me.hp - 1; me.set_temp("zy_vajra_cd", 1, 600000); me.notify("<hiy>金刚不坏真意护住你最后一线生机！</hiy>"); }
-        else if (e === "zw_wuji" && me.max_hp && (me.hp - sh) / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.clear_downside && me.clear_downside(); }
+        // clear_downside(type) 按 downside === type 匹配，不传参数时什么都不会清除。
+        else if (e === "zw_wuji" && me.max_hp && (me.hp - sh) / me.max_hp < 0.18 && !me.query_temp("zy_wuji_cd")) { me.set_temp("zy_wuji_cd", 1, 600000); me.do_recover(Math.floor(me.max_hp * v.heal / 100)); me.clear_downside && me.clear_downside(true); }
         if (e === "em_wrath" && me.query_temp("zy_wrath_ready") && from && from.hp > 0 && !me._zy_reflecting) {
             me.remove_temp("zy_wrath_ready"); me.set_temp("zy_wrath_cd", 1, 8000);
             var reflect = Math.min(Math.floor(sh * v.reflect / 100), Math.floor(me.gj * v.cap / 100));
@@ -1053,7 +1231,12 @@
         return Math.max(0, sh);
     }
     function onKill(me) { var active = getActive(me); if (active && active.intent.effect === "ss_debt") me.set_temp("zy_debt", 1, 120000); }
-    function onCombatEnd(me) { clearCombatState(me); me.remove_temp("zy_flying"); me.remove_temp("zy_thunder"); }
+    function onCombatEnd(me) {
+        clearCombatState(me); me.remove_temp("zy_flying"); me.remove_temp("zy_thunder");
+        // 无剑之境每场战斗一次；护体与各类运行时标记随战斗结束清理。
+        delete me._zy_domain_used; delete me._zy_domain_until; delete me._zy_domain_last;
+        delete me._zy_armor; delete me._zy_bind; delete me._zy_rupture; delete me._zy_seal_hits;
+    }
 
     WORLD.ZHENYI = {
         DATA: DATA, FAMILY_TO_KEY: FAMILY_TO_KEY, MAX_LEVEL: MAX_LEVEL, DAILY_LIMIT: DAILY_LIMIT, ENERGY_COST: ENERGY_COST,
@@ -1069,6 +1252,11 @@
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
         prepare_attack: prepareAttack, modify_attack: modifyAttack, after_attack: afterAttack, on_parry: onParry, on_dodge: onDodge,
-        modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill
+        modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill,
+        on_use_pfm: onUsePfm, family_of_key: function (key) { return KEY_TO_FAMILY[key]; },
+        trial_hp_scale: trialHpScale,
+        puzzle_solved: puzzleSolved, solve_puzzle: solvePuzzle, puzzle_gate: puzzleGate, puzzle_command: puzzleCommand,
+        level_grades: LEVEL_GRADES, gm_bypass: gmBypass, clear_trial_temps: clearTrialTemps,
+        keys: { acquired: acquiredKey, level: levelKey, clear: clearKey, daily: dailyKey, puzzle: puzzleKey }
     };
 })();

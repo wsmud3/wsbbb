@@ -1,10 +1,18 @@
 CHARACTER.prototype.reauto_attack = function () {
     if (this.fight_type) {
+        // 在 auto_attack 内部自动出招时（如「无招」改了攻速）不重入：
+        // 外层 auto_attack 结束时会按新攻速重新排定下一击，重入只会递归爆栈并多开一条攻击循环。
+        if (this._in_auto_attack) return;
         if (this.attack_handler) clearTimeout(this.attack_handler);
         this.auto_attack();
     }
 }
 CHARACTER.prototype.auto_attack = function () {
+    this._in_auto_attack = true;
+    try { return this._auto_attack_once(); }
+    finally { this._in_auto_attack = false; }
+}
+CHARACTER.prototype._auto_attack_once = function () {
     var target = this.query_enemy();
     if (this.hp <= 0) {
         if (this.fight_type && target) {
@@ -82,10 +90,13 @@ CHARACTER.prototype.use_pfm = function (target, pfm, level, sktype) {
     } else if (target && target.parry_skill && target.parry_skill.on_parry_pfm) {
         isrelease = target.parry_skill.on_parry_pfm(target, this, pfm, level);
     } else {
-        isrelease = pfm.use(this, target, level, sktype) !== false;
+        this._zy_casting = pfm.id;
+        try { isrelease = pfm.use(this, target, level, sktype) !== false; }
+        finally { delete this._zy_casting; }
     }
     if (isrelease !== false) {
         this.add_mp(-pfm.query_mp(this, level) || 0);
+        if (WORLD.ZHENYI && WORLD.ZHENYI.on_use_pfm) WORLD.ZHENYI.on_use_pfm(this);
 
         this.set_temp("used_pfm", pfm.id, 20000);
         return true;

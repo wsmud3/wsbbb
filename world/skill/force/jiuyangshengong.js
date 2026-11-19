@@ -49,7 +49,7 @@ this.pfm = {
 				id: "force",
 				name: "九阳护体",
 				desc: "伤害减免+" + dr + "%，反震伤害翻倍",
-				duration: parseInt(lv * 10),
+				duration: Math.min(10000, parseInt(lv * 10)),  // 1000 级达到上限 10 秒
 				downside: false,
 				override: 2,
 				prop: { diff_sh_per: dr },
@@ -65,7 +65,7 @@ this.pfm = {
 		},
 		query_desc: function (me, lv) {
 			var dr = 30 + Math.floor(lv / 33.3);
-			return "将九阳真气布满全身，" + (parseInt(lv * 10 / 1000)) + "秒内增加你" + dr + "%的伤害减免，反震伤害加倍。";
+			return "将九阳真气布满全身，" + (Math.min(10000, parseInt(lv * 10)) / 1000) + "秒内增加你" + dr + "%的伤害减免，反震伤害加倍。";
 		}
 	},
 	zhenyan: {

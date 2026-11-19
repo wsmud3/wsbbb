@@ -155,6 +155,7 @@ this.enter = function (me, sk, pfmid) {
         }
         if (WORLD.ZHENYI) zy_pfm_started = !!WORLD.ZHENYI.begin_pfm(me, target, pfm, sp_skill);
         try {
+            me._zy_casting = pfm.id;
             isrelease = pfm.use(me, target, lv, sk) != false;
             if (isrelease) {
                 // 记录最后使用的绝招（供左右互搏等技能使用）
@@ -169,6 +170,7 @@ this.enter = function (me, sk, pfmid) {
             isrelease = true;
             console.error("绝招 %s 执行出错（已按已释放结算）:", pfm.id, (e && e.stack) || e);
         } finally {
+            delete me._zy_casting;
             // 无论绝招成功、主动返回 false 或抛错，都必须结束本次真意上下文。
             if (WORLD.ZHENYI && zy_pfm_started) WORLD.ZHENYI.end_pfm(me, target, pfm, sp_skill, isrelease);
             zy_pfm_started = false;
@@ -177,6 +179,7 @@ this.enter = function (me, sk, pfmid) {
 
     if (isrelease) {
         me.add_mp(-pfm_mp || 0);
+        if (WORLD.ZHENYI && WORLD.ZHENYI.on_use_pfm) WORLD.ZHENYI.on_use_pfm(me);
         //释放成功才算释放时间
         // if (!pfm.use_type) {
         //     //保存目标被释放的技能

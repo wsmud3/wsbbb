@@ -13,7 +13,8 @@ this.add_action("meditate", "盘坐参悟", function (me) {
         if (me.query_temp("jz_meditating")) {
             me.remove_temp("jz_meditating");
             me.set_temp("jz_meditate_done", 1);
-            me.notify("\n<hig>你的倒影中浮现出一行字：</hig>\n\n「无剑，即是——万物皆剑。」\n\n你获得了<hic>「剑道顿悟」</hic>——最终决战中全伤害提升20%。\n但你的骄傲也随之增长了。");
+            me.notify("\n<hig>你的倒影中浮现出一行字：</hig>\n\n「无剑，即是——万物皆剑。」\n\n你心中的躁意渐渐平复。");
         }
     }, 30000);
 });
+this.set_npc("pub/zhenyi_shiyantai#jz_4");
