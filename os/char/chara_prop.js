@@ -51,10 +51,6 @@ CHARACTER.prototype.query_soft_prop = function (name) {
     if (buff > 0) return CHARACTER.soft_cap(total - buff) + buff;
     return CHARACTER.soft_cap(total);
 };
-// 实际内力上限：基础 limit_mp + 装备/技能的固定加成，再乘以百分比加成 limit_mp_per（如素女头冠）
-CHARACTER.prototype.query_limit_mp = function () {
-    return parseInt(((this.limit_mp || 0) + this.query_prop("limit_mp")) * (100 + this.query_prop("limit_mp_per")) / 100);
-};
 CHARACTER.prototype.query_prop_no_buff = function (name) {
     var total = this.query_prop(name);
     if (this.buff_prop)

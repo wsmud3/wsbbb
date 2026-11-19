@@ -162,7 +162,6 @@ UTIL = {
                 case "study_per":
                 case "add_sh_per":
                 case "add_bjsh_per":
-                case "limit_mp_per":
                 case "busy_per":
                 case "gjsd_per":
                 case "bj_per":

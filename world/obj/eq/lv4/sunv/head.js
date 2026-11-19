@@ -6,6 +6,8 @@
 					grade: 4,
 					eq_type: EQUIP_TYPE.HEAD,
 					hole_count: 4,
-					prop: { mz: 50, int: 12, limit_mp_per: 8 }
+					prop: { mz: 50, int: 12, per: 5 }
 	});
 	this.family = FAMILIES.SUNV;
+// 容貌不随精炼成长
+this.fixed_props = ["per"];

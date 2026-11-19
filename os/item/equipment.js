@@ -317,8 +317,10 @@ EQUIPMENT.prototype.levelchange_prop = function () {
     if (!(this.level >= 0 && this.level < 13)) return;
     const base_props = this.original_prop ?? Object.getPrototypeOf(this).prop;
     var val = this.levelData[this.level];
+    var fixed = this.fixed_props;
     for (var key in base_props) {
         var value = base_props[key];
+        if (fixed && fixed.indexOf(key) >= 0) { this.prop[key] = value; continue; }
         switch (key) {
             case "desc":
             case "str1":
