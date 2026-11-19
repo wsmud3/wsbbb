@@ -50,10 +50,9 @@ USER.prototype.recount = function () {
         this.zj = parseInt(this.zj * tf);
     }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
-    this.diff_sh_per = this.query_prop('diff_sh_per');
-
-
-    this.diff_fy_per = this.query_prop('diff_fy_per');
+    // 免伤/破防经软上限折算（见 CHARACTER.soft_cap）
+    this.diff_sh_per = this.query_soft_prop('diff_sh_per');
+    this.diff_fy_per = this.query_soft_prop('diff_fy_per');
     if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 }
 
@@ -277,6 +276,8 @@ if (!USER._sws_orig_check_unlock) {
 }
 FOLLOWER.prototype.remove_obj = USER.prototype.remove_obj;
 FOLLOWER.prototype.recount = USER.prototype.recount;
+USER.prototype.soft_cap_props = true;
+FOLLOWER.prototype.soft_cap_props = true;
 FOLLOWER.prototype.items_changed = USER.prototype.items_changed;
 FOLLOWER.prototype.send_commands = USER.prototype.send_commands;
 

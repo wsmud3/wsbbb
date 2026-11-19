@@ -27,6 +27,24 @@ CHARACTER.prototype.add_buff_prop = function (p, v) {
     if (!this.buff_prop) this.buff_prop = {};
     this.buff_prop[p] = (this.buff_prop[p] || 0) + v;
 }
+// 免伤/破防/终伤软上限：技能与装备带来的部分超过 SOFT_CAP_START 后递减，且永远不超过 SOFT_CAP_MAX；
+// buff（状态）带来的加成不参与递减，原样加在后面，所以只有开 buff 才可能超过 SOFT_CAP_MAX。
+// 曲线 start + (max-start)·(1-e^(-(x-start)/(max-start)))：在 start 处与线性衔接，越往上加成越少。
+// 例（start 80 / max 100）：90→87.9，100→92.6，120→97.3，150→99.4。只对玩家（及其随从）生效。
+CHARACTER.SOFT_CAP_PROPS = { diff_sh_per: 1, diff_fy_per: 1, add_sh_per: 1 };
+CHARACTER.SOFT_CAP_START = 80;
+CHARACTER.SOFT_CAP_MAX = 100;
+CHARACTER.soft_cap = function (v) {
+    var a = CHARACTER.SOFT_CAP_START, m = CHARACTER.SOFT_CAP_MAX;
+    if (!(v > a)) return v;
+    return a + (m - a) * (1 - Math.exp(-(v - a) / (m - a)));
+};
+CHARACTER.prototype.query_soft_prop = function (name) {
+    var total = this.query_prop(name);
+    if (!this.soft_cap_props || !CHARACTER.SOFT_CAP_PROPS[name]) return total;
+    var buff = (this.buff_prop && this.buff_prop[name]) || 0;
+    return CHARACTER.soft_cap(total - buff) + buff;
+};
 CHARACTER.prototype.query_prop_no_buff = function (name) {
     var total = this.query_prop(name);
     if (this.buff_prop)

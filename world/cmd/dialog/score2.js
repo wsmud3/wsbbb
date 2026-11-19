@@ -19,7 +19,7 @@ this.enter = function (me, arg) {
     }
     var str = ['{"type":"dialog","dialog":"score",'];
     str.push('id:"');\nstr.push(target.id);\nstr.push("\",add_sh:\"");
-    str.push(target.query_prop("add_sh_per"));
+    str.push(parseInt((target.query_soft_prop ? target.query_soft_prop("add_sh_per") : target.query_prop("add_sh_per")) * 100) / 100);
     str.push("%\",diff_fy:\"");
     str.push(parseInt(target.diff_fy_per * 100) / 100);
     str.push("%\",bj:\"");

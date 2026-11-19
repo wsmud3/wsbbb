@@ -158,7 +158,7 @@ CHARACTER.prototype.do_attack = function (par) {
             }
             sh = sh * this.attack_part.hert;
             if (!par.no_power) {
-                sh = sh + sh * this.query_prop("add_sh_per") / 100; //增加伤害%
+                sh = sh + sh * this.query_soft_prop("add_sh_per") / 100; //增加伤害%（玩家经软上限折算）
 
                 // ZC passives: 嗜血 - damage increases as self HP decreases
                 var zcBloodthirst = this.query_prop("zc_bloodthirst") || 0;
@@ -194,7 +194,7 @@ CHARACTER.prototype.do_attack = function (par) {
             power_gj += this.force_skill.do_force_attack(this, target, par);
         }
         if (power_gj > 0 && (!weapon || weapon.weapon_type === WEAPON_TYPE.NONE)) {
-            power_gj = power_gj + power_gj * this.query_prop("add_sh_per") / 100; //增加伤害%
+            power_gj = power_gj + power_gj * this.query_soft_prop("add_sh_per") / 100; //增加伤害%（玩家经软上限折算）
             if (par.iscirt)
                 power_gj = power_gj * (150 + (par.add_bjsh_per ?? this.query_prop("add_bjsh_per"))) / 100;
 
