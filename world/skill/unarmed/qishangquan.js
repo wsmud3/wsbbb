@@ -54,8 +54,9 @@ this.pfm = {
 				var hits = 0;
 				for (var i = 0; i < 7; i++) {
 					if (target.hp <= 0 || me.hp <= 0) break;
-					var sh = me.do_attack({ target: target, gj: me.gj, mz: me.mz });
-					if (sh > 0) {
+					var qs_par = { target: target, gj: me.gj, mz: me.mz };
+					var sh = me.do_attack(qs_par);
+					if (sh > 0 && !qs_par.is_dodge && !qs_par.is_parry) {
 						hits++;
 						var selfDmg = Math.min(Math.floor(sh * 0.2), me.hp - 1);
 						if (selfDmg > 0) me.add_hp(-selfDmg);

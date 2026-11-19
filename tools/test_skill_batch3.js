@@ -71,7 +71,11 @@ async function main() {
     await check("少林身法(高阶)·一苇渡江被动：被打中触发不抛错", () => {
         const a = mkUser(); learn(a, { shaolinshenfa2: "dodge" }, 2000);
         SKILL.get("shaolinshenfa2").on_dodge_over(a, null, { is_dodge: false });
-        assert.strictEqual(statusOf(a, "dodge").duration, 20000);
+        assert.strictEqual(statusOf(a, "yiwei_passive").duration, 20000);
+        // 被动与绝招「一苇渡江」（id dodge）不再互相挤掉
+        const ds0 = a.query_prop("dex");
+        SKILL.get("shaolinshenfa2").pfm.lingbo.use(a, null, 2000);
+        assert.ok(statusOf(a, "dodge") && statusOf(a, "yiwei_passive"), "被动与绝招同时存在");
     });
 
     // ---------- 1. 小无相功 ----------

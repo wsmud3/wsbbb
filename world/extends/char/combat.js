@@ -28,27 +28,44 @@ CHARACTER.prototype.recount = function () {
     // - 未设定的 NPC（动物/简单怪物）每次都按基础属性 + 全部后天加成的公式重算。
     // 原实现在数值大于 0 后就不再重算，导致任何增益、减益对 NPC 的这五项都不生效。
     var stats = CHARACTER.NPC_STATS;
-    if (!this._npc_base) this._npc_base = {};
-    if (!this._npc_set) this._npc_set = {};
+    // 记录对象必须是实例自有：原型上若已有（模板 on_create 里就 recount 过，如心魔），所有克隆会共用同一份
+    var own = Object.prototype.hasOwnProperty;
+    if (!own.call(this, "_npc_base")) this._npc_base = Object.assign({}, this._npc_base);
+    if (!own.call(this, "_npc_set")) this._npc_set = Object.assign({}, this._npc_set);
+    if (!own.call(this, "_npc_mod")) this._npc_mod = Object.assign({}, this._npc_mod);
     var zcApplied = this._zc_applied_stats || {};
     var bp = this.buff_prop || {};
     for (var si = 0; si < stats.length; si++) {
         var st = stats[si], cur = this[st];
         var touched = cur > 0 && cur !== this._npc_set[st] && cur !== zcApplied[st];
-        if (touched) this._npc_base[st] = cur;                 // 模板值，或被脚本直接改写的新值
-        else if (!(st in this._npc_base)) this._npc_base[st] = null; // 公式模式
+        if (touched) {
+            // 模板值，或被脚本直接改写的新值。改写时数值里已含上次叠加的状态加成，先扣掉再存为基础值，
+            // 避免把当时的增益/减益固化进基础值（例如副本脚本按当前攻击 ×1.6 改写）。
+            var lm = this._npc_mod[st];
+            var nb = cur;
+            if (lm && 100 + lm.per > 0) nb = Math.round(cur * 100 / (100 + lm.per) - lm.flat);
+            this._npc_base[st] = nb > 0 ? nb : cur;
+        } else if (!(st in this._npc_base)) this._npc_base[st] = null; // 公式模式
         var base = this._npc_base[st], v;
+        var flat = bp[st] || 0, per = bp[st + "_per"] || 0;
         if (base === null) v = CHARACTER.npc_formula[st](this);
-        else v = parseInt((base + (bp[st] || 0)) * (100 + (bp[st + "_per"] || 0)) / 100);
+        else v = parseInt((base + flat) * (100 + per) / 100);
         if (v < 0) v = 0;
         this[st] = v;
         this._npc_set[st] = v;
+        this._npc_mod[st] = { flat: flat, per: per };
     }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
 
     // NPC 不折算软上限；免伤类 buff 给的是特殊免伤 diff_sh_per2，只把状态带来的那部分加上
-    this.diff_sh_per = this.query_prop('diff_sh_per') + ((this.buff_prop && this.buff_prop.diff_sh_per2) || 0);
-    this.diff_fy_per = this.query_prop('diff_fy_per');
+    if (this.soft_cap_props) {
+        // 玩家镜像（大弟子、排行榜）按玩家规则折算软上限
+        this.diff_sh_per = this.query_soft_prop('diff_sh_per') + this.query_prop('diff_sh_per2');
+        this.diff_fy_per = this.query_soft_prop('diff_fy_per');
+    } else {
+        this.diff_sh_per = this.query_prop('diff_sh_per') + ((this.buff_prop && this.buff_prop.diff_sh_per2) || 0);
+        this.diff_fy_per = this.query_prop('diff_fy_per');
+    }
     if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 
 
@@ -93,6 +110,8 @@ CHARACTER.prototype.do_attack = function (par) {
     // 在反击类钩子（on_dodge / on_dodge_over / on_parry_over / on_dodge_success / 状态钩子）里发起的攻击一律视为反击，
     // 反击不会再触发对方的反击类钩子，防止双方都装反击技能时互相无限反击
     if (this._in_react) par.is_counter = true;
+    // 被反击命中时，被动钩子照常执行（叠层、回血等），但不能在其中再发起攻击，避免互相无限反击
+    if (this._react_silent) return 0;
     var weapon = this.query_weapon();//par.no_weapon ? null :
     var attackskill = par.no_weapon ? this.noweapon_skill : this.attack_skill;
 
@@ -147,9 +166,9 @@ CHARACTER.prototype.do_attack = function (par) {
     }
     if (par.is_dodge) {
         if (par.on_dodge) par.on_dodge(target);
-    } else if (target.dodge_skill.on_dodge && !par.is_counter) {
-        // par.is_counter：本次攻击本身就是一次反击，不再触发对方的反击类钩子，防止双方互相无限反击
-        react(target, () => target.dodge_skill.on_dodge(target, this, par));
+    } else if (target.dodge_skill.on_dodge) {
+        // par.is_counter：本次攻击本身就是一次反击，对方钩子照常执行但不能再发起攻击（react 静默模式）
+        react(target, () => target.dodge_skill.on_dodge(target, this, par), par.is_counter);
     }
     if (par.is_dodge) {
         sh = 0;
@@ -403,11 +422,11 @@ CHARACTER.prototype.do_attack = function (par) {
     if (par.is_dodge && target.fight_type && this.hp > 0) {
         if (WORLD.ZHENYI) WORLD.ZHENYI.on_dodge(target);
         // 闪避成功钩子（on_dodge 名不副实：它在「没闪开」时调用）。轻功位技能与状态均可定义
-        if (target.dodge_skill && target.dodge_skill.on_dodge_success && !par.no_append_target && !par.is_counter) {
-            try { react(target, () => target.dodge_skill.on_dodge_success(target, this, par)); }
+        if (target.dodge_skill && target.dodge_skill.on_dodge_success && !par.no_append_target) {
+            try { react(target, () => target.dodge_skill.on_dodge_success(target, this, par), par.is_counter); }
             catch (e) { console.error("on_dodge_success error:", (e && e.stack) || e); }
         }
-        if (this.hp > 0 && target.hp > 0 && !par.is_counter) fire_status_hook(target, "on_dodge_success", this, par);
+        if (this.hp > 0 && target.hp > 0) fire_status_hook(target, "on_dodge_success", this, par);
         var zcCounterDodge = target.query_prop("zc_counter_dodge") || 0;
         if (zcCounterDodge > 0) {
             var cdDmg = target.gj * zcCounterDodge;
@@ -424,13 +443,13 @@ CHARACTER.prototype.do_attack = function (par) {
         }
     }
     if (this.fight_type) {
-        if (!par.no_append_target && !par.is_counter) {
+        if (!par.no_append_target) {
             target.dodge_skill.on_dodge_over
-                && react(target, () => target.dodge_skill.on_dodge_over(target, this, par));
+                && react(target, () => target.dodge_skill.on_dodge_over(target, this, par), par.is_counter);
 
             if (!par.is_dodge)
                 target.parry_skill.on_parry_over &&
-                    react(target, () => target.parry_skill.on_parry_over(target, this, par));
+                    react(target, () => target.parry_skill.on_parry_over(target, this, par), par.is_counter);
         }
         if (!par.no_append) {
             attackskill.on_attack_over && attackskill.on_attack_over(this, target, par, sh);
@@ -588,16 +607,18 @@ function fire_status_hook(ch, name, a, b, c) {
         var st = list[i];
         if (!st || typeof st[name] !== "function") continue;
         if (ch.status.indexOf(st) < 0) continue; // 前面的回调已把它移除
-        try { react(ch, () => st[name](ch, a, b, c)); }
+        try { react(ch, () => st[name](ch, a, b, c), !!(b && b.is_counter)); }
         catch (e) { console.error("status hook %s/%s error:", st.id, name, (e && e.stack) || e); }
     }
 }
 CHARACTER.fire_status_hook = fire_status_hook;
 // 执行反击类钩子期间给角色打上 _in_react 标记（见 do_attack 开头）
-function react(ch, fn) {
-    var prev = ch._in_react;
+// silent：本次触发源于对方的反击，钩子内发起的攻击直接作废（do_attack 返回 0），其余被动效果照常
+function react(ch, fn, silent) {
+    var prev = ch._in_react, prevSilent = ch._react_silent;
     ch._in_react = true;
-    try { return fn(); } finally { ch._in_react = prev; }
+    if (silent) ch._react_silent = true;
+    try { return fn(); } finally { ch._in_react = prev; ch._react_silent = prevSilent; }
 }
 
 function absorb_by_shield(ch, sh) {

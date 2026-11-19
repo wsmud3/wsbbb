@@ -113,13 +113,20 @@ function testMaxMpSave() {
     let me = mkUser("mm_a");
     const eqs = ["eq/lv5/xiaoyao/head", "eq/lv5/xiaoyao/waist"].map(p => give(me, p));
     eqs.forEach(o => me.equip(o)); me.recount();
-    const bonus = me.query_prop("max_mp");
-    assert.ok(bonus > 0, "逍遥套带 max_mp");
-    assert.strictEqual(me.max_mp, 100000 + bonus);
+    // 装备只加内力上限（limit_mp），不加最大内力（max_mp）
+    const bonus = me.query_prop("limit_mp");
+    assert.ok(bonus > 0, "逍遥套带内力上限");
+    assert.strictEqual(me.query_prop("max_mp"), 0, "逍遥套不再加最大内力");
+    assert.strictEqual(me.max_mp, 100000);
     for (let k = 0; k < 3; k++) {
         me = relog(me);
-        assert.strictEqual(me.max_mp, 100000 + bonus, "第" + (k + 1) + "次读档 max_mp 不叠加");
+        assert.strictEqual(me.max_mp, 100000, "第" + (k + 1) + "次读档 max_mp 不变");
+        assert.strictEqual(me.query_prop("limit_mp"), bonus, "内力上限加成不叠加");
     }
+    // 精炼后内力上限属性仍在（旧版迁移表会把 limit_mp 当旧 key 删掉）
+    const sl = give(me, "eq/lv5/wushen/xiedisheli");
+    assert.ok(sl.prop.limit_mp > 0); sl.level_up(3);
+    assert.ok(sl.prop.limit_mp > 30000, "精炼后内力上限保留并成长");
     // 卸下全部装备后回到基础值
     for (const o of me.equipment.slice()) if (o) me.unequip(o);
     assert.strictEqual(me.query_prop("max_mp"), 0);

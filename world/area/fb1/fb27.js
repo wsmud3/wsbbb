@@ -146,15 +146,14 @@ this.gm_on_dizi_died = function (dz) {
     if (zwj) this.gm_apply_haoling(zwj);
 };
 
-// 号令层数 → 张无忌攻击（NPC 的 gj 在模板里写死，recount 不重算，直接按基准改）
+// 号令层数 → 张无忌攻击（用状态 prop gj_per 实现，NPC 的攻击会按状态重算；不再直接改写 gj）
 this.gm_apply_haoling = function (zwj) {
     var room = zwj.environment;
     if (!room) return;
     var n = this.gm_get(room, "gm_haoling", 0);
-    if (!zwj._gm_base_gj) zwj._gm_base_gj = zwj.gj;
-    zwj.gj = Math.floor(zwj._gm_base_gj * (1 + GM_HAOLING_PER * n));
     if (n > 0) {
-        zwj.add_status({ id: "gm_haoling", name: "<hiy>号令</hiy>", desc: "六大派每死一人，教众士气便盛一分（" + n + " 层，攻击 +" + Math.round(GM_HAOLING_PER * n * 100) + "%）", duration: 0, override: 2 });
+        var per = Math.round(GM_HAOLING_PER * n * 100);
+        zwj.add_status({ id: "gm_haoling", name: "<hiy>号令</hiy>", desc: "六大派每死一人，教众士气便盛一分（" + n + " 层，攻击 +" + per + "%）", duration: 0, override: 2, prop: { gj_per: per } });
     }
 };
 

@@ -40,11 +40,13 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			me.send_room("<HIM>$N黯然神伤，掌中忽生忽灭，施展出「无中生有」！</HIM>", target);
-			var hit = me.do_attack({
+			var wz_par = {
 				target: target,
 				gj: me.gj * 2,
 				attack_msg: "<HIM>$N的掌力若有若无，虚实难辨地向$n拍去！</HIM>"
-			});
+			};
+			var hit = me.do_attack(wz_par);
+			if (wz_par.is_dodge || wz_par.is_parry) hit = 0; // 被闪避/招架不算命中
 			// 命中后偷取敌人一个正面buff（内联处理，不依赖on_attack_over）；未命中不偷取
 			if (hit > 0 && target.hp > 0 && target.status && target.status.length > 0) {
 				for (var i = target.status.length - 1; i >= 0; i--) {

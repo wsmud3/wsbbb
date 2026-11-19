@@ -7,7 +7,7 @@ this.set({
     eq_type: EQUIP_TYPE.WAIST,
     hole_count: 4,
     group_name: "mp_set_lv5",
-    prop: { fy: 355, dex: 35, max_mp: 4500, dazuo_per: 15, releasetime_per: 10 },
+    prop: { fy: 355, dex: 35, limit_mp: 4500, dazuo_per: 15, releasetime_per: 10 },
 });
 this.family = FAMILIES.XIAOYAO;
 this.group_prop = function (count) {

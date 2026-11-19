@@ -54,6 +54,36 @@ require("./zhenyi_sim/boot.js")().then(() => {
     z.recount(); z.recount();
     assert.strictEqual(z.ds, 54000, "重算后叠层保留且不重复");
 
+    // 外部改写时扣掉当时的状态加成再存为基础值（如副本脚本按当前攻击改写）
+    const w = mkNpc({ gj: 100000, fy: 50000, mz: 80000, ds: 60000, zj: 40000 });
+    w.add_status({ id: "w_deb", name: "测试", duration: 10000, downside: true, prop: { gj_per: -50 } });
+    assert.strictEqual(w.gj, 50000);
+    w.gj = 60000; w.recount();               // 脚本在减益期间改写：视为「受减益影响后的 60000」
+    assert.strictEqual(w.gj, 60000, "改写值保留");
+    w.remove_status("w_deb", true);
+    assert.strictEqual(w.gj, 120000, "减益结束后按扣除减益的新基础值恢复，不固化减益");
+
+    // 「先改字段再改回」期间发生 recount：用 with_temp_prop 不会固化
+    const t = mkNpc({ gj: 100000, fy: 50000, mz: 80000, ds: 60000, zj: 40000 });
+    t.add_status({ id: "t_buf", name: "测试", duration: 10000, prop: { gj_per: 50 } });
+    t.with_temp_prop("x", { gj_per: -30 }, function () {
+        assert.strictEqual(t.gj, 120000, "临时 -30%");
+        t.add_status({ id: "t_mid", name: "测试", duration: 10000, prop: { mz: 1 } });
+    });
+    t.remove_status("t_buf", true); t.remove_status("t_mid", true);
+    assert.strictEqual(t.gj, 100000, "临时属性与增益结束后回到模板值");
+
+    // 原型上已有记录对象（模板 on_create 里 recount 过）时，克隆实例各用各的
+    const proto = mkNpc({ gj: 200000, fy: 1, mz: 1, ds: 1, zj: 1 });
+    const A = Object.create(proto), B = Object.create(proto);
+    A.status = []; B.status = []; A.prop = {}; B.prop = {}; A.buff_prop = {}; B.buff_prop = {};
+    A.recount(); B.recount();
+    A.add_status({ id: "a_deb", name: "测试", duration: 10000, downside: true, prop: { gj_per: -50 } });
+    B.recount();
+    A.remove_status("a_deb", true);
+    assert.strictEqual(A.gj, 200000, "实例间不共享基础值");
+    assert.strictEqual(B.gj, 200000);
+
     console.log("test_npc_recount: all passed");
     process.exit(0);
 }).catch(e => { console.error(e); process.exit(1); });

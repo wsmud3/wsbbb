@@ -7,7 +7,7 @@ this.set({
     eq_type: EQUIP_TYPE.HEAD,
     hole_count: 3,
     group_name: "mp_set_lv4",
-    prop: { fy: 248, dex: 27, per: 2, max_mp: 3000 },
+    prop: { fy: 248, dex: 27, per: 2, limit_mp: 3000 },
 });
 this.family = FAMILIES.XIAOYAO;
 this.group_prop = function (count) {

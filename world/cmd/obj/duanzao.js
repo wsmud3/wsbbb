@@ -9,7 +9,7 @@
 	ds: { name: "躲闪", category: 0, desc: "提升躲闪" },
 	zj: { name: "招架", category: 0, desc: "提升招架" },
 	max_hp: { name: "气血上限", category: 0, desc: "提升气血上限" },
-	max_mp: { name: "内力上限", category: 0, desc: "提升内力上限" },
+	limit_mp: { name: "内力上限", category: 0, desc: "提升内力上限" },
 	// 后天属性 (category 1)
 	str: { name: "臂力", category: 1, desc: "提升臂力" },
 	con: { name: "根骨", category: 1, desc: "提升根骨" },
@@ -62,7 +62,7 @@
 
 	this.WORD_BASE = {
 	gj: 70, fy: 70, mz: 70, ds: 70, zj: 70,
-	max_hp: 1400, max_mp: 1400,
+	max_hp: 1400, limit_mp: 1400,
 	str: 15, con: 15, dex: 15, int: 15,
 	gj_per: 3, fy_per: 3, mz_per: 3, ds_per: 3, zj_per: 3,
 	hp_per: 2,
@@ -133,7 +133,8 @@
 	this.KEY_MIGRATION = {
 		bj_sh: 'add_bjsh_per',
 		limit_hp: 'max_hp',
-		limit_mp: 'max_mp',
+		// 「内力上限」词条：装备只加内力上限（limit_mp），不加最大内力（max_mp）。旧档里写成 max_mp 的词条迁回 limit_mp
+		max_mp: 'limit_mp',
 		ignore_fy: 'diff_fy_per',
 		final_damage: 'add_sh_per',
 		// 旧版锻造词条用了引擎不读取的 key，映射到实际生效的属性

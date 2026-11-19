@@ -18,7 +18,9 @@ this.enter = function (me, arg) {
         }
     }
     var str = ['{"type":"dialog","dialog":"score",'];
-    str.push('id:"');\nstr.push(target.id);\nstr.push("\",add_sh:\"");
+    str.push('id:"');
+    str.push(target.id);
+    str.push("\",add_sh:\"");
     str.push(parseInt((target.query_soft_prop ? target.query_soft_prop("add_sh_per") : target.query_prop("add_sh_per")) * 100) / 100);
     str.push("%\",diff_fy:\"");
     str.push(parseInt(target.diff_fy_per * 100) / 100);
@@ -72,4 +74,6 @@ this.enter = function (me, arg) {
     }
     str.push('",downside_per:"');
     str.push(target.query_prop("diff_downside_per"));
-    str.push('%"}');\nme.send(str.join(""));\n}
+    str.push('%"}');
+    me.send(str.join(""));
+}

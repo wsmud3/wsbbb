@@ -92,13 +92,10 @@ this.pfm = {
 																				for (var pkey in sk.pfm) {
 																								var pfm = sk.pfm[pkey];
 																								if (pfm.enable_skill !== "force" && pfm.use_type !== 2) {
-																												var old_gj = me.gj;
-																												var old_mz = me.mz;
-																												me.gj = parseInt(me.gj * 0.7);
-																												me.mz = parseInt(me.mz * 0.7);
-																												pfm.use(me, target, me.query_skill(sk.id));
-																												me.gj = old_gj;
-																												me.mz = old_mz;
+																												// 施展期间攻击、命中按 70% 计（临时状态，不直接改写字段）
+																												me.with_temp_prop("taiji2_copy", { gj_per: -30, mz_per: -30 }, function () {
+																																pfm.use(me, target, me.query_skill(sk.id));
+																												});
 																												break;
 																								}
 																				}

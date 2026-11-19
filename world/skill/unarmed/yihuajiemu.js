@@ -44,11 +44,10 @@ function find_status(ch, id) {
 }
 this.on_parry_pfm = function (me, from, pfm, lv, sk) {
 	if (!from || from === me) return false;
+	// 只看自己的「移花」增益：护体期间对面释放的下一个绝招被化解，护体随即结束。
+	// 对方身上的「移花」减益只是单纯的减益（降躲闪、招架），与化解无关，也不在这里移除。
 	if (!find_status(me, "yihua_self")) return false;
-	var debuff = find_status(from, "yihua_debuff");
-	if (!debuff || debuff.caster_id !== me.id) return false;
 	me.remove_status("yihua_self", true);
-	from.remove_status("yihua_debuff", true);
 	me.send_room("<HIM>$N的「移花接木」气劲流转，将$n的" + pfm.name + "尽数化解于无形！</HIM>", from);
 	from.notify("<HIM>你的" + pfm.name + "被移花接木化解了！</HIM>");
 	return true;

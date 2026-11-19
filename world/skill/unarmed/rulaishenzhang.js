@@ -78,7 +78,9 @@ this.pfm = {
 			me.send_room("<hio>$N身形跃起如大鹏展翅，一掌从天而降，掌风呼啸似天雷滚滚，掌心金光凝聚如烈日陨落，正是如来神掌之「灭魔」！</hio>", target);
 			// Damage scales with defense and damage reduction
 			var bonusDmg = Math.floor(me.fy * 0.5 + me.diff_sh_per * me.gj * 0.01);
-			var hit = me.do_attack({target: target, gj: me.gj + bonusDmg, damage_msg: "<hir>$N的灭魔一掌如天罚降临，金光贯穿天地！</hir>"});
+			var mp_par = {target: target, gj: me.gj + bonusDmg, damage_msg: "<hir>$N的灭魔一掌如天罚降临，金光贯穿天地！</hir>"};
+			// 被闪避/招架不算命中（招架时 do_attack 仍可能因附加伤害返回 > 0）
+			var hit = me.do_attack(mp_par) && !mp_par.is_dodge && !mp_par.is_parry;
 			// 命中后昏迷：引擎标准昏迷状态（is_faint，受免控与减益抗性影响），最多 10 秒。
 			// 原先用 prop busy:999999，实际是给目标加了「使别人忙乱 +999 秒」的属性。
 			if (hit && target && target.hp > 0) {

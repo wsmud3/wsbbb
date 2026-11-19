@@ -70,8 +70,8 @@ assert.ok(checkobj.includes('obj.path === "eq/cp"') && !checkobj.includes("obj.w
     "普通装备不能仅因带词条就获得自制装备重铸入口");
 assert.ok(duanzao.includes("ignore_fy: 'diff_fy_per'") && duanzao.includes("final_damage: 'add_sh_per'") &&
     duanzao.includes("bj_sh: 'add_bjsh_per'") && duanzao.includes("limit_hp: 'max_hp'") &&
-    duanzao.includes("limit_mp: 'max_mp'"),
-    "五类旧词条必须全部映射到等效的现行词条");
+    duanzao.includes("max_mp: 'limit_mp'") && !duanzao.includes("limit_mp: 'max_mp'"),
+    "五类旧词条必须全部映射到等效的现行词条（内力上限词条为 limit_mp：装备只加内力上限，不加最大内力）");
 assert.ok(wordStone.includes("duanzao.KEY_MIGRATION[prop_key]") && wordStone.includes('this.path = path + "#" + prop_key'),
     "旧词条石必须在加载时归一为现行词条石");
 

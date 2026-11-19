@@ -190,6 +190,7 @@ FOLLOWER.REPLACE = function (me, old, npc) {
 
 
     old.prop = {};
+    old.buff_prop = {}; // 下面会对每个状态重新 change_buff，buff_prop 不清空会翻倍
     old._group_grants = {};
     old.init();
     if (old.status) {

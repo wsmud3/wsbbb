@@ -43,6 +43,11 @@ CHARACTER.soft_cap = function (v) {
 };
 CHARACTER.SOFT_CAP_EXTRA = { diff_fy_per: "diff_fy_per2" };
 CHARACTER.prototype.query_soft_prop = function (name) {
+    // 终伤的「硬减」（add_sh_hard，如长生诀·震慑）在软上限折算之后直接扣除，本身不参与折算
+    if (name === "add_sh_per") return this._query_soft_prop(name) - (this.query_prop("add_sh_hard") || 0);
+    return this._query_soft_prop(name);
+};
+CHARACTER.prototype._query_soft_prop = function (name) {
     var total = this.query_prop(name);
     if (!this.soft_cap_props || !CHARACTER.SOFT_CAP_PROPS[name]) return total;
     if (CHARACTER.SOFT_CAP_EXTRA[name]) total += this.query_prop(CHARACTER.SOFT_CAP_EXTRA[name]);

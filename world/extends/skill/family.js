@@ -474,11 +474,15 @@ FAMILY.prototype.init_dadizi = function (npc, me) {
             npc.equipment[obj.eq_type] = obj;
         }
     }
-    npc.max_hp = npc.hp = npc.max_hp * 2;
+    var dadizi_hp = (me.max_hp || 0) * 2;
+    npc.max_hp = npc.hp = dadizi_hp;
     npc.age = me.query_age();
+    npc.soft_cap_props = true; // 镜像按玩家规则折算软上限
     npc.clear_prop();
     npc.init();
     npc.recount();
+    // init() 会把装备 max_hp 再加一遍，按「本人 max_hp × 2」还原
+    if (dadizi_hp > 0) npc.max_hp = npc.hp = dadizi_hp;
     npc.auto_skills = null;
     npc.environment && npc.environment.item_changed(npc, true);
     this.is_init_first = true;

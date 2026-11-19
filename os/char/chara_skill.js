@@ -179,6 +179,14 @@ CHARACTER.prototype.query_used_skill = function (skname) {
 }
 // 战斗中的短期记录（如「上一个绝招」）：只放在内存里，带过期时间，不进存档。
 // temp 即使带过期时间也会随存档写盘，这类记录不应持久化（小无相功的 copy_pfm_* 除外，那是有意存档的）。
+// 临时属性：在 fn 执行期间给自己挂一个承载 prop 的临时状态（经 recount 生效，玩家/NPC 通用），结束即移除。
+// 用来替代「直接改写 gj/fy 等字段再改回」的写法——那种写法在执行中途发生 recount 时会把临时值固化成 NPC 的基础值。
+CHARACTER.prototype.with_temp_prop = function (key, prop, fn) {
+    var sid = "_tmp_" + key;
+    this.add_status({ id: sid, name: "", desc: "", duration: 60000, no_diff: true, override: 2, prop: prop });
+    try { return fn(); }
+    finally { this.remove_status(sid, true); }
+};
 CHARACTER.prototype.set_mem = function (name, value, time) {
     if (!this._mem) Object.defineProperty(this, "_mem", { value: {}, writable: true, enumerable: false });
     this._mem[name] = { v: value, e: time ? Date.now() + time : 0 };

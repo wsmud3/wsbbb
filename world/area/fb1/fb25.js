@@ -67,27 +67,13 @@ this.hmy_key = function (room) {
 this.hmy_get = function (room, k, d) { return room.query_temp(this.hmy_key(room), k, d); };
 this.hmy_set = function (room, k, v) { room.set_temp(this.hmy_key(room), k, v); };
 
-// 东方不败狂暴 + 鬼魅。NPC 的 gj/ds/mz 在模板里写死，recount 不会按 *_per 重算，
-// 所以直接改数值、30 秒后还原（状态只用于显示和攻速，gjsd 每次 recount 都会重算）。
+// 东方不败狂暴 + 鬼魅：攻击 +60%、闪避 +50%、命中 +20%，持续 30 秒。
+// 用状态 prop 实现（NPC 的五项属性现在会按状态重算），不再直接改写数值，避免把当时的增减益固化进基础值。
 this.hmy_kuangbao = function (df) {
     if (!df || df.hp <= 0) return;
-    if (!df._hmy_base) df._hmy_base = { gj: df.gj, ds: df.ds, mz: df.mz };
-    var b = df._hmy_base;
-    df.gj = Math.floor(b.gj * 1.6);
-    df.ds = Math.floor(b.ds * 1.5);
-    df.mz = Math.floor(b.mz * 1.2);
-    if (df._hmy_kb_timer) clearTimeout(df._hmy_kb_timer);
-    df._hmy_kb_timer = df.call_out(function () {
-        this._hmy_kb_timer = null;
-        if (!this._hmy_base) return;
-        this.gj = this._hmy_base.gj;
-        this.ds = this._hmy_base.ds;
-        this.mz = this._hmy_base.mz;
-        if (this.hp > 0 && this.environment && this.environment.send_room)
-            this.environment.send_room("<hiy>东方不败眼中血色渐退，狂暴与鬼魅身法都消散了。</hiy>");
-    }, 30000);
-    df.add_status({ id: "hmy_kuangbao", name: "<hir>狂暴</hir>", desc: "攻击暴涨，悍不畏死", duration: 30000, override: 2, prop: { gjsd: 1200 } });
-    df.add_status({ id: "hmy_guimei", name: "<hiw>鬼魅</hiw>", desc: "身法快如鬼魅，难以捉摸", duration: 30000, override: 2 });
+    df.add_status({ id: "hmy_kuangbao", name: "<hir>狂暴</hir>", desc: "攻击暴涨，悍不畏死", duration: 30000, override: 2, prop: { gjsd: 1200, gj_per: 60 },
+        finish_msg: "<hiy>东方不败眼中血色渐退，狂暴与鬼魅身法都消散了。</hiy>" });
+    df.add_status({ id: "hmy_guimei", name: "<hiw>鬼魅</hiw>", desc: "身法快如鬼魅，难以捉摸", duration: 30000, override: 2, prop: { ds_per: 50, mz_per: 20 } });
     if (df.environment && df.environment.send_room)
         df.environment.send_room("<hir>杨莲亭倒在血泊之中，东方不败厉啸一声，双目尽赤——狂暴！鬼魅身法随之展开！</hir>");
 };

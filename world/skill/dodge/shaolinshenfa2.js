@@ -33,7 +33,7 @@
 	var lv = me.query_skill("shaolinshenfa2", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 	if (!par.is_dodge && !me.query_temp("yiwei_fy")) {
 									me.add_status({
-				id: "dodge",
+				id: "yiwei_passive", // 与绝招「一苇渡江」（id dodge）分开，避免同 id 不同 override 互相挤掉
 				name: "一苇渡江",
 				desc: "一苇渡江之卸力诀，增加你的防御",
 				prop: {

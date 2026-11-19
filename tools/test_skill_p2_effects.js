@@ -49,12 +49,13 @@ async function main() {
         const g0 = a.gjsd; P("kuangfengkuaidao", "pfm1").use(a, b, 1000);
         assert.ok(st(a, "kuangfeng21")); assert.ok(a.gjsd < g0, g0 + "→" + a.gjsd);
     });
-    check("九阴白骨爪·夺命：命中后昏迷 3+lv*5/1000 秒；高阶说明写出 8 秒上限", () => {
+    check("九阴白骨爪·夺命：命中后使敌人无法闪避（不昏迷），时长 3+lv*5/1000 秒；高阶说明写出 8 秒上限", () => {
         const [a, b] = pair(); spy(a, true);
         P("jiuyinbaiguzhao", "duo").use(a, b, 1000);
-        assert.ok(b.is_faint > 0 && st(b, "faint").duration === 8000);
+        assert.ok(!b.is_faint, "一阶夺命不昏迷");
+        assert.ok(st(b, "duoming") && st(b, "duoming").duration === 8000 && st(b, "duoming").prop.ds_per <= -90, "无法闪避 8 秒");
         const [c, d] = pair(); spy(c, false);
-        P("jiuyinbaiguzhao", "duo").use(c, d, 1000); assert.ok(!d.is_faint, "未命中不昏迷");
+        P("jiuyinbaiguzhao", "duo").use(c, d, 1000); assert.ok(!st(d, "duoming"), "未命中不生效");
         assert.ok(P("jiuyinbaiguzhao2", "po").query_desc(a, 5000).indexOf("8秒") >= 0);
     });
     check("金蛇狂舞：200% 伤害，命中后忙乱 6 秒", () => {

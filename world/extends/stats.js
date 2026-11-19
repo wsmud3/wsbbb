@@ -41,9 +41,12 @@ STATS.loadTopUser = function (data, npc) {
     }
     npc.userid = data.userid;
     npc.temp = data.temp;
+    npc.soft_cap_props = true; // 镜像按玩家规则折算软上限
     npc.clear_prop();
     npc.init();
     npc.recount();
+    // 快照的 max_hp 已含装备加成，init() 会把装备 max_hp 再加一遍（NPC recount 不重算 max_hp），按快照值还原
+    if (data.max_hp > 0) { npc.max_hp = data.max_hp; if (npc.hp > npc.max_hp) npc.hp = npc.max_hp; }
 }
 STATS.checkStats = function (player) {
     this.updateScore(player);

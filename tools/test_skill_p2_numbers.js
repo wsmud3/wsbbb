@@ -50,8 +50,12 @@ async function main() {
         SKILL.get("changshengjue").on_new_enemy(a, b);
         const st = statusOf(b, "changsheng_zhenshe");
         assert.ok(st && st.downside === false && !st.no_clear);
-        assert.deepStrictEqual(st.prop, { add_sh_per: -25 });
-        assert.strictEqual(b.query_prop("add_sh_per") - s0, -25);
+        assert.deepStrictEqual(st.prop, { add_sh_hard: 25 });
+        assert.strictEqual(b.query_prop("add_sh_per"), s0, "不改终伤本身（不参与软上限）");
+        // 硬减：在软上限折算之后整额扣除——例如折算后 97%，震慑 25 → 72%
+        b.add_status({ id: "t_ash", name: "测试", duration: 10000, prop: { add_sh_per: 150 } });
+        const capped = b._query_soft_prop("add_sh_per");
+        assert.ok(Math.abs(b.query_soft_prop("add_sh_per") - (capped - 25)) < 1e-9, "软上限后再减 25");
         assert.ok(/最终伤害降低25%/.test(SKILL.get("changshengjue").query_enable_prop(1000).force.desc));
     });
     check("九阴神功被动：每层 1%", () => {
@@ -169,11 +173,12 @@ async function main() {
     });
     check("乱拳：最后一拳只无视 150 点防御；左右互搏再次施展上一个绝招", () => {
         const [a, b] = pair({ kongmingquan: "unarmed" }, 1000);
-        b.fy = 1000; const seen = [];
+        b.recount(); const f0 = b.fy; const seen = [];
         stubAttack(a, p => { seen.push(b.fy); return 1; });
         SKILL.get("kongmingquan").pfm.pfm1.use(a, b, 1000);
-        assert.deepStrictEqual(seen, [1000, 1000, 1000, 1000, 1000, 850]);
-        assert.strictEqual(b.fy, 1000, "打完复原");
+        // 最后一拳期间目标挂临时状态防御 -150（经 recount 生效，不直接改写 fy）
+        assert.deepStrictEqual(seen, [f0, f0, f0, f0, f0, f0 - Math.round(150 * (100 + b.query_prop("fy_per")) / 100)]);
+        assert.strictEqual(b.fy, f0, "打完复原");
         assert.ok(!stubAttack(a, [1]).some(c => c.diff_fy));
         // 左右互搏：上一招为罗汉伏虎
         a.set_mem("sk/last_pfm_id", "fuhuquan/zhen", 30000); a.set_mem("sk/last_pfm_lv", 600, 30000);

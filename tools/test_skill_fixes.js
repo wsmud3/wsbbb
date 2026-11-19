@@ -111,7 +111,7 @@ async function main() {
     });
 
     // ---------- 7. 移花接木 ----------
-    check("移花接木：无移花时绝招照常生效；对带减益的敌人化解下一招后双方移花结束", () => {
+    check("移花接木：无移花时绝招照常生效；移花增益期间化解对方下一招后增益结束，减益保留", () => {
         const a = mkUser("yh_a"), b = mkUser("yh_b");
         learn(a, { yihuajiemu: "parry" }, 1000);
         learn(b, { tianshanzhang: null }, 1000);
@@ -127,15 +127,18 @@ async function main() {
         assert.ok(statusOf(a, "yihua_self") && statusOf(b, "yihua_debuff"));
         assert.strictEqual(b.use_pfm(a, pfm, 100, "unarmed"), true, "被化解仍算释放（扣内力）");
         assert.strictEqual(pfm.used, 1, "下一招被化解");
-        assert.ok(!statusOf(a, "yihua_self") && !statusOf(b, "yihua_debuff"), "双方移花立即结束");
+        assert.ok(!statusOf(a, "yihua_self"), "化解后自身移花增益立即结束");
+        assert.ok(statusOf(b, "yihua_debuff"), "对方的移花减益是单纯减益，不随化解移除");
         assert.strictEqual(b.use_pfm(a, pfm, 100, "unarmed"), true);
         assert.strictEqual(pfm.used, 2, "之后的绝招照常生效");
-        // 3) 有增益但对方没有减益：照常
+        // 3) 护体仍在、对方减益已被驱散：仍化解下一招（护体期间生效，不依赖对方减益），护体随即结束
         SKILL.get("yihuajiemu").pfm.pfm1.use(a, b, 1000);
         b.remove_status("yihua_debuff", true);
         b.use_pfm(a, pfm, 100, "unarmed");
-        assert.strictEqual(pfm.used, 3, "不带移花减益的敌人不受影响");
-        assert.ok(statusOf(a, "yihua_self"), "增益保留");
+        assert.strictEqual(pfm.used, 2, "护体期间对方减益已消失也照样化解");
+        assert.ok(!statusOf(a, "yihua_self"), "化解后护体结束");
+        b.use_pfm(a, pfm, 100, "unarmed");
+        assert.strictEqual(pfm.used, 3, "护体结束后照常生效");
         assert.ok(!a.query_temp("yihua_block"), "不再写存档 temp");
     });
     check("移花接木：玩家手动 pfm 分派与自动出招一致（=== true 才化解）", () => {

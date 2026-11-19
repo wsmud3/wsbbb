@@ -216,6 +216,13 @@ const tests = {
         assert.ok(!o.prop.bj_resist_per && !o.prop.ignore_busy_per);
         const dz = WORLD.COMMANDS.duanzao;
         assert.ok(dz.PROPS.diff_bj_per && !dz.PROPS.bj_resist_per);
+        // 「内力上限」词条：旧档写成 max_mp（最大内力）的迁回 limit_mp（内力上限）
+        const o2 = OBJ.CREATE("eq/cp#cloth");
+        o2.load_db(["eq/cp#cloth", "cpx2", 0, "custom", "words", ["max_mp", 2, "limit_mp", 1]]);
+        o2.on_load(me);
+        assert.deepStrictEqual(o2.words.map(w => w.key), ["limit_mp", "limit_mp"]);
+        assert.ok(o2.prop.limit_mp > 0 && !o2.prop.max_mp, "装备只加内力上限");
+        assert.ok(dz.PROPS.limit_mp && !dz.PROPS.max_mp);
     },
     "套装：三件档与五件档累计；不同门派不凑件；登录后一致"() {
         let me = mkUser("grp1");

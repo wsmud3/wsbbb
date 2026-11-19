@@ -25,7 +25,8 @@ this.query_enable_prop = function (lv) {
 // 每个新敌人进战时施加震慑
 this.on_new_enemy = function (me, target) {
 				if (target && target.hp > 0) {
-								// 降低敌人最终伤害 15%，长生诀每 100 级多降 1%。downside:false、无 no_clear 为有意设计（避开负面抗性）
+								// 降低敌人最终伤害 15%，长生诀每 100 级多降 1%。downside:false、无 no_clear 为有意设计（避开负面抗性）。
+								// 用 add_sh_hard「硬减」：在对方终伤经软上限折算之后再整额扣除，不受软上限影响（红技能特例）
 								var zs = 15 + Math.floor(me.query_skill("changshengjue", 0) / 100);
 								target.add_status({
 												id: "changsheng_zhenshe",
@@ -35,7 +36,7 @@ this.on_new_enemy = function (me, target) {
 												downside: false,
 												override: 2,
 												only_combat: true,
-												prop: { add_sh_per: -zs },
+												prop: { add_sh_hard: zs },
 								}, me);
 				}
 };

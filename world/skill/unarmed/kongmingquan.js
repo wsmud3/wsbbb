@@ -51,11 +51,10 @@ this.pfm = {
 				var opts = { target: target, gj: me.gj, mz: me.mz };
 				if (i === 5 && allHit) {
 					// 按说明最后一拳无视对方 150 点防御（原先 diff_fy=150 被当成百分比，等于无视全部防御和免伤）。
-					// 引擎没有「无视固定防御」的参数，这一拳期间临时把目标防御压低 150 点，打完复原。
-					var fy0 = target.fy, fy1 = Math.max(0, fy0 - 150);
-					target.fy = fy1;
-					try { if (!me.do_attack(opts)) allHit = false; }
-					finally { if (target.fy === fy1) target.fy = fy0; }
+					// 引擎没有「无视固定防御」的参数，这一拳期间给目标挂临时状态防御 -150，打完移除（不直接改写 fy，避免固化进 NPC 基础值）。
+					target.with_temp_prop("luanquan_fy", { fy: -150 }, function () {
+						if (!me.do_attack(opts)) allHit = false;
+					});
 				} else if (!me.do_attack(opts)) allHit = false;
 			}
 			me.end_attack(target);
@@ -85,16 +84,14 @@ this.pfm = {
 			var per = 75 + Math.floor(lv / 100);
 			if (lastPfm) {
 				// 按说明：再次使用之前的绝招，效果为自身攻击的 per%——施展期间临时把攻击力按比例压低
-				var gj0 = me.gj;
-				me.gj = Math.floor(gj0 * per / 100);
 				me._zuoyou_hubo = true; // 防重入（如上一招本身又去调用别的绝招）
 				try {
-					me.send_room("<HIY>$N右手一翻，竟又使出了「" + lastPfm.name + "」！</HIY>", target);
-					lastPfm.use(me, target, me.query_mem("sk/last_pfm_lv") || lv);
+					me.with_temp_prop("zuoyou_gj", { gj_per: per - 100 }, function () {
+						me.send_room("<HIY>$N右手一翻，竟又使出了「" + lastPfm.name + "」！</HIY>", target);
+						lastPfm.use(me, target, me.query_mem("sk/last_pfm_lv") || lv);
+					});
 				} finally {
 					me._zuoyou_hubo = false;
-					// 玩家按属性重算攻击力（保留施展中新得的增益）；NPC 的攻击力是模板固定值，直接复原
-					if (me.is_player) me.recount(); else me.gj = gj0;
 				}
 			} else {
 				me.do_attack({

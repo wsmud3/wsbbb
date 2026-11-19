@@ -15,6 +15,8 @@ this.on_use = function (me) {
         return me.notify_fail('这颗丹药在你死亡的时候才会起作用。');
         else {
             me.clear_status();
+
+            if (me.restore_item_buffs) me.restore_item_buffs();
             me.hp = me.max_hp;
             me.mp = me.max_mp;
             me.notify('{type:"die",relive:true}');

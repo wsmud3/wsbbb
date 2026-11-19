@@ -76,6 +76,8 @@ this.enter = function (me, sk, pfmid) {
     if (is_ref) lv = parseInt(lv / 2);
     var pfm_mp = pfm.query_mp(me, lv);
     if (WORLD.ZHENYI) pfm_mp = WORLD.ZHENYI.pfm_cost(me, pfm, sp_skill, pfm_mp);
+    // 可取消型绝招再次使用时不消耗内力，先于内力检查处理（下方原位置的调用保留为兜底）
+    if (pfm.try_cancel && pfm.try_cancel(me, lv) === true) return;
     if (me.mp < pfm_mp) {
         return me.notify("你的内力不够，无法使用" + name);
     }
