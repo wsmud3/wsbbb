@@ -68,6 +68,11 @@ var qihuan_link_valid = function (me) {
 	return false;
 };
 
+// 幻魔身法时长：同凌波微步，lv×10 毫秒，最短 3 秒、最长 10 秒
+var huanmo_duration = function (lv) { return Math.max(3000, Math.min(parseInt((lv || 0) * 10), 10000)); };
+// 幻魔身法是否生效：以状态为准（状态不存档，下线即失效）
+var huanmo_active = function (me) { return me.query_status && me.query_status("busiyinfa_huanmo") > 0; };
+
 // 幻魔身法：随机触发已装备攻击技能
 var huanmo_trigger_pfm = function (me, target) {
 	var cd = me.query_temp("busiyinfa_huanmo_trigger", 0);
@@ -113,7 +118,7 @@ this.on_dodge_success = function (me, from, par) {
 	}
 
 	// 幻魔身法状态下额外触发随机技能
-	if (me.query_temp("busiyinfa_huanmo")) {
+	if (huanmo_active(me)) {
 		huanmo_trigger_pfm(me, from);
 	}
 };
@@ -125,19 +130,9 @@ this.on_damage = function (me, from, sh, ctx) {
 	var isReflect = ctx && ctx.kind === "reflect"; // 反震/反伤来的伤害：照常化解，但不再反击
 	if (sh <= 0) return sh;
 
-	// 幻魔身法：绝对闪避
-	if (me.query_temp("busiyinfa_huanmo")) {
-		var counterDmg = me.gj * 0.6;
-		if (isReflect) return 0;
-		var result = from ? from.damage(counterDmg, me, 0, { kind: "reflect" }) : 0;
-		if (result > 0 && from) {
-			me.send_combat("<him>$N身形一晃，幻影反手一击，造成" + Math.floor(result) + "点伤害。</him>\n", from);
-		}
-		if (from && from.hp > 0) {
-			huanmo_trigger_pfm(me, from);
-		}
-		return 0;
-	}
+	// 幻魔身法的绝对闪避改在闪避判定里实现（见绝招 huanmo：持续期间闪避 +999999，与凌波微步相同），
+	// 这里不再按「内功位受伤后清零」处理——那种写法只在内功也装不死印法时生效，且判定上仍算被打中。
+	if (me.query_temp("busiyinfa_huanmo")) me.remove_temp("busiyinfa_huanmo"); // 清理旧版写入存档、不过期的标记
 
 	// 内力为盾：以MP抵消伤害
 	if (me.query_temp("busiyinfa_nisheng")) {
@@ -232,6 +227,8 @@ this.pfm = {
 				downside: true,
 				override: 2,
 				no_clear: true,
+				// 不受负面抵抗影响：目标负面抵抗 ≥100% 时（多数首领）会被直接拒绝挂上，图标不显示，而锁链效果照常
+				no_diff: true,
 				only_combat: true,
 				prop: {},
 				start_msg: "<hio>$N的生死二气锁定了$n，幻身降临！</hio>",
@@ -301,25 +298,23 @@ this.pfm = {
 		query_mp: function (me, level) { return 600; },
 		query_desc: function (me, lv) {
 			lv = lv || 0;
-			return "邪王独步天下的鬼魅身法。" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，并随机释放一个已装备的攻击技能（1.5秒内最多触发一次）。";
+			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，并随机释放一个已装备的攻击技能（1.5秒内最多触发一次）。";
 		},
 		use: function (me, target, lv) {
 			if (!me.skills.dodge || me.skills.dodge.enable_skill !== "busiyinfa")
 			return me.notify("幻魔身法需要将不死印法装备为轻功才可使用。");
 
 			me.remove_temp("busiyinfa_huanmo_trigger");
+			me.remove_temp("busiyinfa_huanmo");
+			// 与凌波微步相同：持续期间闪避 +999999，走正常闪避判定（闪避成功才触发幻影反击与随机技能）
 			me.add_status({
-				id: "dodge",
+				id: "busiyinfa_huanmo",
 				name: "幻魔身法",
-				duration: Math.min(parseInt(lv * 10), 30000),
+				duration: huanmo_duration(lv),
 				desc: "绝对闪避所有攻击，闪避反击并可触发随机技能",
 				override: 2,
-				prop: {},
-				on_attach: function (p) {
-					p.set_temp("busiyinfa_huanmo", 1);
-				},
+				prop: { ds: 999999 },
 				on_expire: function (p) {
-					p.remove_temp("busiyinfa_huanmo");
 					p.remove_temp("busiyinfa_huanmo_trigger");
 				},
 				start_msg: "<him>$N的身影陡然虚化，化作数道幻影——「幻魔身法」！</him>",

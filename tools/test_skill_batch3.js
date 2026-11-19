@@ -156,13 +156,16 @@ async function main() {
     });
 
     // ---------- 4. 时长上限 ----------
-    await check("时长上限：生死逆转/幻魔 30 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
+    await check("时长上限：生死逆转 30 秒、幻魔 10 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
         const lv = 10000, a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], wunianchangong: [], zhenyanshouyin: [] }, lv); learn(b, {}, 100); fight(a, b);
         const by = SKILL.get("busiyinfa").pfm;
         by.nisheng.use(a, b, lv); assert.strictEqual(statusOf(a, "force").duration, 30000);
         assert.ok(/30秒内/.test(by.nisheng.query_desc(a, lv)));
-        by.huanmo.use(a, b, lv); assert.strictEqual(statusOf(a, "dodge").duration, 30000);
-        assert.ok(/30秒内/.test(by.huanmo.query_desc(a, lv)));
+        // 幻魔身法：同凌波微步，最长 10 秒、最短 3 秒；持续期间闪避 +999999（真正闪避，不依赖内功位）
+        by.huanmo.use(a, b, lv); assert.strictEqual(statusOf(a, "busiyinfa_huanmo").duration, 10000);
+        assert.strictEqual(statusOf(a, "busiyinfa_huanmo").prop.ds, 999999);
+        assert.ok(/^邪王独步天下的鬼魅身法。10秒内/.test(by.huanmo.query_desc(a, lv)) && /3秒内/.test(by.huanmo.query_desc(a, 100)));
+        assert.ok(!a.query_temp("busiyinfa_huanmo"), "不再写会存档的标记");
         const wn = SKILL.get("wunianchangong").pfm;
         assert.ok(/^10秒内/.test(wn.pfm2.query_desc(a, lv)) && /10秒内禁止/.test(wn.pfm3.query_desc(a, lv)));
         b.max_hp = b.hp = 1e13; wn.pfm3.use(a, b, lv); assert.strictEqual(statusOf(b, "bikou").duration, 10000);
