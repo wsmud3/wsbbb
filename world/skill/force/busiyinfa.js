@@ -77,27 +77,31 @@ var huanmo_active = function (me) { return me.query_status && me.query_status("b
 var huanmo_trigger_pfm = function (me, target) {
 	var cd = me.query_temp("busiyinfa_huanmo_trigger", 0);
 	if (cd > 0) return;
+	// 候选：已装备在武器/拳脚等攻击位上的特殊技能的绝招（内功、轻功、招架位除外）。
+	// 原先只收「冷却时长 <= 0」的绝招（query_distime 返回的是冷却总长，不是剩余冷却），攻击绝招几乎都有冷却，所以从不触发；
+	// 触发后又调用 change_distime 把该绝招的冷却清零，与说明不符。现改为：随机挑一个已装备的攻击绝招免费施展一次，不影响它自己的冷却。
 	var pfms = [];
-	for (var sk_id in me.skills) {
-		var player_skill = me.skills[sk_id];
-		var sp_skill_id = player_skill.enable_skill || sk_id;
-		var sp_skill = SKILL.get(sp_skill_id);
+	for (var slot in me.skills) {
+		var player_skill = me.skills[slot];
+		if (!player_skill || !player_skill.enable_skill) continue;           // 只看已装备的位置
+		if (slot === "force" || slot === "dodge" || slot === "parry") continue;
+		var sp_skill = SKILL.get(player_skill.enable_skill);
 		if (!sp_skill || !sp_skill.pfm) continue;
 		for (var pfm_id in sp_skill.pfm) {
 			var pfm = sp_skill.pfm[pfm_id];
-			if (pfm.type === "force" || pfm.use_type === 2 || pfm.enable_skill === "force" || pfm.enable_skill === "dodge" || pfm.enable_skill === "parry") continue;
-			if (pfm.query_distime(me, player_skill.level, player_skill.is_ref) <= 0) {
-				pfms.push({ sk: sp_skill, pfm: pfm, id: sk_id, pid: pfm_id });
-			}
+			if (!pfm || typeof pfm.use !== "function") continue;
+			if (pfm.type === "force" || pfm.use_type === 2 || pfm.no_auto) continue;
+			if (pfm.enable_skill && pfm.enable_skill !== slot) continue;
+			pfms.push({ sk: sp_skill, pfm: pfm, id: sp_skill.id, pid: pfm_id });
 		}
 	}
 	if (pfms.length > 0) {
 		var chosen = pfms[Math.floor(Math.random() * pfms.length)];
 		var lv = me.query_skill(chosen.id, 0);
-		me.send_combat("<hio>$N如鬼魅般的身影触发了——" + chosen.pfm.name + "！</hio>\n", target);
-		chosen.pfm.use(me, target, lv);
-		chosen.pfm.change_distime(me, chosen.id + "/" + chosen.pid);
 		me.set_temp("busiyinfa_huanmo_trigger", 1, 1500);
+		me.send_combat("<hio>$N如鬼魅般的身影触发了——" + chosen.pfm.name + "！</hio>\n", target);
+		try { chosen.pfm.use(me, target, lv); }
+		catch (e) { console.error("huanmo_trigger_pfm error:", (e && e.stack) || e); }
 	}
 };
 
@@ -115,6 +119,8 @@ this.on_dodge_success = function (me, from, par) {
 	var result = from.damage(counterDmg, me, 0, { kind: "reflect" });
 	if (result > 0) {
 		me.send_combat("<him>$N身形一晃，幻影反手一击，造成" + Math.floor(result) + "点伤害。</him>\n", from);
+	} else {
+		me.send_combat("<him>$N身形一晃，幻影反手一击，却被$n护体真气化解。</him>\n", from);
 	}
 
 	// 幻魔身法状态下额外触发随机技能

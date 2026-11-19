@@ -155,6 +155,19 @@ async function main() {
         assert.strictEqual(statusOf(b, "busy").duration, 2000);
     });
 
+    await check("不死印法：闪避成功幻影反击；幻魔期间闪避随机施展一个已装备攻击绝招（不清冷却）", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], dugujiujian: ["sword"] }, 3000); learn(b, {}, 100); fight(a, b);
+        a.environment = b.environment = { items: [a, b], send_room() {} };
+        const msgs = []; a.send_combat = b.send_combat = t => msgs.push(String(t));
+        SKILL.get("busiyinfa").on_dodge_success(a, b, {});
+        assert.ok(msgs.some(m => /幻影反手一击/.test(m)), "幻影反击有提示");
+        SKILL.get("busiyinfa").pfm.huanmo.use(a, b, 3000);
+        a.set_temp("pfm/sword/test_cd", 1, 60000);
+        msgs.length = 0; SKILL.get("busiyinfa").on_dodge_success(a, b, {});
+        assert.ok(msgs.some(m => /触发了/.test(m)), "幻魔期间触发随机绝招");
+        assert.ok(a.query_temp("pfm/sword/test_cd"), "不清除其他冷却");
+    });
+
     // ---------- 4. 时长上限 ----------
     await check("时长上限：生死逆转 30 秒、幻魔 10 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
         const lv = 10000, a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], wunianchangong: [], zhenyanshouyin: [] }, lv); learn(b, {}, 100); fight(a, b);
