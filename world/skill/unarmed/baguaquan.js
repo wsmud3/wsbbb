@@ -55,19 +55,3 @@ this.pfm = {
 		}
 	};
 ;
-this.slots = [
-	{
-			prop: 'bgq_mz',
-			value: (lv) => 10,
-			format: (val) => {
-				return '震字诀命中增加10%';
-			},
-	},
-	{
-			prop: 'bgq_nl',
-			value: (lv) => 5,
-			format: (val) => {
-				return '震字诀附加的内力增加5%';
-			},
-	}
-	];

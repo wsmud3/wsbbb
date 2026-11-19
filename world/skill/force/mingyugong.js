@@ -14,7 +14,7 @@ this.query_enable_prop = function (lv) {
 		return {
 			force: {
 				dazuo_per: 20,
-				expend_mp_per: -20,
+				expend_mp_per: 20,
 				per: 11,
 				max_hp: lv * 10,
 				limit_mp: lv * 150,

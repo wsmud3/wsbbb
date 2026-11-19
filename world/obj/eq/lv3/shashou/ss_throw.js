@@ -6,6 +6,6 @@ this.set({
     grade: 3,
     eq_type: EQUIP_TYPE.THROWING,
     hole_count: 2,
-    prop: { gj: 95, gjsd: -500, add_sh_per: 5 }
+    prop: { gj: 95, gjsd: 500, add_sh_per: 5 }
 });
 this.family = FAMILIES.SHASHOU;

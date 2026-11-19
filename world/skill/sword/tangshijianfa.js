@@ -36,29 +36,6 @@
             sword: 100
         }
     };
-    this.slots = [
-
-        {
-            prop: 'tsjf_cz',
-            name: "躺尸·疾起",
-            count: 1,
-            query_needs: function (grade) { return [{ path: "book/up", count: 1 }]; },
-            value: (lv) => 2000,
-            format: (val) => {
-                return '躺尸出招时间减少2秒';
-            }
-        },
-        {
-            prop: 'tsjf_cd',
-            name: "躺尸·速醒",
-            count: 1,
-            query_needs: function (grade) { return [{ path: "book/up", count: 1 }]; },
-            value: (lv) => 2000,
-            format: (val) => {
-                return '躺尸躺地时间减少2秒';
-            }
-        }
-    ];
 
     this.pfm = {
         wu:

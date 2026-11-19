@@ -42,21 +42,6 @@ this.query_enable_prop = function (lv) {
     };
 }
 
-this.slots = [
-    {
-        prop: "mgqq_cc",
-        value: lv => 1,
-        format: (val) => {
-            return "连刺次数+1";
-        }
-    }, {
-        prop: "mgqq_mz",
-        value: lv => 50,
-        format: (val) => {
-            return "回马枪触发的连刺命中增加" + val + "%";
-        }
-    }
-];
 
 this.pfm = {
     lian:

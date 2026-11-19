@@ -24,22 +24,6 @@ this.learn_condition = {
         force: 30
     }
 };
-this.slots = [
-    {
-        prop: 'hl_fy',
-        value: (lv) => lv,
-        format: (val) => {
-            return '黑龙护体受到伤害减少' + val + '点';
-        },
-    },
-    {
-        prop: 'hl_sh',
-        value: (lv) => lv,
-        format: (val) => {
-            return '黑龙护体被命中时对目标造成' + val + '点伤害';
-        },
-    },
-];
 
 this.on_force_parry = function (me, target) {
     let sh = me.query_temp('sk_heilong');

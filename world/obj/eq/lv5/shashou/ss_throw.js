@@ -6,6 +6,6 @@ this.set({
     unit: "枚",
     eq_type: EQUIP_TYPE.THROWING,
     hole_count: 4,
-    prop: { gj: 280, gjsd: -500, add_sh_per: 12 },
+    prop: { gj: 280, gjsd: 500, add_sh_per: 12 },
 });
 this.family = FAMILIES.SHASHOU;

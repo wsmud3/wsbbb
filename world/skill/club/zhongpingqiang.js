@@ -31,22 +31,6 @@ this.query_enable_prop = function (lv) {
         }
     };
 }
-this.slots = [
-    {
-        prop: "zpqf_cc",
-        value: lv => 10 + lv / 500,
-        format: (val) => {
-            return "突击命中后无视对方防御" + val + "%";
-        }
-    }, {
-        prop: "zpqf_mz",
-        value: lv => 1,
-        count: 1,
-        format: (val) => {
-            return "回马枪刺出后无法躲闪";
-        }
-    }
-];
 this.pfm = {
     lian:
     {

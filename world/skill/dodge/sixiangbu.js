@@ -33,28 +33,6 @@ this.query_enable_prop = function (lv) {
         }
     };
 }
-this.slots = [
-    {
-        prop: 'sxbf_gjsd',
-        name: "四象·疾",
-        query_needs: function (grade) { return [{ path: "book/up", count: 1 }]; },
-        value: (lv) => 10,
-        count: 2,
-        format: (val) => {
-            return '四象步法攻击速度增加10%';
-        },
-    },
-    {
-        prop: 'sxbf_ds',
-        name: "四象·幻",
-        count: 1,
-        query_needs: function (grade) { return [{ path: "book/up", count: 1 }]; },
-        value: (lv) => 10,
-        format: (val) => {
-            return '四象步法躲闪增加10%';
-        },
-    },
-];
 this.pfm = {
     chan:
     {

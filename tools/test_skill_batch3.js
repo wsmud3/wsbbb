@@ -270,8 +270,9 @@ async function main() {
     });
 
     // ---------- 9. 进阶槽 ----------
-    await check("唐诗剑法 / 四象步：进阶界面与执行不报错、名字不再是 undefined", () => {
-        for (const id of ["tangshijianfa", "sixiangbu", "taizuchangquan"]) {
+    await check("进阶界面与执行不报错、名字不再是 undefined；唐诗剑法 / 四象步已无进阶", () => {
+        for (const id of ["tangshijianfa", "sixiangbu"]) assert.ok(!SKILL.get(id).slots || !SKILL.get(id).slots.length, id + " 应无进阶槽");
+        for (const id of ["taizuchangquan"]) {
             const me = mkUser(); me.skills[id] = { level: 1000, exp: 0 }; me.find_obj_bypath = () => null;
             for (const args of [[], ["ss"], ["ss", "0"], ["sword"], ["dodge"], ["unarmed"], ["0"], ["reset"]]) WORLD.COMMANDS.lingwu.enter(me, id, ...args);
             assert.ok(me.log.join("").indexOf("undefined") < 0, id + " 显示 undefined");

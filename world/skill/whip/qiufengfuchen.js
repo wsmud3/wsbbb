@@ -69,19 +69,3 @@ this.pfm = {
 //    return true;
 //}
 
-this.slots = [
-	{
-			prop: 'qffc_ml',
-			value: (lv) => 1000,
-			format: (val) => {
-				return '缠字诀忙乱时间增加1秒';
-		},
-	},
-	{
-			prop: 'qffc_mz',
-			value: (lv) => 20,
-			format: (val) => {
-				return '缠字诀命中判定下限增加20%';
-		},
-	},
-];

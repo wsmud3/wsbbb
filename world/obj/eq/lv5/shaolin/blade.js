@@ -13,6 +13,6 @@ this.set({
 this.family = FAMILIES.SHAOLIN;
 this.group_prop = function (count) {
     if (count >= 5) return { fy_per: 10, diff_sh_per: 10 };
-    if (count >= 3) return { max_hp: 100 };
+    if (count >= 3) return { max_hp: 10000 };
     return null;
 };

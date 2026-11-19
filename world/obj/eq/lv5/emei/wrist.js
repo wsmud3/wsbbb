@@ -7,7 +7,7 @@ this.set({
     eq_type: EQUIP_TYPE.WRIST,
     hole_count: 4,
     group_name: "mp_set_lv5",
-    prop: { fy: 310, mz: 180, zj: 200, bj_per: 4, bj_per2: 20 },
+    prop: { fy: 310, mz: 180, zj: 200, bj_per: 4, add_bjsh_per: 20 },
 });
 this.family = FAMILIES.EMEI;
 this.group_prop = function (count) {

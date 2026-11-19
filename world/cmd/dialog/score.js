@@ -76,7 +76,7 @@ this.enter = function (me, arg) {
     str.push(target.query_prop("dex"));
     str.push(',int_add:');
     str.push(target.query_prop("int"));
-    var limit_mp = target.limit_mp + target.query_prop("limit_mp");
+    var limit_mp = target.query_limit_mp();
     str.push(',limit_mp:');
     str.push(limit_mp);
     if (target.query_jingli) {

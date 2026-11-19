@@ -1,4 +1,17 @@
 
+CHARACTER.NPC_STATS = ["gj", "fy", "mz", "ds", "zj"];
+CHARACTER.npc_formula = {
+    gj: function (c) { return parseInt(c.str + (c.query_prop("gj") + c.query_prop("str") * c.str / 10) * (100 + c.query_prop("gj_per")) / 100); },
+    fy: function (c) { return parseInt(((c.str + c.con) / 10 + c.query_prop("fy") + c.query_prop("con") * c.con / 10) * (100 + c.query_prop("fy_per")) / 100); },
+    mz: function (c) { return parseInt((c.dex / 2 + c.query_prop("mz")) * (100 + c.query_prop("mz_per")) / 100); },
+    ds: function (c) {
+        var zcFocus = c.query_prop("zc_focus") || 0;
+        var dexDodge = c.query_prop("dex") * c.dex / 5;
+        if (zcFocus > 0) dexDodge = dexDodge * (1 + zcFocus);
+        return parseInt((c.dex / 2 + c.query_prop("ds") + dexDodge) * (100 + c.query_prop("ds_per")) / 100);
+    },
+    zj: function (c) { return parseInt((c.str / 2 + c.query_prop("zj") + c.query_prop("str") * c.str / 5) * (100 + c.query_prop("zj_per")) / 100); },
+};
 CHARACTER.prototype.recount = function () {
 
     this.gjsd = 4000 - (this.query_prop("gjsd") || 0);
@@ -9,25 +22,27 @@ CHARACTER.prototype.recount = function () {
         this.gjsd = 500;
     }
 
-    // NPC战斗属性：如果模板中已显式设定（gj>0），则保留设定值，避免后天属性被公式重复计算
-    // 未设定的NPC（如动物/简单怪物）仍由基础属性+后天加成公式计算
-    if (!(this.gj > 0)) {
-        this.gj = parseInt(this.str + (this.query_prop("gj") + this.query_prop("str") * this.str / 10) * (100 + this.query_prop("gj_per")) / 100);
-    }
-    if (!(this.fy > 0)) {
-        this.fy = parseInt(((this.str + this.con) / 10 + this.query_prop("fy") + this.query_prop("con") * this.con / 10) * (100 + this.query_prop("fy_per")) / 100);
-    }
-    if (!(this.mz > 0)) {
-        this.mz = parseInt((this.dex / 2 + this.query_prop("mz")) * (100 + this.query_prop("mz_per")) / 100);
-    }
-    if (!(this.ds > 0)) {
-        var zcFocus = this.query_prop("zc_focus") || 0;
-        var dexDodge = this.query_prop("dex") * this.dex / 5;
-        if (zcFocus > 0) dexDodge = dexDodge * (1 + zcFocus);
-        this.ds = parseInt((this.dex / 2 + this.query_prop("ds") + dexDodge) * (100 + this.query_prop("ds_per")) / 100);
-    }
-    if (!(this.zj > 0)) {
-        this.zj = parseInt((this.str / 2 + this.query_prop("zj") + this.query_prop("str") * this.str / 5) * (100 + this.query_prop("zj_per")) / 100);
+    // NPC 五项战斗属性（攻击/防御/命中/闪避/招架）：
+    // - 模板显式设定（或运行中被副本脚本直接改写）的数值作为「基础值」保留，不再用公式重复计算后天属性；
+    //   每次重算都在基础值上叠加状态（增益/减益）带来的固定值与百分比：(基础 + buff固定) × (100 + buff%) / 100。
+    // - 未设定的 NPC（动物/简单怪物）每次都按基础属性 + 全部后天加成的公式重算。
+    // 原实现在数值大于 0 后就不再重算，导致任何增益、减益对 NPC 的这五项都不生效。
+    var stats = CHARACTER.NPC_STATS;
+    if (!this._npc_base) this._npc_base = {};
+    if (!this._npc_set) this._npc_set = {};
+    var zcApplied = this._zc_applied_stats || {};
+    var bp = this.buff_prop || {};
+    for (var si = 0; si < stats.length; si++) {
+        var st = stats[si], cur = this[st];
+        var touched = cur > 0 && cur !== this._npc_set[st] && cur !== zcApplied[st];
+        if (touched) this._npc_base[st] = cur;                 // 模板值，或被脚本直接改写的新值
+        else if (!(st in this._npc_base)) this._npc_base[st] = null; // 公式模式
+        var base = this._npc_base[st], v;
+        if (base === null) v = CHARACTER.npc_formula[st](this);
+        else v = parseInt((base + (bp[st] || 0)) * (100 + (bp[st + "_per"] || 0)) / 100);
+        if (v < 0) v = 0;
+        this[st] = v;
+        this._npc_set[st] = v;
     }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
 

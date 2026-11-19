@@ -73,7 +73,7 @@ function on_check(me) {
             + WORLD.DATA.query_temp("dazuo_per", 0) + 50) / 100);
     let str = ['<hic>你正在双修中，每10秒增加', speed, "最大内力，预计"];
 
-    var max = me.limit_mp + me.query_prop("limit_mp");
+    var max = me.query_limit_mp();
     let time = Math.floor((max - me.max_mp) / speed) * 10;
 
     if (time < 60) str.push('不到1分钟');
@@ -92,7 +92,7 @@ function on_check(me) {
     me.send(str.join(""));
 }
 function do_dazuo(me) {
-    var max = me.limit_mp + me.query_prop("limit_mp");
+    var max = me.query_limit_mp();
 
     var force_skill = me.force_skill;
     if (!force_skill) return me.notify_fail("<hir>你突然忘了怎么打坐。</hir>");

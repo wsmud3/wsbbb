@@ -6,6 +6,6 @@
 					grade: 5,
 					eq_type: EQUIP_TYPE.HEAD,
 					hole_count: 5,
-					prop: { mz: 75, int: 18, lim_mp_per: 12 }
+					prop: { mz: 75, int: 18, limit_mp_per: 12 }
 	});
 	this.family = FAMILIES.SUNV;

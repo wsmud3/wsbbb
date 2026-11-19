@@ -14,7 +14,7 @@ this.set({
         int: 440,
         diff_fy_per: 19,
         mz_per: 19,
-        expend_mp_per: -16,
+        expend_mp_per: 16,
         add_sh_per: 13,
     },
 });

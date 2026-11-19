@@ -23,22 +23,6 @@ this.learn_condition = {
         force: 350
     }
 };
-this.slots = [
-    {
-        prop: 'mgxf_cd',
-        value: (lv) => 10,
-        format: (val) => {
-            return '硬气功绝招冷却时间减少10%';
-        },
-    },
-    {
-        prop: 'mgxf_zj',
-        value: (lv) => 10 + lv / 100,
-        format: (val) => {
-            return '硬气功额外增加' + val + '%招架';
-        },
-    },
-];
 
 this.pfm = {
     power:

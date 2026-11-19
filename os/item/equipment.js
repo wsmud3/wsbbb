@@ -194,7 +194,8 @@ EQUIPMENT.prototype.get_desc = function (me) {
     str.push("\n");
     this.condition_tostring(str);
 
-    if (this.desc) str.push(this.desc);
+    var desc = this.query_item_desc ? this.query_item_desc(me) : this.desc;
+    if (desc) str.push(desc);
     str.push("\n");
     if (this.prop) {
         str.push("<");

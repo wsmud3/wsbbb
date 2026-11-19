@@ -38,30 +38,6 @@ this.query_enable_prop = function (lv) {
         }
     };
 }
-this.slots = [
-    {
-        prop: 'qlz_sh',
-        value: (lv) => 100,
-        format: (val) => {
-            return '锁龙伤害增加100%';
-        },
-    },
-    {
-        prop: 'qlz_cd',
-        value: (lv) => Math.min(50, lv / 200),
-        format: (val) => {
-            return '锁龙绝招冷却时间减少' + val + '%';
-        },
-    },
-    {
-        prop: 'qlz_hm',
-        value: (lv) => 1,
-        grade: 4,
-        format: (val) => {
-            return '锁龙触发后将使对方昏迷';
-        },
-    },
-];
 this.pfm = {
     suo:
     {

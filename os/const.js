@@ -51,6 +51,7 @@ PROPERTIES = {
     mz: "命中",
     bj_per: "暴击",
     limit_mp: "内力上限",
+    limit_mp_per: "内力上限",
     gjsd: "攻击速度",
     gjsd_per: "攻击速度",
     mz_per: "命中",

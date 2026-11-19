@@ -45,15 +45,6 @@
 									}
 					};
 	}
-	this.slots = [
-					{
-									prop: 'wcz_gcd',
-									value: (lv) => 2000,
-									format: (val) => {
-													return '无常五化绝招释放时间减少2秒';
-									},
-					}
-	];
 	this.pfm = {
 					chang:
 					{

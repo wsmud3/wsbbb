@@ -9,13 +9,13 @@ this.set({
 });
 this.transable = true;
 this.on_use = function (me) {
-    if (me.max_mp >= me.limit_mp + me.query_prop("limit_mp")) {
+    if (me.max_mp >= me.query_limit_mp()) {
         return me.notify_fail("你的经脉容纳不了再多的内力了。");
     }
 
     var count = this.random(this.add_mp / 2) + this.add_mp / 2;
     // 不超过内力上限
-    var room = me.limit_mp + me.query_prop("limit_mp") - me.max_mp;
+    var room = me.query_limit_mp() - me.max_mp;
     me.add_maxmp(Math.min(count, room));
 }
 

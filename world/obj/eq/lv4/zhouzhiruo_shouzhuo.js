@@ -9,7 +9,7 @@
 					prop: {
 									fy: 160,
 									limit_mp: 2000,
-									expend_mp_per: -10,
+									expend_mp_per: 10,
 									con: 10,
 					},
 	});

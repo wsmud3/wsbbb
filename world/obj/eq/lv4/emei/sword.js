@@ -12,7 +12,7 @@ this.set({
 });
 this.family = FAMILIES.EMEI;
 this.group_prop = function (count) {
-    if (count >= 5) return { hp_per: 50, diff_fy_per: 8 };
+    if (count >= 5) return { hp_per: 8, diff_fy_per: 8 };
     if (count >= 3) return { con: 50 };
     return null;
 };

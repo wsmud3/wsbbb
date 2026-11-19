@@ -35,7 +35,7 @@ this.on_parry_over = function (me, target, par) {
 }
 this.do_force_attack = function (me, target) {
 
-    if (me.max_mp < me.limit_mp + me.query_prop("limit_mp")) {
+    if (me.max_mp < me.query_limit_mp()) {
         if (!me.query_temp("sk_beiming")) {
             me.set_temp("sk_beiming", 1, 8000);
             var gj = Math.round(me.query_skill("beimingshengong", 0) / 10);

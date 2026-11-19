@@ -42,22 +42,6 @@ this.on_force_parry = function (me, target, sh) {
     return 0;
 }
 
-this.slots = [
-
-    {
-        prop: "lxg_lt",
-        value: lv => 20 + Math.min(60, lv / 200),
-        format: (val) => {
-            return "龙吞势同时增加" + val + "%忽视防御";
-        }
-    }, {
-        prop: "lxg_xq",
-        value: lv => 20 + Math.min(60, lv / 200),
-        format: (val) => {
-            return "龙吞势同时增加" + val + "%伤害减免";
-        }
-    }
-];
 this.pfm = {
     power:
     {
