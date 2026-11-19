@@ -20,8 +20,10 @@ this.set({
     },
 });
 
+// 圣道：每次命中叠一层；叠满后继续命中刷新持续时间（原先满层后不刷新，层数逐层消退）。
 this.do_attack = function (me, target, par) {
     if (target.hp > 0) {
+        if (EQUIPMENT.refresh_full_stack(me, "wushen_xuanyuan")) return 0;
         me.add_status({
             id: "wushen_xuanyuan",
             name: "圣道",

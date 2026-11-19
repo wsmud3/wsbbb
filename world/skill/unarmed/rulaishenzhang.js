@@ -52,8 +52,9 @@ this.pfm = {
 				if (!e || e.hp <= 0) continue;
 				// Force-based damage: 20% of attacker's max_mp as bonus damage
 				var bonusDmg = Math.floor(me.max_mp * 0.2);
-				me.do_attack({target: e, damage_msg: "<hio>$N的万佛朝宗佛光普照，金光如潮水般涌过$n全身，造成内劲伤害！</hio>", gj: me.gj + bonusDmg});
-				if (me.record_damage && e.sum_damages) totalDmg += (e.sum_damages || 0);
+				// 按本次实际造成的伤害累计（原先读的是攻击者的 record_damage / 目标的历史总伤害，几乎从不成立）
+				var dealt = me.do_attack({target: e, damage_msg: "<hio>$N的万佛朝宗佛光普照，金光如潮水般涌过$n全身，造成内劲伤害！</hio>", gj: me.gj + bonusDmg});
+				if (dealt > 0) totalDmg += dealt;
 			}
 			// Heal based on damage dealt
 			if (totalDmg > 0) {
@@ -77,25 +78,25 @@ this.pfm = {
 			me.send_room("<hio>$N身形跃起如大鹏展翅，一掌从天而降，掌风呼啸似天雷滚滚，掌心金光凝聚如烈日陨落，正是如来神掌之「灭魔」！</hio>", target);
 			// Damage scales with defense and damage reduction
 			var bonusDmg = Math.floor(me.fy * 0.5 + me.diff_sh_per * me.gj * 0.01);
-			me.do_attack({target: target, gj: me.gj + bonusDmg, damage_msg: "<hir>$N的灭魔一掌如天罚降临，金光贯穿天地！</hir>"});
-			// Stun the target for 3 seconds
-			if (target && target.hp > 0) {
+			var hit = me.do_attack({target: target, gj: me.gj + bonusDmg, damage_msg: "<hir>$N的灭魔一掌如天罚降临，金光贯穿天地！</hir>"});
+			// 命中后昏迷：引擎标准昏迷状态（is_faint，受免控与减益抗性影响），最多 10 秒。
+			// 原先用 prop busy:999999，实际是给目标加了「使别人忙乱 +999 秒」的属性。
+			if (hit && target && target.hp > 0) {
 				target.add_status({
-					id: "miemo_stun",
+					id: "faint",
 					name: "昏迷",
 					desc: "被如来神掌灭魔击中，陷入昏迷",
-					duration: Math.min(parseInt(lv * 5), 5000),
+					is_faint: true,
+					duration: Math.min(parseInt(lv * 5), 10000),
 					downside: true,
-					override: 1,
-					prop: { busy: 999999 },
 					start_msg: "<hir>$N被灭魔掌力震得昏迷过去，七窍隐隐有金光溢出！</hir>",
 					finish_msg: "$N从昏迷中醒来。",
-				});
+				}, me);
 			}
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
-			return "一式从天而降的掌法，伤害附加防御50%+免伤%×攻击力，命中造成" + (Math.min(parseInt(lv * 5), 5000) / 1000) + "秒昏迷。降魔卫道，一掌灭魔。";
+			return "一式从天而降的掌法，伤害附加防御50%+免伤%×攻击力，命中造成" + (Math.min(parseInt(lv * 5), 10000) / 1000) + "秒昏迷。降魔卫道，一掌灭魔。";
 		}
 	}
 };

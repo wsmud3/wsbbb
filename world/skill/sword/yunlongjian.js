@@ -44,17 +44,31 @@
 				mp: 20,
 				use: function (me, target, lv) {
 					me.send_room("<HIW>$N剑出如龙——「云龙三现」！$w幻出三道白色剑光，如云中神龙乍现，$n只见白光闪烁，剑已及身！</HIW>", target);
+					// 装备云龙心法（内功）时，命中后令敌人躲闪降低 30%，持续 10 秒（与移花、化功等同类减益时长同量级）
+					var withXinfa = me.skills && me.skills.force && me.skills.force.enable_skill === "yunlongxinfa";
 					for (var i = 0; i < 3; i++) {
-						me.do_attack({
+						var hit = me.do_attack({
 							target: target,
-							gj: me.gj,
+							gj: Math.floor(me.gj * 150 / 100), // 按说明 150% 攻击力（原为 100%）
 							mz: Math.floor(me.mz * (150 + i * 50) / 100),
 						});
+						if (hit && withXinfa && target.hp > 0 && !target.query_status("yunlong_longyin")) {
+							target.add_status({
+								id: "yunlong_longyin",
+								name: "龙吟",
+								desc: "被云龙剑龙吟所扰，躲闪降低30%",
+								duration: 10000,
+								downside: true,
+								prop: { ds_per: -30 },
+								start_msg: "<HIW>$N被龙吟般的剑啸震得心神摇曳，身法迟滞！</HIW>",
+								finish_msg: "$N从龙吟中回过神来。",
+							}, me);
+						}
 					}
 					me.end_attack(target)
 				},
 				query_desc: function (me, lv) {
-					return "快速出剑攻击敌人出其不意，配合云龙心法如龙吟般声响减少敌人躲闪几率，每次攻击增加命中50%，对敌人造成自身攻击力150%的伤害。";
+					return "快速出剑攻击敌人出其不意，每次攻击增加命中50%，对敌人造成自身攻击力150%的伤害。配合云龙心法时剑啸如龙吟，命中后使敌人10秒内躲闪降低30%。";
 				}
 			}
 		};

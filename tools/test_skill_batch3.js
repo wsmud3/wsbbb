@@ -1,0 +1,364 @@
+"use strict";
+// 第三批技能修复回归测试（真实引擎）：未定义 lv 的 5 处钩子、小无相功冷却按玩家独立与战斗记录不存档、
+// 删除 5 门技能后旧存档安全、太极剑被动、时长上限、修罗刀层数、屠神暴伤、如来神掌昏迷、玄虚步冷却、
+// 反震/反击不递归、千蛛万毒手启用属性、进阶槽补齐。
+// 运行：node tools/test_skill_batch3.js
+const assert = require("assert");
+
+let failed = 0, passed = 0;
+async function check(name, fn) {
+    try { await fn(); passed++; }
+    catch (e) { failed++; console.error("✗ " + name + "\n   " + ((e && e.stack) || e).split("\n").slice(0, 5).join("\n   ")); }
+}
+function mkUser(id) {
+    const me = new USER();
+    me.id = id || ("t" + Math.random().toString(36).slice(2, 8)); me.name = "测试"; me.userid = 1;
+    me.gender = 1; me.age = 30; me.level = 5; me.exp = 1e10; me.pot = 1e10;
+    me.str = me.con = me.dex = me.int = 30; me.kar = 20; me.per = 20;
+    me.temp = {}; me.items = []; me.stores = []; me.books = []; me.settings = {};
+    me.equipment = [null, null, null, null, null, null, null, null, null, null, null];
+    me.skills = {}; me.custom_skills = []; me.status = [];
+    me.family = FAMILIES.NONE; me.limit_mp = 100000; me.log = [];
+    me.reg_time = Math.floor(Date.now() / 60000) - 60 * 24 * 365;
+    me.notify = function (t) { this.log.push(String(t)); return false; };
+    me.notify_fail = me.notify; me.send = me.send_room = me.send_combat = function (t) { this.log.push(String(t)); };
+    me.send_commands = function () { this.log.push([].slice.call(arguments).join("|")); };
+    me.notify_hp = function () {}; me.status_changed = function () {};
+    return me;
+}
+function learn(me, map, lv) {
+    for (const id of Object.keys(map)) { me.skills[id] = { level: lv, exp: 0 }; const bs = [].concat(map[id] || []); for (const b of bs) if (!me.skills[b]) me.skills[b] = { level: lv, exp: 0 }; }
+    for (const id in me.skills) { const s = SKILL.get(id); if (s) s.attach_prop(me, lv); }
+    for (const id of Object.keys(map)) for (const b of [].concat(map[id] || [])) me.enable_skill(b, id);
+    me.max_mp = me.limit_mp + me.query_prop("limit_mp"); me.mp = me.max_mp;
+    me.init_skill(); me.recount(); me.hp = me.max_hp;
+}
+function fight(a, b) { a.fight_type = b.fight_type = 2; a.enemy = [b]; b.enemy = [a]; }
+const statusOf = (ch, id) => (ch.status || []).find(s => s.id === id);
+
+async function main() {
+    // ---------- 0. 未定义 lv 的 5 处钩子 ----------
+    await check("长生诀·不灭：on_damage 触发不抛错并挂上不灭", () => {
+        const a = mkUser(); learn(a, { changshengjue: "force" }, 2000); a.hp = a.max_hp;
+        const ret = a.force_skill.on_damage(a, null, a.max_hp * 0.95);
+        assert.strictEqual(ret, 0);
+        assert.strictEqual(statusOf(a, "changsheng_bumie").duration, 20000);
+    });
+    await check("慈航剑典·灵动：进战触发不抛错", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { cihangjiandian: "force" }, 2000); learn(b, {}, 100); fight(a, b);
+        a.environment = b.environment = { items: [a, b] };
+        SKILL.get("cihangjiandian").on_beginfight(a, b);
+        assert.strictEqual(statusOf(a, "cihang_lingdong").duration, 20000);
+    });
+    await check("参合指：命中叠层；参合之殇 5 层以上一次清空全部层数并昏迷", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { canhezhi: "unarmed" }, 2000); learn(b, {}, 100); fight(a, b);
+        const sk = SKILL.get("canhezhi");
+        for (let i = 0; i < 6; i++) sk.on_attack_over(a, b, {}, 100);
+        assert.strictEqual(b.query_status("canhe"), 6, "层数正常叠加");
+        assert.strictEqual(statusOf(b, "canhe").duration, 20000);
+        a.do_attack = () => 1; a.end_attack = () => {};
+        sk.pfm.pfm1.use(a, b, 2000);
+        assert.strictEqual(b.query_status("canhe"), 0, "重置全部层数");
+        assert.ok(b.is_faint > 0, "昏迷");
+    });
+    await check("倚天剑法·伏魔：命中叠层不抛错", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { yitianjianfa: "sword" }, 2000); learn(b, {}, 100);
+        SKILL.get("yitianjianfa").on_attack_over(a, b, {});
+        SKILL.get("yitianjianfa").on_attack_over(a, b, {});
+        assert.strictEqual(b.query_status("fumo"), 2);
+        assert.strictEqual(statusOf(b, "fumo").duration, 10000);
+    });
+    await check("少林身法(高阶)·一苇渡江被动：被打中触发不抛错", () => {
+        const a = mkUser(); learn(a, { shaolinshenfa2: "dodge" }, 2000);
+        SKILL.get("shaolinshenfa2").on_dodge_over(a, null, { is_dodge: false });
+        assert.strictEqual(statusOf(a, "dodge").duration, 20000);
+    });
+
+    // ---------- 1. 小无相功 ----------
+    await check("小无相功：冷却/出招按玩家独立，不改共享 pfm，不泄漏全局 pfm", () => {
+        // 找一个可被模仿的 sword 绝招（grade<=4）
+        let src = null;
+        for (const id in WORLD.SKILLS) {
+            const s = WORLD.SKILLS[id]; if (!s.pfm || s.grade > 4 || s.is_custom || s.family === FAMILIES.MONSTER) continue;
+            for (const k in s.pfm) { const p = s.pfm[k]; if (p.enable_skill === "sword" && !p.no_copy && p.distime && p.distime !== 20000) { src = p; break; } }
+            if (src) break;
+        }
+        assert.ok(src, "找到可模仿的剑法绝招");
+        for (const id of ["xiaowuxianggong", "xiaowuxianggong2"]) {
+            const duo = SKILL.get(id).pfm.duo;
+            const a = mkUser(), b = mkUser(), t = mkUser(); learn(a, {}, 100); learn(b, {}, 100); learn(t, {}, 100); fight(a, t);
+            a.use_pfm = () => true; // 只验证冷却记录
+            t.set_mem("used_pfm", src.id, 20000);
+            duo.use(a, t, 1000, "sword");
+            assert.strictEqual(duo.query_distime(a, 1000), src.query_distime(a, 1000), id + " 本人冷却跟随模仿的绝招");
+            assert.strictEqual(duo.query_distime(b, 1000), 20000, id + " 其他玩家不受影响");
+            assert.strictEqual(duo.distime, 20000, id + " 共享 pfm 对象未被改写");
+            assert.strictEqual(typeof globalThis.pfm, "undefined", "没有泄漏全局 pfm");
+            assert.ok(a.query_temp("copy_pfm_sword"), id + " 无相学会的绝招照常存档");
+        }
+    });
+    await check("战斗中的绝招记录只在内存里，不写 temp（不存档）", () => {
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+        const p = { id: "x/y", name: "x", query_mp: () => 0, use() { return true; } };
+        a.use_pfm(b, p, 100, "unarmed");
+        assert.strictEqual(b.query_mem("sk/last_hit_pfm"), "x/y");
+        assert.strictEqual(a.query_mem("used_pfm"), "x/y");
+        assert.strictEqual(a.query_mem("sk/last_pfm_id"), "x/y");
+        for (const k of ["used_pfm", "sk/last_pfm_id", "sk/last_pfm_lv"]) assert.ok(!a.temp[k], k + " 不应进 temp");
+        assert.ok(!b.temp["sk/last_hit_pfm"]);
+        assert.ok(Object.keys(a).indexOf("_mem") < 0, "_mem 不可枚举");
+        const src = require("fs").readFileSync(require("path").join(__dirname, "../world/cmd/battle/pfm.js"), "utf8");
+        assert.ok(!src.split("\n").some(l => !/^\s*\/\//.test(l) && /set_temp\("(used_pfm|sk\/last_pfm_id|sk\/last_pfm_lv|sk\/last_hit_pfm)"/.test(l)));
+    });
+
+    // ---------- 2. 删除技能 ----------
+    await check("删除的 5 门技能：文件不存在、旧存档安全、引用已清", () => {
+        const gone = ["jinshezhang", "dapintianxianjue", "zhangzhongzhiguo", "tiandiqipan", "nixianmojue", "shandianwulianbian"];
+        for (const id of gone) assert.ok(!SKILL.get(id), id + " 已删除");
+        const me = mkUser("old_save");
+        me.skills = {
+            force: { level: 100, exp: 0, enable_skill: "dapintianxianjue" }, dapintianxianjue: { level: 100, exp: 0, force: true },
+            unarmed: { level: 100, exp: 0, enable_skill: "tiandiqipan" }, tiandiqipan: { level: 100, exp: 0, unarmed: true },
+            parry: { level: 100, exp: 0, enable_skill: "zhangzhongzhiguo" }, zhangzhongzhiguo: { level: 100, exp: 0, parry: true },
+            nixianmojue: { level: 100, exp: 0 }, jinshezhang: { level: 100, exp: 0 },
+            whip: { level: 100, exp: 0, enable_skill: "shandianwulianbian" }, shandianwulianbian: { level: 100, exp: 0, whip: true },
+        };
+        me.init(); me.recount();
+        for (const id of gone) assert.ok(!me.skills[id], id + " 从存档里清掉");
+        for (const b of ["force", "unarmed", "parry", "whip"]) assert.strictEqual(me.skills[b].enable_skill, null);
+        WORLD.COMMANDS.cha.render_skill(me, me, false);
+        me.on_skillchanged && me.on_skillchanged();
+        const fs = require("fs"), path = require("path");
+        const txt = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+        for (const f of ["world/npc/yz/zhubanxian.js", "world/npc/wf/jinshelangjun.js", "world/area/fb1/fb11.js", "world/npc/pub/jiaoxi.js"])
+            for (const id of gone) assert.ok(txt(f).indexOf('"' + id + '"') < 0 && txt(f).indexOf("#" + id + '"') < 0, f + " 仍引用 " + id);
+    });
+
+    // ---------- 3. 太极剑法被动 ----------
+    await check("太极剑法：命中后忙乱 2 秒，内置冷却 10 秒（对方已忙乱也进冷却）", () => {
+        const sk = SKILL.get("taijijian");
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+        b.add_status({ id: "busy", name: "忙乱", is_busy: true, duration: 500, downside: true });
+        sk.on_attack_over(a, b, {}, 100);
+        assert.ok(a.query_mem("taiji_busy_cd"), "对方已忙乱也进入冷却");
+        b.remove_status("busy", true);
+        sk.on_attack_over(a, b, {}, 100);
+        assert.ok(!statusOf(b, "busy"), "冷却中不触发");
+        a.remove_mem("taiji_busy_cd");
+        sk.on_attack_over(a, b, { is_parry: true }, 0);
+        assert.ok(!statusOf(b, "busy"), "未命中不触发");
+        sk.on_attack_over(a, b, {}, 100);
+        assert.strictEqual(statusOf(b, "busy").duration, 2000);
+    });
+
+    // ---------- 4. 时长上限 ----------
+    await check("时长上限：生死逆转/幻魔 30 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
+        const lv = 10000, a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], wunianchangong: [], zhenyanshouyin: [] }, lv); learn(b, {}, 100); fight(a, b);
+        const by = SKILL.get("busiyinfa").pfm;
+        by.nisheng.use(a, b, lv); assert.strictEqual(statusOf(a, "force").duration, 30000);
+        assert.ok(/30秒内/.test(by.nisheng.query_desc(a, lv)));
+        by.huanmo.use(a, b, lv); assert.strictEqual(statusOf(a, "dodge").duration, 30000);
+        assert.ok(/30秒内/.test(by.huanmo.query_desc(a, lv)));
+        const wn = SKILL.get("wunianchangong").pfm;
+        assert.ok(/^10秒内/.test(wn.pfm2.query_desc(a, lv)) && /10秒内禁止/.test(wn.pfm3.query_desc(a, lv)));
+        b.max_hp = b.hp = 1e13; wn.pfm3.use(a, b, lv); assert.strictEqual(statusOf(b, "bikou").duration, 10000);
+        SKILL.get("zhenyanshouyin").pfm[Object.keys(SKILL.get("zhenyanshouyin").pfm)[1]].use(a, b, lv);
+        assert.strictEqual(statusOf(a, "busi_fayin").duration, 10000);
+        assert.ok(/持续10秒/.test(SKILL.get("liumaishenjian").pfm[Object.keys(SKILL.get("liumaishenjian").pfm)[1]].query_desc(a, lv)));
+        assert.ok(/持续10秒/.test(SKILL.get("xiuluodao").pfm.liudao.query_desc(a, lv)));
+    });
+
+    // ---------- 5. 修罗刀层数 ----------
+    await check("修罗刀：炼狱攻击次数 = 1 + 流血层数；轮回按层数增伤", () => {
+        const sk = SKILL.get("xiuluodao");
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+        b.max_hp = b.hp = 1e12;
+        for (let i = 0; i < 3; i++) b.add_status({ id: "xiuluo_bleed", name: "修罗", duration: 60000, override: 1, max_count: 10, downside: true });
+        assert.strictEqual(b.query_status("xiuluo_bleed"), 3);
+        const pars = []; a.do_attack = p => { p._gj_at_call = a.gj; pars.push(p); return 1; }; a.end_attack = () => {};
+        sk.pfm.lianyu.use(a, b, 1000);
+        assert.strictEqual(pars.length, 4, "1+3 次");
+        pars.length = 0; sk.pfm.liudao.use(a, b, 1000);
+        assert.strictEqual(pars[0].gj, parseInt(pars[0]._gj_at_call * (100 + 3 * 500) / 100));
+    });
+
+    // ---------- 6. 屠神大法 ----------
+    await check("屠神大法·七杀：暴伤加成叠加在角色自身值上", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { tushendafa: "force" }, 1000); learn(b, {}, 100);
+        a.add_prop("add_bjsh_per", 50); b.hp = b.max_hp / 2;
+        const par = {}; SKILL.get("tushendafa").on_before_attack(a, b, par);
+        assert.ok(par.add_bjsh_per > 50, "包含自身 50 点 " + par.add_bjsh_per);
+        SKILL.get("tushendafa").on_attack_over(a, b, par, 0);
+    });
+
+    await check("屠神大法·七杀：终伤加成只在内存记账，旧存档残留 temp 被清掉且不再误扣", () => {
+        const sk = SKILL.get("tushendafa");
+        const a = mkUser(), b = mkUser(); learn(a, { tushendafa: "force" }, 1000); learn(b, {}, 100); b.hp = b.max_hp / 2;
+        a.temp.tushen_addsh = 80; a.temp.tushen_before = 1; a.temp.tushen = 1;   // 旧存档残留
+        const s0 = a.query_prop("add_sh_per");
+        const par = {}; sk.on_before_attack(a, b, par);
+        assert.ok(!a.temp.tushen_addsh && !a.temp.tushen_before && !a.temp.tushen, "残留 temp 已清");
+        assert.ok(a.query_prop("add_sh_per") > s0, "本次攻击有终伤加成（没有被残留 temp 卡住或误扣）");
+        sk.on_attack_over(a, b, par, 0);
+        assert.strictEqual(a.query_prop("add_sh_per"), s0, "攻击结束撤销，属性回到原值");
+        // 中途没走到 on_attack_over：下一次攻击前先撤销上次的加成，不会越叠越多
+        sk.on_before_attack(a, b, {}); a.remove_mem("tushen_before"); sk.on_before_attack(a, b, {});
+        const once = a.query_prop("add_sh_per") - s0; sk.on_attack_over(a, b, {}, 0);
+        assert.strictEqual(a.query_prop("add_sh_per"), s0); assert.ok(once > 0 && once <= 100);
+        for (const k of Object.keys(a.temp)) assert.ok(!/^tushen/.test(k) || a.temp[k] == null, "不再写 temp " + k);
+    });
+
+    // ---------- 7. 如来神掌·灭魔 ----------
+    await check("如来神掌·灭魔：命中后标准昏迷（最多 10 秒），未命中不昏迷，免控可挡", () => {
+        const p = SKILL.get("rulaishenzhang").pfm[Object.keys(SKILL.get("rulaishenzhang").pfm).find(k => SKILL.get("rulaishenzhang").pfm[k].name === "灭魔")];
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b); a.end_attack = () => {};
+        a.do_attack = () => 0; p.use(a, b, 5000); assert.ok(!statusOf(b, "faint"));
+        a.do_attack = () => 1; p.use(a, b, 5000);
+        assert.strictEqual(statusOf(b, "faint").duration, 10000); assert.ok(b.is_faint > 0);
+        assert.ok(!(b.query_prop("busy") > 0), "不再给目标加 busy 属性");
+        const c = mkUser(); learn(c, {}, 100); fight(a, c); c.add_prop("ig_control", 1); p.use(a, c, 5000);
+        assert.ok(!statusOf(c, "faint"), "免控挡住昏迷");
+    });
+
+    // ---------- 8 / 10. 反击冷却与防递归 ----------
+    await check("玄虚步：被打中反击有 5 秒内置冷却；双方都装不会互相无限反击", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { xuanxubu: "dodge" }, 1000); learn(b, { xuanxubu: "dodge" }, 1000); fight(a, b);
+        a.max_hp = a.hp = b.max_hp = b.hp = 1e12; a.ds = b.ds = 0; a.zj = b.zj = 0;
+        let n = 0; const da = a.do_attack; a.do_attack = function (p) { n++; return da.call(this, p); };
+        b.do_attack({ target: a, gj: 100, mz: 1e9 });
+        b.do_attack({ target: a, gj: 100, mz: 1e9 });
+        assert.strictEqual(n, 1, "5 秒内只反击 1 次");
+    });
+    await check("一星混元：双方都在混元之气中，反击不会互相递归", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { yixinghunyuan: "parry" }, 10000); learn(b, { yixinghunyuan: "parry" }, 10000); fight(a, b);
+        a.max_hp = a.hp = b.max_hp = b.hp = 1e12;
+        for (const c of [a, b]) c.add_status({ id: "yixinghunyuan", name: "混元之气", duration: 60000 });
+        let n = 0; for (const c of [a, b]) { const d = c.do_attack; c.do_attack = function (p) { if (++n > 200) throw new Error("递归"); return d.call(this, p); }; }
+        b.do_attack({ target: a, gj: 100, mz: 1 });
+        assert.ok(n <= 10, "攻击次数 " + n);
+    });
+    await check("九阳神功 / 阴阳九转：双方反震不递归，反震伤害不再被反震", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { jiuyangshengong: "force" }, 1000); learn(b, { jiuyangshengong: "force" }, 1000); fight(a, b);
+        a.max_hp = a.hp = b.max_hp = b.hp = 1e12;
+        const ahp = a.hp, bhp = b.hp;
+        a.damage(1000, b, 0);
+        assert.ok(b.hp < bhp, "b 被反震"); assert.ok(ahp - a.hp < 2000, "a 没有被反震回来");
+        const c = mkUser(); learn(c, { yinyangjiuzhuan: "force" }, 1000); c.set_temp("yinyang_jiuzhu", 1); fight(c, a);
+        c.max_hp = c.hp = 1e12; const a2 = a.hp, c2 = c.hp;
+        c.damage(1000, a, 0);
+        assert.ok(a.hp < a2, "a 被九烛反震");
+        assert.ok(c2 - c.hp < 2000, "九阳不会把九烛的反震再震回去");
+    });
+    await check("不死印法反击、燃木刀法反伤带 reflect 标记，九阳不会再反震", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"] }, 1000); learn(b, { jiuyangshengong: "force" }, 1000); fight(a, b);
+        a.max_hp = a.hp = b.max_hp = b.hp = 1e12; a.ds = 1e12;
+        const ahp = a.hp;
+        b.do_attack({ target: a, gj: 100, mz: 1 }); // 闪开 → 不死印法反击 b；b 的九阳不应再反震 a
+        assert.strictEqual(a.hp, ahp);
+        const r = mkUser(); learn(r, {}, 100); r.set_temp("sk_ranmu", 1000, 60000); fight(r, b); r.end_attack = () => {};
+        const rhp = r.hp; SKILL.get("ranmudao").on_parry_over(r, b, { is_parry: false });
+        assert.strictEqual(r.hp, rhp, "燃木反伤不被九阳反震");
+    });
+
+    // ---------- 11. 千蛛万毒手 ----------
+    await check("千蛛万毒手：启用属性生效", () => {
+        const e = SKILL.get("qianzhuwandushou").query_enable_prop(1000);
+        assert.strictEqual(e.unarmed.gj, 1520);
+        const a = mkUser(); learn(a, {}, 100); const g0 = a.gj;
+        learn(a, { qianzhuwandushou: "unarmed" }, 1000);
+        assert.ok(a.gj > g0);
+    });
+
+    // ---------- 9. 进阶槽 ----------
+    await check("唐诗剑法 / 四象步：进阶界面与执行不报错、名字不再是 undefined", () => {
+        for (const id of ["tangshijianfa", "sixiangbu", "taizuchangquan"]) {
+            const me = mkUser(); me.skills[id] = { level: 1000, exp: 0 }; me.find_obj_bypath = () => null;
+            for (const args of [[], ["ss"], ["ss", "0"], ["sword"], ["dodge"], ["unarmed"], ["0"], ["reset"]]) WORLD.COMMANDS.lingwu.enter(me, id, ...args);
+            assert.ok(me.log.join("").indexOf("undefined") < 0, id + " 显示 undefined");
+            for (const s of SKILL.get(id).slots) assert.ok(s.name && typeof s.query_needs === "function" && s.count >= 1);
+        }
+    });
+
+    // ---------- 追加 A~J ----------
+    await check("金蛇游身掌(dodge 版)·金龙升天：无法闪避最多 5 秒", () => {
+        const p = SKILL.get("jinsheyoushenzhang").pfm.pfm1;
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+        a.do_attack = () => 1; a.end_attack = () => {};
+        p.use(a, b, 5000); assert.strictEqual(statusOf(b, "miss").duration, 5000);
+        assert.ok(/5秒内/.test(p.query_desc(a, 5000)) && /3\.5秒内/.test(p.query_desc(a, 100)));
+    });
+    await check("阴阳九转·镇天地：每秒一跳，0 级 5 秒、每 200 级 +1 秒、最多 10 秒", () => {
+        const p = SKILL.get("yinyangjiuzhuan").pfm.zhentiandi;
+        for (const [lv, secs] of [[0, 5], [199, 5], [200, 6], [1000, 10], [5000, 10]]) {
+            const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+            p.use(a, b, lv);
+            const st = statusOf(a, "yinyang_zhentiandi_buff");
+            assert.strictEqual(st.duration, 1000); assert.strictEqual(st.duration_count, secs, "lv" + lv);
+            assert.ok(p.query_desc(a, lv).indexOf(secs + "秒内") === 0);
+        }
+    });
+    await check("无念：附加最大内力 1%", () => {
+        const a = mkUser(); learn(a, { wunianchangong: "force" }, 1000); a.max_mp = 300000; a.mp = 10;
+        SKILL.get("wunianchangong").pfm.pfm2.use(a, null, 1000);
+        assert.strictEqual(a.force_skill.do_force_attack(a, null, {}), 3000);
+    });
+    await check("松风剑法：普攻命中叠松风（上限随等级 3~6），松月无影消耗全部层数", () => {
+        const sk = SKILL.get("songfengjianfa");
+        const a = mkUser(), b = mkUser(); learn(a, { songfengjianfa: "sword" }, 600); learn(b, {}, 100); fight(a, b);
+        for (let i = 0; i < 9; i++) sk.on_attack_over(a, b, {}, 100);
+        assert.strictEqual(a.query_status("songfeng"), 5, "600 级上限 5 层");
+        sk.on_attack_over(a, b, { is_parry: true }, 0);
+        a._zy_casting = "x"; sk.on_attack_over(a, b, {}, 100); delete a._zy_casting;
+        assert.strictEqual(a.query_status("songfeng"), 5, "未命中/绝招不叠层");
+        assert.ok(!a.temp.sk_songfeng);
+        const pars = []; a.do_attack = p => { pars.push(p); return 1; }; a.end_attack = () => {};
+        sk.pfm.pfm1.use(a, b, 600);
+        assert.strictEqual(pars.length, 6, "1+5 次攻击"); assert.strictEqual(a.query_status("songfeng"), 0);
+        const c = mkUser(); learn(c, { songfengjianfa: "sword" }, 9000);
+        for (let i = 0; i < 9; i++) sk.on_attack_over(c, b, {}, 100);
+        assert.strictEqual(c.query_status("songfeng"), 6, "最多 6 层");
+        assert.ok(statusOf(c, "songfeng").only_combat);
+    });
+    await check("神照经·拳经：护盾在场时冷却 2 倍速；提前破盾剩余恢复正常", async () => {
+        const p = SKILL.get("shenzhaojing").pfm.pfm2;
+        const a = mkUser(), b = mkUser(); learn(a, { shenzhaojing: "force" }, 1000); learn(b, {}, 100); fight(a, b);
+        a.do_attack = () => 1; a.end_attack = () => {};
+        p.use(a, b, 1000);                              // 护盾 15 秒
+        a.set_temp("pfm/force/pfm2", 1, 10000);         // pfm.js 随后写入 10 秒冷却
+        await new Promise(r => setTimeout(r, 5));
+        let left = a.temp["pfm/force/pfm2"].e - Date.now();
+        assert.ok(left > 4900 && left <= 5000, "护盾期间 10 秒冷却只需 5 秒 " + left);
+        // 2 秒后破盾：已按 2 倍速走了 4 秒，冷却应剩 6 秒
+        const st = statusOf(a, "quanjing"); st.qj_t0 -= 2000;
+        a.damage(99999, null, 100);
+        left = a.temp["pfm/force/pfm2"].e - Date.now();
+        assert.ok(!statusOf(a, "quanjing")); assert.ok(left > 5900 && left <= 6000, "破盾后恢复正常速度 " + left);
+    });
+    await check("云龙剑·云龙三现：装备云龙心法时命中后降低敌人躲闪 30%", () => {
+        const p = SKILL.get("yunlongjian").pfm[Object.keys(SKILL.get("yunlongjian").pfm).find(k => SKILL.get("yunlongjian").pfm[k].name === "云龙三现")];
+        const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+        a.do_attack = () => 1; a.end_attack = () => {};
+        p.use(a, b, 1000); assert.ok(!statusOf(b, "yunlong_longyin"), "没装云龙心法不触发");
+        const c = mkUser(); learn(c, { yunlongxinfa: "force" }, 1000); fight(c, b); c.do_attack = () => 1; c.end_attack = () => {};
+        p.use(c, b, 1000); const st = statusOf(b, "yunlong_longyin");
+        assert.ok(st && st.prop.ds_per === -30 && st.duration === 10000);
+    });
+    await check("破玉拳·劈石：招架降低与防御降低数值相同", () => {
+        for (const id of ["poyuquan", "poyuquan2"]) {
+            const sk = SKILL.get(id); const p = Object.values(sk.pfm).find(x => x.name === "劈石");
+            const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
+            a.do_attack = par => { par.is_dodge = false; par.is_parry = false; return 1; }; a.end_attack = () => {};
+            p.use(a, b, 1000);
+            const st = (b.status || []).find(s => s.prop && s.prop.fy < 0);
+            assert.ok(st, id + " 挂上劈石"); assert.strictEqual(st.prop.zj, st.prop.fy, id);
+        }
+    });
+    await check("擒龙手·锁龙：我方身法按 dex1 + dex1×后天加成 比较", () => {
+        const src = require("fs").readFileSync(require("path").join(__dirname, "../world/skill/unarmed/qinlong.js"), "utf8");
+        assert.ok(/dex1 \+ dex1 \* me\.query_prop\(.dex.\)/.test(src) && /dex2 \+ dex2 \* target\.query_prop\(.dex.\)/.test(src));
+    });
+
+    console.log((failed ? "第三批技能测试失败 " : "第三批技能测试通过 ") + passed + "/" + (passed + failed));
+    process.exit(failed ? 1 : 0);
+}
+require("./zhenyi_sim/boot.js")().then(main).catch(e => { console.error(e); process.exit(1); });

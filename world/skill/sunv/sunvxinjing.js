@@ -23,6 +23,8 @@
 		};
 	}
 
+	// 容貌比较用总容貌（基础 + 装备/技能/状态加成），原先只比基础 per
+	function total_per(ch) { return ch ? (ch.per || 0) + (ch.query_prop ? ch.query_prop("per") : 0) : 0; }
 	this.pfm = {
 		faxiang: {
 			name: "玄女法相",
@@ -59,7 +61,7 @@
 			mp: 3,
 			use: function (me, target, lv) {
 				if (!target) return me.notify("你要用魅魂对付谁？");
-				if (me.per > target.per) {
+				if (total_per(me) > total_per(target)) {
 					var duration = parseInt(lv / 100) * 1000;
 					if (duration < 1000) duration = 1000;
 					if (duration > 11000) duration = 11000;
@@ -80,8 +82,9 @@
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {
-				var per = me.query_prop("per");
-				return "以容貌魅惑敌人，若自身容貌（当前" + (per || 0) + "）高于对手，则令其陷入迷魂状态" + parseInt(lv / 100) + "秒（无法普攻）。";
+				var per = total_per(me);
+				var mhSec = Math.min(Math.max(parseInt(lv / 100), 1), 11);
+				return "以容貌魅惑敌人，若自身容貌（当前" + (per || 0) + "）高于对手，则令其陷入迷魂状态" + mhSec + "秒（无法普攻）。";
 			}
 		}
 	};

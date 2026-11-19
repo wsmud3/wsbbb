@@ -55,14 +55,20 @@ this.pfm = {
 											var time = 8000 + lv * 5;
 											if (time > 200000) time = 200000;
 											let add_fy = lv * 2 + 500;
-											me.set_temp("sk_ranmu", add_fy, time);
+											// 原先只设了 temp sk_ranmu，读取它的是一阶燃木刀法（shaolin/ranmudao）的招架位钩子，
+											// 高阶燃木刀法自己从不读取，反伤从未生效。改为状态自带的被命中钩子，与装在哪个技能位无关。
 											me.add_status({
 															id: "weapon",
 															name: "真焰",
-															desc: "增加你的防御",
+															desc: "增加你的防御，被敌人命中后对其造成" + add_fy + "点伤害",
 															duration: time,
 															prop: {
 																			fy: add_fy
+															},
+															on_be_hit: function (owner, attacker) {
+																			if (!attacker || attacker === owner || attacker.hp <= 0) return;
+																			owner.send_combat("<HIR>$N的护体真焰灼伤了$n的真元！！</HIR>", attacker);
+																			attacker.damage2(add_fy, owner, { kind: "reflect" });
 															}
 											});
 							},

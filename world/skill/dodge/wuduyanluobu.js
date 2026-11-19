@@ -56,7 +56,7 @@ this.pfm = {
 			}
 		},
 		query_desc: function (me, lv) {
-			return "金蛇游身，宛若万蛇缠身，成功后使敌人忙乱6秒";
+			return "金蛇游身，宛若万蛇缠身，成功后使敌人忙乱" + (Math.min(1000 + parseInt(lv * 5), 6000) / 1000) + "秒";
 		}
 	}
 };

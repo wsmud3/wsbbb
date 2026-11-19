@@ -87,7 +87,7 @@ this.pfm = {
             me.end_attack(target);
             let dex1 = me.dex ?? 20;
             let dex2 = target.dex ?? 20;
-            let is_add = dex1 + dex2 * me.query_prop('dex') >
+            let is_add = dex1 + dex1 * me.query_prop('dex') >   // 我方身法 = 基础 + 基础×后天加成（原误写成 dex2）
             dex2 + dex2 * target.query_prop('dex');
             if (is_add) {
                 if (me.query_prop('qlz_hm')) {

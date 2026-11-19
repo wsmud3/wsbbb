@@ -85,7 +85,7 @@ this.pfm = {
 												me.end_attack(target);
 								},
 		query_desc: function (me, lv) {
-												return"快速狠辣的攻击，命中后对敌人造成你攻击力300%的伤害，在" + (3 + parseInt(lv * 5 / 1000)) + "秒内使敌人昏迷。";
+												return"快速狠辣的攻击，命中后对敌人造成你攻击力300%的伤害，在" + (Math.min(3000 + parseInt(lv * 5), 8000) / 1000) + "秒内使敌人昏迷。";
 								}
 	}, juan:
 				{

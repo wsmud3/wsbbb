@@ -58,9 +58,24 @@ this.query_enable_prop = function (lv) {
 												gj: 20 + parseInt(lv * 1.3),
 												mz: 20 + parseInt(lv * 1.2),
 												zj: 20 + parseInt(lv * 0.8),
-												desc: "攻击命中后会使敌方忙乱2秒。"
+												desc: "攻击命中后会使敌方忙乱2秒（冷却10秒）。"
 								}
 				};
+};
+// 被动：剑法攻击命中后使敌方忙乱 2 秒，内置冷却 10 秒（对方已在忙乱中也照样进入冷却）。
+// 冷却记在内存里（set_mem），不存档。
+this.on_attack_over = function (me, target, par, sh) {
+	if (!target || target.hp <= 0 || !(sh > 0) || par.is_dodge || par.is_parry) return;
+	if (me.query_mem("taiji_busy_cd")) return;
+	me.set_mem("taiji_busy_cd", 1, 10000);
+	target.add_status({
+		id: "busy",
+		name: "忙乱",
+		desc: "被太极剑意牵引，手忙脚乱",
+		is_busy: true,
+		duration: 2000,
+		downside: true,
+	}, me);
 };
 this.pfm = {
 				rao: {
@@ -85,10 +100,10 @@ this.pfm = {
 																				downside: true,
 																				desc: "你被太极剑法缠绕，无法脱身",
 																				duration: time,
-																				prop: { is_busy: 1 },
+																				is_busy: true, // 原先写在 prop 里，引擎只认状态上的 is_busy 标志
 																				start_msg: "<cyn>$n被太极剑的连绵剑气缠绕，忙乱" + (time / 1000) + "秒！</cyn>",
 																				finish_msg: "<cyn>$N终于挣脱了太极剑的缠绕。</cyn>",
-																});
+																}, me);
 																me.end_attack(target);
 												}
 								},

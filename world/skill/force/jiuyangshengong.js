@@ -11,12 +11,13 @@ this.learn_condition = {
 };
 
 // 被动反震：被命中后对敌人造成反震伤害（1000级≈5333），九阳护体期间翻倍
-this.on_damage = function (me, from, sh) {
-	if (from && from.hp > 0 && sh > 0) {
+this.on_damage = function (me, from, sh, ctx) {
+	// 反震/反伤造成的伤害不再反震（ctx.kind === "reflect"），双方都装反震内功时不会互相递归
+	if (from && from.hp > 0 && sh > 0 && !(ctx && ctx.kind === "reflect")) {
 		var lv = me.query_skill("jiuyangshengong");
 		var fz = 2000 + Math.floor(lv * 3.333);
 		if (me.query_temp("jiuyang_ht")) fz = fz * 2;
-		from.damage(fz, me);
+		from.damage(fz, me, 0, { kind: "reflect" });
 		me.send_room("<HIY>$N的九阳神功反震，" + from.name + "受到了" + fz + "点反震伤害！</HIY>");
 	}
 	return sh;
@@ -52,7 +53,7 @@ this.pfm = {
 				duration: Math.min(10000, parseInt(lv * 10)),  // 1000 级达到上限 10 秒
 				downside: false,
 				override: 2,
-				prop: { diff_sh_per: dr },
+				prop: { diff_sh_per2: dr },
 				start_msg: "<HIY>$N九阳真气护体，坚不可摧！</HIY>",
 				finish_msg: "$N的九阳护体效果消失了。",
 				on_attach: function (p) {
@@ -76,8 +77,8 @@ this.pfm = {
 		mp: 20,
 		use: function (me, target, lv) {
 			me.send_room("<HIY>$N催动九阳真气，熊熊烈焰扑向$n——「九阳真焰」！</HIY>", target);
-			me.do_attack({target: target, gj: me.gj * 1.5});
-			// 施加阳炎debuff
+			// 命中（造成伤害）后才施加阳炎debuff，与说明一致（同其他「命中后」绝招，以 do_attack 返回值判断）
+			if (!me.do_attack({target: target, gj: me.gj * 1.5})) { me.end_attack(target); return; }
 			var casterId = me.id;
 			target.add_status({
 				id: "force",

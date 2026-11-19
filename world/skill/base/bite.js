@@ -1,6 +1,7 @@
 
 this.inherits(SKILL);
 this.id = "bite";
+this.is_hidden = true; // NPC 专用（野兽），不进随机残页池
 this.name = "基本咬技";
 this.grade = 0;
 this.type = SKILL_TYPES.BASE;

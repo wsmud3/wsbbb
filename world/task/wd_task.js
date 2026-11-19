@@ -162,6 +162,7 @@ this.reward = function (me, lv) {
         if (sk.family === FAMILIES.MONSTER) continue;
         if (sk.family && sk.family !== FAMILIES.NONE) continue;
         if (sk.is_custom) continue;
+        if (sk.is_hidden) continue; // NPC 专用 / 有专门来源的技能不进随机池（与 FAMILY.query_skill 一致）
         if (target_grades.indexOf(sk.grade) !== -1) {
             skill_pool.push(skid);
         }

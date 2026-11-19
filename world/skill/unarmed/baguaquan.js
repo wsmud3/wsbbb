@@ -40,15 +40,17 @@ this.pfm = {
 			mp: 20,
 			use: function (me, target, lv) {
 				me.send_room("<HIW>$N脚踩八卦——「震字诀」！内力催发，一拳震出，势如雷霆！</HIW>", target);
-				var mp_dmg = parseInt(me.max_mp * 0.2);
+				// 进阶槽：bgq_nl 为附加内力的额外百分点，bgq_mz 为命中百分比加成（原先两项都没人读取）
+				var mp_dmg = parseInt(me.max_mp * (20 + me.query_prop("bgq_nl")) / 100);
 				me.do_attack({
 					target: target,
-					gj: me.gj + mp_dmg,
+					gj: mp_dmg, // 按说明伤害为 20%（+进阶）最大内力，不再叠加攻击力
+					mz: me.mz * (100 + me.query_prop("bgq_mz")) / 100,
 				});
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {
-				return "对敌人造成你20%最大内力的伤害。";
+				return "对敌人造成你" + (20 + (me && me.query_prop ? me.query_prop("bgq_nl") : 0)) + "%最大内力的伤害。";
 			}
 		}
 	};

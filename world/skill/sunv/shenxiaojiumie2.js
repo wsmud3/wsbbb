@@ -19,11 +19,21 @@
 		};
 	}
 
-	// Passive: +50% total damage to 麻痹 enemies (base 30% + 进阶 20%)
+	// 杖法位攻击结束：对麻痹之敌追加50%伤害（基础30%+进阶20%）；阳雷荡邪秽期间每次造成伤害附加当前内力3%（每500级+1%）的额外伤害。
+	// （阳雷原写在 on_force_over 里，而本技能只能装在杖法位，内功钩子永远不会被调用）
 	this.on_attack_over = function (me, target, par, sh) {
-		if (sh > 0 && target && target.hp > 0 && target.query_status("zidian_mabi")) {
+		if (!(sh > 0) || !target || target.hp <= 0) return;
+		if (target.query_status("zidian_mabi")) {
 			var bonus = Math.floor(sh * 0.5);
 			target.damage(bonus, me);
+		}
+		if (target.hp > 0 && me.query_status("shenxiao_yanglei2")) {
+			var mpPct = 0.03 + Math.floor(me.query_skill("shenxiaojiumie2", 0) / 500) * 0.01;
+			var ylBonus = Math.floor(me.mp * mpPct);
+			if (ylBonus > 0) {
+				target.damage(ylBonus, me);
+				me.send_combat("<HIG>阳雷迸发，额外造成" + ylBonus + "点伤害！</HIG>\n", target);
+			}
 		}
 	};
 
@@ -51,12 +61,13 @@
 						];
 					for (var i = 0; i < 5; i++) {
 							if (t.hp <= 0 || me.hp <= 0) break;
-							me.do_attack({
+							var leiSh = me.do_attack({
 							target: t,
 							gj: me.gj * 1.8,
 							attack_msg: thunderMsgs[i]
 						});
-							me.mp += Math.floor(me.gj * 1.8);
+							// 按说明：命中才回复等同于造成伤害的内力（add_mp 不会超过上限；原为不判命中直接 mp += 攻击力×1.8）
+							if (leiSh > 0) me.add_mp(Math.floor(leiSh));
 					}
 				}
 				me.send_room("<HIR>$N的天打五雷轰——五雷轰顶，群敌辟易！</HIR>");
@@ -86,12 +97,6 @@
 					prop: {},
 					start_msg: "<HIG>$N周身阳雷缠绕，杖上电光闪烁！</HIG>",
 					finish_msg: "$N的阳雷之力渐渐消散。",
-					on_attach: function (p) {
-						p.set_temp("shenxiao_yanglei2", 1);
-					},
-					on_expire: function (p) {
-						p.remove_temp("shenxiao_yanglei2");
-					},
 				});
 			},
 			query_desc: function (me, lv) {
@@ -99,24 +104,5 @@
 				var qMp = Math.floor(me.mp * mpPct);
 				return "引阳雷之力加持自身，15秒内每次造成伤害时附加当前内力" + Math.floor(mpPct * 100) + "%(" + qMp + ")的额外伤害。";
 			}
-		}
-	};
-
-	// 阳雷荡邪秽：每次攻击命中时附加内力伤害（可成长）
-	this.on_force_over = function (me, target, par, sh) {
-		if (sh > 0 && target && target.hp > 0 && me.query_temp("shenxiao_yanglei2")) {
-			var lv = me.query_skill("shenxiaojiumie2", 0);
-			var mpPct = 0.03 + Math.floor(lv / 500) * 0.01;
-			var bonus = Math.floor(me.mp * mpPct);
-			if (bonus > 0) {
-				target.damage(bonus, me);
-				me.send_combat("<HIG>阳雷迸发，额外造成" + bonus + "点伤害！</HIG>\n", target);
-			}
-		}
-		// 同时触发麻痹被动（如果基版已触发，这里额外+20%叠加到50%）
-		if (sh > 0 && target && target.hp > 0 && target.query_status("zidian_mabi") && !me.query_temp("shenxiao_yanglei2")) {
-			// 非阳雷状态下单独触发麻痹增伤20%
-			var bonus2 = Math.floor(sh * 0.2);
-			if (bonus2 > 0) target.damage(bonus2, me);
 		}
 	};

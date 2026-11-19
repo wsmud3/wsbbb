@@ -48,14 +48,27 @@ this.pfm = {
 			release_time: 7000,
 			mp: 20,
 			use: function (me, target, lv) {
-				var selfDmg = Math.floor(me.gj * 0.2);
-				me.from_attack(selfDmg, 0, null, "");
+				// 按说明：七拳，每拳自身受到该拳伤害的20%（伤敌先伤己，最多扣到1点气血）；
+				// 最后一式「七伤总诀」，每命中一拳伤害+50%。原代码只打一拳150%，没有总诀式。
 				me.send_room("<HIR>$N一拳击出，拳风之中蕴含七伤之意——「七伤」！伤敌先伤己，$N自身先受其害，但拳力也因此暴增！</HIR>", target);
-				me.do_attack({
-					target: target,
-					gj: Math.floor(me.gj * 1.5),
-					mz: me.mz,
-				});
+				var hits = 0;
+				for (var i = 0; i < 7; i++) {
+					if (target.hp <= 0 || me.hp <= 0) break;
+					var sh = me.do_attack({ target: target, gj: me.gj, mz: me.mz });
+					if (sh > 0) {
+						hits++;
+						var selfDmg = Math.min(Math.floor(sh * 0.2), me.hp - 1);
+						if (selfDmg > 0) me.add_hp(-selfDmg);
+					}
+				}
+				if (target.hp > 0 && me.hp > 0) {
+					me.do_attack({
+						target: target,
+						gj: Math.floor(me.gj * (100 + hits * 50) / 100),
+						mz: me.mz,
+						attack_msg: "<HIR>$N七拳过后劲力汇聚，使出「七伤总诀」，七股拳劲如同七道惊雷轰向$n！</HIR>",
+					});
+				}
 				me.end_attack(target)
 			},
 			query_desc: function (me, lv) {

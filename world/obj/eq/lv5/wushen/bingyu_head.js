@@ -6,5 +6,5 @@ this.set({
     unit: "支",
     eq_type: EQUIP_TYPE.HEAD,
     hole_count: 4,
-    prop: { per: 1, int: 39, mz_per: 4, distime_per: 5, practice_per: 22 },
+    prop: { per: 1, int: 39, mz_per: 4, distime_per: 5, lianxi_per: 22 },
 });

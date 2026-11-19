@@ -25,6 +25,7 @@ this.on_create = function (path, par) {
 
     if (this.grade === 6) {
         this.name = "移山镐";
+        this.kuang_home = true; // 可以在自家后院挖矿
         this.desc = "你可以在自家后院挖矿，更容易挖到高级的宝石";
     }
     EQUIPMENT.prototype.on_create.apply(this);

@@ -11,19 +11,28 @@ this.learn_condition = {
     skill: { force: 1000 }
 };
 
+// 年龄加成：在 -9 ~ +9 之间往复。0 级 -9，每 100 级 +1，1800 级到 +9，之后每 100 级 -1，3600 级回到 -9，循环。
+// 引擎里 prop.age 的语义是「年轻多少岁」（USER.query_age = 基础年龄 - query_prop("age")，展示为「年龄：-N岁」），
+// 所以「年龄加成 v」对应 prop.age = -v：v 为正显得更年长，为负更年轻。
+function age_bonus(lv) {
+    var p = Math.floor((lv || 0) / 100) % 36;
+    return p <= 18 ? p - 9 : 27 - p;
+}
+this.age_bonus = age_bonus;
 this.query_prop = function (lv, me) {
     var prop = {};
     if (me && me.is_player) {
-        prop.age = 9;
+        var v = age_bonus(lv);
+        if (v) prop.age = -v;
     }
     return prop;
 };
 
 this.on_before_attack = function (me, target, par) {
     if (!target || target.hp <= 0 || par.no_append_before) return;
-    // Age-based bonus damage
-    var age = me.query_prop ? me.query_prop("age") : 0;
-    if (!age && me.age) age = me.age;
+    // 年龄越大附加伤害越高：按实际年龄（含本功的年龄加成）计算。
+    // 原先读的是 query_prop("age")（玩家只有 9，floor(9/10)=0），对玩家恒为 0。
+    var age = me.query_age ? me.query_age() : (me.age || 0);
     if (age > 0) {
         var bonus = Math.floor(age / 10);
         if (bonus > 0) {
@@ -45,7 +54,7 @@ this.query_enable_prop = function (lv) {
             con: parseInt(lv * 338 / 1000),
             diff_fy_per: 6,
             limit_mp: parseInt(lv * 285000 / 1000),
-            desc: "年龄：+9岁\n命中后对敌人造成附加伤害(年龄越大伤害越高)\n唯一：将你内力的95%转化为气血",
+            desc: "年龄：" + (age_bonus(lv) >= 0 ? "+" : "") + age_bonus(lv) + "岁\n命中后对敌人造成附加伤害(年龄越大伤害越高)\n唯一：将你内力的95%转化为气血",
         },
     };
 };
@@ -110,7 +119,8 @@ this.pfm = {
                             only_combat: true,
                             downside: true,
                             prop: {
-                                release_time: -3000,
+                                // 引擎读取的 key 是 releasetime / distime（负值为延长）；原先写成 release_time，没人读
+                                releasetime: -3000,
                                 distime: -3000,
                             },
                             start_msg: "<HIM>$N被「唯我独尊」的霸气震慑，招式运转迟缓！</HIM>",

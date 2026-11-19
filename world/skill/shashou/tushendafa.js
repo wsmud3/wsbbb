@@ -32,15 +32,32 @@ this.query_enable_prop = function (lv) {
 		}
 	};
 };
+// 七杀被动：按目标已损失气血提高本次攻击的命中、暴伤、终伤。
+// 原先终伤用 add_prop 直接改角色属性，再用不过期的 temp（tushen_addsh / tushen_before）记账撤销：
+// temp 会存档、而 prop 不存档，下线重登后残留的 tushen_addsh 会被当成「要撤销的加成」扣掉，
+// 让终伤越打越低；某次攻击没走到 on_attack_over 时 tushen_before 又会卡死，之后再不加成。
+// 现改为：记账放内存（set_mem，不存档）。角色 prop 本身也不存档、登录时重建，两者同生同灭，
+// 重登后不会再误扣；防重入标记 1 秒自动过期，不会卡死。钩子里顺手清掉旧存档残留的三个 temp。
+var TUSHEN_OLD_TEMPS = ["tushen_addsh", "tushen_before", "tushen"];
+function clear_old_temps(me) {
+	if (!me.temp) return;
+	for (var i = 0; i < TUSHEN_OLD_TEMPS.length; i++) if (me.temp[TUSHEN_OLD_TEMPS[i]] != null) me.remove_temp(TUSHEN_OLD_TEMPS[i]);
+}
+function undo_qisha_bonus(me) {
+	var prev = me.query_mem("tushen_addsh", 0);
+	if (prev > 0) me.add_prop("add_sh_per", -prev);
+	me.remove_mem("tushen_addsh");
+}
+function clear_qisha_bonus(me) {
+	me.remove_mem("tushen_before");
+	undo_qisha_bonus(me);
+}
 this.on_before_attack = function (me, target, par) {
 	if (!target || target === me) return;
-	if (me.query_temp("tushen_before")) return;
-	me.set_temp("tushen_before", 1);
-	var prev = me.query_temp("tushen_addsh", 0);
-	if (prev > 0) {
-		me.add_prop("add_sh_per", -prev);
-		me.remove_temp("tushen_addsh");
-	}
+	clear_old_temps(me);
+	if (me.query_mem("tushen_before")) return;
+	me.set_mem("tushen_before", 1, 1000);
+	undo_qisha_bonus(me);
 	var missingHpPercent = 100 - Math.floor(target.hp * 100 / target.max_hp);
 	if (missingHpPercent > 0) {
 		var lv = me.query_skill("tushendafa");
@@ -48,20 +65,16 @@ this.on_before_attack = function (me, target, par) {
 		var bonus = missingHpPercent * multiplier;
 		if (bonus > 0) {
 			me.add_prop("add_sh_per", bonus);
-			me.set_temp("tushen_addsh", bonus);
+			me.set_mem("tushen_addsh", bonus);
 			par.mz = parseInt((par.mz || me.mz) * (100 + bonus) / 100);
-			par.add_bjsh_per = (par.add_bjsh_per || 0) + bonus;
+			// 在角色自身暴伤加成之上叠加（do_attack 里 par.add_bjsh_per 会整个取代角色自身值，原先等于把自身暴伤加成清零）
+			par.add_bjsh_per = (par.add_bjsh_per ?? me.query_prop("add_bjsh_per")) + bonus;
 		}
 	}
 };
 this.on_force_over = function (me, target, par, sh) {
-	me.remove_temp("tushen_before");
-	var prev = me.query_temp("tushen_addsh", 0);
-	if (prev > 0) {
-		me.add_prop("add_sh_per", -prev);
-		me.remove_temp("tushen_addsh");
-	}
-	if (sh > 0 && me.query_temp("tushen")) {
+	clear_qisha_bonus(me);
+	if (sh > 0 && me.query_status("tushen")) {
 		var lv = me.query_skill("tushendafa");
 		var healPer = 5 + Math.floor(lv / 500);
 		var lostHp = me.max_hp - me.hp;
@@ -73,12 +86,7 @@ this.on_force_over = function (me, target, par, sh) {
 	}
 };
 this.on_attack_over = function (me, target, par, sh) {
-	me.remove_temp("tushen_before");
-	var prev = me.query_temp("tushen_addsh", 0);
-	if (prev > 0) {
-		me.add_prop("add_sh_per", -prev);
-		me.remove_temp("tushen_addsh");
-	}
+	clear_qisha_bonus(me);
 };
 this.pfm = {
 	tushen: {
@@ -103,12 +111,6 @@ this.pfm = {
 					add_bjsh_per: bj_sh,
 					diff_fy_per: diff_fy,
 					gjsd_per: gjsd,
-				},
-				on_attach: function (p) {
-					p.set_temp("tushen", 1);
-				},
-				on_expire: function (p) {
-					p.remove_temp("tushen");
 				},
 				finish_msg: "$N身上的屠神之力渐渐消散。"
 			});

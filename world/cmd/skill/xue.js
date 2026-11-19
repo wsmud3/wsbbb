@@ -258,7 +258,8 @@ function do_learn(me) {
             exp = exp * 10;
         }
     }
-    if (master.do_teach) {
+    // master.pot_teach 里列出的技能按普通方式（消耗潜能）传授，不走 NPC 自定义的 do_teach（如朱熹按学费教读书写字）
+    if (master.do_teach && !(master.pot_teach && master.pot_teach[this.skill_base.id])) {
         return master.do_teach(me, this.skill_base, lv);
     }
 

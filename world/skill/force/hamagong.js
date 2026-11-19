@@ -43,7 +43,7 @@ this.pfm = {
 					override: 2,
 					is_busy: true,
 					no_diff: true,
-					prop: { diff_sh_per: 15 + parseInt(lv / 100), ds: -999999, zj: -999999 },
+					prop: { diff_sh_per2: 15 + parseInt(lv / 100), ds: -999999, zj: -999999 },
 					on_attach: function (who) {
 						who.set_temp("hamagong_xixi", 1);
 						who.set_temp("hamagong_xixi_total", dura);

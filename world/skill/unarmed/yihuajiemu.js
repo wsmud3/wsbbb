@@ -31,16 +31,28 @@ this.query_enable_prop = function (lv) {
 		}
 	}
 
-// 移花接木：招架时可化解敌人的绝招
+// 移花接木：施展「移花」后，自身带「移花」增益、敌人带「移花」减益。
+// 增益期间，身带本人所施「移花」减益的敌人对自己施展的下一个绝招被化解，
+// 双方的「移花」随即结束。其余任何情况都返回 false，绝招照常释放。
+// 返回值约定（pfm.js / auto_combat.js）：=== true 表示已化解（照常扣内力、进冷却），其它值照常释放。
+function find_status(ch, id) {
+	if (!ch || !ch.status) return null;
+	for (var i = 0; i < ch.status.length; i++) {
+		if (ch.status[i].id === id) return ch.status[i];
+	}
+	return null;
+}
 this.on_parry_pfm = function (me, from, pfm, lv, sk) {
-				if (me.query_temp("yihua_block")) {
-			me.remove_temp("yihua_block");
-			me.remove_status("yihua_self", true);
-			me.send_room("<HIM>$N的「移花接木」气劲流转，将$n的" + pfm.name + "尽数化解于无形！</HIM>", from);
-			from.notify("<HIM>你的" + pfm.name + "被移花接木化解了！</HIM>");
-			return true;
-		}
-	};
+	if (!from || from === me) return false;
+	if (!find_status(me, "yihua_self")) return false;
+	var debuff = find_status(from, "yihua_debuff");
+	if (!debuff || debuff.caster_id !== me.id) return false;
+	me.remove_status("yihua_self", true);
+	from.remove_status("yihua_debuff", true);
+	me.send_room("<HIM>$N的「移花接木」气劲流转，将$n的" + pfm.name + "尽数化解于无形！</HIM>", from);
+	from.notify("<HIM>你的" + pfm.name + "被移花接木化解了！</HIM>");
+	return true;
+};
 
 this.pfm = {
 				pfm1: {
@@ -51,21 +63,17 @@ this.pfm = {
 			mp: 30,
 			use: function (me, target, lv) {
 				var dur = 30000;
-				me.send_room("<HIM>$N双掌虚引——「移花接木」！$N周身气劲流转如花开绽放，一股无形之力笼罩全身，可化解敌人下一次绝招！</HIM>", me);
+				me.send_room("<HIM>$N双掌虚引——「移花接木」！$N周身气劲流转如花开绽放，一股无形之力笼罩全身，可化解敌人的下一次绝招！</HIM>", me);
 				// 自身获得"移花"增益buff：抵挡下一次敌人释放的绝招
-				me.set_temp("yihua_block", 1);
 				me.add_status({
 					id: "yihua_self",
 					name: "移花",
-					desc: "可化解敌人下一次绝招",
+					desc: "可化解身带「移花」的敌人对你施展的下一个绝招",
 					duration: dur,
 					downside: false,
 					override: 2,
 					start_msg: "<HIM>$N获得移花接木护体，周身气劲如花绽放！</HIM>",
 					finish_msg: "$N的移花接木效果消散了。",
-					on_expire: function (p) {
-						p.remove_temp("yihua_block");
-					},
 				});
 				// 附近敌人获得"移花"减益buff：降低躲闪和招架
 				var env = me.environment;
@@ -76,6 +84,7 @@ this.pfm = {
 						if (c && c !== me) {
 							c.add_status({
 								id: "yihua_debuff",
+								caster_id: me.id,
 								name: "移花",
 								desc: "躲闪和招架降低" + (3 + parseInt(lv / 100)) + "%",
 								duration: 10000 + parseInt(lv * 5),

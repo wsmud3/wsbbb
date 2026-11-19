@@ -31,7 +31,7 @@ this.on_use = function (me) {
                 name: "龟灵",
                 desc: "增加你的防御，减少你的伤害",
                 prop: {
-                    diff_sh_per: 8,
+                    diff_sh_per2: 8,
                     add_sh_per: -8
                 },
                 duration: 10000

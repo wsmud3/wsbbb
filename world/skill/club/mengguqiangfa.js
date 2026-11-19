@@ -93,7 +93,7 @@ this.pfm = {
         mp: 20,
         use: function (me, target, lv) {
 
-            var per = 150 + parseInt(lv / 20);
+            var per = 150 + parseInt(lv / 50); // 按说明命中 +(50+lv/50)%（原为 lv/20）
             if (me.do_attack({
                 target: target,
                 gj: me.gj,

@@ -183,10 +183,14 @@ FOLLOWER.REPLACE = function (me, old, npc) {
     }
     if (npc.exp > old.exp) old.exp = npc.exp;
     if (npc.pot > old.pot) old.pot = npc.pot;
-    if (npc.max_mp > old.max_mp) old.max_mp = npc.max_mp;
+    // 比较、保留的都是基础内力：old.prop 马上清空并由 init() 重新叠加装备，不先扣掉会重复计算
+    old.max_mp -= old.query_prop("max_mp");
+    var npcBaseMp = npc.max_mp - (npc.query_prop ? npc.query_prop("max_mp") : 0);
+    if (npcBaseMp > old.max_mp) old.max_mp = npcBaseMp;
 
 
     old.prop = {};
+    old._group_grants = {};
     old.init();
     if (old.status) {
         for (var j = old.status.length - 1; j >= 0; j--) {
@@ -228,7 +232,10 @@ var SAVE_STRPROP = ["id", "name", "title", "desc"];
 FOLLOWER.prototype.save = function (me) {
     var str = ["prop:["];
     for (var i = 0; i < SAVE_NUMPROP.length; i++) {
-        str.push(this[SAVE_NUMPROP[i]] || 0);
+        var v = this[SAVE_NUMPROP[i]] || 0;
+        // 同 USER.getData：max_mp 只存基础值，装备/状态的 max_mp 读档后 init 会重新叠加
+        if (SAVE_NUMPROP[i] === "max_mp" && this.query_prop) v -= this.query_prop("max_mp") || 0;
+        str.push(v);
         str.push(",");
     }
     str.push("0],");

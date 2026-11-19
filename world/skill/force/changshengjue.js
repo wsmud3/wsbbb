@@ -16,7 +16,8 @@ this.query_enable_prop = function (lv) {
 												hp_per: parseInt(lv * 0.015),
 												diff_sh_per: parseInt(lv * 0.01),
 												limit_mp: lv * 1000,
-												desc: "震慑：进入战斗时所有敌人降低15%伤害\n不灭：当你的气血降低到10%时恢复大量气血，并短时间无视伤害，冷却10分钟\n唯一：将你内力的150%转化为气血",
+												// 震慑：-(15 + floor(lv/100))% 终伤
+												desc: "震慑：进入战斗时所有敌人最终伤害降低" + (15 + Math.floor(lv / 100)) + "%\n不灭：当你的气血降低到10%时恢复大量气血，并短时间无视伤害，冷却10分钟\n唯一：将你内力的150%转化为气血",
 								},
 				};
 };
@@ -24,15 +25,17 @@ this.query_enable_prop = function (lv) {
 // 每个新敌人进战时施加震慑
 this.on_new_enemy = function (me, target) {
 				if (target && target.hp > 0) {
+								// 降低敌人最终伤害 15%，长生诀每 100 级多降 1%。downside:false、无 no_clear 为有意设计（避开负面抗性）
+								var zs = 15 + Math.floor(me.query_skill("changshengjue", 0) / 100);
 								target.add_status({
 												id: "changsheng_zhenshe",
 												name: "震慑",
-												desc: "被长生诀震慑，伤害降低15%",
+												desc: "被长生诀震慑，最终伤害降低" + zs + "%",
 												duration: 86400000,
 												downside: false,
 												override: 2,
 												only_combat: true,
-												prop: { gj_per: -15 },
+												prop: { add_sh_per: -zs },
 								}, me);
 				}
 };
@@ -64,6 +67,7 @@ this.on_force_parry = function (me, from, sh, par) {
 };
 
 this.on_damage = function (me, from, sh) {
+	var lv = me.query_skill("changshengjue", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 				if (sh <= 0) return sh;
 				if (me.query_temp("changsheng_bumie_cd")) return sh;
 				var hp_after = me.hp - sh;
@@ -79,7 +83,7 @@ this.on_damage = function (me, from, sh) {
 												duration: parseInt(lv * 10),
 												downside: false,
 												override: 2,
-												prop: { diff_sh_per: 9990 + parseInt(lv / 100), diff_sh: 99999999 },
+												prop: { diff_sh_per2: 9990 + parseInt(lv / 100), diff_sh: 99999999 },
 												start_msg: "<hio>$N的长生诀真气爆发，不灭之体护住全身！</hio>",
 												finish_msg: "$N的不灭之体消散了。",
 								});

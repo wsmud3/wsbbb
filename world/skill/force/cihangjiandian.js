@@ -42,6 +42,7 @@ this.on_new_enemy = function (me, target) {
 
 // 首次进战时触发灵动 + 群体驱散
 this.on_beginfight = function (me, target) {
+	var lv = me.query_skill("cihangjiandian", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 	// 群体驱散：驱散房间内所有敌人的增益buff，不驱散绿色debuff
 	var room = me.environment;
 	if (room) {

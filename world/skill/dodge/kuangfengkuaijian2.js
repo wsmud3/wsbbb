@@ -33,17 +33,40 @@
 		dodge: {
 				ds: parseInt(lv * 1.9) + 16,
 				dex: parseInt(lv * 333.0 / 1000),
-				gjsd: -250,
+				gjsd: 250,   // 攻击间隔缩短 250 毫秒（与一阶一致；原 -250 写反成变慢）
 			},
 		sword: {
 				gj: lv * 2 + 10,
 				mz: lv * 2 + 10,
 				dex: parseInt(lv * 250.0 / 1000),
-				gjsd: -250,
+				gjsd: 250,   // 攻击间隔缩短 250 毫秒（与一阶一致；原 -250 写反成变慢）
 				bj_per: 4,
 			},
 		}
 };
+
+	// 夺命连环续发：三剑全中后（temp kuangfeng），下一次剑法攻击结束时再连出三剑，每轮命中递减；
+	// 任一剑落空即收招。一阶狂风快剑有这段，高阶版漏了，导致说明里的「继续触发」从不发生。
+	this.on_attack_over = function (me, target, par) {
+		var kf_count = me.query_temp("kuangfeng");
+		if (!kf_count || !target || target.hp <= 0) return;
+		me.send_room("<hir>$N一击奏效，手中快剑如狂风般继续攻来</hir>\n");
+		var isMiss = false;
+		var per = 10 - parseInt(me.query_skill("kuangfengkuaijian2", 0) / 100);
+		if (per < 3) per = 3;
+		var mz = parseInt(me.mz - me.mz * (kf_count - 1) * per / 100);
+		if (mz < 0) mz = 0;
+		for (var i = 0; i < 3; i++) {
+			if (!me.do_attack({ target: target, gj: me.gj, mz: mz, no_append: true })) isMiss = true;
+		}
+		if (isMiss) {
+			me.send_room("<hic>$N一击未能奏效，收招后退</hic>");
+			me.remove_temp("kuangfeng");
+		} else {
+			me.set_temp("kuangfeng", kf_count + 1, 5000);
+		}
+		if (par.is_dodge || par.is_parry) me.end_attack(target);
+	};
 
 	this.pfm = {
 	duoming:

@@ -22,14 +22,9 @@ this.skill_map(
     ["whip", 5000],
     ["unarmed", 5000],
     ["throwing", 5000],
-    ["niutou", 3000],
-    ["nixianmojue", 5000, "force"],
-    ["tiandiqipan", 5000, "unarmed"],
-    ["tianditongshou", 5000, "unarmed"],
-    ["xiuluodao", 5000, "blade"],
-    ["cihangjiandian", 5000, "force"],
-    ["shandianwulianbian", 5000, "whip"],
-    ["dapintianxianjue", 5000, "force"]
+    ["niutou", 3000]
+    // 武馆只教基本功：原先列在这里的 7 门 6 品武学（逆仙魔诀、天地棋盘、天地同寿、修罗刀、
+    // 慈航剑典、闪电五连鞭、大品天仙诀）已移除
 );
 this.on_checkskill = function (me) {
     if (!me.query_temp("wg_sr")) {

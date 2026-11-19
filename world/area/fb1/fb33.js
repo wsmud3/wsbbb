@@ -37,6 +37,7 @@ this.set({
 this.drops = [
     "book/bc#fuyujianfa",
     "book/bc#bianjiushi",
+    "book/bc#cihangjiandian",
     "eq/lv5/wushen/feiyi_sword",
 ];
 
@@ -45,6 +46,7 @@ this.drops = [
 	    { obj: "book/bc#bianjiushi", odds: 2900 },
 	    { obj: "eq/lv5/wushen/feiyi_sword", odds: 17 },
 	    { obj: "book/bc#fuyujianfa", odds: 1800 },
+	    { obj: "book/bc#cihangjiandian", odds: 1800 },
 	];
 
 this.on_leaved = function (me) {

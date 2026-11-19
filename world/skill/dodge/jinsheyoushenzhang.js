@@ -62,14 +62,14 @@
 						name: "金蛇",
 						desc: "你被金蛇游身掌的掌力所困，无法闪避",
 						is_miss: true,
-						duration: 3000 + parseInt(lv * 5),
+						duration: Math.min(3000 + parseInt(lv * 5), 5000), // 3 秒 + 每级 5 毫秒，最多 5 秒
 						downside: true,
 					}, me);
 				}
 				me.end_attack(t);
 			},
 			query_desc: function (me, lv) {
-				return "对敌人造成你攻击力110%的伤害，命中后使敌人在8秒内无法闪避";
+				return "对敌人造成你攻击力110%的伤害，命中后使敌人在" + (Math.min(3000 + parseInt(lv * 5), 5000) / 1000) + "秒内无法闪避";
 			}
 		}
 	};

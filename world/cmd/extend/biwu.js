@@ -205,6 +205,8 @@ this.create_npc = function (player, fam) {
     for (var i = 0; i < COPY_PROPS.length; i++) {
         npc[COPY_PROPS[i]] = player[COPY_PROPS[i]];
     }
+    // max_mp 里含装备/状态叠加的 prop.max_mp，镜像随后 init() 会把装备再加一遍，所以只复制基础值
+    npc.max_mp = (player.max_mp || 0) - (player.query_prop ? player.query_prop("max_mp") : 0);
     npc.equipment = [];
     if (player.equipment) {
         var eqs = player.equipment;
@@ -248,6 +250,7 @@ this.create_npc = function (player, fam) {
     }
     npc.clear_prop();
     npc.init();
+    npc.soft_cap_props = true; // 镜像按玩家规则折算软上限
     npc.recount = this.recount;
     npc.recount();
     npc.check_pfms = this.check_pfms;
@@ -286,12 +289,9 @@ this.recount = function () {
     if (this.dodge_skill && this.dodge_skill.on_recount_dodge) {
         this.ds += this.dodge_skill.on_recount_dodge(this);
     }
-    this.diff_sh_per = this.query_prop('diff_sh_per');
-    if (this.diff_sh_per > 80) {
-        this.diff_sh_per = 80 + Math.sqrt((this.diff_sh_per - 80) * 4);
-        if (this.diff_sh_per > 99.9999) this.diff_sh_per = 99.9999;
-    }
-    this.diff_sh_per += this.query_prop('diff_sh_per2');
+    // 与玩家同一套软上限（CHARACTER.soft_cap）：免伤/破防/终伤超过 80 递减，特殊免伤 diff_sh_per2 之后叠加
+    this.diff_sh_per = this.query_soft_prop('diff_sh_per') + this.query_prop('diff_sh_per2');
+    this.diff_fy_per = this.query_soft_prop('diff_fy_per');
 
 }
 this.check_pfms = function (target) {

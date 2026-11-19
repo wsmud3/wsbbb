@@ -45,7 +45,7 @@ this.pfm = {
         use: function (me, target, lv) {
             me.do_attack({
                 target: target,
-                gj: me.gj,
+                gj: me.gj + lv + me.query_skill("zixiashengong", 0) * 2, // 按说明：攻击 + 破玉拳等级 + 紫霞神功×2
                 no_weapon: true,
                 attack_msg: "<HIY>$N大喝一声，握紧的拳头蒙上一层淡淡的紫色雾气，闪电般重重的击向$n</HIY>",
                 damage_msg: "<hir>只见$P的紫拳如同硬玉般砸得$p飞了出去，重重的摔在地上，吐血不止！</hir>",
@@ -75,17 +75,18 @@ this.pfm = {
                 no_weapon: true
             };
             me.do_attack(par);
-            if (!par.is_dodge) {
-                let time = 5000 + parseInt(lv / 2);
+            if (!par.is_dodge && !par.is_parry) { // 命中（未被闪避/招架）才挂劈石
+                let time = 5000 + lv * 2; // 按说明 5+lv/500 秒
                 if (time > 15000) time = 15000;
-                let fy = lv * 2 + 600;
+                let fy = lv + 600; // 按说明 lv+600
                 target.add_status({
                     id: "pishi",
                     name: "劈石",
-                    desc: "降低防御和招架",
+                    desc: "防御、招架各降低" + fy + "点",
                     downside: true,
                     prop: {
-                        fy: -fy
+                        fy: -fy,
+                        zj: -fy   // 降低招架与降低防御数值相同
                     },
                     duration: time
                 });
@@ -98,7 +99,7 @@ this.pfm = {
             let time = Math.floor(5 + lv / 500);
             if (time > 15) time = 15;
             let fy = lv + 600;
-            return `劈石一击，命中后可降低目标${fy}点防御，持续${time}秒。`;
+            return `劈石一击，命中后可降低目标${fy}点防御和${fy}点招架，持续${time}秒。`;
         }
     }
 };

@@ -2,6 +2,7 @@
 this.inherits(SKILL);
 this.name = "玄冥神掌";
 this.id = "xuanmingshenzhang_m";
+this.is_hidden = true; // NPC 专用（玄冥二老），不进随机残页/随机技能池
 this.grade = 4;
 this.desc = "百损道人所创的极寒掌法，玄冥二老将其修炼至化境，掌力阴毒无比。";
 this.attack_actions = [

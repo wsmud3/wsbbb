@@ -40,13 +40,13 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			me.send_room("<HIM>$N黯然神伤，掌中忽生忽灭，施展出「无中生有」！</HIM>", target);
-			me.do_attack({
+			var hit = me.do_attack({
 				target: target,
 				gj: me.gj * 2,
 				attack_msg: "<HIM>$N的掌力若有若无，虚实难辨地向$n拍去！</HIM>"
 			});
-			// 命中后偷取敌人一个正面buff（内联处理，不依赖on_attack_over）
-			if (target.status && target.status.length > 0) {
+			// 命中后偷取敌人一个正面buff（内联处理，不依赖on_attack_over）；未命中不偷取
+			if (hit > 0 && target.hp > 0 && target.status && target.status.length > 0) {
 				for (var i = target.status.length - 1; i >= 0; i--) {
 					var st = target.status[i];
 					if (!st.downside && !st.no_steal && !st.is_busy && !st.is_faint && !st.is_miss && !st.is_rash) {
@@ -92,7 +92,7 @@ this.pfm = {
 					only_combat: true,
 					downside: true,
 					prop: {
-						distime_per: -(50 + parseInt(lv / 100)),
+						gjsd_per: -(50 + parseInt(lv / 100)), // 降攻速（原误写成 distime_per，那是绝招冷却）
 						releasetime_per: -(50 + parseInt(lv / 100)),
 					},
 					start_msg: "<HIR>$N被「呆若木鸡」震慑，动作变得迟缓无比！</HIR>",

@@ -21,6 +21,17 @@ this.query_enable_prop = function (lv) {
 		}
 	};
 };
+// 无念期间（内功位）：每次攻击附加最大内力 1% 的伤害（作为内力伤害并入本次攻击）。
+// 原先只用 on_attach 设了一个 wunian_active 标记，没有任何地方读取，附加伤害从未生效。
+this.do_force_attack = function (me, target, par) {
+	if (!me.status) return 0;
+	for (var i = 0; i < me.status.length; i++) {
+		var st = me.status[i];
+		// 状态 id 是通用的 "force"（覆盖替换时只同步 name 等字段），按名称识别无念
+		if (st.id === "force" && st.name === "无念") return Math.floor((me.max_mp > 0 ? me.max_mp : 0) * 0.01);
+	}
+	return 0;
+};
 this.pfm = {
 	pfm1: {
 		name: "净念",
@@ -60,19 +71,17 @@ this.pfm = {
 			me.add_status({
 				id: "force",
 				name: "无念",
-				desc: "伤害减免+" + (23 + parseInt(lv / 100)) + "%，攻击附加内力1%伤害",
-				duration: parseInt(lv * 10),
+				desc: "伤害减免+" + (23 + parseInt(lv / 100)) + "%，攻击附加最大内力1%伤害",
+				duration: Math.min(parseInt(lv * 10), 10000),
 				downside: false,
 				override: 2,
-				prop: { diff_sh_per: 23 + parseInt(lv / 100) },
+				prop: { diff_sh_per2: 23 + parseInt(lv / 100) },
 				start_msg: "<hio>$N的防御大幅提升，攻击中蕴含佛力！</hio>",
 				finish_msg: "$N的无念状态消散了。",
-				on_attach: function(p) { p.set_temp("wunian_active", 1); },
-				on_expire: function(p) { p.remove_temp("wunian_active"); },
 			});
 		},
 		query_desc: function (me, lv) {
-			return "" + (parseInt(lv * 10 / 1000)) + "秒内增加" + (23 + parseInt(lv / 100)) + "%伤害减免，每次攻击附加内力1%的伤害。";
+			return "" + (Math.min(parseInt(lv * 10), 10000) / 1000) + "秒内增加" + (23 + parseInt(lv / 100)) + "%伤害减免，每次攻击附加最大内力1%的伤害。";
 		}
 	},
 	pfm3: {
@@ -89,21 +98,23 @@ this.pfm = {
 				var forceDmg = Math.floor(me.max_mp * 0.15);
 				target.damage2(forceDmg, me);
 				target.add_status({
-					id: "bikou_jin",
+					// 状态 id 必须是 "bikou"：出招分派在 no_pfm 时会 remove_status("bikou")，即只禁「下一个」绝招。
+					// 原先 id 是 bikou_jin，移除不掉，整段时间内所有绝招都被禁。
+					id: "bikou",
 					name: "闭口禅禁制",
 					desc: "被闭口禅禁制，无法使用下一个绝招",
-					duration: 7000 + parseInt(lv * 5),
+					duration: Math.min(7000 + parseInt(lv * 5), 10000),
 					downside: true,
 					override: 2,
 					prop: { no_pfm: 1 },
 					start_msg: "<hir>$N被闭口禅禁制，下一个绝招无法释放！</hir>",
 					finish_msg: "$N的闭口禅禁制解除了。",
 				});
-				me.notify("<hir>闭口禅发动：造成" + forceDmg + "点内力伤害，封印对方下个绝招12秒！</hir>");
+				me.notify("<hir>闭口禅发动：造成" + forceDmg + "点内力伤害，" + (Math.min(7000 + parseInt(lv * 5), 10000) / 1000) + "秒内封印对方下一个绝招！</hir>");
 			}
 		},
 		query_desc: function (me, lv) {
-			return "造成15%内力上限伤害，" + (7 + parseInt(lv * 5 / 1000)) + "秒内禁止对方下一个绝招。";
+			return "造成15%内力上限伤害，" + (Math.min(7000 + parseInt(lv * 5), 10000) / 1000) + "秒内禁止对方下一个绝招。";
 		}
 	}
 };

@@ -51,7 +51,17 @@
 				unarmed: true,
 	};
 
-	this.pfm = {
+	// 小无相功的冷却/出招跟随所模仿的绝招，按玩家记在内存里（不存档、不共享）
+function per_player(me, pfm, k, def) {
+    var m = me && me.__xwx_times && me.__xwx_times[pfm.id];
+    return m && m[k] !== undefined ? m[k] : def;
+}
+function set_per_player(me, pfm, d, r) {
+    if (!me) return;
+    if (!me.__xwx_times) me.__xwx_times = {};
+    me.__xwx_times[pfm.id] = { d: d, r: r };
+}
+this.pfm = {
 				duo:
 				{
 								name: "无相",
@@ -61,17 +71,17 @@
 								allow_busy: true,
 								release_time: 3000,
 								query_releasetime: function (me, lv) {
-												return this.release_time;
+												return per_player(me, this, "r", this.release_time); // 每个玩家独立：取本人上次模仿那招的出招时间
 								},
 								query_distime: function (me, lv) {
-												return this.distime;
+												return per_player(me, this, "d", this.distime); // 每个玩家独立：取本人上次模仿那招的冷却
 								},
 								query_name: function (me, type) {
 												if (!type) return this.name;
 												return "无相" + (ALLOW_TYPES[type] || "");
 								},
 								use: function (me, target, lv, sk) {
-												var prev = target.query_temp("used_pfm");
+												var prev = target.query_mem("used_pfm");
 												if (!prev) return me.notify_fail("<cyn>" + target.name + "最近没有使用绝招，你无法模仿。</cyn>");
 												var str = prev.split("/");
 												var sp_skill = SKILL.get(str[0]);
@@ -80,7 +90,7 @@
 												}
 												if (sp_skill.grade > 4)
 												return me.notify_fail("对方使用的武功太高深，你无法模仿。");
-												pfm = sp_skill.get_pfm(str[1]);
+												var pfm = sp_skill.get_pfm(str[1]); // 原先漏写 var，泄漏成全局变量
 												if (!pfm) {
 																return me.notify_fail(sp_skill.name + "没有这个绝招。");
 												}
@@ -113,8 +123,8 @@
 												if (up > 100) up = 100;
 												me.use_pfm(target, pfm, parseInt(up * lv / 100));
 
-												this.distime = pfm.query_distime(me, lv);
-												this.release_time = pfm.query_releasetime(me, lv);
+												// 冷却/出招按本人记录，不再改写全服共用的 pfm 对象（原先一人使用会影响所有玩家）
+												set_per_player(me, this, pfm.query_distime(me, lv), pfm.query_releasetime(me, lv));
 
 												if (sp_skill.grade <= 4 && isEnable && ALLOW_RECORD[pfm.enable_skill] &&
 																!me.is_in("yz/leitai/leitai") &&
@@ -140,10 +150,10 @@
 								no_copy: true,
 								release_time: 3000,
 								query_releasetime: function (me, lv) {
-												return this.release_time;
+												return per_player(me, this, "r", this.release_time); // 每个玩家独立：取本人上次模仿那招的出招时间
 								},
 								query_distime: function (me, lv) {
-												return this.distime;
+												return per_player(me, this, "d", this.distime); // 每个玩家独立：取本人上次模仿那招的冷却
 								},
 								query_name: function (me, type) {
 												if (!type) return this.name;
@@ -163,7 +173,7 @@
 												}
 												if (sp_skill.family === FAMILIES.MONSTER) return me.notify_fail("怪物专属技能无法模仿。");
 												if (sp_skill.grade > 4) return me.notify_fail("对方使用的武功太高深，你无法模仿。");
-												pfm = sp_skill.get_pfm(str[1]);
+												var pfm = sp_skill.get_pfm(str[1]); // 原先漏写 var，泄漏成全局变量
 												if (!pfm) {
 																return me.notify_fail(sp_skill.name + "没有这个绝招。");
 												}
@@ -181,8 +191,8 @@
 												var up = 70 + parseInt(lv / 100);
 												if (up > 100) up = 100;
 												me.use_pfm(target, pfm, parseInt(up * lv / 100));
-												this.distime = pfm.query_distime(me, lv);
-												this.release_time = pfm.query_releasetime(me, lv);
+												// 冷却/出招按本人记录，不再改写全服共用的 pfm 对象（原先一人使用会影响所有玩家）
+												set_per_player(me, this, pfm.query_distime(me, lv), pfm.query_releasetime(me, lv));
 								},
 								query_desc: function (me, lv) {
 												lv = 70 + parseInt(lv / 100);

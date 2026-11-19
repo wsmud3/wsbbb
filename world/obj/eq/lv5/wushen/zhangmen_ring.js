@@ -6,5 +6,5 @@ this.set({
     unit: "枚",
     eq_type: EQUIP_TYPE.RING,
     hole_count: 4,
-    prop: { gj: 440, int: 49, study_per: 17, practice_per: 17, meditate_per: 17 },
+    prop: { gj: 440, int: 49, study_per: 17, lianxi_per: 17, dazuo_per: 17 },
 });

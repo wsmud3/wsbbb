@@ -98,12 +98,13 @@
             mp: 20,
             use: function (me, target, lv) {
                 me.send_room("<HIW>$N高举$w，玄铁重剑以泰山压顶之势砸向$n——「重剑无锋」！</HIW>", target);
-                me.do_attack({
+                var hit = me.do_attack({
                     target: target,
                     gj: me.gj * 2.5,
                     attack_msg: "<HIW>$N的玄铁重剑带着万钧之力砸下！</HIW>"
                 });
-                target.add_status({
+                // 说明为「命中后」残缺：未命中（被闪避/招架无伤害）不生效
+                if (hit > 0 && target.hp > 0) target.add_status({
                     id: "xuantie_canque",
                     name: "残缺",
                     desc: "战斗属性降低" + (10 + parseInt(lv / 100)) + "%，攻击速度降低" + (10 + parseInt(lv / 100)) + "%",
@@ -115,7 +116,7 @@
                         mz_per: -(10 + parseInt(lv / 100)),
                         ds_per: -(10 + parseInt(lv / 100)),
                         zj_per: -(10 + parseInt(lv / 100)),
-                        distime_per: -(10 + parseInt(lv / 100)),
+                        gjsd_per: -(10 + parseInt(lv / 100)), // 降攻速（原误写成 distime_per，那是绝招冷却）
                     },
                     start_msg: "<HIW>$n被玄铁重剑之力震伤，招式残缺不全！</HIW>",
                     finish_msg: "$n从重剑震伤中恢复了过来。",

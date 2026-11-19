@@ -29,6 +29,49 @@ this.query_enable_prop = function (lv) {
 		}
 	}
 
+// ===== 拳经盾期间拳经冷却 2 倍速流逝 =====
+// 冷却存在两处：玩家手动出招的 temp "pfm/force/pfm2"（{v,e}）与自动出招 auto_skills 项的 release_time（绝对时间）。
+var QJ_KEY = "pfm/force/pfm2";
+function quanjing_cd_left(me, pfm) {
+	var now = Date.now(), left = 0;
+	var t = me.temp && me.temp[QJ_KEY];
+	if (t && t.e > now) left = t.e - now;
+	if (me.auto_skills) for (var i = 0; i < me.auto_skills.length; i++) {
+		var it = me.auto_skills[i];
+		if (it.pfm === pfm && it.release_time > now) left = Math.max(left, it.release_time - now);
+	}
+	return left;
+}
+function quanjing_cd_shift(me, pfm, delta) {
+	if (!delta) return;
+	var now = Date.now();
+	var t = me.temp && me.temp[QJ_KEY];
+	if (t && t.e > now) t.e = Math.max(now + 1, t.e + delta);
+	if (me.auto_skills) for (var i = 0; i < me.auto_skills.length; i++) {
+		var it = me.auto_skills[i];
+		if (it.pfm === pfm && it.release_time > now) it.release_time = Math.max(now + 1, it.release_time + delta);
+	}
+	if (me.is_player) me.notify('{type:"changepfm",id:"force/pfm2",time:' + Math.round(delta) + '}');
+}
+// 护盾挂上（且本次冷却已写入）后：按护盾持续满 D 毫秒预估剩余冷却
+function quanjing_cd_on_shield(me, pfm, st) {
+	if (!me || !me.status || me.status.indexOf(st) < 0) return;
+	var R = quanjing_cd_left(me, pfm);
+	if (!(R > 0)) return;
+	var D = st.duration;
+	var want = R <= 2 * D ? R / 2 : R - D;
+	st.qj_t0 = Date.now(); st.qj_R = R; st.qj_pfm = pfm;
+	quanjing_cd_shift(me, pfm, want - R);
+}
+// 护盾结束（提前破掉或到时）：护盾实际在场 x 毫秒，冷却应剩 max(0, R - 2x)
+function quanjing_cd_on_expire(me, st) {
+	if (!st.qj_t0 || !st.qj_pfm) return;
+	var x = Date.now() - st.qj_t0;
+	var cur = quanjing_cd_left(me, st.qj_pfm);
+	if (!(cur > 0)) return;
+	quanjing_cd_shift(me, st.qj_pfm, Math.max(0, st.qj_R - 2 * x) - cur);
+}
+
 this.pfm = {
 		pfm1: {
 			name: "神照",
@@ -61,18 +104,26 @@ this.pfm = {
 					gj: Math.floor(me.gj * (6 + Math.floor(me.query_prop("str") / 100)) / 100),
 					mz: me.mz,
 				})) {
-					me.add_status({
+					// 护盾：shield 为剩余吸收量，由 CHARACTER.damage 消耗（耗尽即移除）。重复命中时刷新护盾
+					me.remove_status("quanjing", true);
+					var qj = {
 						id: "quanjing",
 						name: "拳经盾",
-						desc: "吸收1392点伤害",
+						desc: "吸收1392点伤害，期间拳经冷却加快",
 						duration: 5000 + parseInt(lv * 10),
-						prop: { absorb_sh: 1392 },
-					});
+						shield: 1392,
+						// 护盾提前破掉/结束：把冷却校正为「护盾在场期间 2 倍速流逝，其余正常」
+						on_expire: function (p) { quanjing_cd_on_expire(p, this); },
+					};
+					me.add_status(qj);
+					// 本次拳经的冷却是在 use 返回后才由 pfm.js / auto_combat.js 写入的，推迟到写入之后再调整
+					var self = this;
+					setTimeout(function () { quanjing_cd_on_shield(me, self, qj); }, 0);
 				}
 				me.end_attack(target)
 			},
 			query_desc: function (me, lv) {
-				return "拳经——一式直拳对敌人造成伤害，造成6%攻击力的伤害，你臂力越高造成的伤害越大，命中后给自己增加一个吸收1392伤害的护盾，护盾期间拳经冷却减少。";
+				return "拳经——一式直拳对敌人造成伤害，造成6%攻击力的伤害，你臂力越高造成的伤害越大，命中后给自己增加一个吸收1392伤害的护盾，护盾存在期间拳经冷却速度加快100%。";
 			}
 		}
 	};

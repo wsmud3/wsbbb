@@ -12,5 +12,7 @@ this.on_use = function (me) {
         return me.notify_fail("你觉得你的经脉容纳不了再多的内力了。");
     }
     me.send_room("<hiw>$N拿出一块熊胆，三下五除二得就吞了下去。</hiw>");
-    me.add_maxmp(40);
+    // 不超过内力上限
+    var room = me.limit_mp + me.query_prop("limit_mp") - me.max_mp;
+    me.add_maxmp(Math.min(40, room));
 }

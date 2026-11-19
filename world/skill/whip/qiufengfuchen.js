@@ -35,24 +35,25 @@ this.pfm = {
 			mp: 15,
 			use: function (me, target, lv) {
 				me.send_room("<HIG>$N拂尘如秋风扫叶——「缠字诀」！$w化作千丝万缕缠向$n，将其手脚牢牢束缚！</HIG>", target);
+				// 进阶槽：qffc_mz 为命中百分比加成，qffc_ml 为忙乱时间增加的毫秒数（原先两项都没人读取）
 				if (me.do_attack({
 					target: target,
 					gj: me.gj,
-					mz: me.mz,
+					mz: me.mz * (100 + me.query_prop("qffc_mz")) / 100,
 				})) {
 					target.add_status({
 						id: "busy",
 						name: "忙乱",
 						desc: "被缠字诀所困，无法攻击和招架",
 						is_busy: true,
-						duration: Math.min(5000 + parseInt(lv * 5), 10000),
+						duration: Math.min(5000 + parseInt(lv * 5), 10000) + me.query_prop("qffc_ml"),
 						downside: true,
 					});
 				}
 				me.end_attack(target)
 },
 			query_desc: function (me, lv) {
-				return "如秋风扫叶般，快速挥动佛尘牵制敌人，使敌人" + (Math.min(5000 + parseInt(lv * 5), 10000) / 1000) + "秒内处于忙乱状态。";
+				return "如秋风扫叶般，快速挥动佛尘牵制敌人，使敌人" + ((Math.min(5000 + parseInt(lv * 5), 10000) + (me && me.query_prop ? me.query_prop("qffc_ml") : 0)) / 1000) + "秒内处于忙乱状态。";
 			}
 		}
 	};

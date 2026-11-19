@@ -87,18 +87,25 @@ CHARACTER.prototype.use_pfm = function (target, pfm, level, sktype) {
 
         this.send_room("<red>$N释放技能" + pfm.name + "，但是内功被种魔之力压制，无法使用！</red>\n");
         isrelease = true;
-    } else if (target && target.parry_skill && target.parry_skill.on_parry_pfm) {
-        isrelease = target.parry_skill.on_parry_pfm(target, this, pfm, level);
+    } else if (target && target.parry_skill && target.parry_skill.on_parry_pfm
+        && target.parry_skill.on_parry_pfm(target, this, pfm, level, sktype) === true) {
+        // 对方招架技能化解了本次绝招（如移花接木）：绝招不生效，但照常扣内力。
+        // on_parry_pfm 返回其它值（含 undefined）时绝招照常释放。
+        isrelease = true;
     } else {
         this._zy_casting = pfm.id;
         try { isrelease = pfm.use(this, target, level, sktype) !== false; }
         finally { delete this._zy_casting; }
+        // 记录「对目标施展的绝招」，供斗转星移·斗转使用
+        if (isrelease && target && target !== this && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, 60000);
+        // 记录自己上一个绝招（空明拳·左右互搏读取），与手动出招一致；只在内存里，不存档
+        if (isrelease) { this.set_mem("sk/last_pfm_id", pfm.id, 30000); this.set_mem("sk/last_pfm_lv", level, 30000); }
     }
     if (isrelease !== false) {
         this.add_mp(-pfm.query_mp(this, level) || 0);
         if (WORLD.ZHENYI && WORLD.ZHENYI.on_use_pfm) WORLD.ZHENYI.on_use_pfm(this);
 
-        this.set_temp("used_pfm", pfm.id, 20000);
+        this.set_mem("used_pfm", pfm.id, 20000);
         return true;
     }
     return false;

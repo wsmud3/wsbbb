@@ -320,6 +320,14 @@ CHARACTER.prototype.init = function () {
 
         }
     }
+    // 存档里若有已删除的技能（技能文件不存在），上面已把它从 skills 里去掉；这里再把基本技能上
+    // 指向它的装备关系（enable_skill）清空，免得界面、绝招列表、技能组还引用一个不存在的技能。
+    if (this.skills) {
+        for (let item in this.skills) {
+            var sk_data = this.skills[item];
+            if (sk_data && sk_data.enable_skill && !this.skills[sk_data.enable_skill]) sk_data.enable_skill = null;
+        }
+    }
 
     this.init_skill();
 }

@@ -50,9 +50,8 @@ zhong:
 	release_time: 8000,
 	use: function (me, target, lv) {
 
-		var time = 12000 - lv;
-		if (time < 10000) time = 10000;
-		var fu = 10 + parseInt(lv / 100);
+		var time = 10000; // 按说明：生死符 10 秒后发作
+		var fu = 10 + parseInt(lv / 300); // 按说明 10+lv/300（原为 lv/100）
 		if (fu > 40) fu = 40;
 		var sh = me.do_attack({
 			target: target,
@@ -91,8 +90,7 @@ zhong:
 
 	},
 	query_desc: function (me, lv) {
-		var time = 12000 - lv;
-		if (time < 10000) time = 10000;
+		var time = 10000; // 按说明：生死符 10 秒后发作
 		var fu = 10 + parseInt(lv / 300);
 		if (fu > 40) fu = 40;
 		return"逆运真气将阳刚之气转为阴柔，化水为冰，命中敌人后" + (time / 1000) +"秒后爆发，如果你的最大气血大于敌方当前气血，敌人气血将降为1，否则将受到你当前气血" + fu+"%的伤害。不可招架";

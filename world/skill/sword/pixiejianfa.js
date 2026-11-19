@@ -52,8 +52,8 @@
 			use: function (me, target, lv) {
 				me.send_room("<HIR>$N眼中杀机骤现，身形化作一道残影，手中$w光芒暴涨，剑尖凝聚一点寒星——「刺目」！这一剑不取咽喉、不刺心口，偏生直夺$n双目而去，快得仿佛电光石火，令人避无可避！</HIR>", target);
 				var sh = me.do_attack({target: target, gj: me.gj * 1.5});
-				// 施加失明debuff
-				target.add_status({
+				// 命中后才施加失明debuff（原先不判断命中）
+				if (sh) target.add_status({
 						id: "pixie_shiming",
 						name: "失明",
 						desc: "无法命中敌人，无法躲闪，必被暴击",

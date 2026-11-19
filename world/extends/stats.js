@@ -63,6 +63,8 @@ STATS.saveTops = function (tops) {
             for (let j = 0; j < COPY_PROPS.length; j++) {
                 obj[COPY_PROPS[j]] = top[COPY_PROPS[j]];
             }
+            // max_mp 里含装备/状态叠加的 prop.max_mp，镜像随后 init() 会把装备再加一遍，所以只复制基础值
+            obj.max_mp = (top.max_mp || 0) - (top.query_prop ? top.query_prop("max_mp") : 0);
             if (top.skills) obj.skills = top.skills;
             if (top.equipment) {
                 obj.eq = [];

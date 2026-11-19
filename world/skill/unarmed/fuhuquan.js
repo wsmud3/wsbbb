@@ -42,7 +42,7 @@ this.pfm = {
         mp: 20,
         use: function (me, target, lv) {
 
-            var t = parseInt(me.str * 5 + lv / 30);
+            var t = parseInt(me.str * 5 + lv / 20); // 按说明 lv/20（原为 lv/30）
             me.do_attack({
                 target: target,
                 gj: me.gj * t / 100,

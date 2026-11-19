@@ -94,7 +94,12 @@ this.pfm = {
 					name: "万蛊",
 					desc: "被敌人命中时使敌人受到2200点伤害",
 					duration: 10000 + parseInt(lv * 10),
-					prop: { reflect_sh: 2200 },
+					// 被命中时反噬攻击者：固定 2200 点，无视防御与百分比免伤（diff_fy=100），仍受固定免伤等结算
+					on_be_hit: function (owner, attacker) {
+						if (!attacker || attacker === owner || attacker.hp <= 0) return;
+						var dmg = attacker.damage(2200, owner, 100, { kind: "reflect" });
+						if (dmg > 0) owner.send_combat("<HIG>$N身上的毒蛊反噬，$n受到" + dmg + "点伤害！</HIG>\n", attacker);
+					},
 				})},
 			query_desc: function (me, lv) {
 				return "毒气弥漫，笼罩全身，" + (10 + parseInt(lv * 10 / 1000)) + "秒内在被敌人命中时候使敌人受到2200点伤害。";
@@ -106,8 +111,10 @@ this.query_prop = function (lv) {
 	return {
 			per: (-parseInt(lv / 300) - 1)
 		};
+};
 
-	this.query_enable_prop = function (lv) {
+// 原先这段写在 query_prop 的 return 之后（永远执行不到），启用属性从未生效
+this.query_enable_prop = function (lv) {
 			return {
 				unarmed: {
 				gj: parseInt(lv * 1.5) + 20,
@@ -120,4 +127,3 @@ this.query_prop = function (lv) {
 			},
 			}
 		};
-}

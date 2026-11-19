@@ -69,16 +69,16 @@ this.pfm = {
 				id: "busi_fayin",
 				name: "不死法印",
 				desc: "固定免伤" + shield + "点",
-				duration: parseInt(lv * 10),
+				duration: Math.min(parseInt(lv * 10), 10000),
 				downside: false,
 				override: 2,
 				prop: { diff_sh: shield },
-				start_msg: "<hio>$N获得了" + shield + "点固定免伤，持续8秒！</hio>",
+				start_msg: "<hio>$N获得了" + shield + "点固定免伤，持续" + (Math.min(parseInt(lv * 10), 10000) / 1000) + "秒！</hio>",
 				finish_msg: "$N的不死法印消散了。",
 			});
 		},
 		query_desc: function (me, lv) {
-			return "真言守护，将105%的攻击力转化为固定免伤，持续" + (parseInt(lv * 10 / 1000)) + "秒。不死法印，金刚不坏。";
+			return "真言守护，将105%的攻击力转化为固定免伤，持续" + (Math.min(parseInt(lv * 10), 10000) / 1000) + "秒。不死法印，金刚不坏。";
 		}
 	}
 };

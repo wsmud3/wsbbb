@@ -21,17 +21,19 @@ this.set({
 });
 
 this.on_use = function (me) {
-    if (me.hp <= 1 && me.mp <= 1)
-    return me.notify("你的气血和内力都已耗尽，无法施展兵解。");
+    if (me.hp <= 1 && me.mp <= 1) {
+        me.notify("你的气血和内力都已耗尽，无法施展兵解。");
+        return false;
+    }
+    var target = me.query_enemy();
+    if (!target) {
+        me.notify("你当前没有战斗目标。");
+        return false;
+    }
     var dmg = me.hp + me.mp;
     me.set_hp(1);
     me.set_mp(1);
-    var target = me.query_enemy();
-    if (target) {
-        target.from_attack(dmg, 999999, null,
-        "<HIZ>$N施展兵解之术，气血内力归一，化作惊天一击轰向$n！</HIZ>");
-    } else {
-        me.notify("你施展了兵解之术，但没有目标可以攻击。");
-    }
+    target.from_attack(dmg, 999999, null,
+    "<HIZ>$N施展兵解之术，气血内力归一，化作惊天一击轰向$n！</HIZ>");
     return true;
 };

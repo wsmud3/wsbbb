@@ -49,20 +49,19 @@
 			mp: 20,
 			use: function (me, target, lv) {
 				me.send_room("<hiy>$N将禅杖高举过顶，周身佛光骤然大盛，口中梵音如雷——「罗汉伏魔」！但见一尊金刚罗汉法相从$N身后浮现，宝相庄严，怒目圆睁！$N手中$w与罗汉法相的降魔杵合二为一，挟着无上佛门降魔之力，化作一道贯穿天地的金色光柱，轰然砸向$n！这一杖之威，足以令群魔辟易、万邪不侵！</hiy>", target);
-				var stacks = (me.query_temp("luohan_stacks") || 0) + 1;
-				if (stacks > 5) stacks = 5;
-				me.set_temp("luohan_stacks", stacks);
+				// 按说明：每层 +80%，最多 5 层。原先每次叠加的 prop 是 stacks×80（累加后远超 400%），且未设 max_count（默认 10 层）
+				var stacks = Math.min(5, me.query_status("luohan_fumo") + 1);
 				me.add_status({
 					id: "luohan_fumo",
 					name: "罗汉伏魔",
-					desc: "罗汉伏魔" + stacks + "层，伤害+" + (stacks * 80) + "%",
+					desc: "每层伤害+80%",
 					duration: 5000 + parseInt(lv * 10),
 					downside: false,
 					override: 1,
-					prop: { gj_per: stacks * 80 },
+					max_count: 5,
+					prop: { gj_per: 80 },
 					start_msg: "<hiy>$N周身金光大盛，罗汉之力灌注全身(" + stacks + "层)！</hiy>",
 					finish_msg: "$N的罗汉伏魔之力消散了。",
-					on_expire: function(p) { p.remove_temp("luohan_stacks"); },
 				});
 				me.do_attack({target: target});
 				me.end_attack(target);

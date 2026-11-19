@@ -148,7 +148,7 @@ this.pfm = {
 						id: "liumai_defdown",
 						name: "破碎",
 						desc: "防御降低" + defPerStack + "%",
-						duration: 5000 + parseInt(lv * 5),
+						duration: Math.min(5000 + parseInt(lv * 5), 10000),
 						only_combat: true,
 						downside: true,
 						override: 1,
@@ -183,7 +183,7 @@ this.pfm = {
 			var defPerStack = 3;
 			if (lv >= 2000) defPerStack = 5;
 			else if (lv >= 1000) defPerStack = 4;
-			return "六脉齐射，随机攻击你的敌人，命中一次叠加一层<hir>破碎</hir>(每层降低" + defPerStack + "%防御，最多10层)，持续10秒。溅射伤害不会触发破碎效果。";
+			return "六脉齐射，随机攻击你的敌人，命中一次叠加一层<hir>破碎</hir>(每层降低" + defPerStack + "%防御，最多10层)，持续" + (Math.min(5000 + parseInt(lv * 5), 10000) / 1000) + "秒。溅射伤害不会触发破碎效果。";
 		}
 	}
 };

@@ -106,6 +106,9 @@ this.enter = function (me, sk, pfmid) {
         //     }
         // }
     }
+    // 可取消型绝招（如阴阳九转·镇天地「再次使用可取消」）：处于该绝招状态时再次使用，
+    // 由 pfm.try_cancel 处理并返回 true，不受冷却限制，也不扣内力、不重置冷却。
+    if (pfm.try_cancel && pfm.try_cancel(me, lv) === true) return;
     var key = "pfm/" + sk + "/" + pfmid;
     if (me.query_temp(key)) {
         return me.notify(pfm.name + "还没准备好，你还不能使用。");
@@ -145,9 +148,11 @@ this.enter = function (me, sk, pfmid) {
 
         me.send_room("<red>$N释放技能" + pfm.name + "，但是内功被种魔之力压制，无法使用！</red>\n");
         isrelease = true;
-    } else if (target && target.parry_skill && target.parry_skill.on_parry_pfm) {
-        isrelease = target.parry_skill.on_parry_pfm(target, me, pfm, lv, sk);
-
+    } else if (target && target.parry_skill && target.parry_skill.on_parry_pfm
+        && target.parry_skill.on_parry_pfm(target, me, pfm, lv, sk) === true) {
+        // 对方招架技能化解了本次绝招（如移花接木）：绝招不生效，但照常扣内力、进冷却。
+        // on_parry_pfm 返回其它值（含 undefined）时绝招照常释放。
+        isrelease = true;
     } else {
         if (pfm.is_weapon && sp_skill != me.attack_skill) {
             //me.attack_skill = sp_skill;
@@ -159,8 +164,10 @@ this.enter = function (me, sk, pfmid) {
             isrelease = pfm.use(me, target, lv, sk) != false;
             if (isrelease) {
                 // 记录最后使用的绝招（供左右互搏等技能使用）
-                me.set_temp("sk/last_pfm_id", pfm.id, 30000);
-                me.set_temp("sk/last_pfm_lv", lv, 30000);
+                me.set_mem("sk/last_pfm_id", pfm.id, 30000);
+                me.set_mem("sk/last_pfm_lv", lv, 30000);
+                // 记录「对目标施展的绝招」，供斗转星移·斗转使用
+                if (target && target !== me && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, 60000);
             }
         } catch (e) {
             // 绝招脚本内部抛错时，伤害/效果往往已经结算了一部分，但异常会一路穿出
@@ -185,7 +192,7 @@ this.enter = function (me, sk, pfmid) {
         //     //保存目标被释放的技能
         //     me.set_temp("used_pfm", pfm.id, 20000);
         // }
-        me.set_temp("used_pfm", pfm.id, 20000);
+        me.set_mem("used_pfm", pfm.id, 20000); // 小无相功·无相读取；只在内存里，不存档
         var time = pfm.query_releasetime(me, lv);
         if (time) me.release_time = time + now;
         else me.release_time = 0;

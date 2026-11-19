@@ -13,15 +13,17 @@ this.set({
     }
 });
 this.group_name = "lm2";
+// 档位表：穿到 3 件得三件档，穿到 5 件再加五件档（两档累计，见 EQUIPMENT.normalize_group）
 this.group_prop = function (count) {
-    if (count == 3) {
-        return {
-            int: 10
-        };
-    } else if (count == 5) {
+    if (count >= 5) {
         return {
             lianxi_per: 15,
             dazuo_per: 15
+        };
+    }
+    if (count >= 3) {
+        return {
+            int: 10
         };
     }
 }

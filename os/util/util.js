@@ -137,9 +137,12 @@ UTIL = {
                         :
                         str.push(PROPERTIES[item] + "：+" + (-prop[item] * count / 1000) + "秒");
                     break;
+                case "gjsd":
+                    // prop.gjsd 正值 = 攻击间隔缩短（出手更快），原先显示成「攻击速度：+X秒」容易误解
+                    str.push("攻击间隔：" + (prop[item] > 0 ? "-" : "+") + (Math.abs(prop[item]) * count / 1000) + "秒");
+                    break;
                 case "diff_busy":
                 case "busy":
-                case "gjsd":
                 case "diff_downside":
                     prop[item] > 0 ?
                         str.push(PROPERTIES[item] + "：+" + (prop[item] * count / 1000) + "秒")

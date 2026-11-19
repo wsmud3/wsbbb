@@ -7,7 +7,7 @@ this.set({
     eq_type: EQUIP_TYPE.WAIST,
     hole_count: 4,
     group_name: "mp_set_lv5",
-    prop: { fy: 355, con: 45, str: 30, expend_mp_per: -10, zj_per: 10 },
+    prop: { fy: 355, con: 45, str: 30, expend_mp_per: 10, zj_per: 10 },
 });
 this.family = FAMILIES.WUDANG;
 this.group_prop = function (count) {

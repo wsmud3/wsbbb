@@ -64,9 +64,10 @@
 				mp: 25,
 				use: function (me, target, lv) {
 					me.send_room("<HIC>$N剑势看似轻柔无力——「绵里藏针」！$w如棉絮般飘向$n，却在触及的刹那暴起锋芒！</HIC>", target);
+					// 按说明先手示弱只造成 83% 伤害（原为 100%）；后手 266% 即「增加 166%」，与说明一致
 					if (me.do_attack({
 						target: target,
-						gj: me.gj,
+						gj: Math.floor(me.gj * 83 / 100),
 						mz: me.mz,
 					})) {
 					} else {

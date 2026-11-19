@@ -17,12 +17,15 @@ this.set({
     },
 });
 
+// 覆雨：30% 几率追加剑雨伤害。返回值并入本次攻击的伤害，走正常的部位、增伤、暴击与伤害显示流程。
 this.do_attack = function (me, target, par) {
     if (target && target.hp > 0 && Math.random() < 0.3) {
         var extraDmg = Math.floor(me.gj * 0.3);
         if (extraDmg > 500000) extraDmg = 500000;
-        target.damage(extraDmg, me);
-        me.send_combat("<HIB>覆雨剑上水汽弥漫，剑雨如注，追加" + extraDmg + "点伤害！</HIB>", target);
+        if (extraDmg > 0) {
+            me.send_combat("<HIB>覆雨剑上水汽弥漫，剑雨如注！</HIB>\n", target);
+            return extraDmg;
+        }
     }
     return 0;
 };

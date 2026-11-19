@@ -27,23 +27,29 @@ CHARACTER.prototype.add_buff_prop = function (p, v) {
     if (!this.buff_prop) this.buff_prop = {};
     this.buff_prop[p] = (this.buff_prop[p] || 0) + v;
 }
-// 免伤/破防/终伤软上限：技能与装备带来的部分超过 SOFT_CAP_START 后递减，且永远不超过 SOFT_CAP_MAX；
-// buff（状态）带来的加成不参与递减，原样加在后面，所以只有开 buff 才可能超过 SOFT_CAP_MAX。
-// 曲线 start + (max-start)·(1-e^(-(x-start)/(max-start)))：在 start 处与线性衔接，越往上加成越少。
-// 例（start 80 / max 100）：90→87.9，100→92.6，120→97.3，150→99.4。只对玩家（及其随从）生效。
+// 免伤/破防/终伤软上限（与比武 biwu.js 同一条曲线）：技能与装备带来的部分超过 SOFT_CAP_START 后
+// 按 start + 2·√(x-start) 递减，最高 SOFT_CAP_MAX（99.9999，即没有 buff 永远到不了 100）。
+// 例：85→84.5，90→86.3，100→88.9，120→92.6，150→96.7，180 及以上→99.9999。
+// 三项不分来源（技能、装备、buff、减益）全部套用此曲线。唯一例外是「特殊免伤」diff_sh_per2：
+// 免伤类 buff 一律给 diff_sh_per2，它在软上限之后原样叠加（见 USER.recount），所以只有开 buff 才能超过 100。
+// 破防的 diff_fy_per2 并入破防一起折算。只对玩家、随从和擂台镜像生效，NPC 不折算。
 CHARACTER.SOFT_CAP_PROPS = { diff_sh_per: 1, diff_fy_per: 1, add_sh_per: 1 };
 CHARACTER.SOFT_CAP_START = 80;
-CHARACTER.SOFT_CAP_MAX = 100;
+CHARACTER.SOFT_CAP_MAX = 99.9999;
 CHARACTER.soft_cap = function (v) {
-    var a = CHARACTER.SOFT_CAP_START, m = CHARACTER.SOFT_CAP_MAX;
+    var a = CHARACTER.SOFT_CAP_START;
     if (!(v > a)) return v;
-    return a + (m - a) * (1 - Math.exp(-(v - a) / (m - a)));
+    return Math.min(CHARACTER.SOFT_CAP_MAX, a + Math.sqrt((v - a) * 4));
 };
+CHARACTER.SOFT_CAP_EXTRA = { diff_fy_per: "diff_fy_per2" };
 CHARACTER.prototype.query_soft_prop = function (name) {
     var total = this.query_prop(name);
     if (!this.soft_cap_props || !CHARACTER.SOFT_CAP_PROPS[name]) return total;
-    var buff = (this.buff_prop && this.buff_prop[name]) || 0;
-    return CHARACTER.soft_cap(total - buff) + buff;
+    if (CHARACTER.SOFT_CAP_EXTRA[name]) total += this.query_prop(CHARACTER.SOFT_CAP_EXTRA[name]);
+    // 兜底：通过 buff 获得的免伤都算特殊免伤——buff 带来的正值普通免伤不折算，原样加在后面
+    var buff = name === "diff_sh_per" && this.buff_prop ? (this.buff_prop.diff_sh_per || 0) : 0;
+    if (buff > 0) return CHARACTER.soft_cap(total - buff) + buff;
+    return CHARACTER.soft_cap(total);
 };
 CHARACTER.prototype.query_prop_no_buff = function (name) {
     var total = this.query_prop(name);
@@ -250,4 +256,18 @@ CHARACTER.prototype.clear_combat_prop = function (name, val) {
         this.recount();
     }
     this._clear_zc_stacks();
+}
+
+// 武器的「攻击结算后」钩子：world/extends/char/combat.js 在每次攻击结束时调用 this.on_attack_over(me, target, par, sh)，
+// sh 是这一击实际造成的伤害。玩家/随从本身没有这个回调，这里转给武器的 on_attack_over。
+// 用途：吸血类（按实际伤害）、拳套普攻（引擎只在 no_weapon 绝招时调用拳套的 do_attack）。
+// NPC 文件自己定义的 on_attack_over 会覆盖本方法，不受影响。
+CHARACTER.prototype.on_attack_over = function (me, target, par, sh) {
+    var weapon = this.equipment && this.equipment[EQUIP_TYPE.WEAPON];
+    if (!weapon || typeof weapon.on_attack_over !== "function") return;
+    try {
+        weapon.on_attack_over(this, target, par || {}, sh || 0);
+    } catch (e) {
+        console.error("weapon on_attack_over error:", weapon.path, e && e.stack || e);
+    }
 }

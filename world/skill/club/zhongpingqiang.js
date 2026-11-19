@@ -80,7 +80,7 @@ this.pfm = {
         mp: 20,
         use: function (me, target, lv) {
 
-            var per = 150 + parseInt(lv / 20);
+            var per = 150 + parseInt(lv / 50); // 按说明命中 +(50+lv/50)%，上限 +100%（原为 lv/20）
             if (per > 200) per = 200;
             if (me.do_attack({
                 target: target,
@@ -89,12 +89,15 @@ this.pfm = {
                 no_dodge: me.query_prop('zpqf_mz') > 0,
                 attack_msg: "<hir>$N突然反身疾退，$n正疑惑发愣间，却见$N骤然转身，施展出「<red>回马枪</red>」刺向傻不楞登的$n</hir>"
             })) {
-                per = 100 + parseInt(lv / 10);
+                // 按说明「再发起一次突击」：与绝招「突击」同倍率（200%+lv/5%，上限 500%）并带突击的进阶破防
+                per = 200 + parseInt(lv / 5);
+                if (per > 500) per = 500;
                 me.do_attack({
                     target: target,
                     attack_msg: "<hiy>$N身形突进，手中$W犹如灵蛇出洞，快速向$n刺去</hiy>",
                     gj: me.gj * per / 100,
-                    mz: me.mz
+                    mz: me.mz,
+                    diff_fy: me.query_prop('zpqf_cc')
                 });
             }
             me.end_attack(target);

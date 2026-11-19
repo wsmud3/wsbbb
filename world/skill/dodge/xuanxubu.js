@@ -33,6 +33,9 @@
 	// 闪避时进行反击的被动
 	this.on_dodge = function (me, attacker, par) {
 		if (!attacker || attacker.hp <= 0) return;
+		if (par && par.is_counter) return;              // 对方的反击不再反击
+		if (me.query_mem("xuanxu_counter_cd")) return;  // 内置冷却 5 秒（记在内存里，不存档）
+		me.set_mem("xuanxu_counter_cd", 1, 5000);
 		var lv = me.query_skill("xuanxubu", 0);
 		var gj = lv * 3 + 500;
 		me.send_room("<hiz>$N脚踏玄虚，身形一晃，趁势反击而出！</hiz>", attacker);
@@ -43,6 +46,7 @@
 			no_dodge: true,
 			no_parry: true,
 			no_append_target: true,
+			is_counter: true,
 			attack_msg: "<hiz>$N身形如鬼似魅，趁闪避之势，一掌反击向$n！</hiz>",
 			damage_msg: "$N的玄虚反击掌力结结实实地打在$n身上！"
 		});
@@ -67,7 +71,7 @@
 					duration: duration,
 					prop: {
 						ds_per: 5 + parseInt(lv / 100),
-						diff_sh_per: 5 + parseInt(lv / 100),
+						diff_sh_per2: 5 + parseInt(lv / 100),
 					}
 				});
 			},

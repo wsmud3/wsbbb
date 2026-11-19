@@ -67,7 +67,7 @@
 				me.send_room("<HIW>$N剑气纵横——「剑气」！$w上剑芒暴涨，这一剑蕴含了$N全部的精气神，命中大幅提升！</HIW>", target);
 				me.do_attack({
 					target: target,
-					gj: me.gj,
+					gj: Math.floor(me.gj * 310 / 100), // 按说明 310% 伤害（原为 100%）
 					mz: Math.floor(me.mz * 2),
 				});
 				me.end_attack(target)

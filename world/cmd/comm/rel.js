@@ -43,7 +43,7 @@ this.enter = function (me, type, cmd) {
             if (cmd === 'diaoyu') {
                 var wea = target.query_weapon();
                 if (!wea ||
-                    !wea.path.startsWith("sp/tool/diao")) {
+                    (!wea.path.startsWith("sp/tool/diao") && !wea.is_fishing_rod)) {
                     return me.notify(target.name + "没有装备钓竿不可以钓鱼(进入住宅选择目标随从-背包-装备钓鱼竿)。");
                 }
 

@@ -24,7 +24,7 @@ this.on_force_over = function (me, target, par, sh) {
 			downside: true,
 			override: 1,
 			max_count: 10,
-			prop: { gj_per: -parseInt(lv * 1 / 1000), ds_per: -parseInt(lv * 1 / 1000), mz_per: -parseInt(lv * 1 / 1000) },
+			prop: { gj_per: -1, ds_per: -1, mz_per: -1 }, // 按说明每层 1%（原为 lv/1000，1000 级以下为 0）
 		}, me);
 		// Update name to show current stack count
 		if (target.status) {

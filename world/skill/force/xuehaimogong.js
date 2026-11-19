@@ -38,7 +38,16 @@ this.pfm = {
 					desc: "战斗属性增加" + (10 + parseInt(lv / 100)) + "%，不会死亡",
 					duration: 4000 + parseInt(lv * 5),
 					prop: { gj_per: 10 + parseInt(lv / 100), fy_per: 10 + parseInt(lv / 100), mz_per: 10 + parseInt(lv / 100), ds_per: 10 + parseInt(lv / 100), zj_per: 10 + parseInt(lv / 100) },
+					// 不会死亡：借引擎的 min_hp 锁血（add_hp 最多扣到 min_hp），结束时恢复原值
+					on_attach: function (who) {
+						if (who._xueji_min_hp === undefined) who._xueji_min_hp = who.min_hp || 0;
+						if (!(who.min_hp >= 1)) who.min_hp = 1;
+					},
 					on_expire: function(who) {
+						if (who._xueji_min_hp !== undefined) {
+							who.min_hp = who._xueji_min_hp;
+							delete who._xueji_min_hp;
+						}
 						who.add_status({
 							id: "xueji_p",
 							name: "血虚",

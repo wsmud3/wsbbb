@@ -72,15 +72,14 @@
 						}
 					}
 					if (stacks > 0) {
-						me.remove_status("changxian");
-						for (var k = 0; k < stacks; k++) {
-							me.do_attack({
-								target: target,
-								gj: me.gj + 1000 * stacks,
-								mz: me.mz,
-								no_parry: true,
-							});
-						}
+						// 按说明：一次性释放，每层附加 1000 伤害，无法招架（原先打 stacks 次、每次 +1000×stacks，随层数平方增长；且只移除 1 层）
+						me.remove_status("changxian", true);
+						me.do_attack({
+							target: target,
+							gj: me.gj + 1000 * stacks,
+							mz: me.mz,
+							no_parry: true,
+						});
 					} else {
 						me.do_attack({
 							target: target,

@@ -81,14 +81,15 @@
 				target.add_status({
 					id: "zidian_mabi",
 					name: "麻痹",
-					desc: "攻击速度+" + malaPct + "%，冷却+" + malaPct + "%，出招+" + malaPct + "%",
+					desc: "攻击间隔延长" + malaPct + "%，绝招冷却延长" + malaPct + "%，出招时间延长" + malaPct + "%",
 					duration: malaDuration,
 					downside: true,
 					override: 2,
 					prop: {
-						gjsd_per: malaPct,
-						distime_per: malaPct,
-						releasetime_per: malaPct,
+						// 引擎约定：gjsd_per / distime_per / releasetime_per 正值为加快、缩短，减益须取负值
+						gjsd_per: -malaPct,
+						distime_per: -malaPct,
+						releasetime_per: -malaPct,
 					},
 					start_msg: "<HIM>$n被紫电击中，全身麻痹，动作迟缓！</HIM>",
 					finish_msg: "$n的麻痹效果消失了。",
@@ -101,7 +102,7 @@
 				var malaPct = 20 + parseInt(lv / 100);
 				if (malaPct > 40) malaPct = 40;
 				var malaDuration = (Math.min(8000 + lv * 5, 20000) / 1000);
-				return "引天雷之力，造成200%攻击力的伤害，自身获得「紫电」buff（攻击+" + bonus + "%，命中+" + bonus + "%，持续" + (5 + parseInt(lv * 10 / 1000)) + "秒），敌人获得「麻痹」debuff（攻速/冷却/出招+" + malaPct + "%，持续" + malaDuration + "秒）。";
+				return "引天雷之力，造成200%攻击力的伤害，自身获得「紫电」buff（攻击+" + bonus + "%，命中+" + bonus + "%，持续" + (5 + parseInt(lv * 10 / 1000)) + "秒），敌人获得「麻痹」debuff（攻击间隔、绝招冷却、出招时间延长" + malaPct + "%，持续" + malaDuration + "秒）。";
 			}
 		}
 	};

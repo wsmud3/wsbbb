@@ -45,7 +45,17 @@
 				mp: 25,
 				use: function (me, target, lv) {
 					me.send_room("<HIY>$N眼中精光大盛，手中$w骤然间金光暴涨——「金蛇狂舞」！霎时间，$w化作千百道金色剑影，如同无数条金蛇同时苏醒，在$n周身疯狂舞动，嘶嘶声中金光乱窜，每一道剑影都蕴含着致命的杀机，$n被这铺天盖地的金色蛇影完全吞没！</HIY>", target);
-					me.do_attack({target: target});
+					// 按说明：200%攻击力，命中后忙乱6秒（原代码只普通攻击一次，没有倍率也没有忙乱）
+					if (me.do_attack({target: target, gj: me.gj * 2, mz: me.mz})) {
+						target.add_status({
+							id: "busy",
+							name: "金蛇狂舞",
+							desc: "被金蛇剑影缠住，手忙脚乱",
+							is_busy: true,
+							duration: 6000,
+							downside: true,
+						}, me);
+					}
 					me.end_attack(target);
 				},
 				query_desc: function (me, lv) {

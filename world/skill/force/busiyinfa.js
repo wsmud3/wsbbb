@@ -97,13 +97,17 @@ var huanmo_trigger_pfm = function (me, target) {
 };
 
 // ---------------------------------------------------------------
-// 轻功被动：闪避时幻影反击
+// 轻功被动：闪避成功时幻影反击
+// 原先写在 on_dodge 里，而引擎只在「没闪开」时调用 on_dodge，变成了被打中才反击；
+// 再叠加内功位 on_damage 的幻魔反击，内功、轻功同装时一击会触发两套。
+// 现改为 on_dodge_success（真正闪开时才调用）：一击要么闪开（这里反击），要么没闪开
+// （幻魔期间由内功位 on_damage 化解并反击），不会重复。
 // ---------------------------------------------------------------
-this.on_dodge = function (me, from, par) {
+this.on_dodge_success = function (me, from, par) {
 	if (!from || from.hp <= 0 || !from.fight_type) return;
 
 	var counterDmg = me.gj * 0.6;
-	var result = from.damage(counterDmg, me, 0);
+	var result = from.damage(counterDmg, me, 0, { kind: "reflect" });
 	if (result > 0) {
 		me.send_combat("<him>$N身形一晃，幻影反手一击，造成" + Math.floor(result) + "点伤害。</him>\n", from);
 	}
@@ -117,13 +121,15 @@ this.on_dodge = function (me, from, par) {
 // ---------------------------------------------------------------
 // 内功被动：逆守 + 内力为盾 + 生死锁链 + 幻魔身法绝对闪避
 // ---------------------------------------------------------------
-this.on_damage = function (me, from, sh) {
+this.on_damage = function (me, from, sh, ctx) {
+	var isReflect = ctx && ctx.kind === "reflect"; // 反震/反伤来的伤害：照常化解，但不再反击
 	if (sh <= 0) return sh;
 
 	// 幻魔身法：绝对闪避
 	if (me.query_temp("busiyinfa_huanmo")) {
 		var counterDmg = me.gj * 0.6;
-		var result = from ? from.damage(counterDmg, me, 0) : 0;
+		if (isReflect) return 0;
+		var result = from ? from.damage(counterDmg, me, 0, { kind: "reflect" }) : 0;
 		if (result > 0 && from) {
 			me.send_combat("<him>$N身形一晃，幻影反手一击，造成" + Math.floor(result) + "点伤害。</him>\n", from);
 		}
@@ -206,7 +212,7 @@ this.pfm = {
 		distime: 35000,
 		allow_busy: false,
 		query_mp: function (me, level) { return 1200; },
-		query_desc: function (level) {
+		query_desc: function (me, lv) {
 			return "对目标施加不可驱散的「幻身」（战斗结束消失）。链接期间，你对目标的伤害50%转化为气血，目标对你的伤害50%转化为内力。累积死印/生印合计7层时触发归元：清除所有负面状态并回复气血内力。";
 		},
 		use: function (me, target, lv) {
@@ -244,8 +250,9 @@ this.pfm = {
 		distime: 45000,
 		allow_busy: true,
 		query_mp: function (me, level) { return 500; },
-		query_desc: function (level) {
-			return "逆转经脉，8秒内受到的伤害改为扣除内力而非气血，攻击伤害降低40%。结束后回复被扣除的内力，并反噬对手等量内力。";
+		query_desc: function (me, lv) {
+			lv = lv || 0;
+			return "逆转经脉，" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内受到的伤害改为扣除内力而非气血，攻击伤害降低" + (30 + parseInt(lv / 100)) + "%。结束后回复被扣除的内力，并反噬对手等量内力。";
 		},
 		use: function (me, target, lv) {
 			if (!me.skills.force || me.skills.force.enable_skill !== "busiyinfa")
@@ -255,8 +262,8 @@ this.pfm = {
 			me.add_status({
 				id: "force",
 				name: "逆转",
-				duration: parseInt(lv * 10),
-				desc: "受到的伤害由内力承担，攻击伤害降低40%",
+				duration: Math.min(parseInt(lv * 10), 30000),
+				desc: "受到的伤害由内力承担，攻击伤害降低" + (30 + parseInt(lv / 100)) + "%",
 				override: 2,
 				prop: { gj_per: -(30 + parseInt(lv / 100)) },
 				on_attach: function (p) {
@@ -292,8 +299,9 @@ this.pfm = {
 		distime: 25000,
 		allow_busy: false,
 		query_mp: function (me, level) { return 600; },
-		query_desc: function (level) {
-			return "邪王独步天下的鬼魅身法。10秒内绝对闪避所有攻击，每次闪避触发幻影反击，并随机释放一个已装备的攻击技能（1.5秒内最多触发一次）。";
+		query_desc: function (me, lv) {
+			lv = lv || 0;
+			return "邪王独步天下的鬼魅身法。" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，并随机释放一个已装备的攻击技能（1.5秒内最多触发一次）。";
 		},
 		use: function (me, target, lv) {
 			if (!me.skills.dodge || me.skills.dodge.enable_skill !== "busiyinfa")
@@ -303,7 +311,7 @@ this.pfm = {
 			me.add_status({
 				id: "dodge",
 				name: "幻魔身法",
-				duration: parseInt(lv * 10),
+				duration: Math.min(parseInt(lv * 10), 30000),
 				desc: "绝对闪避所有攻击，闪避反击并可触发随机技能",
 				override: 2,
 				prop: {},

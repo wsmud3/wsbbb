@@ -19,26 +19,52 @@ this.set({
     },
 });
 
+// 女娲：复活同一房间里阵亡的队友（只限队友），流程与原地复活（relive locale）一致：
+// 遵守房间的 no_relive 与 on_relive 限制，发出客户端的复活消息，清掉死亡时的状态后重新进入房间。
+// 没有可复活的队友时不生效、不计冷却。
 this.on_use = function (me) {
     var room = me.environment;
-    if (!room) return me.notify("你不在任何房间中。");
+    if (!room) {
+        me.notify("你不在任何房间中。");
+        return false;
+    }
+    if (room.no_relive || me.is_in("yz/leitai/leitai")) {
+        me.notify("这里不能复活。");
+        return false;
+    }
+    var team = me.team || [];
+    var dead = [];
+    for (var i = 0; i < team.length; i++) {
+        var p = team[i];
+        if (!p || p === me || !p.is_player || !(p.hp <= 0) || p.environment !== room) continue;
+        if (p.query_temp("relive")) continue; // 已在用天师符等待复活
+        dead.push(p);
+    }
+    if (!dead.length) {
+        me.notify("附近没有需要复活的队友。");
+        return false;
+    }
     var count = 0;
-    for (var i = 0; i < WORLD.USERS.length; i++) {
-        var p = WORLD.USERS[i];
-        if (p.hp <= 0 && p.environment == room && p != me) {
-            p.hp = Math.max(1, Math.floor(p.max_hp * 0.3));
-            p.mp = Math.floor(p.max_mp * 0.3);
-            p.notify_hp();
-            p.clear_downside();
-            room.item_changed(p, true);
-            p.send("<HIZ>你被女娲石的五彩神光复活了！</HIZ>");
-            count++;
-        }
+    for (var j = 0; j < dead.length; j++) {
+        var q = dead[j];
+        if (room.on_relive && room.on_relive(q, true) === false) continue;
+        q.die = USER.prototype.die;
+        q.clear_status();
+        q.hp = Math.max(1, Math.floor(q.max_hp * 0.3));
+        q.mp = Math.floor(q.max_mp * 0.3);
+        q.notify('{type:"die",relive:true}');
+        if (q.force_skill && q.force_skill.on_relive) q.force_skill.on_relive(q);
+        q.environment = null;
+        q.moveto(room, null, "<HIZ>" + q.name + "沐浴在五彩神光之中，重新站了起来。</HIZ>");
+        q.notify_hp && q.notify_hp();
+        if (q.restore_item_buffs) q.restore_item_buffs();
+        q.send("<HIZ>你被女娲石的五彩神光复活了！</HIZ>");
+        count++;
     }
-    if (count > 0) {
-        me.send_room("<HIZ>$N举起女娲石，五彩神光照耀四方，周围的死者纷纷复活！</HIZ>");
-    } else {
-        me.notify("附近没有需要复活的玩家。");
+    if (!count) {
+        me.notify("附近没有可以复活的队友。");
+        return false;
     }
+    me.send_room("<HIZ>$N举起女娲石，五彩神光照耀四方，阵亡的同伴纷纷复活！</HIZ>");
     return true;
 };

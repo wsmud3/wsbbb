@@ -47,9 +47,16 @@ this.pfm = {
 			me.send_room("<HIY>$N咧嘴一笑，突然拳速暴增——「乱拳」！左勾拳、右摆拳、上冲拳、下劈拳，毫无章法却又暗合天道！</HIY>", target);
 			var allHit = true;
 			for (var i = 0; i < 6; i++) {
+				if (target.hp <= 0 || me.hp <= 0) break;
 				var opts = { target: target, gj: me.gj, mz: me.mz };
-				if (i === 5 && allHit) opts.diff_fy = 150;
-				if (!me.do_attack(opts)) allHit = false;
+				if (i === 5 && allHit) {
+					// 按说明最后一拳无视对方 150 点防御（原先 diff_fy=150 被当成百分比，等于无视全部防御和免伤）。
+					// 引擎没有「无视固定防御」的参数，这一拳期间临时把目标防御压低 150 点，打完复原。
+					var fy0 = target.fy, fy1 = Math.max(0, fy0 - 150);
+					target.fy = fy1;
+					try { if (!me.do_attack(opts)) allHit = false; }
+					finally { if (target.fy === fy1) target.fy = fy0; }
+				} else if (!me.do_attack(opts)) allHit = false;
 			}
 			me.end_attack(target);
 		},
@@ -64,16 +71,38 @@ this.pfm = {
 		release_time: 3096,
 		mp: 30,
 		use: function (me, target, lv) {
-			var lastPfmId = me.query_temp("sk/last_pfm_id");
-			var hasLastPfm = lastPfmId && lastPfmId !== "kongmingquan/pfm2";
-			me.send_room("<HIY>$N双眼忽左忽右，左手画圆右手画方——「左右互搏」！一心二用，" + (hasLastPfm ? "左手空明拳右手却施展出之前的绝技" : "双手分别使出不同的招式") + "，威力虽减但奇招迭出！</HIY>", target);
+			var lastPfmId = me.query_mem("sk/last_pfm_id");
+			// 找到上一个绝招（pfm.js / auto_combat.js 释放成功时在内存里记录 sk/last_pfm_id / sk/last_pfm_lv，30 秒内有效，不存档）
+			var lastPfm = null;
+			if (lastPfmId && lastPfmId !== "kongmingquan/pfm2" && !me._zuoyou_hubo) {
+				var lp = String(lastPfmId).split("/");
+				var lpSkill = SKILL.get(lp[0]);
+				lastPfm = lpSkill && lpSkill.pfm ? lpSkill.pfm[lp[1]] : null;
+				if (lastPfm && typeof lastPfm.use !== "function") lastPfm = null;
+			}
+			me.send_room("<HIY>$N双眼忽左忽右，左手画圆右手画方——「左右互搏」！一心二用，" + (lastPfm ? "左手空明拳右手却施展出之前的绝技" : "双手分别使出不同的招式") + "，威力虽减但奇招迭出！</HIY>", target);
 			// 威力随等级成长：75% + 每100级+1%
 			var per = 75 + Math.floor(lv / 100);
-			me.do_attack({
-				target: target,
-				gj: Math.floor(me.gj * per / 100),
-				mz: me.mz,
-			});
+			if (lastPfm) {
+				// 按说明：再次使用之前的绝招，效果为自身攻击的 per%——施展期间临时把攻击力按比例压低
+				var gj0 = me.gj;
+				me.gj = Math.floor(gj0 * per / 100);
+				me._zuoyou_hubo = true; // 防重入（如上一招本身又去调用别的绝招）
+				try {
+					me.send_room("<HIY>$N右手一翻，竟又使出了「" + lastPfm.name + "」！</HIY>", target);
+					lastPfm.use(me, target, me.query_mem("sk/last_pfm_lv") || lv);
+				} finally {
+					me._zuoyou_hubo = false;
+					// 玩家按属性重算攻击力（保留施展中新得的增益）；NPC 的攻击力是模板固定值，直接复原
+					if (me.is_player) me.recount(); else me.gj = gj0;
+				}
+			} else {
+				me.do_attack({
+					target: target,
+					gj: Math.floor(me.gj * per / 100),
+					mz: me.mz,
+				});
+			}
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {

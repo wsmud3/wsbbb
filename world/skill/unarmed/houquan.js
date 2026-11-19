@@ -32,7 +32,8 @@ this.pfm = {
 			mp: 15,
 			use: function (me, target, lv) {
 				me.send_room("$N施展了猴拳的寸劲。", target);
-				me.do_attack({target: target});
+				// 按说明：基本攻击附加 1100 伤害
+				me.do_attack({target: target, gj: me.gj + 1100, mz: me.mz});
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {

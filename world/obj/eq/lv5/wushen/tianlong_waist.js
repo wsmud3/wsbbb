@@ -6,5 +6,5 @@ this.set({
     unit: "条",
     eq_type: EQUIP_TYPE.WAIST,
     hole_count: 4,
-    prop: { fy: 242, dex: 110, hp_per: 2, fy_per: 2, meditate_per: 22 },
+    prop: { fy: 242, dex: 110, hp_per: 2, fy_per: 2, dazuo_per: 22 },
 });

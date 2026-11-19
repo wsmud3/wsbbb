@@ -31,7 +31,8 @@ CHARACTER.prototype.recount = function () {
     }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
 
-    this.diff_sh_per = this.query_prop('diff_sh_per');
+    // NPC 不折算软上限；免伤类 buff 给的是特殊免伤 diff_sh_per2，只把状态带来的那部分加上
+    this.diff_sh_per = this.query_prop('diff_sh_per') + ((this.buff_prop && this.buff_prop.diff_sh_per2) || 0);
     this.diff_fy_per = this.query_prop('diff_fy_per');
     if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 
@@ -74,6 +75,9 @@ CHARACTER.prototype.do_attack = function (par) {
         target = this.query_enemy();
         if (!target) return;
     }
+    // 在反击类钩子（on_dodge / on_dodge_over / on_parry_over / on_dodge_success / 状态钩子）里发起的攻击一律视为反击，
+    // 反击不会再触发对方的反击类钩子，防止双方都装反击技能时互相无限反击
+    if (this._in_react) par.is_counter = true;
     var weapon = this.query_weapon();//par.no_weapon ? null :
     var attackskill = par.no_weapon ? this.noweapon_skill : this.attack_skill;
 
@@ -128,8 +132,9 @@ CHARACTER.prototype.do_attack = function (par) {
     }
     if (par.is_dodge) {
         if (par.on_dodge) par.on_dodge(target);
-    } else if (target.dodge_skill.on_dodge) {
-        target.dodge_skill.on_dodge(target, this, par);
+    } else if (target.dodge_skill.on_dodge && !par.is_counter) {
+        // par.is_counter：本次攻击本身就是一次反击，不再触发对方的反击类钩子，防止双方互相无限反击
+        react(target, () => target.dodge_skill.on_dodge(target, this, par));
     }
     if (par.is_dodge) {
         sh = 0;
@@ -144,7 +149,10 @@ CHARACTER.prototype.do_attack = function (par) {
             par.on_parry(target, par.is_parry);
         }
         par.bj = par.bj ?? this.bj;
+        var parried_sh = 0;
         if (par.is_parry) {
+            // 记下被招架掉的这一击原本的力道（含绝招倍率与部位系数），供「招架成功」类状态钩子估算本应受到的伤害
+            parried_sh = sh * (this.attack_part && this.attack_part.hert > 0 ? this.attack_part.hert : 1);
             sh = 0;
         } else {
             if (weapon && weapon.do_attack &&
@@ -254,11 +262,17 @@ CHARACTER.prototype.do_attack = function (par) {
                 target.on_damage && target.on_damage(this, sh);
                 if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
             }
+            // 状态钩子：招架成功（如斗转星移·星移的反弹）
+            // 第 4 个参数是这一击若未被招架、经招架者免伤/防御结算后本应受到的伤害
+            if (target.hp > 0 && this.hp > 0 && target.status && target.status.length) {
+                var parried_taken = parried_sh > 0 ? Math.max(0, mitigate_damage(target, parried_sh, this, par.diff_fy)) : 0;
+                fire_status_hook(target, "on_parry_success", this, par, parried_taken);
+            }
             // ZC passive: 反击(招架) - counter-attack on successful parry
             var zcCounterParry = target.query_prop("zc_counter_parry") || 0;
             if (zcCounterParry > 0 && this.hp > 0 && target.fight_type) {
                 var counterDmg = target.gj * zcCounterParry;
-                counterDmg = this.damage(counterDmg, target, 0);
+                counterDmg = this.damage(counterDmg, target, 0, { kind: "reflect" });
                 if (counterDmg > 0)
                     target.send_combat("<HIC>移花接木！反击造成" + Math.floor(counterDmg) + "点伤害。</HIC>\n", this);
             }
@@ -283,6 +297,8 @@ CHARACTER.prototype.do_attack = function (par) {
                 target.send_combat(query_status_msg(target.hp, target.max_hp));
                 target.on_damage && target.on_damage(this, sh);
                 if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
+                // 状态钩子：被命中（如万蛊噬天反噬、化毒蚀内力、寒冰减速、护体真焰）
+                if (this.hp > 0 && target.hp > 0) fire_status_hook(target, "on_be_hit", this, par, sh);
 
                 // ZC passive: 吸血(武器) - lifesteal from damage dealt
                 var zcLifesteal = this.query_prop("zc_lifesteal") || 0;
@@ -371,10 +387,16 @@ CHARACTER.prototype.do_attack = function (par) {
     // ZC passive: 反击(轻功) - counter-attack on successful dodge
     if (par.is_dodge && target.fight_type && this.hp > 0) {
         if (WORLD.ZHENYI) WORLD.ZHENYI.on_dodge(target);
+        // 闪避成功钩子（on_dodge 名不副实：它在「没闪开」时调用）。轻功位技能与状态均可定义
+        if (target.dodge_skill && target.dodge_skill.on_dodge_success && !par.no_append_target && !par.is_counter) {
+            try { react(target, () => target.dodge_skill.on_dodge_success(target, this, par)); }
+            catch (e) { console.error("on_dodge_success error:", (e && e.stack) || e); }
+        }
+        if (this.hp > 0 && target.hp > 0 && !par.is_counter) fire_status_hook(target, "on_dodge_success", this, par);
         var zcCounterDodge = target.query_prop("zc_counter_dodge") || 0;
         if (zcCounterDodge > 0) {
             var cdDmg = target.gj * zcCounterDodge;
-            var cdResult = this.damage(cdDmg, target, 0);
+            var cdResult = this.damage(cdDmg, target, 0, { kind: "reflect" });
             if (cdResult > 0)
                 target.send_combat("<HIC>灵巧反击！造成" + Math.floor(cdResult) + "点伤害。</HIC>\n", this);
         }
@@ -387,13 +409,13 @@ CHARACTER.prototype.do_attack = function (par) {
         }
     }
     if (this.fight_type) {
-        if (!par.no_append_target) {
+        if (!par.no_append_target && !par.is_counter) {
             target.dodge_skill.on_dodge_over
-                && target.dodge_skill.on_dodge_over(target, this, par);
+                && react(target, () => target.dodge_skill.on_dodge_over(target, this, par));
 
             if (!par.is_dodge)
                 target.parry_skill.on_parry_over &&
-                    target.parry_skill.on_parry_over(target, this, par);
+                    react(target, () => target.parry_skill.on_parry_over(target, this, par));
         }
         if (!par.no_append) {
             attackskill.on_attack_over && attackskill.on_attack_over(this, target, par, sh);
@@ -434,34 +456,14 @@ CHARACTER.prototype.do_recover = function (hp) {
 CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
     if (!(sh > 0)) return 0;
     if (this._wushen_taiji_invincible) return 0;
-    let diff_sh_per = this.diff_sh_per;
-    let fy = this.fy;
-    if (diff_fy > 0) {
-        diff_sh_per -= diff_sh_per * diff_fy / 100;
-        fy -= fy * diff_fy / 100;
-    }
-    let diff_fy_per = from ? from.diff_fy_per : 0;//忽视防御，从免伤开始减
-    if (diff_sh_per > 0 && diff_fy_per > 0) {
-        diff_sh_per -= diff_fy_per;
-        if (diff_sh_per < 0) {
-            diff_fy_per = -diff_sh_per;
-        }
-    }
-    if (fy > 0 && diff_fy_per > 0) {
-        fy -= fy * diff_fy_per / 100;
-        if (fy < 0) fy = 0;
-    }
-    if (diff_sh_per > 0)
-        sh = sh - sh * diff_sh_per / 100;//伤害减免
-    if (fy > 0 && sh > 0)
-        sh = (sh / (sh + fy) * sh);
-    sh = sh - this.query_prop("diff_sh");
+    sh = mitigate_damage(this, sh, from, diff_fy);
 
     if (sh > 0 && this.equipment && this.equipment[1] && this.equipment[1].on_defense) {
         sh = this.equipment[1].on_defense(this, from, sh);
     }
     if (sh > 0 && this.force_skill.on_damage) {
-        sh = this.force_skill.on_damage(this, from, sh);
+        // 第 4 个参数把伤害来源类型交给内功：反震/反伤类内功遇到 {kind:"reflect"} 不应再反震
+        sh = this.force_skill.on_damage(this, from, sh, damageContext);
     }
 
     if (WORLD.ZHENYI && sh > 0) sh = WORLD.ZHENYI.modify_damage(this, from, sh);
@@ -477,6 +479,9 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
             if (guardianReduction > 10) this.send_combat("<HIC>$N以残血之躯激发守护之力，伤害大减！</HIC>\n", from);
         }
     }
+
+    // 护盾：状态对象上的 shield 字段为剩余可吸收量，先于扣血抵消伤害，耗尽即移除该状态
+    if (sh > 0 && this.status && this.status.length) sh = absorb_by_shield(this, sh);
 
     if (sh > 0) {
         sh = parseInt(sh);
@@ -507,7 +512,7 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
                     duration: 5000,
                     downside: false,
                     override: 2,
-                    prop: { diff_sh_per: 10000, diff_sh: 99999999 },
+                    prop: { diff_sh_per2: 10000, diff_sh: 99999999 },
                     start_msg: "<HIR>混沌真气爆发，不灭之体护住全身！</HIR>\n",
                     finish_msg: "不灭之体消散了。",
                 });
@@ -531,7 +536,72 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
     }
     return 0;
 }
-CHARACTER.prototype.damage2 = function (sh, from) {
+// 免伤 / 防御 / 固定免伤的基础结算（CHARACTER.damage 的第一步，无副作用）
+function mitigate_damage(ch, sh, from, diff_fy) {
+    let diff_sh_per = ch.diff_sh_per;
+    let fy = ch.fy;
+    if (diff_fy > 0) {
+        diff_sh_per -= diff_sh_per * diff_fy / 100;
+        fy -= fy * diff_fy / 100;
+    }
+    let diff_fy_per = from ? from.diff_fy_per : 0;//忽视防御，从免伤开始减
+    if (diff_sh_per > 0 && diff_fy_per > 0) {
+        diff_sh_per -= diff_fy_per;
+        if (diff_sh_per < 0) {
+            diff_fy_per = -diff_sh_per;
+        }
+    }
+    if (fy > 0 && diff_fy_per > 0) {
+        fy -= fy * diff_fy_per / 100;
+        if (fy < 0) fy = 0;
+    }
+    if (diff_sh_per > 0)
+        sh = sh - sh * diff_sh_per / 100;//伤害减免
+    if (fy > 0 && sh > 0)
+        sh = (sh / (sh + fy) * sh);
+    sh = sh - ch.query_prop("diff_sh");
+    return sh;
+}
+// 状态钩子：遍历角色身上的状态，调用状态对象上同名的回调 fn(owner, a, b, c)。
+// 目前用于 on_be_hit(owner, attacker, par, sh)（被普攻/绝招命中且造成伤害后）
+// 与 on_parry_success(owner, attacker, par, parried_sh)（招架成功后）。
+// 回调抛错只记日志，不打断战斗流程（攻击多在定时器里执行，异常逃出会让进程退出）。
+function fire_status_hook(ch, name, a, b, c) {
+    if (!ch || !ch.status || !ch.status.length) return;
+    var list = ch.status.slice();
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i];
+        if (!st || typeof st[name] !== "function") continue;
+        if (ch.status.indexOf(st) < 0) continue; // 前面的回调已把它移除
+        try { react(ch, () => st[name](ch, a, b, c)); }
+        catch (e) { console.error("status hook %s/%s error:", st.id, name, (e && e.stack) || e); }
+    }
+}
+CHARACTER.fire_status_hook = fire_status_hook;
+// 执行反击类钩子期间给角色打上 _in_react 标记（见 do_attack 开头）
+function react(ch, fn) {
+    var prev = ch._in_react;
+    ch._in_react = true;
+    try { return fn(); } finally { ch._in_react = prev; }
+}
+
+function absorb_by_shield(ch, sh) {
+    var list = ch.status.slice();
+    for (var i = 0; i < list.length && sh > 0; i++) {
+        var st = list[i];
+        if (!st || !(st.shield > 0)) continue;
+        var used = Math.min(st.shield, sh);
+        st.shield -= used;
+        sh -= used;
+        if (st.shield <= 0) {
+            st.shield = 0;
+            ch.remove_status(st.id, true);
+        }
+    }
+    return sh;
+}
+
+CHARACTER.prototype.damage2 = function (sh, from, damageContext) {
     if (!sh) return;
 
     if (this.record_damage && from) {
@@ -541,7 +611,7 @@ CHARACTER.prototype.damage2 = function (sh, from) {
 
     }
     if (this.force_skill.on_damage) {
-        sh = this.force_skill.on_damage(this, from, sh);
+        sh = this.force_skill.on_damage(this, from, sh, damageContext);
         if (!sh) return 0;
     }
     this.add_hp(-sh);

@@ -43,11 +43,11 @@ this.on_attack = function (me, target) {
     return me.fy;
 }
 this.on_parry_over = function (me, target, par) {
+    // 护体真焰：被敌人命中后才反伤（招架住不算命中，闪开时引擎不调用本钩子）；原先招架成功时反而伤害翻倍
     let sh = me.query_temp("sk_ranmu");
-    if (sh) {
-        if (par.is_parry) sh = sh * 2;
+    if (sh && !par.is_parry) {
         target.send_combat("<HIR>$n的护体真气灼伤了$N的真元！！</HIR>", me);
-        target.damage2(sh, me);
+        target.damage2(sh, me, { kind: "reflect" });
         me.end_attack(target);
     }
 }

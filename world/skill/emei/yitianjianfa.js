@@ -40,6 +40,7 @@ this.query_enable_prop = function (lv) {
     };
 }
 this.on_attack_over = function (me, target, par) {
+	var lv = me.query_skill("yitianjianfa", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
     if (!par.is_dodge && !par.is_parry) {
         target.add_status({
             id: "fumo",

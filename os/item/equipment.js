@@ -556,6 +556,67 @@ EQUIPMENT.prototype.on_create = function (path, par) {
 
 }
 
+// 套装规范化（物品原型创建完毕后执行一次）：
+//  1) 装备文件里的 group_prop(count) 是「档位表」：返回穿到 count 件时所在那一档的属性
+//     （`if (count >= 5) return 五件档; if (count >= 3) return 三件档;`）。
+//     这里包装成「累计表」：返回已达到的全部档位之和。原来穿满 5 件只拿五件档、三件档丢失；
+//     check_group 与登录时 CHARACTER.init 都按累计表结算，包装后两处同时生效。
+//  2) 门派套（lv4/lv5 六个门派共用 mp_set_lv4 / mp_set_lv5）按门派区分组名，
+//     不同门派的散件不再互相凑件数。
+EQUIPMENT.group_tiers = function (item) {
+    var raw = item && (item.group_prop_tier || item.group_prop);
+    if (!raw) return [];
+    var tiers = [], prev = "null";
+    for (var n = 1; n <= 11; n++) {
+        var p = raw.call(item, n);
+        var j = JSON.stringify(p || null);
+        if (p && j !== prev && j !== "{}") tiers.push([n, p]);
+        prev = j;
+    }
+    return tiers;
+}
+EQUIPMENT.normalize_group = function (item) {
+    if (!item || !item.group_prop || item.group_prop_tier) return;
+    var raw = item.group_prop;
+    item.group_prop_tier = raw;
+    item.group_prop = function (count) {
+        var tiers = EQUIPMENT.group_tiers(this), total = null;
+        for (var t = 0; t < tiers.length; t++) {
+            if (tiers[t][0] > count) break;
+            var p = tiers[t][1];
+            if (!total) total = {};
+            for (var k in p) {
+                if (typeof p[k] === "number") total[k] = (total[k] || 0) + p[k];
+                else if (total[k] === undefined) total[k] = p[k];
+            }
+        }
+        return total;
+    };
+    if (item.group_name && item.family && item.family.id && String(item.group_name).indexOf("@") < 0)
+        item.group_name = item.group_name + "@" + item.family.id;
+}
+EQUIPMENT.prototype.create = function (path, par) {
+    OBJ.prototype.create.call(this, path, par);
+    EQUIPMENT.normalize_group(this);
+}
+
+// 叠层状态（override:1）已满层时，add_status 直接返回、不刷新持续时间。
+// 叠满后继续触发时用它刷新整层的持续时间。返回是否刷新。
+EQUIPMENT.refresh_full_stack = function (me, sid) {
+    if (!me || !me.status) return false;
+    for (var i = 0; i < me.status.length; i++) {
+        var item = me.status[i];
+        if (item.id !== sid) continue;
+        if (item.override !== 1 || !(item.count >= item.max_count) || !item.duration) return false;
+        if (item.handler) clearTimeout(item.handler);
+        item.handler = me.call_out(me.remove_status, item.duration, sid);
+        item.start_time = Date.now();
+        if (me.status_changed) me.status_changed(item, "refresh");
+        return true;
+    }
+    return false;
+}
+
 EQUIPMENT.prototype.query_group_desc = function (me, str) {
     if (!this.group_prop || !this.group_name) return;
     var count = 0;
@@ -566,25 +627,23 @@ EQUIPMENT.prototype.query_group_desc = function (me, str) {
             }
         }
     }
-    for (var i = 2; i < 8; i++) {
-        var prop = this.group_prop(i);
-        if (prop) {
-            var cc = i <= count ? this.query_grade_color() : "blk";
-
-            str.push("<");
-            str.push(cc);
-            str.push(">");
-            str.push("\n");
-            str.push(UTIL.to_c(i));
-            str.push("件套：");
-            str.push(UTIL.prop_toString(prop, " "));
-            str.push("</");
-            str.push(cc);
-            str.push(">");
-        }
+    // 只列出各档位（2 件、3 件……第一次出现或数值变化的件数），每档显示该档自身的属性；
+    // 达到件数的档位全部高亮，与 group_prop 的累计结算一致。
+    var tiers = EQUIPMENT.group_tiers(this);
+    for (var t = 0; t < tiers.length; t++) {
+        var n = tiers[t][0], prop = tiers[t][1];
+        var cc = n <= count ? this.query_grade_color() : "blk";
+        str.push("<");
+        str.push(cc);
+        str.push(">");
+        str.push("\n");
+        str.push(UTIL.to_c(n));
+        str.push("件套：");
+        str.push(UTIL.prop_toString(prop, " "));
+        str.push("</");
+        str.push(cc);
+        str.push(">");
     }
-
-
 }
 
 EQUIPMENT.prototype.check_group = function (me, isadd) {

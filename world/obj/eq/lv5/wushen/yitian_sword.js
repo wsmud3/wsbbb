@@ -16,13 +16,22 @@ this.set({
 				},
 });
 
+// 特效「攻击时有几率无视对方防御」：每次出手 5% 几率追加一剑，伤害为攻击力的 1.5 倍，
+// 走 damage(sh, from, 100)——diff_fy=100 即「破防 100%」，对方的防御与伤害减免都按 0 计算，
+// 与真意「崩岳」的无视防御伤害同一写法。例外：对方免伤已 ≥100%（无敌类 buff 如龙魂丹、
+// 刻意免疫的 NPC）时只按普通规则结算，「无视防御」不等于击穿无敌。
+// 整段包在 try/catch 里：武器钩子在自动攻击定时器里执行，抛出的异常会让整个进程退出。
 this.do_attack = function (me, target, par) {
-				if (target.hp > 0 && Math.random() < 0.05) {
-								var dmg = Math.floor(me.query("gj") * 1.5);
-								if (dmg > 0) {
-												target.from_attack(dmg, 999999, null,
-																"<HIY>$N手中的倚天剑锋芒一闪，剑气凌厉无匹，$n的防御顿时形同虚设！</HIY>");
-								}
+				try {
+								if (!target || !(target.hp > 0) || Math.random() >= 0.05) return 0;
+								var dmg = Math.floor((me.gj || 0) * 1.5);
+								if (!(dmg > 0)) return 0;
+								var diff_fy = (target.diff_sh_per || 0) >= 100 ? 0 : 100;
+								me.send_combat("<HIY>$N手中的倚天剑锋芒一闪，剑气凌厉无匹，$n的防御顿时形同虚设！</HIY>\n", target);
+								var sh = target.damage(dmg, me, diff_fy) || 0;
+								if (sh > 0) me.send_combat("<HIY>倚天剑气破防造成" + Math.floor(sh) + "点伤害。</HIY>\n", target);
+				} catch (e) {
+								console.error("yitian_sword do_attack error:", e && e.stack || e);
 				}
 				return 0;
 };

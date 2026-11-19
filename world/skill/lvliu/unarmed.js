@@ -1,6 +1,7 @@
 this.inherits(SKILL);
 this.name = "绿柳掌法";
 this.id = "lvliu_unarmed";
+this.is_hidden = true; // NPC 专用（绿柳山庄 NPC），不进随机残页/随机技能池
 this.grade = 3;
 this.no_auto = true;
 this.desc = "绿柳山庄的掌法，掌力阴柔，暗藏杀机。";

@@ -29,22 +29,22 @@ function on_check(me) {
         + WORLD.DATA.query_temp("caiyao_exp", 0) * 100
         + me.query_prop('caiyao_exp') * 100;
     let grade = me.query_prop('caiyao1');
-
-    let str = "";
-    if (grade > 80) {
-        str = "有概率采集到红色及以下药材";
-    } else if (grade > 18) {
-        str = "有概率采集到橙色及以下药材";
-    } else if (grade > 10) {
-        str = "有概率采集到紫色及以下药材";
-    } else {
-        str = "有概率采集到黄色及以下药材";
-    }
+    let str = "有概率采集到橙色及以下药材";
+    let rare = rare_chance(me);
+    if (rare > 0) str += "，有" + Math.round(rare * 100) + "%几率多找一株、留下品质更好的那株";
     me.send(`你正在采药，当前效率${grade}，每10秒获得${exp}经验，${exp}潜能，${str}。`);
+}
+
+// 采药效率 caiyao1（药王神篇、神农百草经等）：每次采药有一定几率再找一株，留下品质高的那株。
+// 几率 = 效率 / (效率 + 100)：药篓类工具 1~30 约 1%~23%，武神药王神篇 200 约 67%，武神神农百草经 5000 约 98%。
+function rare_chance(me) {
+    let v = me.query_prop('caiyao1');
+    return v > 0 ? v / (v + 100) : 0;
 }
 
 function do_cai(me) {
     let lv = me.random(18);
+    if (Math.random() < rare_chance(me)) lv = Math.max(lv, me.random(18));
     let obj = me.add_obj('res/cao#' + lv);
     if (obj) {
         me.send_room("<hig>$N采到一株" + obj.color_name + "。</hig>");

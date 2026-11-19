@@ -24,11 +24,12 @@ this.query_enable_prop = function (lv) {
 };
 
 // 九烛状态下的反震：被命中后对敌人造成伤害（随等级成长）
-this.on_damage = function (me, from, sh) {
-    if (me.query_temp("yinyang_jiuzhu") && from && from.hp > 0 && sh > 0) {
+this.on_damage = function (me, from, sh, ctx) {
+    // 反震/反伤造成的伤害不再反震（ctx.kind === "reflect"）
+    if (me.query_temp("yinyang_jiuzhu") && from && from.hp > 0 && sh > 0 && !(ctx && ctx.kind === "reflect")) {
         var lv = me.query_skill("yinyangjiuzhuan");
         var reboundDmg = parseInt(12000 * lv / 1000);
-        from.damage(reboundDmg, me, 0);
+        from.damage(reboundDmg, me, 0, { kind: "reflect" });
         me.send_room("<hiy>$N的九烛之力反震，将" + reboundDmg + "点伤害反弹给$n！</hiy>", from);
     }
     return sh;
@@ -51,6 +52,8 @@ this.on_beginfight = function (me, target) {
         }
     }
 };
+
+function zhentiandi_secs(lv) { return Math.min(5 + Math.floor((lv || 0) / 200), 10); }
 
 this.pfm = {
     zhuanyinyang: {
@@ -100,7 +103,7 @@ this.pfm = {
                     override: 2,
                     no_clear: true,
                     only_combat: true,
-                    prop: { hp_per: jz_hp, diff_sh_per: jz_dr },
+                    prop: { hp_per: jz_hp, diff_sh_per2: jz_dr },
                     start_msg: "<hio>$N周身烛光笼罩，进入九烛状态——气血如烛火不灭！</hio>",
                     finish_msg: "$N的九烛状态消散了。",
                 });
@@ -169,22 +172,31 @@ this.pfm = {
         enable_skill: "force",
         use_type: 2,
         mp: 20,
-        use: function (me, target, lv) {
-            // 如果正在镇守中，再次使用取消
-            if (me.query_temp("yinyang_zhentiandi")) {
-                me.remove_temp("yinyang_zhentiandi");
-                me.remove_status("yinyang_zhentiandi_buff", true);
-                me.send_room("<hiy>$N收起镇天地之势，恢复如常。</hiy>");
-                return;
+        // 持续秒数：0 级 5 秒，每 200 级 +1 秒，最多 10 秒；每秒一跳，跳数 = 秒数
+        // 镇守中再次使用：施展 1 秒后可取消镇守（不受 60 秒冷却限制，见 pfm.js 的 try_cancel）。
+        // 原先取消逻辑写在 use 里，而 use 要等冷却结束才会被调用，实际上取消不了。
+        try_cancel: function (me) {
+            var st = null;
+            for (var i = 0; me.status && i < me.status.length; i++) if (me.status[i].id === "yinyang_zhentiandi_buff") { st = me.status[i]; break; }
+            if (!st) return false;
+            if (Date.now() - st.start_time < 1000) {
+                me.notify("镇天地刚刚施展，1秒后才能取消。");
+                return true;
             }
+            me.remove_temp("yinyang_zhentiandi");
+            me.remove_status("yinyang_zhentiandi_buff", true);
+            me.send_room("<hiy>$N收起镇天地之势，恢复如常。</hiy>");
+            return true;
+        },
+        use: function (me, target, lv) {
 
             if (!target) {
                 me.notify("你需要指定一个目标来镇守。");
                 return;
             }
 
-            me.set_temp("yinyang_zhentiandi", 1);
-            me.set_temp("yinyang_zhentiandi_target", target.id || target.name);
+            // （原先另写了不过期、没人读的 temp yinyang_zhentiandi / _target，会残留在存档里，已去掉）
+            var secs = zhentiandi_secs(lv);
 
             var dr = 60 + parseInt(lv / 100);
             if (dr > 85) dr = 85;
@@ -193,13 +205,13 @@ this.pfm = {
             me.add_status({
                 id: "yinyang_zhentiandi_buff",
                 name: "镇天地",
-                desc: "大幅增加减伤，每秒对目标造成伤害",
-                duration: parseInt(lv * 10),
+                desc: "减伤+" + dr + "%，每秒对目标造成伤害",
+                duration: 1000,          // on_interval 状态：duration 是每跳间隔（每秒一跳）
+                duration_count: secs,    // 跳数 = 持续秒数
                 downside: false,
                 override: 2,
                 no_diff: true,
-                prop: { diff_sh_per: dr },
-                duration_count: 5,
+                prop: { diff_sh_per2: dr },
                 start_msg: "<hio>$N引天地之力入体，防御大增，目标被天地之力锁定！</hio>",
                 finish_msg: "$N的镇天地状态消散了。",
                 on_interval: function (p, count) {
@@ -223,7 +235,7 @@ this.pfm = {
         query_desc: function (me, lv) {
             var dr = 60 + parseInt(lv / 100);
             if (dr > 85) dr = 85;
-            return "5秒内减伤+" + dr + "%，引导天地之力攻击单个敌人，每秒造成自己攻击力附加敌方1.4%当前气血的伤害，1秒后再次使用可取消镇守状态。";
+            return zhentiandi_secs(lv) + "秒内减伤+" + dr + "%，引导天地之力攻击单个敌人，每秒造成自己攻击力附加敌方1.4%当前气血的伤害，1秒后再次使用可取消镇守状态。";
         }
     }
 };

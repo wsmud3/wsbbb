@@ -40,7 +40,7 @@ xi:
             name: "鹤翔",
             on_interval: function (me) {
                 if (me.hp > 0) {
-                    hp = me.do_recover(me.max_hp * gj / 100);
+                    var hp = me.do_recover(me.max_hp * gj / 100);
                     if (hp > 0) me.notify("<hig>你恢复了" + hp + "点气血。</hig>");
                 }
 
@@ -69,9 +69,9 @@ xi:
         for (var i = 0; i < ts.length; i++) {
             var x = ts[i];
             if (x.hp > 0 && me.is_here(x)) {
-                gj = x.do_recover(gj);
-                if (gj > 0)
-                x.notify("<hig>你恢复了" + gj + "点气血。</hig>");
+                var healed = x.do_recover(gj); // 每人按同一回复量结算（原先把 gj 改写成上一个人的实际回复量，后面的人越回越少）
+                if (healed > 0)
+                x.notify("<hig>你恢复了" + healed + "点气血。</hig>");
                 if (x.is_busy) {
                     x.remove_status("busy");
                     // me.reauto_attack();

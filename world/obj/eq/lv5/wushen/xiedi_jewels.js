@@ -6,5 +6,5 @@ this.set({
     unit: "颗",
     eq_type: EQUIP_TYPE.JEWELS,
     hole_count: 4,
-    prop: { con: 110, int: 55, meditate_per: 29, limit_mp: 33000 },
+    prop: { con: 110, int: 55, dazuo_per: 29, limit_mp: 33000 },
 });

@@ -20,6 +20,11 @@ this.query_enable_prop = function (lv) {
 		}
 	}
 
+// 寒冰诀期间（内功位）：每次攻击附加 4000 点寒冰伤害（作为内力伤害并入本次攻击）
+this.do_force_attack = function (me, target, par) {
+	return me.query_status("hanbing") ? 4000 : 0;
+};
+
 this.pfm = {
 		pfm1: {
 			name: "寒冰",
@@ -33,7 +38,21 @@ this.pfm = {
 					name: "寒冰",
 					desc: "伤害附加4000寒冰伤害，攻击者将被减速35%",
 					duration: 10000 + parseInt(lv * 10),
-					prop: { add_sh: 4000 },
+					// 冰甲：被命中时令攻击者 15 秒内攻击间隔延长 35%（gjsd_per 负值为减速）
+					on_be_hit: function (owner, attacker) {
+						if (!attacker || attacker === owner || attacker.hp <= 0) return;
+						attacker.add_status({
+							id: "hanbing_slow",
+							name: "寒冰",
+							desc: "血脉被寒气冻结，攻击速度减慢35%",
+							duration: 15000,
+							downside: true,
+							override: 2,
+							prop: { gjsd_per: -35 },
+							start_msg: "<HIB>$N被寒冰真气冻结血脉，出手迟缓了下来！</HIB>",
+							finish_msg: "$N体内的寒气渐渐散去。",
+						}, owner);
+					},
 					start_msg: "<HIB>$N周身寒气大盛，水汽凝结成霜！</HIB>",
 					finish_msg: "$N周身的寒气渐渐消散。",
 				})},

@@ -36,30 +36,31 @@ this.pfm = {
 	shibu: {
 		name: "十步杀一人",
 		distime: 30000,
+		allow_busy: true, // 说明：无视忙乱
 		enable_skill: "force",
 		release_time: 3096,
 		mp: 35,
 		use: function (me, target, lv) {
 			me.send_room("<HIW>$N长啸一声，太玄功运转——「十步杀一人」！</HIW>", target);
-			if (me.enemy) {
-				for (var i = 0; i < me.enemy.length; i++) {
-					var t = me.enemy[i];
-					if (t && t.hp > 0) {
-						me.do_attack({
-							target: t,
-							gj: me.gj * 1.5,
-							diff_fy: 40,
-							attack_msg: "<HIW>$N的太玄剑气向" + t.name + "袭去！</HIW>"
-						});
-					}
+			// 按说明：每名敌人先攻击一次，命中则再追加一次，直到落空（每名敌人最多 10 次，取「十步」之意，防止无限连击）。
+			var SHIBU_MAX = 10;
+			var list = (me.enemy && me.enemy.length) ? me.enemy.slice() : (target ? [target] : []);
+			for (var i = 0; i < list.length; i++) {
+				var t = list[i];
+				for (var n = 0; n < SHIBU_MAX && t && t.hp > 0 && me.hp > 0; n++) {
+					var sh = me.do_attack({
+						target: t,
+						gj: me.gj * 1.5,
+						diff_fy: 40,
+						attack_msg: n === 0 ? "<HIW>$N的太玄剑气向" + t.name + "袭去！</HIW>" : "<HIW>$N剑气不绝，又是一剑！</HIW>"
+					});
+					if (!(sh > 0)) break;
 				}
-			} else if (target) {
-				me.do_attack({target: target, gj: me.gj * 1.5, diff_fy: 40});
 			}
 			if (target) me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
-			return "对附近敌人进行快速攻击，突破对方40%防御，如果命中增加攻击次数，无视忙乱";
+			return "对附近敌人进行快速攻击，突破对方40%防御，如果命中增加攻击次数（每名敌人最多10次），无视忙乱";
 		}
 	},
 	baishou: {

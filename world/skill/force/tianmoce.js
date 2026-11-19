@@ -123,7 +123,7 @@ this.pfm = {
 				duration: 10000 + parseInt(lv / 100),
 				downside: false,
 				override: 2,
-				prop: { gj_per: boost, diff_sh_per: boost, mz_per: boost, ds_per: boost },
+				prop: { gj_per: boost, diff_sh_per2: boost, mz_per: boost, ds_per: boost },
 				start_msg: "<hio>$N道心通明，战斗力大幅提升！</hio>",
 				finish_msg: "$N的道心状态消失了。",
 			});
@@ -167,36 +167,32 @@ this.pfm = {
 		use: function (me, target, lv) {
 			if (!target) { me.notify("你需要指定一个目标。"); return; }
 			me.send_room("<hiy>$N" + "催动天魔策——「拳罡」！一拳轰出，罡风凛冽！</hiy>", target);
-			me.do_attack({
+			var sh = me.do_attack({
 				target: target,
 				gj: me.gj * (1.5 + lv / 5000),
 				mz: me.mz * (1.2 + lv / 5000),
 				no_weapon: true,
 				attack_msg: "<hiy>$N" + "催动天魔策拳罡，刚猛威烈的一拳轰向$n的$l！</hiy>",
-				on_attack: function (me2, target2, par) {
-					// 命中后叠加buff
-					if (target2.hp > 0 && me2.hp > 0) {
-						var stack = me2.query_temp("tianmoce_quangang_stack") || 0;
-						var maxStack = 5 + parseInt(lv / 1000);
-						if (stack < maxStack) {
-							stack++;
-							me2.set_temp("tianmoce_quangang_stack", stack);
-							me2.add_status({
-								id: "tianmoce_quangang_" + stack,
-								name: "拳罡",
-								desc: "拳罡叠加" + stack + "层：伤害+" + (stack * 8) + "%，破防+" + (stack * 5) + "%",
-								duration: parseInt(lv * 10),
-								downside: false,
-								override: 2,
-								prop: { add_sh_per: parseInt(lv * 8 / 1000), diff_fy_per: parseInt(lv * 5 / 1000) },
-								finish_msg: "",
-							});
-							me2.notify("<hio>拳罡叠加至" + stack + "层！伤害+" + (stack * 8) + "%，破防+" + (stack * 5) + "%</hio>");
-						}
-					}
-					return 0;
-				},
 			});
+			// 命中后叠加拳罡（原先写在 par.on_attack 里，引擎从不读取该字段；层数又记在不过期的 temp 里）。
+			// 单一可叠加状态：每层 +8% 伤害、+5% 破防，最多 maxStack 层。
+			if (sh > 0 && target.hp > 0 && me.hp > 0) {
+				var maxStack = 5 + parseInt(lv / 1000);
+				if (me.query_status("tianmoce_quangang") < maxStack) {
+					me.add_status({
+						id: "tianmoce_quangang",
+						name: "拳罡",
+						desc: "每层伤害+8%，破防+5%",
+						duration: parseInt(lv * 10),
+						downside: false,
+						override: 1,
+						max_count: maxStack,
+						prop: { add_sh_per: 8, diff_fy_per: 5 },
+					});
+					var stack = me.query_status("tianmoce_quangang");
+					me.notify("<hio>拳罡叠加至" + stack + "层！伤害+" + (stack * 8) + "%，破防+" + (stack * 5) + "%</hio>");
+				}
+			}
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {

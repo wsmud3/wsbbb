@@ -51,6 +51,8 @@ this.enter = function (me, arg) {
                 return;
             }
             me.clear_status();
+
+            if (me.restore_item_buffs) me.restore_item_buffs();
             let room = me.environment;
             me.environment = null;
             me.moveto(room, null, "<mag>" + me.name + "的尸体发出阵阵光芒。</mag>");
@@ -86,6 +88,8 @@ this.enter = function (me, arg) {
         var room = ROOM.Get(recover_room);
         me.hp = 1;
         me.clear_status();
+
+        if (me.restore_item_buffs) me.restore_item_buffs();
         room.do_enter(me, true, "<wht>你忽然发现前面多了一个人影，不过那人影又好像已经在那里很久了，只是你一直没发觉。</wht>");
 
         area.on_leaved(me);

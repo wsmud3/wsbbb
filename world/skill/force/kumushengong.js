@@ -33,10 +33,10 @@ this.pfm = {
 				var toRemove = [];
 				if (me.status) {
 					for (var j = 0; j < me.status.length; j++) {
-						if (me.status[j].downside) toRemove.push(me.status[j].id);
+						if (me.status[j].downside && !me.status[j].no_clear) toRemove.push(me.status[j].id);
 					}
 					for (var k = 0; k < toRemove.length; k++) {
-						me.remove_status(toRemove[k]);
+						me.remove_status(toRemove[k], true); // isall：一次清掉全部层数，且不触发 on_interval 的额外一跳
 					}
 				}
 				me.add_status({

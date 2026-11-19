@@ -13,3 +13,5 @@ this.set({
         kuang1: 5000,
     },
 });
+// 可以在自家后院挖矿（wk 命令据此免除观山诀等级要求）
+this.kuang_home = true;

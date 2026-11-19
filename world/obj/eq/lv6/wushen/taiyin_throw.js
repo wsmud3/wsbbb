@@ -21,7 +21,10 @@ this.set({
 
 this.on_use = function (me) {
     var target = me.query_enemy();
-    if (!target) return me.notify("你当前没有战斗目标。");
+    if (!target) {
+        me.notify("你当前没有战斗目标。");
+        return false;
+    }
     target.add_status({
         id: "wushen_taiyin",
         name: "<HIZ>太阴</HIZ>",
@@ -32,7 +35,7 @@ this.on_use = function (me) {
         override: 2,
         prop: {
             gjsd_per: -20,
-            distime_per: 20,
+            distime_per: -20, // 负值 = 冷却变长
         },
         start_msg: "\n<HIZ>$n被太阴的寒冰之力笼罩，动作变得极为缓慢！</HIZ>",
         finish_msg: "$N身上的太阴之力渐渐消退。",

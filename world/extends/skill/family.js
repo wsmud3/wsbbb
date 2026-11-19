@@ -463,6 +463,8 @@ FAMILY.prototype.init_dadizi = function (npc, me) {
     for (var i = 0; i < copy_prop.length; i++) {
         npc[copy_prop[i]] = me[copy_prop[i]];
     }
+    // max_mp 里含装备/状态叠加的 prop.max_mp，镜像随后 init() 会把装备再加一遍，所以只复制基础值
+    npc.max_mp = (me.max_mp || 0) - (me.query_prop ? me.query_prop("max_mp") : 0);
     npc.equipment = [];
     if (me.equipment) {
         var eqs = me.equipment;

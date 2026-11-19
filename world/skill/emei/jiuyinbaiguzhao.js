@@ -48,20 +48,20 @@ this.pfm = {
                 attack_msg: "<hiy>$N冷笑数声，手指微微弯曲成爪，身形疾转，飞向$n头顶抓下</hiy>",
                 damage_msg: "<hir>$n哪里料到$N竟有如此变招，不及躲闪，被$P抓了个鲜血淋漓，头痛欲裂。</hir>"
             })) {
+                // 说明为「使敌人昏迷」，原代码只降了躲闪
                 target.add_status({
-                    id: "duoming",
+                    id: "faint",
                     name: "夺命",
-                    desc: "你无法闪避",
+                    desc: "你昏迷不醒",
+                    is_faint: true,
                     duration: 3000 + parseInt(lv * 5),
                     downside: true,
-                    override: 2,
-                    prop: { ds_per: -(90 + parseInt(lv / 100)) }
-                });
+                }, me);
             }
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            return"快速狠辣的攻击，命中后对敌人造成你攻击力300%的伤害，在" + (3 + parseInt(lv * 5 / 1000)) + "秒内使敌人昏迷。";
+            return"快速狠辣的攻击，命中后对敌人造成你攻击力300%的伤害，在" + ((3000 + parseInt(lv * 5)) / 1000) + "秒内使敌人昏迷。";
         }
     }, juan:
     {

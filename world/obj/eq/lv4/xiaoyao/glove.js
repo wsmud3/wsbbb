@@ -8,7 +8,7 @@ this.set({
     weapon_type: WEAPON_TYPE.NONE,
     hole_count: 3,
     group_name: "mp_set_lv4",
-    prop: { gj: 367, str: 35, mz: 320, gjsd: 5 },
+    prop: { gj: 367, str: 35, mz: 320, gjsd_per: 5 },
 });
 this.family = FAMILIES.XIAOYAO;
 this.group_prop = function (count) {

@@ -55,7 +55,11 @@ this.on_sell_item = function (me, sell_obj) {
 };
 
 this.skill_map(
-    ["literate", 10000]);
+    ["literate", 10000],
+    ["lunyu", 10000]);
+// 《论语》：读书写字达到 LUNYU_NEED_LITERATE 级后可向朱熹学习，按普通武学消耗潜能学习，不收学费
+var LUNYU_NEED_LITERATE = 3000;
+this.pot_teach = { lunyu: true };   // xue.js：这些技能不走下面按学费计算的 do_teach
 this.add_action('tui', '退款', function (me) {
     var count = me.query_temp('learn/zhu', 0);
     if (!count) return me.notify('朱熹说道：我不记得收过你这个学生啊....');
@@ -81,7 +85,8 @@ this.on_checkskill = function (me) {
 
         me.send_commands("give " + this.id + " " + money1 + " money", UTIL.moneyToStr(money1) + "学习10级",
             "give " + this.id + " " + money2 + " money", UTIL.moneyToStr(money2) + "学习100级",
-            "give " + this.id + " " + money3 + " money", UTIL.moneyToStr(money3) + "学习1000级");
+            "give " + this.id + " " + money3 + " money", UTIL.moneyToStr(money3) + "学习1000级",
+            "xue lunyu from " + this.id, "学习《论语》");
         return false;
     }
     return true;
@@ -94,8 +99,14 @@ this.on_accept = function (me, obj, count) {
 
     return true;
 }
-this.on_teach = function (me) {
-
+this.on_teach = function (me, sk) {
+    if (sk === "lunyu") {
+        if (me.query_skill("literate", 0) < LUNYU_NEED_LITERATE) {
+            me.notify("朱熹说道：" + me.call() + "你的学问还没到火候，等你学有所成再来吧。");
+            return false;
+        }
+        return true;
+    }
     return this.on_checkskill(me);
 }
 this.do_teach = function (me, skill, lv) {

@@ -9,7 +9,7 @@ this.set({
 	prop: {
 		str: 120,
 		con: 120,
-		hp: 22000,
+		max_hp: 22000,
 		fy: 990,
 		gj_per: 15,
 	}

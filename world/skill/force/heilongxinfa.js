@@ -48,7 +48,7 @@ this.on_force_parry = function (me, target) {
             '<blk>$n被$N的黑龙护体反弹了' + sh + '点伤害！！</blk>\n',
             target
         );
-        target.damage2(sh, me);
+        target.damage2(sh, me, { kind: "reflect" });
         me.end_attack(target);
     }
     return 0;

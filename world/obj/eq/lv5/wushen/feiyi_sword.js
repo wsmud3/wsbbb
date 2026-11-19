@@ -8,5 +8,5 @@ this.set({
 
     weapon_type: WEAPON_TYPE.SWORD,
     hole_count: 4,
-    prop: { gj: 538, int: 66, practice_per: 33 },
+    prop: { gj: 538, int: 66, lianxi_per: 33 },
 });

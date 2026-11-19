@@ -6,5 +6,5 @@ this.set({
     unit: "件",
     eq_type: EQUIP_TYPE.NECKLACE,
     hole_count: 4,
-    prop: { fy: 253, int: 42, meditate_per: 17, study_per: 17, practice_per: 17 },
+    prop: { fy: 253, int: 42, dazuo_per: 17, study_per: 17, lianxi_per: 17 },
 });

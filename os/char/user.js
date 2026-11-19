@@ -426,9 +426,27 @@ if (!fixed[j]) fixed[j] = null;
 return fixed;
 }
 
+// 物品给的长时间状态（状态本身不存档、死亡会清掉）：物品另记一个带过期时间的 temp，
+// 登录（以及复活后）按剩余时间补回。key = temp 名，value = 物品路径（物品须提供 apply_buff(me, 剩余毫秒, silent)）。
+USER.ITEM_BUFFS = {
+    wushen_weizhang_buff: { path: "eq/lv6/wushen/weizhang_jewels", status: "wushen_weizhang" },
+};
+USER.prototype.restore_item_buffs = function () {
+    if (!this.temp || !(this.hp > 0)) return;
+    for (var key in USER.ITEM_BUFFS) {
+        var t = this.temp[key];
+        if (!t || typeof t !== "object" || !(t.e > Date.now())) continue;
+        var def = USER.ITEM_BUFFS[key];
+        if (this.query_status(def.status)) continue;
+        var base = OBJ.CREATE(def.path);
+        if (base && base.apply_buff) base.apply_buff(this, t.e - Date.now(), true);
+    }
+}
+
 USER.prototype.do_login = function () {
 try { this.init(); } catch (e) {}
 try { this.recount(); } catch (e) {}
+try { this.restore_item_buffs(); } catch (e) { console.error("restore_item_buffs 失败(" + this.id + ")：", e && e.message); }
 this.auto_pfm = false;
 this.long_name();
 try { WORLD.STATS.checkStats(this); } catch (e) { console.error("checkStats 失败(" + this.id + ")：", e && e.message); }
@@ -487,7 +505,11 @@ var SAVE_NUMPROP = ["str", "con", "dex", "int", "gender", "max_mp", "limit_mp", 
 USER.prototype.getData = function () {
 var str = ["{prop:["];
 for (var i = 0; i < SAVE_NUMPROP.length; i++) {
-var v = this[SAVE_NUMPROP[i]]; if (isNaN(v)) v = 0; str.push(v);
+var v = this[SAVE_NUMPROP[i]];
+// 内存里的 max_mp 含装备/状态/技能经 add_prop 叠上去的 prop.max_mp（逍遥套、自制装备词条等），
+// 读档后 init() 会把装备再加一遍。原样存档会让每次登录永久多一份装备内力，所以只存基础值。
+if (SAVE_NUMPROP[i] === "max_mp") v -= this.query_prop("max_mp");
+if (isNaN(v)) v = 0; str.push(v);
 	str.push(",");
 }
 str.push(0);

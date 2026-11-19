@@ -41,6 +41,33 @@
 			}
 		}
 
+	// 松风层数上限：0 级 3 层，每 300 级 +1 层，最多 6 层
+	function songfeng_max(lv) { return Math.min(3 + Math.floor((lv || 0) / 300), 6); }
+	// 剑法普攻命中叠一层「松风」：状态叠层（不存档），10 秒内未再叠加则逐层消退，战斗结束清空。
+	// 原先读的 temp sk_songfeng 从没有任何地方写入，层数恒为 0。
+	this.on_attack_over = function (me, target, par, sh) {
+		if (!(sh > 0) || par.is_dodge || par.is_parry || par.is_counter || me._zy_casting) return; // 只算普攻
+		var lv = me.query_skill("songfengjianfa", 0);
+		var max = songfeng_max(lv);
+		if (me.query_status("songfeng") >= max) {
+			// 已满：刷新持续时间
+			for (var i = 0; me.status && i < me.status.length; i++) {
+				var st = me.status[i];
+				if (st.id === "songfeng") { clearTimeout(st.handler); st.handler = me.call_out(me.remove_status, st.duration, "songfeng"); st.start_time = Date.now(); break; }
+			}
+			return;
+		}
+		me.add_status({
+			id: "songfeng",
+			name: "松风",
+			desc: "松风剑意，松月无影每层多攻击一次",
+			duration: 10000,
+			override: 1,
+			max_count: max,
+			only_combat: true,
+		});
+	};
+
 	this.pfm = {
 		pfm1: {
 				name: "松月无影",
@@ -48,9 +75,9 @@
 				enable_skill: "sword",
 				mp: 25,
 				use: function (me, target, lv) {
-					var stacks = me.query_temp("sk_songfeng") || 0;
+					var stacks = me.query_status("songfeng");
 					me.send_room("<HIG>$N剑势陡然加快——「松月无影」！$N将积累的松风剑意尽数释放，$w化作" + (stacks + 1) + "道剑影朝$n疾刺而去！</HIG>", target);
-					me.remove_temp("sk_songfeng");
+					me.remove_status("songfeng", true); // 消耗全部松风层数
 					for (var i = 0; i <= stacks; i++) {
 						me.do_attack({
 							target: target,
@@ -61,7 +88,8 @@
 					me.end_attack(target)
 				},
 				query_desc: function (me, lv) {
-					return "消耗你积累的速度，瞬间出剑，每层松风增加你一次攻击次数";
+					var cur = me && me.query_status ? me.query_status("songfeng") : 0;
+					return "消耗你积累的松风，瞬间出剑，每层松风增加你一次攻击次数（当前" + cur + "层，最多" + songfeng_max(lv) + "层）。剑法普攻命中时积累一层松风。";
 				}
 			}
 		};

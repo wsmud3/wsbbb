@@ -101,6 +101,19 @@ CHARACTER.prototype.add_hp = function (v) {
     // min_hp：锁血。扣血最多扣到 min_hp，气血不会掉到 0（不触发死亡判定），
     // 这样同一招里随后的昏迷/忙乱等状态仍能挂上（add_status 对 hp<=0 的目标一律拒绝）。
     if (v < 0 && this.min_hp > 0 && this.hp + v < this.min_hp) v = Math.min(0, this.min_hp - this.hp);
+    // 致命一击：这次扣血会让气血归零时，依次询问身上装备的 on_fatal(me, v)；
+    // 任一件返回 true 表示已触发免死，本次最多扣到剩 1 点气血。
+    // 比试（fight_type 1）本来就不会死——输方事后被置回 1 血——这里不触发，免得白白消耗冷却。
+    // 比试中途若被人下杀手，fight_type 会升为 2，届时照常触发。
+    if (v < 0 && this.hp > 0 && this.hp + v <= 0 && this.equipment && !this._in_on_fatal && this.fight_type !== 1) {
+        this._in_on_fatal = true;
+        try {
+            for (var i = 0; i < this.equipment.length; i++) {
+                var eq = this.equipment[i];
+                if (eq && eq.on_fatal && eq.on_fatal(this, v)) { v = 1 - this.hp; break; }
+            }
+        } finally { this._in_on_fatal = false; }
+    }
     if (!v) return 0;
 
     this.hp += v;

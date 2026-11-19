@@ -39,7 +39,12 @@ this.pfm = {
         release_time: 2000,
         enable_skill: "unarmed",
         weapon_type: WEAPON_TYPE.UNARMED,
-        mp: 15,
+        mp: 100,
+        // 按说明固定消耗 100 内力（引擎默认 mp×(1+lv/20) 会随等级放大），仍受内力消耗减免影响
+        query_mp: function (me, lv) {
+            var cost = 100 - 100 * ((me && me.query_prop) ? me.query_prop("expend_mp_per") : 0) / 100;
+            return cost > 0 ? parseInt(cost) : 0;
+        },
         use: function (me, target, lv) {
             if (!target) return me.notify("你要用玄冥寒冰掌对付谁？");
             me.send_room("<hib>$N眼中凶光大盛，双掌翻飞如玄冥降世，霎时间冰霜飞舞、寒气四溢，仿佛九幽地狱降临人间！</hib>");

@@ -22,8 +22,16 @@ this.set({
 });
 
 // 入邪: each attack recovers 2% MP while the buff is active
+// 以「入邪」状态本身为准（状态不随存档保存、死亡/驱散时也会一并清除）。旧版用一个不带过期时间的
+// temp 标记，temp 会存档，入邪期间下线后标记永久残留、效果变成永久；这里顺手清掉这种残留标记。
+function is_ruxie(me) {
+    if (me.query_status("modao_ruxie")) return true;
+    if (me.query_temp("modao_ruxie")) me.remove_temp("modao_ruxie");
+    return false;
+}
+
 this.do_attack = function (me, target, par) {
-    if (me.query_temp("modao_ruxie")) {
+    if (is_ruxie(me)) {
         var recover = Math.floor(me.max_mp * 2 / 100);
         if (recover > 0) me.add_mp(recover);
     }
@@ -31,8 +39,10 @@ this.do_attack = function (me, target, par) {
 };
 
 this.on_use = function (me) {
-    if (me.query_temp("modao_ruxie"))
-    return me.notify("你已经处于入邪状态了。");
+    if (is_ruxie(me)) {
+        me.notify("你已经处于入邪状态了。");
+        return false; // 未生效，不计冷却
+    }
 
     me.add_status({
         id: "modao_ruxie",
@@ -43,19 +53,11 @@ this.on_use = function (me) {
         desc: "双眼泛起诡异的红光，每次攻击恢复2%内力",
         start_msg: "\n<hig>$N双眼泛起诡异的红光，一股邪气从魔刀蔓延至全身，整个人仿佛被魔性支配！</hig>",
         finish_msg: "$N眼中的红光渐渐消退，魔刀的邪气也随之散去。",
-        on_attach: function (who) {
-            who.set_temp("modao_ruxie", 1);
-        },
-        on_expire: function (who) {
-            who.remove_temp("modao_ruxie");
-        }
     });
     return true;
 };
 
 this.on_uneq = function (me) {
-    if (me.query_temp("modao_ruxie")) {
-        me.remove_status("modao_ruxie");
-        me.remove_temp("modao_ruxie");
-    }
+    if (me.query_status("modao_ruxie")) me.remove_status("modao_ruxie");
+    me.remove_temp("modao_ruxie");
 };

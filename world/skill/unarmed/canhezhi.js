@@ -39,6 +39,7 @@ this.query_enable_prop = function (lv) {
 
 // 被动：命中时叠加参合层数
 this.on_attack_over = function (me, target, par, sh) {
+	var lv = me.query_skill("canhezhi", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 	if (!par.is_dodge && !par.is_parry && sh > 0) {
 		target.add_status({
 			id: "canhe",
@@ -77,7 +78,7 @@ this.pfm = {
 			})) {
 				// 大于4层则昏迷5秒，并重置层数
 				if (stacks >= 5) {
-					target.remove_status("canhe");
+					target.remove_status("canhe", true); // 重置全部层数（原先未传 isall，只去 1 层）
 					target.add_status({
 						id: "faint",
 						name: "昏迷",

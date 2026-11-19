@@ -14,7 +14,9 @@ this.on_use = function (me) {
     }
 
     var count = this.random(this.add_mp / 2) + this.add_mp / 2;
-    me.add_maxmp(count);
+    // 不超过内力上限
+    var room = me.limit_mp + me.query_prop("limit_mp") - me.max_mp;
+    me.add_maxmp(Math.min(count, room));
 }
 
 this.on_create = function (path, par) {

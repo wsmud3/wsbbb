@@ -17,6 +17,10 @@ this.set_drop({
 },  {
 	obj: ["eq/lv5/wushen/feiyi_sword"],
 	odds: 2000
+}, {
+	// 慈航剑典残页：与本副本同为 6 品的覆雨剑法残页概率一致（fb33 quick_drops 1800）
+	obj: ["book/bc#cihangjiandian"],
+	odds: 1800
 });
 
 this.add_action("ask_qichong", "询问七重门", function (me) {

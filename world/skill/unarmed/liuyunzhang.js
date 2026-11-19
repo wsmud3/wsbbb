@@ -26,7 +26,7 @@ this.query_enable_prop = function (lv) {
 	return {
 			unarmed: {
 				gj: parseInt(lv * 1.2) + 5,
-				gjsd: -200,
+				gjsd: 200,   // 攻击间隔缩短 200 毫秒（说明「以快速的身法及掌法」；原 -200 写反成变慢）
 				mz: parseInt(lv * 1.3) + 5,
 			},
 		}

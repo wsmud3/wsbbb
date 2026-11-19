@@ -36,17 +36,6 @@ this.query_enable_prop = function (lv) {
 	}
 }
 
-// 星移：招架成功后反弹150%伤害
-this.on_parry_over = function (me, from, par) {
-	if (me.query_temp("xingyi_reflect") && par.is_parry) {
-		var reflected = parseInt(from.gj * 1.5);
-		if (reflected > 0) {
-			from.damage(reflected, me, 0);
-			me.send_room("<HIM>$N的星移之力星光流转，将" + reflected + "点伤害反弹给$n！</HIM>", from);
-		}
-	}
-};
-
 this.pfm = {
 	pfm1: {
 		name: "星移",
@@ -56,15 +45,21 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			me.send_room("<HIM>$N双手虚引——「星移」！$N周身气劲流转，招架之势如星辰移位，变幻莫测！</HIM>", me);
-			me.set_temp("xingyi_reflect", 1);
 			me.add_status({
 				id: "xingyi",
 				name: "星移",
 				desc: "招架增加" + (30 + parseInt(lv / 100)) + "%，招架成功反弹150%伤害",
 				duration: parseInt(lv * 10),
 				prop: { zj_per: 30 + parseInt(lv / 100) },
-				on_expire: function(p) {
-					p.remove_temp("xingyi_reflect");
+				// 招架成功后，把这一击本应对自己造成的伤害（按自身免伤/防御结算后，由引擎估算传入）的150%反弹给攻击者。
+				// 反弹量已是结算后的数值，故对攻击者以 diff_fy=100 结算，不再重复扣防御与百分比免伤。
+				// 原先写在 on_parry_over 里，而本技能只能装在拳脚位，招架位钩子永远不会被调用；且按攻击力而非伤害计算。
+				on_parry_success: function (owner, attacker, par, taken) {
+					if (!attacker || attacker === owner || attacker.hp <= 0) return;
+					var reflected = parseInt(taken * 1.5);
+					if (!(reflected > 0)) return;
+					var dealt = attacker.damage(reflected, owner, 100, { kind: "reflect" });
+					if (dealt > 0) owner.send_room("<HIM>$N的星移之力星光流转，将" + dealt + "点伤害反弹给$n！</HIM>", attacker);
 				},
 			});
 		},
@@ -79,23 +74,26 @@ this.pfm = {
 		release_time: 3096,
 		mp: 30,
 		use: function (me, target, lv) {
-			// 只对武器和拳脚类型的敌人攻击技能生效
-			var enemySkill = target.attack_skill;
-			var canCounter = enemySkill && (
-				enemySkill.can_enables && (
-					enemySkill.can_enables.indexOf("sword") >= 0 ||
-					enemySkill.can_enables.indexOf("blade") >= 0 ||
-					enemySkill.can_enables.indexOf("club") >= 0 ||
-					enemySkill.can_enables.indexOf("staff") >= 0 ||
-					enemySkill.can_enables.indexOf("whip") >= 0 ||
-					enemySkill.can_enables.indexOf("unarmed") >= 0
-				)
-			);
-			if (canCounter) {
-				me.send_room("<HIB>$N长啸一声，斗转星移之「斗转」全力激发——漫天星光为之黯淡！$N将" + enemySkill.name + "的攻势尽数反转，以彼之道还施彼身！</HIB>", target);
-			} else {
-				me.send_room("<HIB>$N长啸一声，斗转星移之「斗转」全力激发——漫天星光为之黯淡！$N以斗转星移之力反击$n！</HIB>", target);
+			// 按说明：用「前一个攻击你的武器或拳脚绝招」攻击敌人，等级取你的斗转星移等级。
+			// 绝招记录在内存 mem "sk/last_hit_pfm"（pfm.js / auto_combat.js 在绝招释放成功后写到目标身上，60 秒有效，不存档）。
+			// 没有可用的记录时退回原效果：以对方的攻击力和命中反击一次。
+			var DZ_BASES = ["sword", "blade", "club", "staff", "whip", "unarmed"];
+			var lastId = me.query_mem("sk/last_hit_pfm");
+			var copied = null;
+			if (typeof lastId === "string" && lastId !== "douzhuanxingyi/pfm2") {
+				var sl = lastId.indexOf("/");
+				var srcSkill = sl > 0 ? SKILL.get(lastId.slice(0, sl)) : null;
+				var srcPfm = srcSkill && srcSkill.get_pfm(lastId.slice(sl + 1));
+				if (srcPfm && typeof srcPfm.use === "function" && DZ_BASES.indexOf(srcPfm.enable_skill) >= 0) copied = srcPfm;
 			}
+			if (copied) {
+				me.send_room("<HIB>$N长啸一声，斗转星移之「斗转」全力激发——漫天星光为之黯淡！$N以彼之道还施彼身，使出了" + copied.name + "！</HIB>", target);
+				try { copied.use(me, target, lv); }
+				catch (e) { console.error("斗转 复制绝招 %s 出错:", lastId, (e && e.stack) || e); }
+				me.end_attack(target);
+				return;
+			}
+			me.send_room("<HIB>$N长啸一声，斗转星移之「斗转」全力激发——漫天星光为之黯淡！$N以斗转星移之力反击$n！</HIB>", target);
 			me.do_attack({
 				target: target,
 				gj: target.gj,

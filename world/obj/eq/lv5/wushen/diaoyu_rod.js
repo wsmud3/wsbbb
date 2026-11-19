@@ -10,3 +10,5 @@ this.set({
     hole_count: 4,
     prop: { gj: 539 },
 });
+// 可以装备着钓鱼（diaoyu 命令认 is_fishing_rod）
+this.is_fishing_rod = true;

@@ -17,6 +17,8 @@
 		};
 	}
 
+	// 容貌比较用总容貌（基础 + 装备/技能/状态加成），原先只比基础 per
+	function total_per(ch) { return ch ? (ch.per || 0) + (ch.query_prop ? ch.query_prop("per") : 0) : 0; }
 	this.pfm = {
 		liuxing: {
 			name: "极乐六性",
@@ -27,13 +29,13 @@
 			use: function (me, target, lv) {
 				if (!target) return me.notify("你要用极乐六性对付谁？");
 				// 只要自己容貌比敌人高就必定击中
-				if (me.per > target.per) {
+				if (total_per(me) > total_per(target)) {
 					me.send_room("<HIM>$N施展极乐六性，如天女散花般惑人心神，$n心神荡漾，无从闪避！</HIM>", target);
 					var dmg = me.gj * (1.5 + lv / 500);
 					target.damage(dmg, me);
 					me.send_room("<HIM>$N的极乐六性正中$n要害，造成" + Math.round(dmg) + "点伤害！</HIM>", target);
 					// 如果容貌大幅超越，额外追加一次攻击
-					if (me.per > target.per + 20) {
+					if (total_per(me) > total_per(target) + 20) {
 						target.damage(dmg * 0.5, me);
 						me.send_room("<HIM>$n被$N的美貌所惑，心神失守，再受重创！</HIM>", target);
 					}
@@ -44,7 +46,7 @@
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {
-				var per = me.query_prop("per");
+				var per = total_per(me);
 				return "以容貌惑敌，若自身容貌（当前" + (per || 0) + "）高于对手则必定命中并造成150%+攻击伤害。若容貌超越对手20点以上，则追加50%额外伤害。";
 			}
 		}

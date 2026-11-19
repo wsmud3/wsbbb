@@ -45,15 +45,15 @@ this.on_parry_over = function (me, target, par) {
 	var stacks = _this._getStacks(me);
 	if (stacks >= maxStacks) return;
 	var lv = me.query_skill("qiankundanuoyi", 0);
-	var addStacks = par.is_parry ? 2 : 1;
-	stacks = Math.min(stacks + addStacks, maxStacks);
-	me.set_temp("qkdny_stacks", stacks);
+	// 招架成功积攒 2 层、失败 1 层（原先 add_status 不传 count，永远只加 1 层；持续时间写成了 lv*10 毫秒）
+	var addStacks = Math.min(par.is_parry ? 2 : 1, maxStacks - stacks);
 	var fy_per_stack = lv;  // 每层防御 = 技能等级
 	me.add_status({
 		id: "qkdny_stack",
 		name: "乾坤",
 		desc: "每层+" + fy_per_stack + "防御，上限" + maxStacks + "层",
-		duration: parseInt(lv * 10),  // 5秒，每次积攒刷新
+		count: addStacks,
+		duration: 5000,  // 5秒，每次积攒刷新
 		downside: false,
 		override: 1,
 		max_count: maxStacks,
@@ -92,7 +92,6 @@ this.pfm = {
 				attack_msg: "<him>$N以乾坤大挪移之力反击$n！</him>"
 			});
 			me.end_attack(target);
-			me.remove_temp("qkdny_stacks");
 			me.remove_status("qkdny_stack", true);  // 消耗全部层数
 		},
 		query_desc: function (me, lv) {
@@ -137,7 +136,6 @@ this.pfm = {
 					}
 				}
 			}
-			me.remove_temp("qkdny_stacks");
 			me.remove_status("qkdny_stack", true);  // 消耗全部层数
 		},
 		query_desc: function (me, lv) {

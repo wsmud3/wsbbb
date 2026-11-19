@@ -1,6 +1,7 @@
 this.inherits(SKILL);
 this.name = "柳絮身法";
 this.id = "lvliu_dodge";
+this.is_hidden = true; // NPC 专用（绿柳山庄 NPC），不进随机残页/随机技能池
 this.grade = 3;
 this.no_auto = true;
 this.desc = "绿柳山庄的轻功身法，身如柳絮，飘忽不定。";

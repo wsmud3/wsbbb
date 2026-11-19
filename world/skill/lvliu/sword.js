@@ -1,6 +1,7 @@
 this.inherits(SKILL);
 this.name = "绿柳剑法";
 this.id = "lvliu_sword";
+this.is_hidden = true; // NPC 专用（绿柳山庄 NPC），不进随机残页/随机技能池
 this.grade = 3;
 this.no_auto = true;
 this.desc = "绿柳山庄的独门剑法，剑招凌厉毒辣，招招取人要害。";

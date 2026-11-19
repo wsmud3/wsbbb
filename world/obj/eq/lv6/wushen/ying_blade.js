@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "鹰刀",
-    desc: "破碎虚空后遗留的神器，里面蕴含着无上的武学至理\n特效：鹰击：攻击有几率使敌人昏迷3秒"
+    desc: "破碎虚空后遗留的神器，里面蕴含着无上的武学至理\n特效：鹰击：攻击时有20%几率使敌人昏迷3秒，触发后15秒内不会再次触发"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -20,7 +20,8 @@ this.set({
 });
 
 this.do_attack = function (me, target, par) {
-    if (target.hp > 0 && !me.query_temp("wushen_ying_cd")) {
+    // 有几率触发（20%），触发后 15 秒内不再触发
+    if (target.hp > 0 && !me.query_temp("wushen_ying_cd") && Math.random() < 0.2) {
         me.set_temp("wushen_ying_cd", 1, 15000);
         target.add_status({
             id: "wushen_ying",

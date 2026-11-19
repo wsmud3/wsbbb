@@ -177,6 +177,21 @@ CHARACTER.prototype.query_used_skill = function (skname) {
     }
     return WORLD.DEFAULT_SKILLS[skname];
 }
+// 战斗中的短期记录（如「上一个绝招」）：只放在内存里，带过期时间，不进存档。
+// temp 即使带过期时间也会随存档写盘，这类记录不应持久化（小无相功的 copy_pfm_* 除外，那是有意存档的）。
+CHARACTER.prototype.set_mem = function (name, value, time) {
+    if (!this._mem) Object.defineProperty(this, "_mem", { value: {}, writable: true, enumerable: false });
+    this._mem[name] = { v: value, e: time ? Date.now() + time : 0 };
+};
+CHARACTER.prototype.query_mem = function (name, def) {
+    var item = this._mem && this._mem[name];
+    if (!item) return def;
+    if (item.e && Date.now() > item.e) { delete this._mem[name]; return def; }
+    return item.v;
+};
+CHARACTER.prototype.remove_mem = function (name) {
+    if (this._mem) delete this._mem[name];
+};
 CHARACTER.prototype.query_status = function (sid) {
     if (!this.status) return 0;
     for (var i = 0; i < this.status.length; i++) {

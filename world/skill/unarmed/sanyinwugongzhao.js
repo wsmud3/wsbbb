@@ -50,10 +50,12 @@ this.pfm = {
 			use: function (me, target, lv) {
 				me.send_room("<HIG>$N阴笑一声，五指如钩——「三阴毒爪」！$N爪上淬着碧绿的毒芒，接连三爪抓向$n，爪风过处空气都似被毒化！</HIG>", target);
 				for (var i = 0; i < 3; i++) {
+					// 按说明：每爪附加当前内力 7% 的毒质内力伤害（原代码误写成攻击力逐爪 +7%）
 					me.do_attack({
 						target: target,
-						gj: Math.floor(me.gj * (100 + i * 7) / 100),
+						gj: me.gj,
 						mz: me.mz,
+						power_gj: Math.floor((me.mp > 0 ? me.mp : 0) * 0.07),
 					});
 				}
 				me.end_attack(target)
@@ -70,7 +72,9 @@ this.pfm = {
 			mp: 25,
 			use: function (me, target, lv) {
 				me.send_room("$N施展了三阴蜈蚣爪的追魂爪。", target);
-				me.do_attack({target: target});
+				// 按说明：200% 攻击力，敌人气血每降低 1%，伤害再 +2%
+				var lost = target.max_hp > 0 ? Math.max(0, 100 - target.hp * 100 / target.max_hp) : 0;
+				me.do_attack({target: target, gj: Math.floor(me.gj * 2 * (100 + lost * 2) / 100), mz: me.mz});
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {

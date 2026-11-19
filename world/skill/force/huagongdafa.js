@@ -35,6 +35,13 @@ this.pfm = {
 					desc: "攻击和防御增加1500点，被击中后腐蚀敌方内力",
 					duration: parseInt(lv * 10),
 					prop: { gj: 1500, fy: 1500 },
+					// 被敌人击中后毒劲反噬，腐蚀对方 8000 点内力
+					on_be_hit: function (owner, attacker) {
+						if (!attacker || attacker === owner || !(attacker.mp > 0)) return;
+						var drain = Math.min(8000, attacker.mp);
+						attacker.add_mp(-drain);
+						owner.send_combat("<HIG>$N体内的化功毒劲反噬，腐蚀了$n" + drain + "点内力！</HIG>\n", attacker);
+					},
 				})},
 			query_desc: function (me, lv) {
 				return "化毒——在" + (parseInt(lv * 10 / 1000)) + "秒内内力化毒布满自身，增加自身1500攻击和防御，被敌人击中后毒劲反噬，将腐蚀敌方8000点内力。";

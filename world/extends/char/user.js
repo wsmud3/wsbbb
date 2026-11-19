@@ -51,7 +51,8 @@ USER.prototype.recount = function () {
     }
     this.bj = parseInt(this.dex / 10 + this.query_prop("bj_per"));
     // 免伤/破防经软上限折算（见 CHARACTER.soft_cap）
-    this.diff_sh_per = this.query_soft_prop('diff_sh_per');
+    // 特殊免伤 diff_sh_per2（免伤类 buff 专用）在软上限之后叠加；破防的 diff_fy_per2 已并入软上限
+    this.diff_sh_per = this.query_soft_prop('diff_sh_per') + this.query_prop('diff_sh_per2');
     this.diff_fy_per = this.query_soft_prop('diff_fy_per');
     if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 }

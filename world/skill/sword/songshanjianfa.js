@@ -52,10 +52,14 @@
 					var mp_cost = parseInt(me.mp * 0.3);
 					me.add_mp(-mp_cost);
 					me.send_room("<HIY>$N面色陡然一沉，周身真气狂涌而出，手中$w缓缓举起——「万岳朝宗」！这一剑尚未发出，方圆数丈之内已是剑气弥漫，$n只觉仿佛置身于嵩山绝顶，万岳群峰齐齐朝着$N手中的$w俯首称臣！$N猛然挥剑，一道磅礴浩荡的剑气如万钧雷霆般倾泻而出，天地为之色变！</HIY>", target);
-					me.do_attack({
-						target: target,
-						gj: me.gj + mp_cost,
-					});
+					// 按说明：消耗的内力对敌人造成等量伤害。原先把内力加在攻击力上，再经防御和免伤层层削减。
+					// 现在剑招本身按攻击力结算，未被闪避时再以 diff_fy=100（不计防御与百分比免伤）造成与消耗内力等量的伤害。
+					var wy = { target: target, gj: me.gj };
+					me.do_attack(wy);
+					if (!wy.is_dodge && target.hp > 0 && mp_cost > 0 && me.fight_type) {
+						var wyDmg = target.damage(mp_cost, me, 100);
+						if (wyDmg > 0) me.send_combat("<HIY>万岳剑气轰然灌入，$n受到" + wyDmg + "点伤害！</HIY>\n", target);
+					}
 					me.end_attack(target);
 				},
 				query_desc: function (me, lv) {

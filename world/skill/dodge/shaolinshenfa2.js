@@ -30,6 +30,7 @@
 	};
 
 	this.on_dodge_over = function (me, target, par) {
+	var lv = me.query_skill("shaolinshenfa2", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 	if (!par.is_dodge && !me.query_temp("yiwei_fy")) {
 									me.add_status({
 				id: "dodge",

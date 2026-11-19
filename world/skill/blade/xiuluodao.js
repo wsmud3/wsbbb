@@ -65,21 +65,33 @@ this.on_attack_over = function (me, target, par) {
     }
 };
 
+// 修罗炼狱击杀后清掉自身冷却：玩家手动出招的冷却 temp（pfm/blade/lianyu）与自动出招的 release_time 都要清
+function reset_lianyu_cd(me, pfm) {
+    if (!me) return;
+    var t = me.temp && me.temp["pfm/blade/lianyu"];
+    if (t && t.e > Date.now()) pfm.change_distime(me, "blade/lianyu");
+    if (me.auto_skills) {
+        for (var i = 0; i < me.auto_skills.length; i++) {
+            if (me.auto_skills[i].pfm === pfm) me.auto_skills[i].release_time = 0;
+        }
+    }
+}
+
 this.pfm = {
     // 修罗炼狱：根据流血层数多次攻击
     lianyu: {
         name: "修罗炼狱",
-        distime: 0,
+        distime: 20000,
         enable_skill: "blade",
         weapon_type: WEAPON_TYPE.BLADE,
-        mp: 0,
-        release_time: 0,
+        mp: 20,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
+        release_time: 4000,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用绝招？");
             me.send_room("<HIR>$N暴喝一声：「修罗炼狱！」刀光化作万千血影，笼罩$n！</HIR>", target);
 
-            var status = target.query_status("xiuluo_bleed");
-            var layer = status ? (status.count || 1) : 1;
+            // query_status 返回的就是层数（数字），原先在数字上取 .count，层数恒为 1
+            var layer = target.query_status("xiuluo_bleed");   // 攻击次数 = 1 + 层数（无层数时 1 次）
             var count = 1 + Math.min(layer, 10);
             var killed = false;
 
@@ -99,31 +111,34 @@ this.pfm = {
             }
 
             if (killed) {
-                this.change_distime(me, "xiuluodao/lianyu");
+                // 冷却是在 use 返回之后才由 pfm.js / auto_combat.js 写入的，这里直接重置会被随后写入的冷却覆盖，
+                // 所以推迟到本次出招结算完再清。原先传的 id "xiuluodao/lianyu" 也不对（冷却键是 pfm/blade/lianyu）。
+                var pfmObj = this;
+                setTimeout(function () { reset_lianyu_cd(me, pfmObj); }, 0);
                 me.send_combat("<HIG>修罗炼狱斩杀了敌人，技能冷却重置！</HIG>", target);
             }
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
             var bonus = 1 + parseInt(lv / 10);
-            return "根据敌人身上的修罗层数进行多次攻击（1+层数，最多11次），每次附加敌人当前气血" + bonus + "%的伤害。击杀重置冷却。"
+            return "根据敌人身上的修罗层数进行多次攻击（1+层数，最多11次），每次附加敌人当前气血" + bonus + "%的伤害。击杀重置冷却。冷却" + (me && this.query_distime ? this.query_distime(me, lv) / 1000 : 20) + "秒，出招" + (me && this.query_releasetime ? this.query_releasetime(me, lv) / 1000 : 4) + "秒。"
         }
     },
 
     // 六道轮回：先按层数增伤攻击，命中后清除流血，并将伤害值转化为自身攻击/命中增益
     liudao: {
         name: "六道轮回",
-        distime: 0,
+        distime: 20000,
         enable_skill: "blade",
         weapon_type: WEAPON_TYPE.BLADE,
-        mp: 0,
-        release_time: 0,
+        mp: 20,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
+        release_time: 4000,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用绝招？");
 
             // 获取当前流血层数（若没有则按1层计算）
-            var status = target.query_status("xiuluo_bleed");
-            var layer = status ? (status.count || 1) : 1;
+            // query_status 返回的就是层数（数字），原先在数字上取 .count，层数恒为 1
+            var layer = target.query_status("xiuluo_bleed") || 1;
 
             // 每层增加 (lv/2)% 伤害
             var per = 100 + layer * parseInt(lv / 2);
@@ -148,7 +163,7 @@ this.pfm = {
                     id: "xiuluo_buff",
                     name: "修罗之力",
                     desc: "攻击和命中大幅提升",
-                    duration: 5000 + parseInt(lv * 10),          // 持续15秒
+                    duration: Math.min(5000 + parseInt(lv * 10), 10000),
                     prop: {
                         gj: buffVal,
                         mz: buffVal
@@ -162,7 +177,7 @@ this.pfm = {
         },
         query_desc: function (me, lv) {
             var per = parseInt(lv / 2);
-            return "根据敌人身上的修罗层数（无层数则按1层）造成每层" + per + "%的额外伤害，命中后清除目标流血状态，并将本次造成的伤害值转化为自身攻击和命中增益，持续15秒。"
+            return "根据敌人身上的修罗层数（无层数则按1层）造成每层" + per + "%的额外伤害，命中后清除目标流血状态，并将本次造成的伤害值转化为自身攻击和命中增益，持续" + (Math.min(5000 + parseInt(lv * 10), 10000) / 1000) + "秒。冷却" + (me && this.query_distime ? this.query_distime(me, lv) / 1000 : 20) + "秒，出招" + (me && this.query_releasetime ? this.query_releasetime(me, lv) / 1000 : 4) + "秒。"
         }
     }
 };

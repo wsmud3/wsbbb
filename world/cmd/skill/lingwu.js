@@ -8,6 +8,7 @@ this.regex = /^(\w+)(?:\s(r?\d+|reset|up|ss|weapon|unarmed|force|dodge|parry)(?:
 this.enter = function (player, skid, arg1, arg2) {
     var skill_base = SKILL.get(skid);
     if (!skill_base) return player.send("没有这个技能。");
+    normalize_slots(skill_base);
 
     var sk = player.skills[skid];
     if (!sk) return player.notify("你还没有学会" + skill_base.color_name + "。");
@@ -866,8 +867,21 @@ function query_any_slot(skill_base, slot_idx) {
     return null;
 }
 
+// 有些技能的进阶槽只写了 prop/value/format，缺 name / query_needs / count：
+// 读书写字流程调用 query_needs 会抛 TypeError，界面上名字显示成 undefined。这里补默认值。
+var SLOT_NAMES = ["一", "二", "三", "四", "五", "六", "七", "八"];
+function normalize_slots(skill_base) {
+    if (!skill_base.slots) return;
+    for (var i = 0; i < skill_base.slots.length; i++) {
+        var slot = skill_base.slots[i];
+        if (!slot) continue;
+        if (!slot.name) slot.name = "进阶" + (SLOT_NAMES[i] || (i + 1));
+        if (typeof slot.query_needs !== "function") slot.query_needs = function () { return []; };
+        if (!slot.count) slot.count = 1;
+    }
+}
 function get_need_path(slot, grd) {
-    var needs = slot.query_needs(grd);
+    var needs = slot.query_needs ? slot.query_needs(grd) : null;
     return needs && needs.length ? needs[0].path : "";
 }
 

@@ -5,7 +5,7 @@ this.enter = function (me) {
     if (!me.environment || !me.environment.can_diaoyu)
         return false;
     var wea = me.query_weapon();
-    if (!wea || !wea.path.startsWith("sp/tool/diao")) return me.notify("你没有装备钓竿不可以钓鱼。");
+    if (!wea || (!wea.path.startsWith("sp/tool/diao") && !wea.is_fishing_rod)) return me.notify("你没有装备钓竿不可以钓鱼。");
     var er = query_er(me);
     if (!er) return me.notify("你身上没有鱼饵，可以去扬州城的杂货店购买钓竿和鱼饵。");
     me.send_room("$N坐在岸边，把手中的$W甩到水里。");

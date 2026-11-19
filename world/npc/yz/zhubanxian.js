@@ -256,10 +256,10 @@
 			me.add_obj("eq/lv6/wushen/" + eqList[i], 1);
 		}
 
-		// 十本秘籍
+		// 秘籍（天地棋盘、逆仙魔诀、大品天仙诀、闪电五连鞭已删除）
 		var skillBooks = [
-			"xiuluodao", "tiandiqipan", "nixianmojue", "tianditongshou",
-			"dapintianxianjue", "yixinghunyuan", "shandianwulianbian",
+			"xiuluodao", "tianditongshou",
+			"yixinghunyuan",
 			"fuyujianfa", "changshengjue", "cihangjiandian"
 		];
 		for (var i = 0; i < skillBooks.length; i++) {

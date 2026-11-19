@@ -48,6 +48,17 @@ this.pfm = {
 		mp: 25,
 		use: function (me, target, lv) {
 			me.send_room("<HIG>$N刀法如狂风骤雨——「狂风二十一式」！$w化作漫天刀影，二十一记快刀如狂风扫叶般向$n席卷而去！</HIG>", target);
+			// 按说明：攻击期间（出招时间内）攻速 +100%（gjsd_per 正值为加快）
+			me.add_status({
+				id: "kuangfeng21",
+				name: "狂风",
+				desc: "攻击速度增加100%",
+				duration: this.release_time || 3096,
+				downside: false,
+				override: 2,
+				only_combat: true,
+				prop: { gjsd_per: 100 },
+			});
 			for (var i = 0; i < 21; i++) {
 				me.do_attack({
 					target: target,

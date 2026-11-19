@@ -1,6 +1,7 @@
 this.inherits(SKILL);
 this.name = "绿柳心法";
 this.id = "lvliu_force";
+this.is_hidden = true; // NPC 专用（绿柳山庄 NPC），不进随机残页/随机技能池
 this.grade = 3;
 this.no_auto = true;
 this.desc = "绿柳山庄的内功心法，真气阴寒绵长。";

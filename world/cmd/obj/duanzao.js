@@ -31,15 +31,15 @@
 	releasetime_per: { name: "出招时间%", category: 3, desc: "减少出招时间百分比" },
 	add_sh_per: { name: "最终伤害%", category: 3, desc: "提升最终伤害百分比" },
 	diff_fy_per: { name: "忽视防御%", category: 3, desc: "忽视对方防御百分比" },
-	ignore_busy_per: { name: "忽视忙乱%", category: 3, desc: "减少忙乱状态时间百分比" },
+	diff_busy_per: { name: "忽视忙乱%", category: 3, desc: "减少忙乱状态时间百分比" },
 	add_bjsh_per: { name: "暴击伤害%", category: 3, desc: "提升暴击伤害百分比" },
 	expend_mp_per: { name: "内力消耗%", category: 3, desc: "减少内力消耗百分比" },
-	bj_resist_per: { name: "暴击抵抗%", category: 3, desc: "减少被暴击几率" },
+	diff_bj_per: { name: "暴击抵抗%", category: 3, desc: "减少被暴击几率" },
 	// 特殊属性 (category 4)
 	per: { name: "容貌", category: 4, desc: "提升容貌" },
 	bj_per: { name: "暴击%", category: 4, desc: "提升暴击几率" },
 	busy_per: { name: "忙乱%", category: 4, desc: "增加忙乱对方时间百分比" },
-	debuff_resist_per: { name: "负面抵抗%", category: 4, desc: "减少负面状态时间百分比" },
+	diff_downside_per: { name: "负面抵抗%", category: 4, desc: "减少负面状态时间百分比" },
 	gjsd: { name: "攻击速度", category: 4, desc: "减少攻击间隔时间" },
 	distime_per: { name: "冷却时间%", category: 4, desc: "减少招式冷却百分比" },
 	distime: { name: "冷却缩减", category: 4, desc: "减少冷却时间" },
@@ -69,8 +69,8 @@
 		lianxi_per: 22, dazuo_per: 22, study_per: 22,
 	diff_sh_per: 2, gjsd_per: 3, releasetime_per: 3,
 	add_sh_per: 2, diff_fy_per: 2,
-	ignore_busy_per: 6, add_bjsh_per: 12, expend_mp_per: 5, bj_resist_per: 5,
-	per: 7, bj_per: 5, busy_per: 7, debuff_resist_per: 5,
+	diff_busy_per: 6, add_bjsh_per: 12, expend_mp_per: 5, diff_bj_per: 5,
+	per: 7, bj_per: 5, busy_per: 7, diff_downside_per: 5,
 	gjsd: 350, distime_per: 3,
 	distime: 350, releasetime: 350,
 	diff_sh: 700,
@@ -136,6 +136,10 @@
 		limit_mp: 'max_mp',
 		ignore_fy: 'diff_fy_per',
 		final_damage: 'add_sh_per',
+		// 旧版锻造词条用了引擎不读取的 key，映射到实际生效的属性
+		ignore_busy_per: 'diff_busy_per',
+		bj_resist_per: 'diff_bj_per',
+		debuff_resist_per: 'diff_downside_per',
 	};
 
 	this.category_names = ["基础属性", "后天属性", "高级属性", "稀有属性", "特殊属性"];
@@ -159,11 +163,11 @@
 
 	// 每个部位允许的特殊属性（category 4）
 	this.ALLOWED_SPECIAL = {
-	    0: ['per', 'bj_per', 'busy_per', 'debuff_resist_per', 'gjsd', 'distime_per', 'distime', 'releasetime', 'diff_sh'],
+	    0: ['per', 'bj_per', 'busy_per', 'diff_downside_per', 'gjsd', 'distime_per', 'distime', 'releasetime', 'diff_sh'],
 	    1: ['per', 'diff_sh'],
-	    2: ['per', 'debuff_resist_per', 'distime', 'releasetime'],
-	    3: ['per', 'bj_per', 'debuff_resist_per'],
-	    4: ['per', 'debuff_resist_per', 'distime_per', 'distime', 'releasetime', 'diff_sh'],
+	    2: ['per', 'diff_downside_per', 'distime', 'releasetime'],
+	    3: ['per', 'bj_per', 'diff_downside_per'],
+	    4: ['per', 'diff_downside_per', 'distime_per', 'distime', 'releasetime', 'diff_sh'],
 	    5: ['per', 'bj_per', 'gjsd', 'distime_per', 'distime', 'releasetime'],
 	    6: ['per', 'distime_per', 'distime', 'releasetime'],
 	    7: ['per', 'bj_per', 'gjsd', 'distime_per', 'distime', 'releasetime'],
@@ -175,15 +179,15 @@
 	// 每个部位允许的稀有属性（category 3）
 	this.ALLOWED_RARE = {
 	    0: ['add_bjsh_per', 'expend_mp_per', 'gjsd_per', 'releasetime_per', 'add_sh_per', 'diff_fy_per'],
-	    1: ['bj_resist_per', 'ignore_busy_per', 'diff_sh_per'],
-	    2: ['ignore_busy_per', 'diff_sh_per'],
-	    3: ['bj_resist_per', 'expend_mp_per', 'ignore_busy_per'],
-	    4: ['bj_resist_per', 'ignore_busy_per', 'diff_sh_per'],
+	    1: ['diff_bj_per', 'diff_busy_per', 'diff_sh_per'],
+	    2: ['diff_busy_per', 'diff_sh_per'],
+	    3: ['diff_bj_per', 'expend_mp_per', 'diff_busy_per'],
+	    4: ['diff_bj_per', 'diff_busy_per', 'diff_sh_per'],
 	    5: ['expend_mp_per', 'gjsd_per', 'releasetime_per', 'add_sh_per', 'diff_fy_per'],
 	    6: ['diff_sh_per', 'releasetime_per', 'diff_fy_per'],
 	    7: ['expend_mp_per', 'diff_sh_per', 'gjsd_per', 'releasetime_per', 'add_sh_per', 'diff_fy_per'],
 	    8: ['add_bjsh_per', 'expend_mp_per', 'gjsd_per', 'releasetime_per', 'add_sh_per', 'diff_fy_per'],
-	    9: ['ignore_busy_per', 'diff_sh_per', 'diff_fy_per'],
+	    9: ['diff_busy_per', 'diff_sh_per', 'diff_fy_per'],
 	    10: ['add_sh_per', 'add_bjsh_per', 'diff_fy_per'],
 	};
 
