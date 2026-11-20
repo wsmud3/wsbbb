@@ -66,7 +66,7 @@ this.pfm = {
 				// 每层造成25755真实伤害
 				var trueDmg = stacks * 25755;
 				target.damage(trueDmg, me);
-				me.send_room("<HIR>$N引爆了" + target.name + "身上" + stacks + "层九阴劲气，造成" + trueDmg + "点真实伤害！</HIR>", target);
+				me.send_room("<HIR>$N引爆了$n体内的九阴劲气，对$n造成" + trueDmg + "点伤害！</HIR>", target);
 				// 层数大于5层昏迷6秒
 				if (stacks > 5) {
 					target.add_status({

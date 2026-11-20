@@ -281,7 +281,7 @@ CHARACTER.prototype.do_attack = function (par) {
                 var excess = sh - cap;
                 target.do_recover(excess);
                 target.add_mp(parseInt(excess));
-                target.send_room("<hio>$N的混沌真气将" + excess + "点伤害转化为气血和内力！</hio>");
+                target.send_room("<hio>$N的混沌真气流转不息，将来袭的劲力化作了气血与内力！</hio>");
                 sh = cap;
             }
         }

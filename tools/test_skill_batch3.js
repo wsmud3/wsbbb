@@ -169,33 +169,33 @@ async function main() {
         for (let r = 0; r < 20; r++) {
             a.remove_temp("busiyinfa_huanmo_trigger");
             B.pfm.huanmo.use(a, b, 3000); msgs.length = 0; dodgeOk(a, b);
-            const m = msgs.find(x => /触发了/.test(x)) || "";
-            assert.ok(!swordNames.some(n => m.indexOf("——" + n + "！") >= 0), "没装备剑时不会使出剑法绝招");
+            const m = msgs.find(x => /顺势使出/.test(x)) || "";
+            assert.ok(!swordNames.some(n => m.indexOf("「" + n + "」") >= 0), "没装备剑时不会使出剑法绝招");
         }
         ({ a, b, msgs } = mk({ busiyinfa: ["force", "dodge"], jiuyinbaiguzhao: ["unarmed"] }));
         a.do_attack = () => 1; a.end_attack = () => {};
         B.pfm.huanmo.use(a, b, 3000); dodgeOk(a, b);
-        const name = (msgs.find(m => /触发了/.test(m)) || "").replace(/<[^>]+>/g, "");
+        const name = (msgs.find(m => /顺势使出/.test(m)) || "").replace(/<[^>]+>/g, "");
         assert.ok(name, "幻魔期间触发随机绝招");
         let key = null;
         for (const [slot, sid] of [["unarmed", "jiuyinbaiguzhao"], ["force", "busiyinfa"]]) {
             const pf = SKILL.get(sid).pfm;
-            const k = Object.keys(pf).find(x => name.indexOf("——" + pf[x].name + "！") >= 0);
+            const k = Object.keys(pf).find(x => name.indexOf("「" + pf[x].name + "」") >= 0);
             if (k) key = "pfm/" + slot + "/" + k;
         }
         assert.ok(key, "识别出触发的绝招");
         const changed = (b.status || []).length > 0 || (a.status || []).some(s => s.id !== "busiyinfa_huanmo");
         assert.strictEqual(!!a.query_temp(key), changed, "挂了状态的绝招重新计算冷却，纯伤害绝招不动冷却");
         msgs.length = 0; dodgeOk(a, b);
-        assert.ok(!msgs.some(m => /触发了/.test(m)), "4 秒内置冷却");
+        assert.ok(!msgs.some(m => /顺势使出/.test(m)), "4 秒内置冷却");
         assert.ok(/随机释放一个可使用的绝招/.test(B.pfm.huanmo.query_desc(a, 3000)));
         // 不死印法其他部位的绝招可以被触发，幻魔身法本身不会
         const got = {};
         for (let r = 0; r < 30; r++) {
             const t = mk({ busiyinfa: ["force", "dodge"] });
             B.pfm.huanmo.use(t.a, t.b, 3000); dodgeOk(t.a, t.b);
-            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
-            if (/不死七幻/.test(m)) got.qihuan = 1; if (/生死逆转/.test(m)) got.nisheng = 1; if (/触发了——幻魔身法/.test(m)) got.huanmo = 1;
+            const m = (t.msgs.find(x => /顺势使出/.test(x)) || "").replace(/<[^>]+>/g, "");
+            if (/不死七幻/.test(m)) got.qihuan = 1; if (/生死逆转/.test(m)) got.nisheng = 1; if (/顺势使出「幻魔身法」/.test(m)) got.huanmo = 1;
         }
         assert.ok(got.qihuan && got.nisheng && !got.huanmo, "可触发不死七幻、生死逆转，不触发幻魔身法");
         // 先手动放过（敌人已带幻身、自己已在逆转中），再被触发：刷新被拒但效果仍在，同样重算冷却。走真实攻击 → 真实闪避
@@ -205,9 +205,9 @@ async function main() {
             B.pfm.qihuan.use(t.a, t.b, 3000); B.pfm.nisheng.use(t.a, t.b, 3000);
             t.a.max_hp = t.a.hp = t.b.max_hp = t.b.hp = 1e12; t.msgs.length = 0;
             B.pfm.huanmo.use(t.a, t.b, 3000);
-            for (let i = 0; i < 5 && !t.msgs.some(m => /触发了/.test(m)); i++) t.b.do_attack({ target: t.a });
-            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
-            for (const pid of ["qihuan", "nisheng"]) if (m.indexOf("——" + B.pfm[pid].name + "！") >= 0) {
+            for (let i = 0; i < 5 && !t.msgs.some(m => /顺势使出/.test(m)); i++) t.b.do_attack({ target: t.a });
+            const m = (t.msgs.find(x => /顺势使出/.test(x)) || "").replace(/<[^>]+>/g, "");
+            for (const pid of ["qihuan", "nisheng"]) if (m.indexOf("「" + B.pfm[pid].name + "」") >= 0) {
                 re[pid] = 1; assert.ok(t.a.query_temp("pfm/force/" + pid), B.pfm[pid].name + "已生效时再被触发也重算冷却");
             }
         }
@@ -219,13 +219,13 @@ async function main() {
         for (let r = 0; r < 80 && (!seenCH || !seenWX); r++) {
             const t = mk({ busiyinfa: ["force", "dodge"], canhezhi: ["unarmed"] });
             B.pfm.huanmo.use(t.a, t.b, 3000); dodgeOk(t.a, t.b);
-            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            const m = (t.msgs.find(x => /顺势使出/.test(x)) || "").replace(/<[^>]+>/g, "");
             if (/参合之殇/.test(m) && (t.b.status || []).some(x => x.id === "canhe") && !(t.b.status || []).some(x => x.id !== "canhe")) {
                 seenCH++; assert.ok(!t.a.query_temp("pfm/unarmed/" + chId), "被动挂的状态不让绝招进冷却");
             }
             const w = mk({ busiyinfa: ["force", "dodge"], liumaishenjian: ["unarmed"] });
             B.pfm.huanmo.use(w.a, w.b, 3000); dodgeOk(w.a, w.b);
-            const wm = (w.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            const wm = (w.msgs.find(x => /顺势使出/.test(x)) || "").replace(/<[^>]+>/g, "");
             if (/无形剑气/.test(wm) && (w.b.status || []).some(x => x.id === "liumai_faint")) {
                 seenWX++; assert.ok(w.a.query_temp("pfm/unarmed/wuxing"), "绝招里写的昏迷算绝招挂状态，重算冷却");
             }
@@ -253,8 +253,8 @@ async function main() {
             x.max_hp = x.hp = y.max_hp = y.hp = 1e12;
             const log = []; x.send_combat = y.send_combat = x.send_room = y.send_room = t => log.push(String(t));
             B.pfm.huanmo.use(x, y, 3000);
-            for (let i = 0; i < 5 && !log.some(m => /触发了/.test(m)); i++) y.do_attack({ target: x });   // 真实攻击 → 真实闪避
-            if (!log.some(m => /触发了——参合之殇/.test(m.replace(/<[^>]+>/g, "")))) continue;
+            for (let i = 0; i < 5 && !log.some(m => /顺势使出/.test(m)); i++) y.do_attack({ target: x });   // 真实攻击 → 真实闪避
+            if (!log.some(m => /顺势使出「参合之殇」/.test(m.replace(/<[^>]+>/g, "")))) continue;
             seen[st] = 1;
             assert.strictEqual(!!y.is_faint, st >= 5, st + " 层时" + (st >= 5 ? "" : "不") + "昏迷");
             assert.strictEqual(!!x.query_temp("pfm/unarmed/pfm1"), st >= 5, st + " 层时" + (st >= 5 ? "" : "不") + "进冷却");
@@ -283,6 +283,34 @@ async function main() {
             assert.ok(a.auto_skills.some(x => x.type === "sword"), "自动出招包含剑法绝招");
             assert.ok(a.query_auto_pfm_skills().some(x => x.type === "sword"), "自动出招配置面板列出剑法绝招");
         }
+    });
+
+    await check("批量清除状态后不残留忙乱（clear_downside / clear_combat_status / remvoe_statuses / clear_status）", () => {
+        for (const fn of [a => a.clear_downside(true), a => a.clear_combat_status(), a => a.remvoe_statuses(x => x.id === "tbusy"), a => a.clear_status()]) {
+            const a = mkUser(); a.environment = { items: [a], send_room() {} };
+            a.add_status({ id: "tbusy", name: "忙乱", duration: 3000, downside: true, is_busy: true, only_combat: true, no_diff: true });
+            assert.ok(a.is_busy > 0);
+            fn(a);
+            assert.ok(!a.status.length && !a.is_busy, "清除后忙乱标志归零，绝招不再被判手忙脚乱");
+        }
+    });
+
+    await check("天魔策·拳罡：每次施展加一层并重新计时，时间到掉一层；持续 1 秒起每 300 级 +1 秒、最长 10 秒", async () => {
+        const Q = SKILL.get("tianmoce").pfm.quangang;
+        assert.ok(/持续1秒/.test(Q.query_desc(null, 100)) && /持续4秒/.test(Q.query_desc(null, 1000)) && /持续10秒/.test(Q.query_desc(null, 5000)));
+        const a = mkUser(), b = mkUser(); learn(a, { tianmoce: ["force", "unarmed"] }, 300); learn(b, {}, 100); fight(a, b);
+        a.environment = b.environment = { items: [a, b], send_room() {}, item_changed() {} }; b.max_hp = b.hp = 1e12;
+        a.do_attack = () => 1; a.end_attack = () => {};
+        const sh0 = a.query_prop("add_sh_per"), msgs = []; a.notify = m => msgs.push(String(m));
+        for (let i = 0; i < 7; i++) Q.use(a, b, 300);
+        assert.deepStrictEqual([a.query_status("tianmoce_quangang"), a.query_prop("add_sh_per") - sh0], [5, 40], "最多 5 层、每层 +8%");
+        assert.ok(!msgs.some(m => /\d+%|\d+层/.test(m)), "叠层提示不出现数值");
+        await new Promise(r => setTimeout(r, 1200));
+        Q.use(a, b, 300);                                   // 满层再施展：只续时
+        await new Promise(r => setTimeout(r, 1200));
+        assert.strictEqual(a.query_status("tianmoce_quangang"), 5, "满层施展会重新计时");
+        await new Promise(r => setTimeout(r, 1000));
+        assert.deepStrictEqual([a.query_status("tianmoce_quangang"), a.query_prop("add_sh_per") - sh0], [4, 32], "时间到只掉一层");
     });
 
     // ---------- 4. 时长上限 ----------

@@ -74,7 +74,7 @@ this.pfm = {
 			}
 			// 每层增加30%伤害
 			var gj = Math.floor(me.gj * (100 + stacks * 30) / 100);
-			me.send_room("<HIY>$N双眸精光一闪——「参合之殇」！参合指力蓄势而发，当前已积" + stacks + "层参合之力，一指点出天地色变！</HIY>", target);
+			me.send_room("<HIY>$N双眸精光一闪——「参合之殇」！" + (stacks >= 5 ? "积蓄已久的参合指力尽数灌入指端" : stacks > 0 ? "参合指力蓄势而发" : "指力凝而未发") + "，一指点出天地色变！</HIY>", target);
 			if (me.do_attack({
 				target: target,
 				gj: gj,

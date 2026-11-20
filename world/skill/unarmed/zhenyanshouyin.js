@@ -73,7 +73,7 @@ this.pfm = {
 				downside: false,
 				override: 2,
 				prop: { diff_sh: shield },
-				start_msg: "<hio>$N获得了" + shield + "点固定免伤，持续" + (Math.min(parseInt(lv * 10), 10000) / 1000) + "秒！</hio>",
+				start_msg: "<hio>$N双手结印，真言流转，周身凝起一层金光护体！</hio>",
 				finish_msg: "$N的不死法印消散了。",
 			});
 		},

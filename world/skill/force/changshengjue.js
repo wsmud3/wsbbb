@@ -60,7 +60,7 @@ this.on_force_parry = function (me, from, sh, par) {
 												var excess = sh - cap;
 												me.do_recover(excess);
 												me.add_mp(parseInt(excess));
-												me.send_room("<hio>$N的混沌真气将" + excess + "点伤害转化为气血和内力！</hio>");
+												me.send_room("<hio>$N的混沌真气流转不息，将来袭的劲力化作了气血与内力！</hio>");
 												return excess;
 								}
 				}

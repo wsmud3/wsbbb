@@ -84,7 +84,7 @@ this.pfm = {
 			var stacks = _this._getStacks(me);
 			if (stacks <= 0)
 			return me.notify("你还没有积攒乾坤之力，无法施展大挪移。");
-			me.send_room("<him>$N运转乾坤大挪移，积攒的" + stacks + "层乾坤之力猛然爆发！</him>", target);
+			me.send_room("<him>$N运转乾坤大挪移，积攒的乾坤之力猛然爆发！</him>", target);
 			var bonus_gj = Math.floor(stacks / 2) * me.gj;
 			me.do_attack({
 				target: target,
@@ -115,7 +115,7 @@ this.pfm = {
 			var heal = Math.floor(me.max_hp * 0.04 * stacks);
 			if (heal > 0) {
 				me.do_recover(heal);
-				me.send_room("<him>$N消耗" + stacks + "层乾坤之力，恢复了" + heal + "点气血！</him>");
+				me.send_room("<him>$N引乾坤之力流转周身，伤势随之平复！</him>");
 			}
 			// 转移一个负面状态给目标
 			if (target && target.hp > 0 && me.status && me.status.length > 0) {

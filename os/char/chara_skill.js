@@ -365,6 +365,9 @@ CHARACTER.prototype.clear_downside = function (type) {
             count++;
         }
     }
+    // 批量移除时 change_buff 在 splice 之前调用，其中的 _recalc_ctrl_flags 仍会看到被删的控制状态；
+    // 移除完再统一重算一次，否则忙乱 / 昏迷等标志会残留到战斗结束（技能被判「手忙脚乱」、普攻停摆）。
+    this._recalc_ctrl_flags();
     if (removed.length == 1 || !this.environment) return;
     var items = this.environment.items;
     var msg = '{type:"status",id:"' + this.id + '",sid:[' + removed + '],action:"remove"}';
@@ -391,6 +394,9 @@ CHARACTER.prototype.clear_combat_status = function () {
             removed += ',"' + item.id + '"';
         }
     }
+    // 批量移除时 change_buff 在 splice 之前调用，其中的 _recalc_ctrl_flags 仍会看到被删的控制状态；
+    // 移除完再统一重算一次，否则忙乱 / 昏迷等标志会残留到战斗结束（技能被判「手忙脚乱」、普攻停摆）。
+    this._recalc_ctrl_flags();
     if (removed.length == 1 || !this.environment) return;
     var items = this.environment.items;
     var msg = '{type:"status",id:"' + this.id + '",sid:[' + removed + '],action:"remove"}';
@@ -413,6 +419,9 @@ CHARACTER.prototype.remvoe_statuses = function (func) {
             removed += ',"' + item.id + '"';
         }
     }
+    // 批量移除时 change_buff 在 splice 之前调用，其中的 _recalc_ctrl_flags 仍会看到被删的控制状态；
+    // 移除完再统一重算一次，否则忙乱 / 昏迷等标志会残留到战斗结束（技能被判「手忙脚乱」、普攻停摆）。
+    this._recalc_ctrl_flags();
     if (removed.length == 1 || !this.environment) return;
     var items = this.environment.items;
     var msg = '{type:"status",id:"' + this.id + '",sid:[' + removed + '],action:"remove"}';
@@ -431,6 +440,9 @@ CHARACTER.prototype.clear_status = function () {
         item.handler && clearTimeout(item.handler);
     }
     this.status.length = 0;
+    // 批量移除时 change_buff 在 splice 之前调用，其中的 _recalc_ctrl_flags 仍会看到被删的控制状态；
+    // 移除完再统一重算一次，否则忙乱 / 昏迷等标志会残留到战斗结束（技能被判「手忙脚乱」、普攻停摆）。
+    this._recalc_ctrl_flags();
     if (!this.environment) return;
     var msg = '{type:"status",id:"' + this.id + '",action:"clear"}';
     var items = this.environment.items;

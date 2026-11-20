@@ -102,7 +102,7 @@ this.on_before_attack = function (me, target, par) {
 this.on_force_parry = function (me, from, sh, par) {
 	// 剑心通明：绝对招架，招架所有伤害（包括物理伤害和内力伤害）
 	if (me.query_temp("cihang_jxtm")) {
-		me.send_room("<hio>$N剑心通明，剑气护体，将" + sh + "点伤害尽数化解！</hio>", from);
+		me.send_room("<hio>$N剑心通明，剑气护体，将$n的攻势尽数化解！</hio>", from);
 		return sh;
 	}
 	return 0;

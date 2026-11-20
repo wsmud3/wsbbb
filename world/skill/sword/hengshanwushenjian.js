@@ -91,7 +91,7 @@
 			var info = choices[choice] || choices.zhurong;
 			var per = 20 + parseInt(lv / 100);
 			var dur = 10000 + lv * 10;
-			me.send_room("<HIM>$N默诵五神赋口诀——「五神赋•" + info.name + "」！" + info.name + "峰神力加身，$N的" + info.stat + "之力暴涨" + per + "%！</HIM>", me);
+			me.send_room("<HIM>$N默诵五神赋口诀——「五神赋•" + info.name + "」！" + info.name + "峰神力加身，$N的" + info.stat + "之力陡然暴涨！</HIM>", me);
 			me.add_status({
 				id: "wushenfu",
 				name: info.name,

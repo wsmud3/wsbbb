@@ -47,7 +47,9 @@ this.init_trial = function (player, data, intent) {
         this.on_before_fight = null;
         this.on_kill = null;
     }
-    this.name = "<hiy>" + intent.trial + "·武意化身</hiy>";
+    // 剑冢五关等关卡化身名字从简（如「利剑化身」），不挂头衔；其余门派沿用原名。
+    if (intent.is_stage) { this.title = ""; this.name = "<hiy>" + intent.mech + "化身</hiy>"; }
+    else this.name = "<hiy>" + intent.trial + "·武意化身</hiy>";
     var level = WORLD.ZHENYI.get_level(player, data.key, intent.id) || 1;
     var stats = WORLD.ZHENYI.trial_stats(intent);
     var rule = intent.mode === "endure" ? "坚持45秒即可通过。" : ("须在" + Math.floor(stats.timeout / 1000) + "秒内击败化身。");

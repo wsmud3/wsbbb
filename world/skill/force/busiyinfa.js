@@ -43,7 +43,7 @@ var qihuan_guiyuan = function (me) {
 		var mpRecover = Math.floor(me.max_mp * sheng * 0.03);
 		if (hpHeal > 0) me.do_recover(hpHeal);
 		if (mpRecover > 0) me.add_mp(mpRecover);
-		me.send_combat("<hio>归元！清除所有负面状态，回复" + hpHeal + "气血、" + mpRecover + "内力！</hio>\n");
+		me.send_combat("<hio>$N周身生死二气交汇归元，浊气尽散，伤势与内力随之复苏！</hio>\n");
 		me.remove_temp("busiyinfa_siyin");
 		me.remove_temp("busiyinfa_shengyin");
 	}
@@ -161,7 +161,7 @@ var huanmo_trigger_pfm = function (me, target) {
 		var c = pfms[k]; pfms[k] = pfms[n - 1];
 		if (c.pfm.check && !c.pfm.no_check && !c.pfm.check(me, c.lv)) continue;
 		me.set_temp("busiyinfa_huanmo_trigger", 1, HUANMO_TRIGGER_CD);
-		me.send_combat("<hio>$N如鬼魅般的身影触发了——" + c.pfm.name + "！</hio>\n", target);
+		me.send_combat("<hio>$N如鬼魅般一闪，顺势使出「" + c.pfm.name + "」！</hio>\n", target);
 		var applied = false;
 		try { applied = huanmo_cast_watch(me, target, function () { c.pfm.use(me, target, c.lv, c.slot); }); }
 		catch (e) { console.error("huanmo_trigger_pfm error:", (e && e.stack) || e); }
@@ -211,13 +211,13 @@ this.on_damage = function (me, from, sh, ctx) {
 		if (availableMp >= sh) {
 			me._nisheng_deducted = (me._nisheng_deducted || 0) + sh;
 			me.add_mp(-sh);
-			me.send_combat("<him>$N逆转经脉，以" + Math.floor(sh) + "点内力抵消了伤害！</him>\n");
+			me.send_combat("<him>$N逆转经脉，以内力硬接下这一击！</him>\n");
 			return 0;
 		} else if (availableMp > 0) {
 			me._nisheng_deducted = (me._nisheng_deducted || 0) + availableMp;
 			me.add_mp(-availableMp);
 			sh = sh - availableMp;
-			me.send_combat("<him>$N内力枯竭，抵消" + availableMp + "点伤害，余伤由气血承担！</him>\n");
+			me.send_combat("<him>$N内力已竭，余劲透体而入！</him>\n");
 		}
 	}
 
@@ -228,7 +228,7 @@ this.on_damage = function (me, from, sh, ctx) {
 		var mpGain = Math.floor(sh * 0.5);
 		if (mpGain > 0) {
 			me.add_mp(mpGain);
-			me.send_combat("<hio>$N的生死锁链将" + mpGain + "点伤害化为内力！</hio>\n");
+			me.send_combat("<hio>生死锁链流转，$N将来袭的劲力化作了内力。</hio>\n");
 		}
 		me.add_temp("busiyinfa_shengyin", 1);
 		qihuan_guiyuan(me);
@@ -249,9 +249,9 @@ this.on_force_over = function (me, target, par, sh) {
 	// 生死印被动：附加目标内力上限5%额外伤害并回复等量气血
 	var bonus = Math.floor(target.max_mp * 0.05);
 	if (bonus > 0) {
-		target.damage(bonus, me);
+		var dealt = target.damage(bonus, me);
 		me.add_hp(bonus);
-		me.send_combat("<hir>生死印引爆，造成" + bonus + "点额外伤害并回复等量气血！</hir>\n", target);
+		if (dealt > 0) me.send_combat("<hir>生死印轰然引爆，对$n造成" + dealt + "点伤害，$N的伤势随之平复几分！</hir>\n", target);
 	}
 
 	// 生死锁链：对链接目标的伤害50%转化为气血
@@ -259,7 +259,7 @@ this.on_force_over = function (me, target, par, sh) {
 		var heal = Math.floor(sh * 0.5);
 		if (heal > 0) {
 			me.do_recover(heal);
-			me.send_combat("<hio>$N的生死锁链将" + heal + "点伤害化为气血！</hio>\n");
+			me.send_combat("<hio>生死锁链流转，$N的伤势随之平复几分。</hio>\n");
 		}
 		me.add_temp("busiyinfa_siyin", 1);
 		qihuan_guiyuan(me);
@@ -342,13 +342,13 @@ this.pfm = {
 					var deducted = p._nisheng_deducted || 0;
 					if (deducted > 0) {
 						p.add_mp(deducted);
-						p.send_combat("<him>逆转结束，回复" + Math.floor(deducted) + "点内力！</him>\n");
+						p.send_combat("<him>$N经脉复归原位，内力缓缓回涌。</him>\n");
 						if (p.enemy && p.enemy.length > 0) {
 							var opp = p.enemy[0];
 							if (opp && opp.hp > 0 && opp.max_mp > 0) {
 								var drain = Math.min(deducted, opp.mp);
 								opp.add_mp(-drain);
-								p.send_combat("<him>" + opp.name + "被逆转之力反噬，损失" + Math.floor(drain) + "点内力！</him>\n", opp);
+								p.send_combat("<him>逆转之力反噬而去，$n内息一阵紊乱！</him>\n", opp);
 							}
 						}
 					}

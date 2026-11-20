@@ -60,7 +60,7 @@ this.pfm = {
 			if (totalDmg > 0) {
 				var heal = Math.floor(totalDmg * 0.3);
 				me.do_recover(heal);
-				me.notify("<hig>万佛朝宗吸纳" + heal + "点伤害化为气血！</hig>");
+				me.notify("<hig>万佛朝宗，来袭的劲力尽数化为你的气血！</hig>");
 			}
 			me.end_attack(target);
 		},

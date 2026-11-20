@@ -65,6 +65,9 @@ this.query_enable_prop = function (lv) {
 	};
 };
 
+// 拳罡：最多 5+等级/1000 层；持续 1 秒起、每 300 级 +1 秒，最长 10 秒。
+var quangang_max = function (lv) { return 5 + parseInt((lv || 0) / 1000); };
+var quangang_duration = function (lv) { return Math.min(10, 1 + Math.floor((lv || 0) / 300)) * 1000; };
 this.pfm = {
 		zhongmo: {
 		name: "种魔",
@@ -174,30 +177,32 @@ this.pfm = {
 				no_weapon: true,
 				attack_msg: "<hiy>$N" + "催动天魔策拳罡，刚猛威烈的一拳轰向$n的$l！</hiy>",
 			});
-			// 命中后叠加拳罡（原先写在 par.on_attack 里，引擎从不读取该字段；层数又记在不过期的 temp 里）。
-			// 单一可叠加状态：每层 +8% 伤害、+5% 破防，最多 maxStack 层。
+			// 命中后叠加一层拳罡（每层 +8% 伤害、+5% 破防，最多 maxStack 层），每次施展都重新计时；
+			// 时间到掉一层并重新计时，直到掉光。（原先每层持续 等级×10 毫秒，3000 级 30 秒一层，满层后再施展也不续时，看起来像永续。）
 			if (sh > 0 && target.hp > 0 && me.hp > 0) {
-				var maxStack = 5 + parseInt(lv / 1000);
-				if (me.query_status("tianmoce_quangang") < maxStack) {
+				var maxStack = quangang_max(lv), dur = quangang_duration(lv), sid = "tianmoce_quangang";
+				var item = me.status && me.status.find(function (x) { return x.id === sid; });
+				if (item && item.override !== 1) { me.remove_status(sid, true); item = null; }   // 旧版残留的整体状态
+				if (item) { item.duration = dur; item.max_count = maxStack; }
+				if (!item || item.count < maxStack) {
 					me.add_status({
-						id: "tianmoce_quangang",
-						name: "拳罡",
-						desc: "每层伤害+8%，破防+5%",
-						duration: parseInt(lv * 10),
-						downside: false,
-						override: 1,
-						max_count: maxStack,
+						id: sid, name: "拳罡", desc: "每层伤害提高8%，破防提高5%",
+						duration: dur, downside: false, override: 1, max_count: maxStack,
 						prop: { add_sh_per: 8, diff_fy_per: 5 },
 					});
-					var stack = me.query_status("tianmoce_quangang");
-					me.notify("<hio>拳罡叠加至" + stack + "层！伤害+" + (stack * 8) + "%，破防+" + (stack * 5) + "%</hio>");
+				} else {
+					// 满层：不再加层，只重新计时
+					clearTimeout(item.handler);
+					item.handler = me.call_out(me.remove_status, dur, sid);
+					item.start_time = Date.now();
+					me.status_changed(item, "refresh");
 				}
+				me.notify(me.query_status(sid) >= maxStack ? "<hio>你拳上罡气已臻极盛，罡风呼啸不绝。</hio>" : "<hio>你拳上的罡气又凝实了几分。</hio>");
 			}
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
-			var maxStack = 5 + parseInt(lv / 1000);
-			return "刚猛威烈的一拳，命中后可叠加拳罡buff（最多" + maxStack + "层），每层增加8%伤害和5%破防。";
+			return "刚猛威烈的一拳，命中后叠加一层拳罡（最多" + quangang_max(lv) + "层），每层增加8%伤害和5%破防；拳罡持续" + (quangang_duration(lv) / 1000) + "秒，每次施展重新计时，时间到掉一层。";
 		}
 	},
 		butiandao: {

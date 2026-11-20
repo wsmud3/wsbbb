@@ -171,7 +171,7 @@ this.pfm = {
                     start_msg: "<HIY>$N吸收了六道轮回之力，修罗之气灌注全身！</HIY>",
                     finish_msg: "<CYN>$N的修罗之力渐渐消散。</CYN>"
                 }, me);
-                me.send_combat("<HIG>$N从轮回中汲取力量，攻击和命中提升了" + buffVal + "点！</HIG>", target);
+                me.send_combat("<HIG>$N从轮回中汲取力量，刀势愈发凌厉！</HIG>", target);
             }
             me.end_attack(target);
         },

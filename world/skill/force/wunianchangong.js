@@ -110,7 +110,7 @@ this.pfm = {
 					start_msg: "<hir>$N被闭口禅禁制，下一个绝招无法释放！</hir>",
 					finish_msg: "$N的闭口禅禁制解除了。",
 				});
-				me.notify("<hir>闭口禅发动：造成" + forceDmg + "点内力伤害，" + (Math.min(7000 + parseInt(lv * 5), 10000) / 1000) + "秒内封印对方下一个绝招！</hir>");
+				me.notify("<hir>闭口禅！你一声断喝，对方内息翻涌，一时竟使不出绝招！</hir>");
 			}
 		},
 		query_desc: function (me, lv) {

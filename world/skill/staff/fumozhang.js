@@ -60,7 +60,7 @@
 					override: 1,
 					max_count: 5,
 					prop: { gj_per: 80 },
-					start_msg: "<hiy>$N周身金光大盛，罗汉之力灌注全身(" + stacks + "层)！</hiy>",
+					start_msg: "<hiy>$N周身金光大盛，罗汉之力灌注全身！</hiy>",
 					finish_msg: "$N的罗汉伏魔之力消散了。",
 				});
 				me.do_attack({target: target});
