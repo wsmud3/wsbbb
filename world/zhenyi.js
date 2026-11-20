@@ -172,7 +172,50 @@
     }
     // 关卡进度记在玩家 temp 上；已领悟真意的角色视为五关全过。
     function stageKey(key, id) { return "zy_stage_" + token(key, id); }
-    function stageCleared(me, data, id) { return !!me.query_temp(stageKey(data.key, id), 0) || hasAnyIntent(me, data); }
+    // 重走（测试与回味用）：zy_replay_<key> = 起始关卡 n，n 之前的关视为已过，n 及之后须重新解机关、打化身；不影响已领悟的真意。
+    function replayKey(key) { return "zy_replay_" + key; }
+    function replayFrom(me, data) { return parseInt(me.query_temp(replayKey(data.key), 0)) || 0; }
+    function stageCleared(me, data, id) {
+        var rf = replayFrom(me, data);
+        if (rf) return id < rf || !!me.query_temp(stageKey(data.key, id), 0);
+        return !!me.query_temp(stageKey(data.key, id), 0) || hasAnyIntent(me, data);
+    }
+    // 开始 / 放弃重走。from = 1 从第一关重走；from = 最后一关 直达最后一关（如独孤求败处）。
+    function startReplay(me, from) {
+        var data = familyData(me);
+        if (!data || !data.stages) return me.notify("此处没有可重走的试炼。"), false;
+        if (from === "off") {
+            if (!replayFrom(me, data)) return me.notify("你并未在重走剑冢。"), false;
+            me.remove_temp(replayKey(data.key));
+            return me.notify("你收住心神，不再重走【" + data.area + "】。"), true;
+        }
+        from = parseInt(from);
+        if (!findTrial(data, from)) return me.notify("没有这一关。"), false;
+        if (!hasAnyIntent(me, data)) return me.notify("你尚未闯过【" + data.area + "】，无从重走。"), false;
+        if (me.is_fighting && me.is_fighting()) return me.notify("战斗中不能重走。"), false;
+        if (me.query_temp("zy_trial_active", "")) return me.notify("你还有一项试炼尚未结束。"), false;
+        if (!currentAreaMatches(me, data)) return me.notify("你须身在【" + data.area + "】中。"), false;
+        me.set_temp(replayKey(data.key), from);
+        for (var i = 0; i < data.stages.length; i++) {
+            var sid = data.stages[i].id;
+            if (sid < from) continue;
+            me.remove_temp(stageKey(data.key, sid)); me.remove_temp(puzzleKey(data.key, sid)); me.remove_temp("zy_pzhp_" + token(data.key, sid));
+        }
+        var st = findTrial(data, from), room = puzzleRoom(data, from);
+        me.notify("<him>剑意重聚，【" + st.trial + "】之后的关隘再度封闭。</him>");
+        if (room && me.environment && me.environment.path !== room) me.moveto(room, me.name + "身形一晃，没入剑冢深处。", me.name + "走了过来。");
+        return true;
+    }
+    function offerReplay(me) {
+        var data = familyData(me);
+        if (!data || !data.stages || !hasAnyIntent(me, data)) return me.notify("石壁上剑痕纵横，你看了半晌，并无所获。"), false;
+        var last = lastStageId(data), lastSt = findTrial(data, last);
+        var cmds = ["zhenyi replay 1", "从【" + data.stages[0].trial + "】重走五关", "zhenyi replay " + last, "直往【" + lastSt.trial + "】，再会独孤求败"];
+        if (replayFrom(me, data)) cmds.push("zhenyi replay off", "放弃重走");
+        cmds.push({ text: "剑冢五关你已闯过。是否重游剑冢，再试一番？" });
+        me.send_commands.apply(me, cmds);
+        return true;
+    }
     function token(key, id) { return key + "_" + id; }
     function acquiredKey(key, id) { return "zy_" + token(key, id); }
     function levelKey(key, id) { return "zy_level_" + token(key, id); }
@@ -916,6 +959,7 @@
         if (data.stages) {
             me.set_temp(stageKey(key, intent.id), 1);
             if (intent.id === lastStageId(data)) {
+                if (replayFrom(me, data)) { me.remove_temp(replayKey(key)); me.notify("<hig>剑冢重游已毕。</hig>"); }
                 for (var li = 0; li < data.list.length; li++) {
                     var it = data.list[li];
                     if (getLevel(me, key, it.id)) continue;
@@ -1316,7 +1360,7 @@
         modify_damage: modifyDamage, on_kill: onKill, on_combat_end: onCombatEnd, is_allowed_skill: allowedSkill,
         on_use_pfm: onUsePfm, family_of_key: function (key) { return KEY_TO_FAMILY[key]; },
         trial_hp_scale: trialHpScale,
-        puzzle_solved: puzzleSolved, solve_puzzle: solvePuzzle, find_trial: findTrial,
+        puzzle_solved: puzzleSolved, solve_puzzle: solvePuzzle, find_trial: findTrial, start_replay: startReplay, offer_replay: offerReplay,
         stage_cleared: function (me, key, id) { var d = findDataByKey(key); return !!(d && (d.stages ? stageCleared(me, d, id) : getLevel(me, key, id) > 0)); }, puzzle_gate: puzzleGate, puzzle_command: puzzleCommand,
         level_grades: LEVEL_GRADES, gm_bypass: gmBypass, clear_trial_temps: clearTrialTemps,
         keys: { acquired: acquiredKey, level: levelKey, clear: clearKey, daily: dailyKey, puzzle: puzzleKey }

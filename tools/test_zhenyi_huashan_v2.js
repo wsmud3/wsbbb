@@ -195,6 +195,25 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(Z.get_level(vet, "jz", 5) === 1 && vet.temp.zy_active === "jz_5" && [1, 2, 3, 4, 5].every(n => Z.stage_cleared(vet, "jz", n)), "已领悟无剑者原样保留");
 }
 
+// ---------- 7c. 通关后重游剑冢：从第一关重走 / 直达第五关 ----------
+{
+    const me = huashan(5); me.environment = { parent: { id: "jz" }, path: "jz/lijiange" }; me.moveto = function (r) { this.environment = { parent: { id: "jz" }, path: r }; };
+    assert.ok(Z.offer_replay(me) && me.commands.pop().some(x => x === "zhenyi replay 5"), "通关后可在第一关处选择重游");
+    assert.ok(Z.start_replay(me, 5));
+    assert.strictEqual(me.environment.path, "jz/wujianxukong", "直达无剑虚空");
+    assert.ok([1, 2, 3, 4].every(n => Z.stage_cleared(me, "jz", n)) && !Z.stage_cleared(me, "jz", 5), "只重打第五关");
+    assert.strictEqual(Z.get_level(me, "jz", 5), 1, "重游不影响已领悟的真意");
+    me.temp.zy_trial_active = "jz_5"; Z.complete_trial(me, "jz", 5);
+    assert.ok(!me.temp.zy_replay_jz && Z.stage_cleared(me, "jz", 5), "打完第五关自动结束重游");
+    delete me.temp.zy_trial_active; delete me.temp.zy_trial_completed;
+    Z.start_replay(me, 1);
+    assert.ok(!Z.puzzle_solved(me, HS, 1) && Z.puzzle_gate(me, "jz", 1, "north") === false, "从第一关重走：机关与关门重新封闭");
+    Z.start_replay(me, "off");
+    assert.ok(Z.puzzle_gate(me, "jz", 1, "north") && !me.temp.zy_replay_jz, "放弃重走后恢复");
+    const fresh = huashan(1); delete fresh.temp.zy_jz_1; fresh.environment = { parent: { id: "jz" } };
+    assert.strictEqual(Z.start_replay(fresh, 1), false, "未通关者不能重游");
+}
+
 // ---------- 8. 试炼化身 v2 机制 ----------
 {
     let timers = [];

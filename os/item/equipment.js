@@ -213,17 +213,7 @@ EQUIPMENT.prototype.get_desc = function (me) {
             str.push("\n");
         }
     }
-    if (this.words && this.words.length > 0) {
-        var duanzao = WORLD.COMMANDS && WORLD.COMMANDS.duanzao;
-        str.push("<hio>词条属性：</hio>\n");
-        for (var i = 0; i < this.words.length; i++) {
-            var w = this.words[i];
-            var wi = duanzao && duanzao.PROPS ? duanzao.PROPS[w.key] : null;
-            var wname = wi ? wi.name : w.key;
-            str.push("  " + wname + " Lv." + (w.level || 1));
-            str.push("\n");
-        }
-    }
+    // 自制装备的词条等级只在重铸界面里显示，装备说明不再重复列出
     if (this.hole_count) {
         for (var i = 0; i < this.hole_count; i++) {
             str.push("◇");

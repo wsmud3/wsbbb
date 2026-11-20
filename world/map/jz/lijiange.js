@@ -38,6 +38,9 @@ this.add_action("jz_walls", "察看四壁剑痕", function (me) {
     me.send_commands.apply(me, cmds);
 });
 
+// 通关后在第一关处重游剑冢：从第一关重走，或直达无剑虚空再会独孤求败（见 WORLD.ZHENYI.offer_replay）
+this.add_action("jz_replay", "剑冢重游", function (me) { return WORLD.ZHENYI.offer_replay(me); });
+
 this.zy_puzzle = function (me, arg) {
     var data = WORLD.ZHENYI.find_by_key(PZ_KEY);
     if (WORLD.ZHENYI.puzzle_solved(me, data, PZ_ID)) return me.notify("机关早已为你开启。"), true;

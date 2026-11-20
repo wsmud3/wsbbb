@@ -21,6 +21,7 @@ this.enter = function (me, arg) {
     else if (action === "upgrade_confirm") return WORLD.ZHENYI.confirm_upgrade(me, parts[1], parts[2]);
     else if (action === "upgrade_cancel") return me.notify("已取消真意升级。");
     else if (action === "puzzle") return WORLD.ZHENYI.puzzle_command(me, parts.slice(1).join(" "));
+    else if (action === "replay") return WORLD.ZHENYI.start_replay(me, parts[1]);
     // NPC动作会把NPC id作为参数传进来；未知参数与空参数都只打开面板。
     if (!me.is_fighting()) this.send_panel(me);
 };
