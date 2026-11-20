@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "js", name: "君山密录", jd_index: 6,
+    id: "js", name: "君山密录",
     desc: "洞庭湖君山，丐帮总舵地下的隐秘石窟，以「降龙十八掌」十八式命名十八间密室。唯有丐帮弟子踏入武帝之境、身经武道塔百层者，方能入内修炼。",
     first: "js/junshandukou", room_path: "js/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

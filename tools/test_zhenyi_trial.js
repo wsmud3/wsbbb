@@ -56,11 +56,12 @@ const item = WORLD.ZHENYI.add_material(player, "jz", 1, 3);
 assert.strictEqual(item.path, "st/zhenyi_hen#jz_1");
 assert.strictEqual(item.count, 3);
 
+// 扫荡、悟痕、按真意解锁的通用流程用武当校验（华山已改为单真意 + 剑冢五关，见 test_zhenyi_huashan_v2.js）。
 function sweeper(failMaterial) {
     return {
-        id: "sweeper", family: { id: "HUASHAN" }, level: 5, expended: 0,
-        temp: { wd100: 1, zy_jz_1: 1, zy_level_jz_1: 1, zy_clear_jz_1: 1 }, bits: {}, items: [], messages: [],
-        environment: { parent: { id: "jz" } },
+        id: "sweeper", family: { id: "WUDANG" }, level: 5, expended: 0,
+        temp: { wd100: 1, zy_zw_1: 1, zy_level_zw_1: 1, zy_clear_zw_1: 1 }, bits: {}, items: [], messages: [],
+        environment: { parent: { id: "zw" } },
         query_temp(key, def) { return this.temp[key] === undefined ? def : this.temp[key]; },
         set_temp(key, value) { this.temp[key] = value; },
         add_temp(key, value) { this.temp[key] = (this.temp[key] || 0) + value; return this.temp[key]; },
@@ -92,17 +93,17 @@ function sweeper(failMaterial) {
 const failedSweep = sweeper(true);
 assert.strictEqual(WORLD.ZHENYI.sweep(failedSweep, 1, 1), false, "悟痕发放失败时扫荡必须整体失败");
 assert.strictEqual(failedSweep.expended, 0, "奖励失败不得消耗精力");
-assert.strictEqual(failedSweep.query_temp("zy_daily_jz_1", 0), 0, "奖励失败不得消耗今日完成次数");
+assert.strictEqual(failedSweep.query_temp("zy_daily_zw_1", 0), 0, "奖励失败不得消耗今日完成次数");
 
 const successfulSweep = sweeper(false);
 assert.strictEqual(WORLD.ZHENYI.sweep(successfulSweep, 1, 1), true, "奖励完整加入背包后扫荡应成功");
 assert.strictEqual(successfulSweep.expended, 20, "成功扫荡才消耗精力");
-assert.strictEqual(successfulSweep.query_temp("zy_daily_jz_1", 0), 1, "成功扫荡才增加今日完成次数");
-assert.ok(successfulSweep.find_obj_bypath("st/zhenyi_hen#jz_1"), "成功扫荡的悟痕必须在背包中");
+assert.strictEqual(successfulSweep.query_temp("zy_daily_zw_1", 0), 1, "成功扫荡才增加今日完成次数");
+assert.ok(successfulSweep.find_obj_bypath("st/zhenyi_hen#zw_1"), "成功扫荡的悟痕必须在背包中");
 
 // 化身死亡回调即使先清掉 active，也必须凭一次性成功标记完成解锁和奖励。
 const completed = {
-    id: "trial-player", family: { id: "HUASHAN" }, temp: { zy_trial_active: "jz_1", zy_trial_npc_dead: "jz_1" },
+    id: "trial-player", family: { id: "WUDANG" }, temp: { zy_trial_active: "zw_1", zy_trial_npc_dead: "zw_1" },
     items: [], messages: [],
     query_temp(key, def) { return this.temp[key] === undefined ? def : this.temp[key]; },
     set_temp(key, value) { this.temp[key] = value; },
@@ -121,13 +122,13 @@ const completed = {
         return old || obj;
     }
 };
-assert.strictEqual(WORLD.ZHENYI.complete_trial(completed, "jz", 1), true, "化身死亡标记必须触发试炼结算");
-assert.strictEqual(completed.temp.zy_jz_1, 1, "击杀化身后必须解锁真意");
-assert.strictEqual(completed.temp.zy_trial_completed, "jz_1", "完成试炼后必须保留待确认离场标记");
-assert.strictEqual(completed.temp.zy_daily_jz_1, 1, "亲自试炼只在成功完成时增加今日次数");
-WORLD.ZHENYI.complete_trial(completed, "jz", 1);
-assert.strictEqual(completed.temp.zy_daily_jz_1, 1, "重复死亡回调不得重复增加完成次数");
-assert.strictEqual(completed.find_obj_bypath("st/zhenyi_hen#jz_1"), undefined, "手动试炼不应发放悟痕掉落");
+assert.strictEqual(WORLD.ZHENYI.complete_trial(completed, "zw", 1), true, "化身死亡标记必须触发试炼结算");
+assert.strictEqual(completed.temp.zy_zw_1, 1, "击杀化身后必须解锁真意");
+assert.strictEqual(completed.temp.zy_trial_completed, "zw_1", "完成试炼后必须保留待确认离场标记");
+assert.strictEqual(completed.temp.zy_daily_zw_1, 1, "亲自试炼只在成功完成时增加今日次数");
+WORLD.ZHENYI.complete_trial(completed, "zw", 1);
+assert.strictEqual(completed.temp.zy_daily_zw_1, 1, "重复死亡回调不得重复增加完成次数");
+assert.strictEqual(completed.find_obj_bypath("st/zhenyi_hen#zw_1"), undefined, "手动试炼不应发放悟痕掉落");
 assert.strictEqual(WORLD.ZHENYI.finish_trial_action(completed), true, "完成副本应打开主消息页确认");
 assert.deepStrictEqual(completed.commands, ["zhenyi trial_confirm", "确认完成并离开", "zhenyi trial_cancel", "暂不离开"]);
 assert.strictEqual(WORLD.ZHENYI.confirm_trial(completed), true, "确认完成副本应离开试炼");

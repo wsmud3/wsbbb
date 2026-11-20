@@ -259,7 +259,7 @@ USER.prototype.query_age = function () {
 }
 // ===== 山外山：宗师境界（level>=3）自动解锁禁地 sws =====
 // check_unlock_sect_jds 在登录、重连和升级时都会被调用，这里包一层实现自动解锁。
-var SWS_JD_INDEX = 10;
+var SWS_JD_INDEX = 3;   // 八派禁地合并为云湺山（第 2 位）后，山外山由第 10 位前移到第 3 位
 function sws_check_unlock(me) {
     if (!me || !me.is_player) return;
     if (me.level < 3) return;
@@ -271,6 +271,8 @@ function sws_check_unlock(me) {
 if (!USER._sws_orig_check_unlock) {
     USER._sws_orig_check_unlock = USER.prototype.check_unlock_sect_jds;
     USER.prototype.check_unlock_sect_jds = function () {
+        // 先迁移禁地列表位布局，再按新位置自动解锁，避免旧版第 3 位（武当禁地）被误当成山外山。
+        try { if (WORLD.ZHENYI && WORLD.ZHENYI.migrate_jd_layout) WORLD.ZHENYI.migrate_jd_layout(this); } catch (e) {}
         try { sws_check_unlock(this); } catch (e) {}
         return USER._sws_orig_check_unlock.apply(this, arguments);
     };

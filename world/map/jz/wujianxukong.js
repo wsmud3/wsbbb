@@ -6,19 +6,19 @@ this.no_fight = true;
 
 // 机关【无剑胜有】：问心抉择。
 //   谦卑：化身气血 100%（若在悟剑石参悟后再谦卑，心境更稳，化身气血 90%）
-//   骄傲：化身气血 120%，但首次通过额外获得无剑悟痕×5
+//   骄傲：化身气血 120%
 var PZ_KEY = "jz", PZ_ID = 5;
 
 function choose(me, humble) {
     var data = WORLD.ZHENYI.find_by_key(PZ_KEY);
-    if (WORLD.ZHENYI.get_level(me, PZ_KEY, PZ_ID)) return me.notify("人影已不在此处等你。");
+    if (WORLD.ZHENYI.stage_cleared(me, PZ_KEY, PZ_ID)) return me.notify("人影已不在此处等你。");
     if (humble) {
         var calm = !!me.query_temp("jz_meditate_done");
         me.notify("\n<hig>独孤求败微微点头：「知耻近乎勇。" + (calm ? "你在悟剑石前静坐良久，心境比来时稳了许多。" : "你已悟得剑道第一义。") + "」</hig>");
         WORLD.ZHENYI.solve_puzzle(me, PZ_KEY, PZ_ID, { hp: calm ? 90 : 100 });
     } else {
-        me.notify("\n<hig>独孤求败大笑：「无谓的勇气。看来你还没明白——但这般锐气，倒也有趣。你若真能胜过我的剑意，我另有所赠。」</hig>");
-        WORLD.ZHENYI.solve_puzzle(me, PZ_KEY, PZ_ID, { hp: 120, bonus: 5 });
+        me.notify("\n<hig>独孤求败大笑：「无谓的勇气。看来你还没明白——但这般锐气，倒也有趣。来吧。」</hig>");
+        WORLD.ZHENYI.solve_puzzle(me, PZ_KEY, PZ_ID, { hp: 120 });
     }
 }
 this.add_action("admit_defeat", "坦然道：我不如你", function (me) { choose(me, true); });

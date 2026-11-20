@@ -4,4 +4,3 @@ this.desc = "虚空骤然炸裂。你发现自己站在一座悬浮于宇宙星�
 this.exits = { "south": "jz/wujianxukong", "north": "jz/chuanchengdian" };
 
 this.no_fight = true;
-this.set_npc("pub/zhenyi_shiyantai#jz_5");

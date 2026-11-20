@@ -50,13 +50,13 @@ const constSrc = read('os/const.js');
 const baseSrc = read('os/base.js');
 
 // 2. 区域注册与入口
-check(/sws:\s*10/.test(jhSrc), 'jh.js 禁地表注册 sws:10');
-check(/jd_index:\s*10/.test(areaSrc), 'area 定义 jd_index:10');
+check(/sws:\s*3\b/.test(jhSrc), 'jh.js 禁地表注册 sws:3');
+check(/jd_index:\s*3\b/.test(areaSrc), 'area 定义 jd_index:3');
 check(/id:\s*"sws"/.test(areaSrc), 'area 定义 id:sws');
 check(/is_copy:\s*true/.test(areaSrc) && /not_fb:\s*true/.test(areaSrc), 'area 为独立副本（is_copy + not_fb）');
 check(/宗师/.test(areaSrc), '入口校验包含宗师境界提示');
 check(/_sws_orig_check_unlock/.test(userExtSrc), 'user.js 挂载宗师自动解锁补丁');
-check(/SWS_JD_INDEX\s*=\s*10/.test(userExtSrc), '解锁补丁使用禁地位 10');
+check(/SWS_JD_INDEX\s*=\s*3\b/.test(userExtSrc), '解锁补丁使用禁地位 3');
 check(/this\.temp\.sws_base\s*=\s*null/.test(userSrc) && /swsTransient/.test(userSrc), '登录时清理旧版山外山临时状态');
 check(/swsSaveRepair/.test(userSrc) && /\[object Object\]/.test(userSrc), '登录时兼容旧版非法对象存档');
 check(/Object\.prototype\.hasOwnProperty\.call\(v, "v"\)/.test(itemSrc) && /JSON\.stringify\(v\)/.test(itemSrc), '临时对象使用安全 JSON 序列化');

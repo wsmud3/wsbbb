@@ -1,4 +1,4 @@
-/* 静态校验真意配置：每门五项、PFM 存在、归属正确且绝不包含 grade 6。 */
+/* 静态校验真意配置：每门五项（单真意门派一项 + 五道关卡）、PFM 存在、归属正确且绝不包含 grade 6。 */
 const fs = require("fs");
 const path = require("path");
 
@@ -58,7 +58,12 @@ walk(root);
 const errors = [];
 const data = WORLD.ZHENYI.DATA;
 for (const [family, config] of Object.entries(data)) {
-    if (config.list.length !== 5) errors.push(`${family}: 应有 5 项真意，实际 ${config.list.length}`);
+    if (config.stages) {
+        // 单真意门派（华山）：一道真意，试炼由五道关卡组成，关卡与禁地机关一一对应
+        if (config.list.length !== 1) errors.push(`${family}: 单真意门派应只有 1 项真意，实际 ${config.list.length}`);
+        if (config.stages.length !== 5) errors.push(`${family}: 应有 5 道关卡，实际 ${config.stages.length}`);
+        for (const st of config.stages) if (!config.puzzles || !config.puzzles[st.id]) errors.push(`${family}: 关卡 ${st.id} 没有对应的禁地机关`);
+    } else if (config.list.length !== 5) errors.push(`${family}: 应有 5 项真意，实际 ${config.list.length}`);
     for (const intent of config.list) {
         for (const binding of intent.pfms) {
             const [skillId, pfmId] = binding.split("/");

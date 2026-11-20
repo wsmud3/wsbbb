@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "xl", name: "修罗暗殿", jd_index: 8,
+    id: "xl", name: "修罗暗殿",
     desc: "杀手楼地下深处的秘境——修罗暗殿。历代杀手之王葬身之处。殿中只有绝对的黑暗和无声的杀意。唯有杀手楼弟子踏入武帝之境、身经武道塔百层者，方能入此暗殿。",
     first: "xl/andianrukou", room_path: "xl/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

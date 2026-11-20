@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "yc", name: "九天瑶池", jd_index: 9,
+    id: "yc", name: "九天瑶池",
     desc: "素女道的圣地——九天瑶池，传说为九天玄女在人间的行宫。池水能洗筋伐髓、重塑根基。唯有素女道弟子踏入武帝之境、身经武道塔百层者，方能入内脱胎换骨。",
     first: "yc/yaochishanmen", room_path: "yc/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

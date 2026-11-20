@@ -15,7 +15,7 @@ var CHOICES = {
 
 function sacrifice(me, pct) {
     var data = WORLD.ZHENYI.find_by_key(PZ_KEY);
-    if (WORLD.ZHENYI.get_level(me, PZ_KEY, PZ_ID)) return me.notify("你早已参透重剑之意，石门对你敞开。");
+    if (WORLD.ZHENYI.stage_cleared(me, PZ_KEY, PZ_ID)) return me.notify("你早已参透重剑之意，石门对你敞开。");
     if (me.hp <= Math.floor(me.max_hp * pct / 100)) return me.notify("你的气血不足以献祭这么多。");
     var c = CHOICES[pct];
     me.damage2(Math.floor(me.max_hp * pct / 100));

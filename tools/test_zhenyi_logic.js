@@ -3,10 +3,11 @@ global.WORLD = { COMMANDS: {} };
 require("../world/zhenyi.js");
 
 function player() {
-    const temp = { wd100: 1, zy_jz_1: 1, zy_active_jz: 1, zy_mat_jz_1: 9, zy_zw_1: 1, zy_mat_zw_1: 9 };
+    // 通用的五道真意 + 十重 + 悟痕流程用武当校验（华山已改为单真意，见 test_zhenyi_huashan_v2.js）。
+    const temp = { wd100: 1, zy_zw_1: 1, zy_active_zw: 1, zy_mat_zw_1: 9, zy_jz_1: 1, zy_mat_jz_1: 9 };
     const bits = {};
     return {
-        id: "tester", family: { id: "HUASHAN" }, level: 5, temp, bits, items: [], commands: [], messages: [],
+        id: "tester", family: { id: "WUDANG" }, level: 5, temp, bits, items: [], commands: [], messages: [],
         query_temp(key, def) { return this.temp[key] === undefined ? def : this.temp[key]; },
         set_temp(key, value) { this.temp[key] = value; return value; },
         add_temp(key, value) { this.temp[key] = (this.temp[key] || 0) + value; return this.temp[key]; },
@@ -34,25 +35,38 @@ function player() {
 }
 
 const me = player();
+me.set_bool("fb2", 3, true);   // 旧版武当独立禁地位
+me.set_bool("fb2", 10, true);  // 旧版山外山位（已前移到第 3 位，由宗师自动解锁按新位重新开启）
 assert.strictEqual(WORLD.ZHENYI.check_unlock(me, true), true, "旧角色应补发禁地权限");
-assert.strictEqual(me.query_bool("fb2", 2), true, "应解锁华山禁地位");
-assert.strictEqual(me.query_temp("zy_level_jz_1", 0), 1, "旧真意应迁移为一重");
-assert.strictEqual(me.query_temp("zy_active", ""), "jz_1", "旧位掩码应迁移为唯一启用项");
-assert.strictEqual(me.query_temp("zy_zw_1", 0), 0, "更新前异门真意应被清理");
-assert.strictEqual(me.query_temp("zy_mat_zw_1", 0), 0, "更新前异门悟痕应被清理");
-assert.strictEqual(me.query_temp("zy_mat_jz_1", 0), 0, "旧版计数悟痕应完成迁移");
-assert.strictEqual(me.find_obj_bypath("st/zhenyi_hen#jz_1").count, 9, "悟痕必须迁移为背包道具");
+assert.strictEqual(me.query_bool("fb2", WORLD.ZHENYI.HUB_JD), true, "应解锁云湺山（八派禁地总入口）");
+assert.strictEqual(me.query_bool("fb2", 3), false, "旧版各派独立禁地位应清除");
+assert.strictEqual(me.query_bool("fb2", 10), false, "旧版山外山位应清除");
+assert.strictEqual(me.query_temp("jd_layout", 0), 2, "禁地位布局只迁移一次");
+// 云湺山（八派禁地总入口）：有门派且达到条件即可进入；从岔路进他派禁地被拒
+assert.strictEqual(WORLD.ZHENYI.can_enter_hub(me, false), true, "本门弟子达到条件可进云湺山");
+{ const loner = player(); loner.family = { id: "NONE" };
+  assert.strictEqual(WORLD.ZHENYI.can_enter_hub(loner), false, "无门派不能进云湺山");
+  assert.ok(loner.messages.pop().includes("云湺山")); }
+global.FAMILIES = Object.assign(global.FAMILIES || {}, { HUASHAN: { name: "华山派" } });
+assert.strictEqual(WORLD.ZHENYI.enter_from_hub(me, "jz"), false, "不能从云湺山踏入他派禁地");
+assert.ok(me.messages.pop().includes("找不到入口"));
+assert.strictEqual(me.query_temp("zy_level_zw_1", 0), 1, "旧真意应迁移为一重");
+assert.strictEqual(me.query_temp("zy_active", ""), "zw_1", "旧位掩码应迁移为唯一启用项");
+assert.strictEqual(me.query_temp("zy_jz_1", 0), 0, "更新前异门真意应被清理");
+assert.strictEqual(me.query_temp("zy_mat_jz_1", 0), 0, "更新前异门悟痕应被清理");
+assert.strictEqual(me.query_temp("zy_mat_zw_1", 0), 0, "旧版计数悟痕应完成迁移");
+assert.strictEqual(me.find_obj_bypath("st/zhenyi_hen#zw_1").count, 9, "悟痕必须迁移为背包道具");
 assert.strictEqual(WORLD.ZHENYI.get_active(me).intent.id, 1, "满足条件时真意应生效");
 assert.deepStrictEqual([0, 1, 2, 4, 6, 8, 10].map(WORLD.ZHENYI.grade_for_level), [0, 1, 2, 3, 4, 5, 6], "真意重数应覆盖游戏 grade 0～6");
 
 me.add_obj("st/xuanjing", 100);
 const messageCountBeforeUpgrade = me.messages.length;
 assert.strictEqual(WORLD.ZHENYI.request_upgrade(me, 1), true, "点击升级应先生成确认步骤");
-assert.strictEqual(me.query_temp("zy_level_jz_1", 0), 1, "确认前不得直接升级");
+assert.strictEqual(me.query_temp("zy_level_zw_1", 0), 1, "确认前不得直接升级");
 assert.ok(me.commands.some(items => items[0] === "zhenyi upgrade_confirm 1 1"), "主消息页应出现确认升级命令");
 assert.ok(!me.messages.slice(messageCountBeforeUpgrade).some(message => /grade|品质/.test(message)), "玩家可见的升级确认不得暴露内部 grade 或品质说明");
 assert.strictEqual(WORLD.ZHENYI.confirm_upgrade(me, 1, 1), true, "确认后才执行升级");
-assert.strictEqual(me.query_temp("zy_level_jz_1", 0), 2, "真意应升到第二重");
+assert.strictEqual(me.query_temp("zy_level_zw_1", 0), 2, "真意应升到第二重");
 assert.strictEqual(WORLD.ZHENYI.serialize(me).list[0].grade, 2, "第二重应进入青色 grade 2");
 assert.ok(!/[约～]/.test(WORLD.ZHENYI.serialize(me).list[0].desc), "面板效果不得使用约数或范围措辞");
 
@@ -68,8 +82,8 @@ for (const data of Object.values(WORLD.ZHENYI.DATA)) {
     }
 }
 
-const firstTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.HUASHAN.list[0]);
-const finalTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.HUASHAN.list[4]);
+const firstTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.WUDANG.list[0]);
+const finalTrial = WORLD.ZHENYI.trial_stats(WORLD.ZHENYI.DATA.WUDANG.list[4]);
 assert.deepStrictEqual([firstTrial.max_hp, firstTrial.gj, firstTrial.skill], [12000000, 140000, 2500], "第一档试炼应沿用旧 NPC 起步数值");
 assert.deepStrictEqual([finalTrial.max_hp, finalTrial.gj, finalTrial.skill], [30000000, 250000, 3000], "第五档试炼应沿用旧 NPC 后段数值");
 assert.strictEqual(WORLD.ZHENYI.allow_public_npc("jz/houshan", "jz/jianyi_yeling"), false, "禁地旧 NPC 不应继续生成");
@@ -201,7 +215,7 @@ assert.strictEqual(WORLD.ZHENYI.ensure_trial_state(reconnected, true), true, "�
 me.level = 4;
 assert.strictEqual(WORLD.ZHENYI.get_active(me), null, "未到武帝时真意不得生效");
 assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 6, family: me.family }, me), false, "grade 6 必须被运行时拦截");
-assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 5, family: { id: "HUASHAN" } }, me), false, "非同一门派对象不得被强化");
+assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 5, family: { id: "WUDANG" } }, me), false, "非同一门派对象不得被强化");
 assert.strictEqual(WORLD.ZHENYI.is_allowed_skill({ grade: 5, family: me.family }, me), true, "本门非红技能可受强化");
 
 console.log("真意逻辑通过：整数效果、百分比单位、旧角色迁移、残留试炼自愈、固定 NPC 档位、升级确认与技能边界均正常。");

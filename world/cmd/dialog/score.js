@@ -96,8 +96,8 @@ this.enter = function (me, arg) {
     if (target.is_player && target.family) {
         // 旧角色第一次打开属性页时也立即补发，不依赖重新升级或再打一次百层。
         if (WORLD.ZHENYI) WORLD.ZHENYI.check_unlock(target, true);
-        var jd = FAMILY_TO_JDS[target.family.id];
-        if (jd) has_jd = target.query_bool("fb2", jd);
+        // 八派禁地已合为一处「门派禁地」，本门有真意即看总入口的解锁位。
+        if (WORLD.ZHENYI && WORLD.ZHENYI.family_data(target)) has_jd = target.query_bool("fb2", WORLD.ZHENYI.HUB_JD);
     }
     str.push(',has_jd:');
     str.push(has_jd);

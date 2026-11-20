@@ -4,4 +4,3 @@ this.desc = "软剑台比利剑台更大，地面铺着柔软的青苔。软剑�
 this.exits = { "south": "jz/ruanjiange", "north": "jz/jianyuanpan" };
 
 this.no_fight = true;
-this.set_npc("pub/zhenyi_shiyantai#jz_2");

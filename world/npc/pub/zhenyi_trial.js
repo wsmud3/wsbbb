@@ -5,11 +5,11 @@ this.set({
     no_refresh: true, no_fight: false, is_zhenyi_trial: true, pfm_rate: 0.25
 });
 
-// v2 门派（目前为华山）的考题参数。每种 mode 考校对应真意的用法：
-//   precision 利剑：剑罡护体，须 5 秒内连中 3 次破罡（对应「封招」）
-//   counter   软剑：剑势不断叠加，须绝招后 4 秒内普攻命中卸势（对应「缠兵」）
-//   burst     重剑：化身持续回元，须以绝招命中打断（对应「内伤」）；并有蓄力重击（按躲闪判定）
-//   endure    木剑：周期剑意冲击，有护体状态时大幅减免（对应「护体」）
+// v2 门派（目前为华山，剑冢五关）的考题参数：
+//   precision 利剑：剑罡护体，须 5 秒内连中 3 次破罡
+//   counter   软剑：剑势不断叠加，须绝招后 4 秒内普攻命中卸势
+//   burst     重剑：化身持续回元，须以绝招命中打断；并有蓄力重击（按躲闪判定）
+//   endure    木剑：周期剑意冲击，有紫气东来护体时大幅减免
 //   master    无剑：剑罡 + 重击 + 低血时万剑归宗（综合考校）
 var V2 = {
     GUARD_EVERY: 15000, GUARD_REDUCE: 0.8, GUARD_HITS: 3, GUARD_WINDOW: 5000,
@@ -53,7 +53,9 @@ this.init_trial = function (player, data, intent) {
     var rule = intent.mode === "endure" ? "坚持45秒即可通过。" : ("须在" + Math.floor(stats.timeout / 1000) + "秒内击败化身。");
     if (intent.mode === "resource") rule += "期间每5秒损失最大内力的2%。";
     if (this.trial_v2) rule += this.v2_rule_text(intent.mode);
-    this.desc = "这是【" + intent.trial + "】凝成的武意化身。" + rule + "此试考校“" + intent.mech + "”之理：" + WORLD.ZHENYI.describe(data, intent, level);
+    this.desc = "这是【" + intent.trial + "】凝成的武意化身。" + rule +
+        // 关卡（如剑冢五关）不对应单独的真意效果，不附真意说明。
+        (intent.is_stage ? "" : "此试考校“" + intent.mech + "”之理：" + WORLD.ZHENYI.describe(data, intent, level));
 
     var skillLv = stats.skill;
     var family = this.trial_v2 && typeof FAMILIES !== "undefined" && WORLD.ZHENYI.family_of_key && FAMILIES[WORLD.ZHENYI.family_of_key(data.key)];
@@ -130,7 +132,7 @@ this.v2_mode_text = function (mode, strike) {
     if (mode === "precision") return "化身会周期凝聚剑罡（受到伤害降低" + pct(V2.GUARD_REDUCE) + "），须在" + sec(V2.GUARD_WINDOW) + "内连续命中" + V2.GUARD_HITS + "次方能破罡。";
     if (mode === "counter") return "化身剑势每5秒增强一层（每层伤害+" + pct(V2.MOMENTUM_STEP) + "），须在绝招命中后" + sec(V2.UNBIND_WINDOW) + "内以普通攻击命中，方能卸去全部剑势。";
     if (mode === "burst") return "化身每5秒回复" + pct(V2.REGEN_PCT) + "气血，绝招命中可震伤其脏腑、" + sec(V2.REGEN_BLOCK) + "内无法回元；它还会蓄力施展重击（最大气血" + strike + "），蓄力时以绝招命中可将其打断，身法足够灵动也能躲开。";
-    if (mode === "endure") return "化身每" + sec(V2.IMPACT_EVERY) + "释放剑意冲击（最大气血" + pct(V2.IMPACT_PCT) + "），若身有紫气东来或剑意护体，冲击减为三分之一。";
+    if (mode === "endure") return "化身每" + sec(V2.IMPACT_EVERY) + "释放剑意冲击（最大气血" + pct(V2.IMPACT_PCT) + "），若身有紫气东来护体，冲击减为三分之一。";
     if (mode === "master") return "化身兼具剑罡与蓄力重击（最大气血" + strike + "）；气血低于30%时将施展万剑归宗（最大气血" + pct(V2.FINAL_PCT) + "）；蓄力时以绝招命中可将其打断，也可躲闪。";
     return "";
 };
@@ -220,7 +222,7 @@ this.v2_tick = function (me) {
     }
     if (mode === "endure" && now >= st.nextImpact) {
         st.nextImpact = now + V2.IMPACT_EVERY;
-        var guarded = (me.query_status && me.query_status("force")) || me._zy_armor;
+        var guarded = me.query_status && me.query_status("force");
         var dmg = Math.floor(me.max_hp * V2.IMPACT_PCT * (guarded ? V2.IMPACT_GUARDED : 1));
         me.damage2(dmg, this);
         me.notify(guarded ? "<hiy>剑意冲击撞上你的护体真气，只受到" + dmg + "点伤害。</hiy>" : "<hir>剑意冲击贯体而过，你受到" + dmg + "点伤害！</hir>");

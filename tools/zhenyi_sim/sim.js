@@ -112,6 +112,8 @@ function stat(me) { return { hp: me.max_hp, mp: me.max_mp, gj: me.gj, fy: me.fy,
 
 function runTrial(id, idx) {
     const me = makePlayer(idx);
+    // 剑冢五关须依次闯过：模拟第 id 关时视为前面各关已过。
+    for (let k = 1; k < id; k++) me.set_temp("zy_stage_jz_" + k, 1);
     WORLD.ZHENYI.solve_puzzle(me, "jz", id);
     const start = ROOM.Get("jz/wuyitai_trial");
     const pub = start.query_copy("zhenyi_public:jz") || start.create_copy("zhenyi_public:jz");
@@ -154,12 +156,12 @@ function runTrial(id, idx) {
     runUntil(() => { tick(); return doneAt || !me.query_temp("zy_trial_active", "") || me.hp <= 0; }, 200000);
     if (VERBOSE) console.log("Q", Q.length, "active", me.query_temp("zy_trial_active", ""), "hp", me.hp, "fight", me.fight_type, npc.fight_type, "env", me.environment === npc.environment);
     if (VERBOSE) console.log(me.log.map(l => l.replace(/<[^>]+>/g, "")).join("\n").slice(0, 3000));
-    const res = { id, win: !!me.query_temp("zy_trial_completed", "") || WORLD.ZHENYI.get_level(me, "jz", id) > 0 || me.log.some(l => /试炼完成|领悟|熬过/.test(l)),
+    const res = { id, win: !!me.query_temp("zy_trial_completed", "") || WORLD.ZHENYI.stage_cleared(me, "jz", id) || me.log.some(l => /试炼完成|领悟|熬过/.test(l)),
         secs: Math.round(((doneAt || T) - t0) / 1000), takenPct: Math.round(100 * taken / me.max_hp),
         npcBusy: Math.round(100 * busyMs / Math.max(1, T - t0)), meBusy: Math.round(100 * meBusyMs / Math.max(1, T - t0)), npcLeft: Math.round(100 * Math.max(0, npc.hp) / npc.max_hp), minHp: Math.round(100 * Math.max(0, minHp) / me.max_hp),
         fail: (me.log.find(l => /试炼失败/.test(l)) || "").replace(/<[^>]+>/g, ""),
         events: {} };
-    for (const l of me.log) for (const k of ["击碎了化身的剑罡", "打断了它的蓄力", "脱手", "卸去", "吐纳回元", "当头压下", "堪堪避过", "剑意冲击", "护体剑意", "无剑之境", "封住", "内伤"]) if (l.includes(k)) res.events[k] = (res.events[k] || 0) + 1;
+    for (const l of me.log) for (const k of ["击碎了化身的剑罡", "打断了它的蓄力", "脱手", "卸去", "吐纳回元", "当头压下", "堪堪避过", "剑意冲击", "封住"]) if (l.includes(k)) res.events[k] = (res.events[k] || 0) + 1;
     res.npc = npcInfo; res.me = stat(me); res.src = src;
     if (process.env.NPCINFO) console.log("   化身", JSON.stringify(npcInfo).slice(0, 200));
     if (process.env.PFMLOG) console.log("   [" + id + "] " + (res.win ? "胜" : "负") + " " + res.secs + "s 化身受制" + res.npcBusy + "% :: " + Object.entries(pfmLog).sort((a, b) => b[1].dmg - a[1].dmg).map(([k, v]) => k + " x" + v.n + " 伤" + Math.round(v.dmg / 1e4) + "万" + (v.busyAfter ? " 后忙" + v.busyAfter : "")).join(" | "));

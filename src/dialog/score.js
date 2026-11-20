@@ -159,7 +159,7 @@ export default {
             html.push("<span class='zy-name'>", z.name, "</span>");
             html.push("<span class='skill-level'>");
             if (z.active) html.push("<hig>已启用</hig> · ");
-            html.push(z.acquired ? ("第" + z.level + "重") : "未领悟");
+            html.push(z.acquired ? (z.no_level ? "已领悟" : ("第" + z.level + "重")) : "未领悟");
             html.push("</span>");
             html.push("</div>");
         }
@@ -183,7 +183,7 @@ export default {
         var html = ["<div class='zy-detail'>"];
         html.push("<div class='zy-detail-title'><hio>【", z.mech, "】</hio>", z.trial ? ("　" + z.trial) : "", "</div>");
         html.push("<div class='zy-desc'>", z.desc, "</div>");
-        if (z.acquired && z.level >= 10) html.push("<div class='zy-meta'><hig>已臻圆满</hig></div>");
+        if (z.acquired && z.level >= 10 && !z.no_level) html.push("<div class='zy-meta'><hig>已臻圆满</hig></div>");
         else if (!z.acquired) {
             html.push("<div class='zy-meta'>完成对应禁地试炼后领悟</div>");
         }

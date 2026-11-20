@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "dmd", name: "达摩洞", jd_index: 4,
+    id: "dmd", name: "达摩洞",
     desc: "少室山达摩洞深处，达摩祖师面壁九年之处。洞壁上留有身影入石，藏有「禅武九重」考验。唯有少林弟子踏入武帝之境、身经武道塔百层者，方能入洞参禅。",
     first: "dmd/shaoshishandao", room_path: "dmd/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

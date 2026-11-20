@@ -4,4 +4,3 @@ this.desc = "一座圆形石台悬于深渊之上，四周只有无尽的黑暗�
 this.exits = { "south": "jz/lijiange", "north": "jz/jianhen" };
 
 this.no_fight = true;
-this.set_npc("pub/zhenyi_shiyantai#jz_1");

@@ -10,7 +10,8 @@ global.WEAPON_TYPE = { NONE: 0 };
 global.FAMILIES = { HUASHAN: { id: "HUASHAN", name: "华山派", boss_skills2: [["sword", 5000], ["literate", 5000], ["dugujiujian3", 5000, ["sword", "parry"]]] } };
 require("../world/zhenyi.js");
 const Z = WORLD.ZHENYI, HS = Z.DATA.HUASHAN;
-const intent = id => HS.list[id - 1];
+const intent = id => HS.list.find(x => x.id === id);
+const stage = id => Z.find_trial(HS, id);
 
 let clock = 1000000;
 Date.now = () => clock;
@@ -63,80 +64,6 @@ for (const it of HS.list) {
 // 旧门派公式保持不变（武当借力十重 49%）
 assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage, 49, "非 v2 门派数值不得变化");
 
-// ---------- 2. 利剑·争锋：封招 ----------
-{
-    const me = huashan(1), foe = actor({ is_player: false });
-    const v = Z.values_for(HS, intent(1), 1);
-    Z.after_attack(me, foe, {}, 100, ownSkill(me)); clock += 1000;
-    Z.after_attack(me, foe, {}, 100, ownSkill(me));
-    assert.ok(!foe.temp.sealed_pfm, "两次命中不应封招");
-    clock += 1000; Z.after_attack(me, foe, {}, 100, ownSkill(me));
-    assert.strictEqual(foe.temp.sealed_pfm, 1, "5 秒内三次命中应封招");
-    assert.ok(me.temp.zy_seal_cd, "封招后进入冷却");
-    delete foe.temp.sealed_pfm;
-    for (let i = 0; i < 3; i++) { clock += 500; Z.after_attack(me, foe, {}, 100, ownSkill(me)); }
-    assert.ok(!foe.temp.sealed_pfm, "冷却期间不再封招");
-    const slow = actor({ is_player: false }), me2 = huashan(1);
-    for (let i = 0; i < 3; i++) { clock += 3000; Z.after_attack(me2, slow, {}, 100, ownSkill(me2)); }
-    assert.ok(!slow.temp.sealed_pfm, "间隔超过窗口不应封招");
-    const other = huashan(1); other.family = { id: "HUASHAN" };
-    const foreign = { grade: 4, family: { id: "OTHER" } };
-    const f3 = actor({ is_player: false });
-    for (let i = 0; i < 3; i++) Z.after_attack(other, f3, {}, 100, foreign);
-    assert.ok(!f3.temp.sealed_pfm, "外门武学不触发");
-    assert.ok(v.seal >= 2 && v.cooldown === 20);
-}
-
-// ---------- 3. 软剑·缠丝：缠兵 ----------
-{
-    const me = huashan(2), foe = actor({ is_player: false });
-    const v = Z.values_for(HS, intent(2), 1), pfm = { id: "kuangfengkuaijian/duoming" }, sk = ownSkill(me);
-    assert.ok(Z.begin_pfm(me, foe, pfm, sk));
-    me._zy_casting = pfm.id; Z.after_attack(me, foe, {}, 100, sk); delete me._zy_casting;
-    Z.end_pfm(me, foe, pfm, sk, true);
-    assert.ok(me.temp.zy_bind_ready, "剑法绝招成功后进入缠兵窗口");
-    assert.ok(!foe._zy_bind, "绝招自身命中不触发缠兵");
-    Z.after_attack(me, foe, {}, 100, sk);
-    assert.ok(foe._zy_bind && foe._zy_bind.by === me, "窗口内普攻命中应施加缠兵");
-    const dealt = Z.modify_damage(me, foe, 1000);
-    assert.strictEqual(Math.round(dealt), Math.round(1000 * (1 - v.weaken / 100)), "缠兵目标对你的伤害按 weaken 降低");
-    assert.strictEqual(foe.taken.length, 1, "缠兵目标攻击你时被反震");
-    assert.strictEqual(foe.taken[0].sh, Math.floor(me.gj * v.reflect / 100));
-    assert.strictEqual(foe.taken[0].ctx.kind, "reflect", "反震伤害标记为 reflect，防止互相反弹递归");
-    Z.modify_damage(me, foe, 1000);
-    assert.strictEqual(foe.taken.length, 1, "反震每秒至多一次");
-    clock += v.duration * 1000 + 1;
-    assert.strictEqual(Z.modify_damage(me, foe, 1000), 1000, "缠兵到期后不再减伤");
-}
-
-// ---------- 4. 重剑·崩岳：内伤 ----------
-{
-    const me = huashan(3), foe = actor({ is_player: false });
-    foe.max_hp = foe.hp = 30000000;
-    const v = Z.values_for(HS, intent(3), 1), pfm = { id: "dugujiujian/poqi" }, sk = ownSkill(me);
-    Z.begin_pfm(me, foe, pfm, sk); Z.end_pfm(me, foe, pfm, sk, true);
-    assert.ok(!foe._zy_rupture, "未命中不施加内伤");
-    Z.begin_pfm(me, foe, pfm, sk); Z.after_attack(me, foe, {}, 100, sk); Z.end_pfm(me, foe, pfm, sk, true);
-    assert.ok(foe._zy_rupture, "命中后施加内伤");
-    Z.on_use_pfm(foe);
-    const expect = Math.floor(Math.min(foe.max_hp * v.pct / 100, me.gj * v.cap / 100));
-    assert.strictEqual(foe.taken[0].sh, expect, "内伤伤害 = min(最大气血 pct%, 攻击力 cap%)");
-    assert.strictEqual(foe.taken[0].diffFy, 100, "内伤无视防御");
-    clock += v.duration * 1000 + 1; Z.on_use_pfm(foe);
-    assert.strictEqual(foe.taken.length, 1, "内伤到期不再触发");
-}
-
-// ---------- 5. 木剑·养意：剑意护体 ----------
-{
-    const me = huashan(4), v = Z.values_for(HS, intent(4), 1), pfm = { id: "zixiashengong/xi" }, sk = ownSkill(me);
-    Z.begin_pfm(me, null, pfm, sk); Z.end_pfm(me, null, pfm, sk, true);
-    const shield = Math.floor(me.max_hp * v.shield / 100);
-    assert.strictEqual(me._zy_armor.amount, shield);
-    assert.strictEqual(Z.modify_damage(me, actor(), shield - 100), 0, "护盾内伤害全部吸收");
-    assert.strictEqual(Z.modify_damage(me, actor(), 1000), 900, "护盾破碎后剩余伤害照常结算");
-    assert.ok(!me._zy_armor);
-}
-
 // ---------- 6. 无剑·无招：不拘兵器施展剑法绝招 ----------
 {
     assert.strictEqual(intent(5).effect, "jz_swordless");
@@ -167,11 +94,11 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     Z.solve_puzzle(me, "jz", 1);
     assert.strictEqual(Z.puzzle_solved(me, HS, 1), true);
     assert.strictEqual(Z.puzzle_solved(other, HS, 1), false, "机关进度按玩家记录，互不影响");
-    const veteran = huashan(1);
-    assert.strictEqual(Z.puzzle_solved(veteran, HS, 1), true, "已领悟该真意的老角色视为已解");
+    const veteran = huashan(5);
+    assert.strictEqual(Z.puzzle_solved(veteran, HS, 1), true, "已领悟无剑的老角色视为五处机关都已解");
     Z.solve_puzzle(me, "jz", 3, { hp: 60 });
-    assert.strictEqual(Z.trial_hp_scale(me, HS, intent(3)), HS.trialHpScale * 0.6, "献祭抉择影响化身气血");
-    assert.strictEqual(Z.trial_hp_scale(me, HS, intent(2)), HS.trialHpScale);
+    assert.strictEqual(Z.trial_hp_scale(me, HS, stage(3)), HS.trialHpScale * 0.6, "献祭抉择影响化身气血");
+    assert.strictEqual(Z.trial_hp_scale(me, HS, stage(2)), HS.trialHpScale);
 
     // 房间脚本：利剑阁 / 软剑阁 走一遍
     function loadRoom(file) {
@@ -207,6 +134,46 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(Z.puzzle_solved(w, HS, 4), "卸下兵器后通过");
 }
 
+// ---------- 7b. 剑冢五关：解一处机关，现一道化身；五关全过领悟无剑 ----------
+{
+    assert.strictEqual(HS.list.length, 1, "华山只剩一道真意");
+    assert.deepStrictEqual(HS.stages.map(x => x.mode), ["precision", "counter", "burst", "endure", "master"]);
+    const me = huashan(1); delete me.temp.zy_jz_1; delete me.temp.zy_level_jz_1; delete me.temp.zy_active;
+    me.environment = { parent: { id: "jz" } };
+    const pass = n => { delete me.temp.zy_trial_completed; me.temp.zy_trial_active = "jz_" + n; return Z.complete_trial(me, "jz", n); };
+    Z.solve_puzzle(me, "jz", 1);
+    assert.strictEqual(me.commands.pop()[0], "zhenyi challenge 1", "解开机关后询问是否开启该关试炼");
+    assert.strictEqual(Z.puzzle_gate(me, "jz", 1, "north"), false, "未击败化身不能往深处走");
+    assert.strictEqual(me.commands.pop()[0], "zhenyi challenge 1", "回到关前仍可开启试炼");
+    assert.ok(pass(1));
+    assert.ok(Z.stage_cleared(me, "jz", 1) && Z.puzzle_gate(me, "jz", 1, "north"), "过关后放行");
+    assert.strictEqual(Z.get_level(me, "jz", 5), 0, "前几关不领悟真意");
+    delete me.temp.zy_trial_active; delete me.temp.zy_trial_completed;
+    Z.solve_puzzle(me, "jz", 3);
+    assert.strictEqual(Z.start_trial(me, 3), false, "不能跳关");
+    assert.ok(me.messages.pop().includes("须先闯过【软剑回环】"));
+    assert.strictEqual(Z.start_trial(me, 1), false, "已过的关不再开启");
+    for (const n of [2, 3, 4]) { assert.ok(pass(n)); assert.strictEqual(Z.get_level(me, "jz", 5), 0); }
+    assert.ok(pass(5));
+    assert.strictEqual(Z.get_level(me, "jz", 5), 1, "第五关通过即领悟无剑");
+    assert.ok(me.messages.some(m => m.includes("灭烛见真火，忘剑得神兵")), "领悟时带典故");
+    me.is_fighting = () => false;
+    assert.strictEqual(Z.sweep(me, 5, 1), false, "五关只需闯过一次，不能扫荡");
+    assert.strictEqual(Z.request_upgrade(me, 5), false, "不分重数，不能升级");
+    me.temp.zy_active = "jz_5";
+    const panel = Z.serialize(me);
+    assert.ok(panel.list.length === 1 && panel.list[0].mechanic_only && panel.list[0].no_level && panel.list[0].acquired, "面板只有一道纯机制真意");
+
+    // 旧档：领悟过的其他真意折算为对应关卡已过，旧数据清除，启用中的旧真意卸下
+    const old = huashan(2); old.temp.zy_jz_1 = 1; old.temp.zy_level_jz_1 = 4; old.temp.zy_jz_3 = 1; delete old.temp.zy_migrate_version;
+    Z.migrate(old);
+    assert.ok([1, 2, 3].every(n => Z.stage_cleared(old, "jz", n)) && !Z.stage_cleared(old, "jz", 4), "旧真意折算为关卡进度");
+    assert.ok(!old.temp.zy_jz_1 && !old.temp.zy_jz_2 && !old.temp.zy_level_jz_1 && !old.temp.zy_active, "旧真意数据清除、卸下");
+    assert.strictEqual(Z.get_level(old, "jz", 5), 0);
+    const vet = huashan(5); delete vet.temp.zy_migrate_version; Z.migrate(vet);
+    assert.ok(Z.get_level(vet, "jz", 5) === 1 && vet.temp.zy_active === "jz_5" && [1, 2, 3, 4, 5].every(n => Z.stage_cleared(vet, "jz", n)), "已领悟无剑者原样保留");
+}
+
 // ---------- 8. 试炼化身 v2 机制 ----------
 {
     let timers = [];
@@ -226,11 +193,11 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
 
     // precision：剑罡
     let me = huashan(1), n = npc(); delete me.temp.zy_jz_1; delete me.temp.zy_active;
-    n.init_trial(me, HS, intent(1)); n.environment = me.environment = {};
+    n.init_trial(me, HS, stage(1)); n.environment = me.environment = {};
     assert.ok(n.mapped.some(r => r[0] === "dugujiujian3") && !n.mapped.some(r => r[0] === "literate"), "v2 化身使用本门武学");
     assert.strictEqual(n.max_hp, Math.floor(12000000 * HS.trialHpScale));
     assert.ok(!/抉择影响/.test(n.desc), "未做抉择时化身描述不提抉择");
-    { const m2 = huashan(3); m2.temp.zy_pzhp_jz_3 = 60; const n2 = npc(); n2.init_trial(m2, HS, intent(3));
+    { const m2 = huashan(3); m2.temp.zy_pzhp_jz_3 = 60; const n2 = npc(); n2.init_trial(m2, HS, stage(3));
       assert.ok(n2.desc.includes("化身气血为原本的60%"), "献祭后化身描述写明气血比例"); }
     run(5000);
     assert.ok(n.v2.guard, "开场后凝聚剑罡");
@@ -245,7 +212,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(!n.v2.guard, "连中三次破罡");
 
     // counter：剑势
-    timers = []; me = huashan(2); n = npc(); n.init_trial(me, HS, intent(2)); n.environment = me.environment = {};
+    timers = []; me = huashan(2); n = npc(); n.init_trial(me, HS, stage(2)); n.environment = me.environment = {};
     run(15000);
     assert.strictEqual(n.v2.momentum, 3); assert.ok(n.gj > n.base_gj);
     n.trial_on_hit(me, false);
@@ -254,7 +221,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.strictEqual(n.v2.momentum, 0, "绝招后 4 秒内普攻卸去剑势"); assert.strictEqual(n.gj, n.base_gj);
 
     // burst：回元 + 重击闪避
-    timers = []; me = huashan(3); n = npc(); n.init_trial(me, HS, intent(3)); n.environment = me.environment = {};
+    timers = []; me = huashan(3); n = npc(); n.init_trial(me, HS, stage(3)); n.environment = me.environment = {};
     n.hp = n.max_hp / 2; run(5000);
     assert.ok(n.hp > n.max_hp / 2, "未受内伤时回元");
     const hpBefore = n.hp; n.trial_on_hit(me, true); run(5000);
@@ -272,7 +239,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(/最大气血20%/.test(n.v2_rule_text("burst")) && /万剑归宗（最大气血30%）/.test(n.v2_rule_text("master")), "考题说明数值取自参数");
 
     // endure：剑意冲击
-    timers = []; me = huashan(4); n = npc(); n.init_trial(me, HS, intent(4)); n.environment = me.environment = {};
+    timers = []; me = huashan(4); n = npc(); n.init_trial(me, HS, stage(4)); n.environment = me.environment = {};
     let h = me.hp; run(10000);
     assert.strictEqual(h - me.hp, Math.floor(me.max_hp * 0.15), "无护体全额冲击");
     me.status.push({ id: "force" }); h = me.hp; run(10000);
@@ -285,7 +252,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
 
 // ---------- 9. GM 旁路 ----------
 {
-    const low = huashan(1); low.level = 1; delete low.temp.wd100;
+    const low = huashan(5); low.level = 1; delete low.temp.wd100;
     assert.strictEqual(Z.get_active(low), null, "未达条件不生效");
     low.temp.zy_gm_bypass = 1;
     assert.strictEqual(Z.get_active(low), null, "普通玩家即使有标记也不能旁路");
@@ -293,7 +260,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(Z.get_active(low), "GM 开启旁路后视为满足条件");
 }
 
-console.log("华山 v2 通过：数值框架（十重≤2.5倍一重）、封招/缠兵/内伤/剑意护体/无剑不拘兵器、五处禁地机关、化身考题机制、GM 测试旁路均正常；旧门派数值与化身未变。");
+console.log("华山 v2 通过：数值框架（十重≤2.5倍一重）、无剑不拘兵器、剑冢五关（机关 + 化身）、化身考题机制、GM 测试旁路均正常；旧门派数值与化身未变。");
 
 // ---------- 九阳护体持续时间上限 ----------
 {

@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "jdfg", name: "金顶佛光", jd_index: 5,
+    id: "jdfg", name: "金顶佛光",
     desc: "峨眉金顶之上，云海中偶尔可见佛光。郭襄创派时言——「佛光之中，藏有倚天剑的秘密」。唯有峨眉弟子踏入武帝之境、身经武道塔百层者，方能入内一探。",
     first: "jdfg/jindingyunti", room_path: "jdfg/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

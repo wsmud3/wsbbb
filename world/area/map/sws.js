@@ -19,7 +19,7 @@ this.set({
     expend: 0,
     exp: 0,
     pot: 0,
-    jd_index: 10,
+    jd_index: 3,
     is_multi: false,
 });
 
@@ -31,7 +31,7 @@ this.map = [
 
 this.drops = [];
 
-var SWS_JD_INDEX = 10;
+var SWS_JD_INDEX = 3;
 var SWS_HUB = "yz/guangchang";
 
 // 「山外之意」词条池：tag 为三选一按钮上的单字，prop 为 recount 消费的百分比属性。
@@ -142,8 +142,9 @@ this.sws_best_set = function (me, done) {
     }
 };
 
-// ============ 江湖入口（jh ar 10） ============
+// ============ 江湖入口（jh ar 3） ============
 this.on_enter = function (me) {
+    if (WORLD.ZHENYI && WORLD.ZHENYI.migrate_jd_layout) WORLD.ZHENYI.migrate_jd_layout(me);
     // 宗师自动解锁：进入时自愈一次解锁位（正常路径由 check_unlock_sect_jds 解锁）
     if (me.level >= 3 && !me.isenable_area(SWS_JD_INDEX)) {
         me.set_bool("fb2", SWS_JD_INDEX, true);

@@ -10,7 +10,6 @@ this.set({
     expend: 0,
     exp: 0,
     pot: 0,
-    jd_index: 2,
     is_multi: false,
 });
 

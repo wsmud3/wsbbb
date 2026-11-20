@@ -241,7 +241,7 @@ async function stage2() {
     ok(!!unlock2 && (parseInt(unlock2[1]) & 1024) !== 0, '江湖禁地第11项(位10)已解锁 unlock2=' + (unlock2 ? unlock2[1] : '?'));
 
     // 进入山外山 → 初始地图「山门」（不再直接开打）
-    gc.send('jh ar 10 start');
+    gc.send('jh ar 3 start');
     const startRoom = await gc.waitFor('进入山门', t => t.indexOf('"path":"sws/start"') >= 0);
     ok(/山门/.test(startRoom), '初始地图显示「山门」');
     await gc.text('山门文案', '守山人', 8000).catch(() => ok(false, '山门文案包含守山人'));

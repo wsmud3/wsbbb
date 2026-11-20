@@ -1,6 +1,6 @@
 this.inherits(AREA);
 this.set({
-    id: "lhfd", name: "琅嬛福地", jd_index: 7,
+    id: "lhfd", name: "琅嬛福地",
     desc: "无崖子与李秋水隐居无量山时建造的武学宝库。珍珑棋局、玉像机关、北冥石刻——三重考验。唯有逍遥弟子踏入武帝之境、身经武道塔百层者，方能入内。",
     first: "lhfd/wuliangshandao", room_path: "lhfd/", is_copy: true, not_fb: true,
     expend: 0, exp: 0, pot: 0, is_multi: false,

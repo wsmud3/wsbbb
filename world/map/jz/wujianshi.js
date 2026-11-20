@@ -17,4 +17,3 @@ this.add_action("meditate", "盘坐参悟", function (me) {
         }
     }, 30000);
 });
-this.set_npc("pub/zhenyi_shiyantai#jz_4");
