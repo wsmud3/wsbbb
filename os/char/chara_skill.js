@@ -172,8 +172,9 @@ CHARACTER.prototype.query_used_skill = function (skname) {
     if (skill) {
 
         var skill_base = SKILL.get(skill.enable_skill || skname);
-        if (!skill_base) skill.enable_skill = null;
-        else return skill_base;
+        if (skill_base) return skill_base;
+        // 自创武学暂未注册（秘籍不在身上等）时保留装备关系，注册后自动恢复；其余失效技能照旧解除
+        if (!(skill.enable_skill && /^zc_/.test(skill.enable_skill))) skill.enable_skill = null;
     }
     return WORLD.DEFAULT_SKILLS[skname];
 }

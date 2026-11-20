@@ -2544,21 +2544,20 @@ this.cmd_removepos = function (me, book_id, position_key) {
             }
         }
     } else if (book.zc_positions.length === 0 && book.zc_skill_id) {
-        // All positions removed, clean up the skill
+        // 所有部位都移除：撤下属性、解除装备、注销技能定义，但保留技能记录（等级、经验）与技能 id，
+        // 之后重新推演部位时沿用同一 id，等级原样恢复。只有「重置秘籍」才清空等级（见 cmd_reset）。
         var sk_data = me.skills[book.zc_skill_id];
         if (sk_data) {
             var skill = SKILL.get(book.zc_skill_id);
             if (skill) skill.release_prop(me, sk_data.level || 0);
-            delete me.skills[book.zc_skill_id];
-        }
-        if (me.custom_skills) {
-            var csIdx = me.custom_skills.indexOf(book.zc_skill_id);
-            if (csIdx >= 0) me.custom_skills.splice(csIdx, 1);
+            for (var bk in me.skills) {
+                if (me.skills[bk] && me.skills[bk].enable_skill === book.zc_skill_id) me.skills[bk].enable_skill = null;
+            }
         }
         delete WORLD.SKILLS[book.zc_skill_id];
+        me.init_skill && me.init_skill();
 
         me.notify('{type:"dialog",dialog:"skills",remove:"' + book.zc_skill_id + '"}');
-        book.zc_skill_id = null;
     }
 
     // Apply refund

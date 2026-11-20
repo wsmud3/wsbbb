@@ -310,6 +310,9 @@ CHARACTER.prototype.init = function () {
         for (let item in this.skills) {
             var base_skill = SKILL.get(item);
             if (!base_skill) {
+                // 自创武学在运行时注册（秘籍 on_reload / 登录后补注册），重启后若秘籍此刻不在身上或注册失败，
+                // 这里查不到定义。原先直接删除，存档随即丢失该技能等级（再次学习从 0 级开始）。保留记录，待注册后照常生效。
+                if (/^zc_/.test(item) || (this.custom_skills && this.custom_skills.indexOf(item) >= 0)) continue;
                 delete this.skills[item];
                 continue;
             }

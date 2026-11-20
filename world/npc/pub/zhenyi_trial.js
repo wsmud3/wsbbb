@@ -117,7 +117,7 @@ this.init_trial = function (player, data, intent) {
         this.v2 = { guard: false, nextGuard: Date.now() + 5000, hits: [], momentum: 0, lastPfmHit: 0,
             nextStrike: Date.now() + V2.STRIKE_EVERY, nextImpact: Date.now() + V2.IMPACT_EVERY, finalDone: false };
         if (this.trial_mode === "precision" || this.trial_mode === "master") this.v2.nextGuard = Date.now() + 3000;
-        player.notify("<hiy>" + this.v2_rule_text(this.trial_mode) + "</hiy>");
+        if (!intent.is_stage) player.notify("<hiy>" + this.v2_rule_text(this.trial_mode) + "</hiy>");   // 剑冢五关不在开场念规则
     }
 };
 

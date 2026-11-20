@@ -951,6 +951,8 @@ USER.prototype.on_skillchanged = function () {
         var bases = ["", "force", "unarmed", "dodge", "parry", "bite", "throwing"];
         var weapon = this.query_weapon_type(), base_type = null;
         if (weapon != WEAPON_TYPE.NONE) bases[0] = weapon;
+        // 华山真意「无剑·无招」：不拘兵器施展剑法绝招，绝招栏也列出剑法位
+        if (bases[0] !== "sword" && WORLD.ZHENYI && WORLD.ZHENYI.weapon_free && WORLD.ZHENYI.weapon_free(this, "sword")) bases.push("sword");
         for (var i = 0; i < bases.length; i++) {
             base_type = bases[i];
             if (!base_type) continue;

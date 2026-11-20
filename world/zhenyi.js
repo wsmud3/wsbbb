@@ -341,6 +341,7 @@
     function allowPublicNpc(roomPath, npcPath) {
         var key = String(roomPath || "").replace(/\\/g, "/").split("/")[0];
         if (!findDataByKey(key)) return true;
+        if (String(npcPath || "") === "jz/dugu_qiubai") return true;   // 剑冢第五关问心的独孤求败（对话 NPC）
         return String(npcPath || "").indexOf("pub/zhenyi_shiyantai#" + key + "_") === 0;
     }
 
@@ -630,6 +631,9 @@
         if (me.query_temp("zy_active", "") === value) { me.remove_temp("zy_active"); me.notify("你收敛心神，不再催动任何真意。"); }
         else { me.set_temp("zy_active", value); me.notify("你开始催动【" + colorIntentName(intent, gradeForLevel(getLevel(me, data.key, intent.id))) + "】。"); }
         clearCombatState(me);
+        // 真意可能改变可用绝招（如无剑·无招放开剑法），刷新绝招栏与自动出招列表
+        me.auto_skills = null;
+        if (me.on_skillchanged) me.on_skillchanged();
         return true;
     }
     function clearCombatState(me) {
@@ -805,7 +809,7 @@
             if (energySpent) restoreEnergy(me, energyBefore);
             return me.notify("试炼场暂时无法进入，精力未被消耗。"), false;
         }
-        me.notify("<hiy>你消耗" + ENERGY_COST + "点精力，开始【" + intent.trial + "】。" + (data.stages ? "" : "今日完成次数" + dailyCount(me, data.key, intent.id) + "/" + DAILY_LIMIT + "。") + "</hiy>");
+        if (!data.stages) me.notify("<hiy>你消耗" + ENERGY_COST + "点精力，开始【" + intent.trial + "】。今日完成次数" + dailyCount(me, data.key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
         npc.do_kill(me); return true;
     }
 

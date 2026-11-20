@@ -283,6 +283,8 @@ async function main() {
             a.auto_skills = null; a.init_pfms();
             assert.ok(a.auto_skills.some(x => x.type === "sword"), "自动出招包含剑法绝招");
             assert.ok(a.query_auto_pfm_skills().some(x => x.type === "sword"), "自动出招配置面板列出剑法绝招");
+            const sent = []; a.send = m => sent.push(String(m)); a.on_skillchanged();
+            assert.ok(sent.some(m => /type:"perform"/.test(m) && /id:"sword\./.test(m)), "绝招栏列出剑法绝招，空手也能点到");
         }
     });
 
@@ -298,7 +300,7 @@ async function main() {
 
     await check("天魔策·拳罡：每次施展加一层并重新计时，时间到掉一层；持续 1 秒起每 300 级 +1 秒、最长 10 秒", async () => {
         const Q = SKILL.get("tianmoce").pfm.quangang;
-        assert.ok(/持续1秒/.test(Q.query_desc(null, 100)) && /持续4秒/.test(Q.query_desc(null, 1000)) && /持续10秒/.test(Q.query_desc(null, 5000)));
+        assert.strictEqual(Q.query_desc(null, 9000), "刚猛威烈的一拳，命中后叠加一层拳罡，最多叠加五层。");
         const a = mkUser(), b = mkUser(); learn(a, { tianmoce: ["force", "unarmed"] }, 300); learn(b, {}, 100); fight(a, b);
         a.environment = b.environment = { items: [a, b], send_room() {}, item_changed() {} }; b.max_hp = b.hp = 1e12;
         a.do_attack = () => 1; a.end_attack = () => {};
@@ -312,6 +314,37 @@ async function main() {
         assert.strictEqual(a.query_status("tianmoce_quangang"), 5, "满层施展会重新计时");
         await new Promise(r => setTimeout(r, 1000));
         assert.deepStrictEqual([a.query_status("tianmoce_quangang"), a.query_prop("add_sh_per") - sh0], [4, 32], "时间到只掉一层");
+    });
+
+    await check("自创武学：登录时技能尚未注册（秘籍不在身上等）也不删除存档记录，注册后等级与装备关系原样恢复", () => {
+        const a = mkUser(); a.custom_skills = ["zc_regtest"];
+        a.skills.zc_regtest = { level: 9000, exp: 0 }; a.skills.unarmed = { level: 9000, exp: 0, enable_skill: "zc_regtest" };
+        delete WORLD.SKILLS.zc_regtest;
+        a.init();
+        assert.ok(a.skills.zc_regtest && a.skills.zc_regtest.level === 9000, "登录初始化不删除未注册的自创技能");
+        assert.strictEqual(a.skills.unarmed.enable_skill, "zc_regtest", "保留装备关系");
+        const book = { zc_skill_id: "zc_regtest", generate_skill_id() { return "zc_regtest"; }, zc_positions: ["拳脚"], zc_words: { "拳脚": [] },
+            zc_pfms: { "拳脚": [] }, zc_name: "测", name: "测", grade: 4, get_quality_grade() { return 4; }, get_all_word_levels() { return {}; }, get_total_pfms() { return 0; } };
+        Object.values(WORLD.COMMANDS).find(c => c.command === "zc").create_or_update_skill(book, a); a.init_skill();
+        assert.strictEqual(a.query_skill("zc_regtest"), 9000, "注册后等级不变");
+        assert.strictEqual(a.attack_skill && a.attack_skill.id, "zc_regtest", "注册后恢复装备");
+        delete WORLD.SKILLS.zc_regtest;
+    });
+
+    await check("自创武学：移除最后一个部位保留等级，重新推演后沿用；只有重置秘籍清空", () => {
+        const ZC = Object.values(WORLD.COMMANDS).find(c => c.command === "zc");
+        const me = mkUser(); me.custom_skills = []; me.items = []; me.items_changed = () => {}; me.add_obj = () => ({});
+        const book = OBJ.CREATE("zc/blank_book"); me.items.push(book); book.environment = me;
+        Object.assign(book, { zc_name: "测拳", name: "测拳秘籍", zc_state: "completed", zc_positions: ["拳脚"], zc_words: { "拳脚": [] }, zc_word_levels: {}, zc_pfms: { "拳脚": [] }, grade: 4 });
+        ZC.create_or_update_skill(book, me); const id = book.zc_skill_id;
+        me.skills[id].level = 9000; me.skills.unarmed = { level: 9000, exp: 0 }; me.enable_skill("unarmed", id); me.init_skill();
+        ZC.cmd_removepos(me, book.id, "拳脚");
+        assert.ok(me.skills[id] && me.skills[id].level === 9000 && book.zc_skill_id === id, "移除最后一个部位不清空等级、不换技能 id");
+        Object.assign(book, { zc_positions: ["拳脚"], zc_words: { "拳脚": [] }, zc_state: "completed" });
+        ZC.create_or_update_skill(book, me);
+        assert.strictEqual(me.query_skill(id), 9000, "重新推演后等级原样");
+        ZC.cmd_reset(me, book.id);
+        assert.ok(!me.skills[id] && !book.zc_skill_id, "重置秘籍才清空");
     });
 
     // ---------- 4. 时长上限 ----------

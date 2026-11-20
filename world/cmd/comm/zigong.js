@@ -6,6 +6,7 @@ this.enter = function (me, arg) {
     var list = [];
     for (var key in me.skills) {
         var skill = SKILL.get(key);
+        if (!skill) continue;   // 自创武学暂未注册时只有记录、没有定义
         if (skill.learn_condition) {
             if (skill.learn_condition.gender &&
                 skill.learn_condition.gender != 3) {

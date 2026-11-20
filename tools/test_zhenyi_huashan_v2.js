@@ -136,7 +136,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     // 无剑虚空：谦卑线点化 + 参悟（不领悟、不放行），骄傲线当场开战
     const wx = loadRoom("wujianxukong.js"), h = huashan(5); delete h.temp.zy_jz_5; delete h.temp.zy_level_jz_5; delete h.temp.zy_active;
     [1, 2, 3, 4].forEach(n => { h.temp["zy_stage_jz_" + n] = 1; });
-    wx.actions.admit_defeat.call(wx, h);
+    wx.zy_puzzle(h, "humble");
     const cw = h.status.find(x => x.id === "jz_canwu");
     assert.ok(h.messages.some(m => m.includes("长叹一声") && m.includes("重剑无锋，大巧不工")), "谦卑线以剑冢铭文点化");
     assert.deepStrictEqual(cw && [cw.duration, cw.prop.int, cw.prop.lianxi_per, cw.prop.study_per, cw.prop.dazuo_per], [3600000, 500, 100, 100, 100], "参悟：一小时、悟性+500、练习学习打坐+100%");
@@ -147,10 +147,10 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(h.status.some(x => x.id === "jz_canwu" && x.duration === 600000 && x.prop.int === 500), "上线按剩余时间恢复参悟");
     h.status = []; h.temp.zy_buff_jz_canwu = { v: 1, e: clock - 1 }; Z.restore_timed_buffs(h);
     assert.ok(!h.status.length, "参悟到期后上线不再恢复");
-    h.status = []; wx.actions.admit_defeat.call(wx, h);
+    h.status = []; wx.zy_puzzle(h, "humble");
     assert.ok(!h.status.length, "参悟每日一次");
     let started = 0; const st0 = Z.start_trial; Z.start_trial = (m, id) => { started = id; return true; };
-    try { wx.actions.challenge.call(wx, h); } finally { Z.start_trial = st0; }
+    try { wx.zy_puzzle(h, "proud"); } finally { Z.start_trial = st0; }
     assert.ok(Z.puzzle_solved(h, HS, 5) && started === 5, "骄傲线当场开启第五关化身之战");
     assert.ok(!h.commands.some(c => c[0] === "zhenyi challenge 5"), "骄傲线不再弹出开启试炼按钮");
 }

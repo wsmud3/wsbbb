@@ -187,7 +187,6 @@ export default {
         else if (!z.acquired) {
             html.push("<div class='zy-meta'>完成对应禁地试炼后领悟</div>");
         }
-        if (z.mechanic_only) html.push("<div class='zy-meta'><hiy>纯机制真意，无需升级。</hiy></div>");
         html.push("<div class='item-commands'>");
         if (z.acquired) html.push("<span cmd='zhenyi active ", z.id, "'>", z.active ? "卸下" : "启用", "</span>");
         if (z.acquired && z.level < 10 && !z.mechanic_only) html.push("<span cmd='zhenyi upgrade ", z.id, "'>升级</span>");

@@ -65,8 +65,8 @@ this.query_enable_prop = function (lv) {
 	};
 };
 
-// 拳罡：最多 5+等级/1000 层；持续 1 秒起、每 300 级 +1 秒，最长 10 秒。
-var quangang_max = function (lv) { return 5 + parseInt((lv || 0) / 1000); };
+// 拳罡：最多 5 层；持续 1 秒起、每 300 级 +1 秒，最长 10 秒。
+var quangang_max = function () { return 5; };
 var quangang_duration = function (lv) { return Math.min(10, 1 + Math.floor((lv || 0) / 300)) * 1000; };
 this.pfm = {
 		zhongmo: {
@@ -202,7 +202,7 @@ this.pfm = {
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
-			return "刚猛威烈的一拳，命中后叠加一层拳罡（最多" + quangang_max(lv) + "层），每层增加8%伤害和5%破防；拳罡持续" + (quangang_duration(lv) / 1000) + "秒，每次施展重新计时，时间到掉一层。";
+			return "刚猛威烈的一拳，命中后叠加一层拳罡，最多叠加五层。";
 		}
 	},
 		butiandao: {

@@ -1,6 +1,7 @@
 this.inherits(ROOM);
 this.name = "无剑虚空";
-this.desc = "这不再是你所能理解的任何空间。四周是纯粹的黑暗与寂静，时间和空间在这里失去了意义。唯一的存在是远处一道模糊的人影——他负手而立，一动不动。你看不清他的面容，甚至不确定他是否真实存在。他开口了，声音像是从你心底升起——「一千年了，你是第一个走到这里的人。我一生求一败而不能。但今日，我想先问你一个问题——你，觉得自己能战胜我吗？」";
+this.desc = "这不再是你所能理解的任何空间。四周是纯粹的黑暗与寂静，时间和空间在这里失去了意义。唯一的存在是远处一道模糊的人影——他负手而立，一动不动，仿佛已在此等了一千年。";
+this.set_npc("jz/dugu_qiubai");
 this.exits = { "south": "jz/wujianshi", "north": "jz/zhongjijiantai" };
 this.no_fight = true;
 
@@ -27,8 +28,12 @@ function proud(me) {
     // 化身之战当场展开；若因精力不足等原因未能开启，北面出口处仍会给出「开启试炼」。
     WORLD.ZHENYI.start_trial(me, PZ_ID);
 }
-this.add_action("admit_defeat", "坦然道：我不如你", function (me) { humble(me); });
-this.add_action("challenge", "拔剑道：我来败你", function (me) { proud(me); });
+// 抉择由独孤求败（jz/dugu_qiubai）的对话浮窗发起：zhenyi puzzle humble / proud
+this.zy_puzzle = function (me, arg) {
+    if (arg === "humble") return humble(me), true;
+    if (arg === "proud") return proud(me), true;
+    return false;
+};
 
 this.on_leave = function (me, dir) {
     return WORLD.ZHENYI ? WORLD.ZHENYI.puzzle_gate(me, PZ_KEY, PZ_ID, dir) : true;
