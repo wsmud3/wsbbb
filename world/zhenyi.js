@@ -16,9 +16,9 @@
             // 其余门派仍走旧公式（五道真意 + 十重修炼）。
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
             v2: true, trialHpScale: 0.8, no_level: true,
-            // 首次通关奖励；通关后可在剑道传承殿「无名剑」处扫荡（每次消耗精力，得玄晶，30% 得残页），扫荡次数可在易直非处兑换残页
+            // 首次通关奖励；通关后可在剑道传承殿「无名剑」处扫荡（每次消耗 10 精力（与副本扫荡一致），得玄晶，30% 得残页），扫荡次数可在易直非处兑换残页
             first_clear_reward: { path: "book/bc#dugujianjue", count: 200 },
-            sweep: { energy: 20, piece: "book/bc#dugujianjue", piece_rate: 30, exchange_cost: 20 },
+            sweep: { energy: 10, piece: "book/bc#dugujianjue", piece_rate: 30, exchange_cost: 20 },
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             guideNames: ["守剑老人", "回锋剑客", "负剑道人", "洗剑客", "无剑客"],
             // 首次挑战第 N 项试炼前，须先解开禁地中对应的机关（按玩家记录，公共地图互不影响）。
