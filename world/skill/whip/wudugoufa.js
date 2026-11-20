@@ -74,7 +74,7 @@ this.pfm = {
 			me.send_room("<HIR>$N喉中发出一声凄厉的尖啸，手中$w骤然间绿光大盛——「金钩锁魂」！$w上淬炼的五种剧毒同时被内力激发，钩尖爆射出五色毒芒！$N身形暴起，$w化作一道撕裂空气的碧绿闪电，直钩$n的兵器！这一钩快、准、狠、毒，四字俱全，仿佛阎罗殿前索命的钩镰使者，要将$n的魂魄从躯壳中硬生生钩出！</HIR>", target);
 			var weap = target.query_weapon();
 			var disarmed = false;
-			if (weap && weap.weapon_type !== WEAPON_TYPE.NONE) {
+			if (weap && weap.weapon_type !== WEAPON_TYPE.NONE && !target.weapon_locked()) {   // 无剑等被动：兵刃不可卸下
 				// 计算钩法等级评价指数
 				var myEval;
 				if (lv < 1000)

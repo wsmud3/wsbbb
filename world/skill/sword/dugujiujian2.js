@@ -106,7 +106,7 @@
 			if (!weap || weap.weapon_type === WEAPON_TYPE.NONE) return me.notify("对方没有兵刃，你不用担心。");
 			me.send_room("<HIC>$N举剑画弧，默潜独孤九剑之「破字诀」, 绵绵剑意，漫天铺地袭向$n</HIC>", target);
 
-			if (lv * 2 + me.random(me.mz) > target.ds && (!target.attack_skill || target.attack_skill.id !== 'dugujiujian4')) {
+			if (lv * 2 + me.random(me.mz) > target.ds && !target.weapon_locked()) {
 				me.send_room("<hir>$n顿时觉得眼前一花，手腕一麻，手中$i脱手而出！\n</hir>", target);
 				target.unequip(weap, true, 12000);
 			} else {

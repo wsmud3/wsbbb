@@ -83,7 +83,7 @@ this.pfm = {
 		name: "屠神",
 		distime: 30000,
 		enable_skill: "force",
-		mp: 20,
+		mp: 1890,
 		release_time: 500,
 		use: function (me, target, lv) {
 			var bj_sh = 30 + Math.floor(lv / 100) * 2;
@@ -129,7 +129,7 @@ this.pfm = {
 		distime: 10000,
 		enable_skill: "blade",
 		weapon_type: WEAPON_TYPE.BLADE,
-		mp: 10,
+		mp: 1717,
 		release_time: 4000,
 		use: function (me, target, lv) {
 			me.send_room("<HIR>$N眼中杀意暴涨，手中刀化作七道血色刀芒，一刀快过一刀地斩向$n！</HIR>", target);

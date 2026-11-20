@@ -218,12 +218,23 @@ this.return_famdesc = function (me, index) {
         }
     }
     if (fb.skills2 && fb.skills2.length) {
-        str.push("\n门派进阶：\n");
+        str.push("\n门派进阶武功：\n");
         for (var i = 0; i < fb.skills2.length; i++) {
             str.push("<span cmd='checkskill ");
             str.push(fb.skills2[i].id);
             str.push(" help'>");
             str.push(fb.skills2[i].color_name);
+            str.push("</span>\n");
+        }
+    }
+    // 上古传承：门派的上古绝学（技能 is_ultimate，如华山独孤剑诀）
+    if (fb.skills4 && fb.skills4.length) {
+        str.push("\n上古传承：\n");
+        for (var i = 0; i < fb.skills4.length; i++) {
+            str.push("<span cmd='checkskill ");
+            str.push(fb.skills4[i].id);
+            str.push(" help'>");
+            str.push(fb.skills4[i].color_name);
             str.push("</span>\n");
         }
     }

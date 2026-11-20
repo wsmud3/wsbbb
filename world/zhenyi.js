@@ -16,6 +16,9 @@
             // 其余门派仍走旧公式（五道真意 + 十重修炼）。
             name: "剑道真意", key: "jz", jd: 2, area: "独孤剑冢", balance: 0.86,
             v2: true, trialHpScale: 0.8, no_level: true,
+            // 首次通关奖励；通关后可在剑道传承殿「无名剑」处扫荡（每次消耗精力，得玄晶，30% 得残页），扫荡次数可在易直非处兑换残页
+            first_clear_reward: { path: "book/bc#dugujianjue", count: 200 },
+            sweep: { energy: 20, piece: "book/bc#dugujianjue", piece_rate: 30, exchange_cost: 20 },
             trialRoom: "jz/wuyitai_trial", guide: "守冢剑侍",
             guideNames: ["守剑老人", "回锋剑客", "负剑道人", "洗剑客", "无剑客"],
             // 首次挑战第 N 项试炼前，须先解开禁地中对应的机关（按玩家记录，公共地图互不影响）。
@@ -29,8 +32,10 @@
                 stage(1, "利剑问锋", "precision", "利剑"),
                 stage(2, "软剑回环", "counter", "软剑"),
                 stage(3, "重剑负山", "burst", "重剑"),
-                stage(4, "木剑守拙", "endure", "木剑"),
-                stage(5, "无剑胜有", "master", "无剑")
+                // 木剑：考校悟性（先天悟性 × 后天悟性 ≥ 10 万），再接一剑（最大气血 100%，只受伤害减免影响）
+                stage(4, "木剑守拙", "insight", "木剑"),
+                // 第五关的化身就是剑魔本人，使独孤剑诀
+                stage(5, "无剑胜有", "master", "无剑", { avatar_name: "独孤求败", avatar_title: "<hir>剑魔</hir>", avatar_sword: "dugujianjue" })
             ]
         },
         WUDANG: {
@@ -123,8 +128,10 @@
         return { id: id, name: name, mech: mech, trial: trialName, mode: mode, pfms: pfms || [], effect: effect };
     }
     // 单真意门派的试炼关卡。字段与真意相同（试炼化身、试炼流程按同一形状读取），但不对应任何战斗效果。
-    function stage(id, trialName, mode, mech) {
-        return { id: id, name: trialName, mech: mech, trial: trialName, mode: mode, pfms: [], effect: null, is_stage: true };
+    function stage(id, trialName, mode, mech, opts) {
+        var st = { id: id, name: trialName, mech: mech, trial: trialName, mode: mode, pfms: [], effect: null, is_stage: true };
+        for (var k in (opts || {})) st[k] = opts[k];
+        return st;
     }
 
     var UPGRADE_XJ = [0, 0, 100, 150, 220, 300, 400, 520, 660, 820, 1000];
@@ -321,7 +328,7 @@
     function trialStats(intent) {
         var source = TRIAL_PROFILES[Math.max(1, Math.min(5, parseInt(intent && intent.id) || 1))], stats = {};
         for (var key in source) stats[key] = source[key];
-        stats.timeout = intent && intent.mode === "burst" ? 120000 : (intent && intent.mode === "endure" ? 45000 : 180000);
+        stats.timeout = intent && intent.mode === "burst" ? 120000 : (intent && intent.mode === "endure" ? 45000 : (intent && intent.mode === "insight" ? 60000 : 180000));
         return stats;
     }
 
@@ -384,7 +391,7 @@
     function allowPublicNpc(roomPath, npcPath) {
         var key = String(roomPath || "").replace(/\\/g, "/").split("/")[0];
         if (!findDataByKey(key)) return true;
-        if (String(npcPath || "") === "jz/dugu_qiubai") return true;   // 剑冢第五关问心的独孤求败（对话 NPC）
+        if (String(npcPath || "") === "jz/dugu_qiubai" || String(npcPath || "") === "jz/wuming_jian") return true;   // 剑冢的对话 / 重温 NPC
         return String(npcPath || "").indexOf("pub/zhenyi_shiyantai#" + key + "_") === 0;
     }
 
@@ -965,12 +972,18 @@
                     if (getLevel(me, key, it.id)) continue;
                     me.set_temp(acquiredKey(key, it.id), 1); me.set_temp(levelKey(key, it.id), 1); me.set_temp(clearKey(key, it.id), 1);
                     me.notify("<him>五关既过，剑冢深处一片寂然。你忽有所悟——灭烛见真火，忘剑得神兵。你领悟了【" + it.name + "】！</him>");
+                    // 首次通关奖励
+                    if (data.first_clear_reward && me.add_obj) {
+                        var fr = data.first_clear_reward, got = me.add_obj(fr.path, fr.count);
+                        if (got) me.notify("<hig>你获得了" + (got.color_name || got.name) + "×" + fr.count + "。</hig>");
+                    }
                 }
             } else {
                 me.notify("<him>化身散作点点剑光——【" + intent.trial + "】已过，剑冢深处的剑意为你让开了一条路。</him>");
             }
-            me.notify("<hig>试炼目标已完成，请点击动作栏“完成副本”确认离场。</hig>");
-            if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
+            me.notify("<hig>你已完成试炼。</hig>");
+            if (me.end_fight) me.end_fight();
+            returnFromTrial(me, key);   // 完成即离场，不再要求点击「完成副本」
             return true;
         }
         addDaily(me, key, intent.id, 1);
@@ -983,9 +996,9 @@
                 if (addMaterial(me, key, intent.id, pzBonus)) me.notify("<hig>你在机关中所做的抉择得到回应：另得" + intent.name + "悟痕×" + pzBonus + "。</hig>");
             }
         }
-        me.notify("<hiy>今日完成次数" + dailyCount(me, key, intent.id) + "/" + DAILY_LIMIT + "。</hiy>");
-        me.notify("<hig>试炼目标已完成，请点击动作栏“完成副本”确认离场。</hig>");
-        if (WORLD.COMMANDS.zhenyi) WORLD.COMMANDS.zhenyi.send_panel(me);
+        me.notify("<hig>你已完成试炼。今日完成次数" + dailyCount(me, key, intent.id) + "/" + DAILY_LIMIT + "。</hig>");
+        if (me.end_fight) me.end_fight();
+        returnFromTrial(me, key);   // 完成即离场，不再要求点击「完成副本」
         return true;
     }
     function failTrial(me, reason) {
@@ -1041,7 +1054,7 @@
     }
     function sweep(me, id, count) {
         var data = familyData(me), intent = findIntent(data, id);
-        if (data && data.stages) return me.notify("【" + data.area + "】的试炼只需闯过一次，无从扫荡。"), false;
+        if (data && data.stages) return sweepStages(me, data, count);
         if (!data || !intent) return me.notify("没有这项试炼。"), false;
         if (!canEnterArea(me, data.key)) return false;
         if (!currentAreaMatches(me, data)) return me.notify("你须身在【" + data.area + "】中方可扫荡。"), false;
@@ -1063,6 +1076,40 @@
         announceReward(me, intent, granted); return true;
     }
 
+    // 剑冢等关卡式试炼的扫荡：须已通关（领悟真意）；每次消耗 sweep.energy 精力，得玄晶，sweep.piece_rate% 得一张残页；累计次数供易直非兑换
+    function sweepCountKey(key) { return "zy_sweep_" + key; }
+    function sweepStages(me, data, count) {
+        var cfg = data.sweep;
+        if (!cfg) return me.notify("这项试炼无从扫荡。"), false;
+        if (!hasAnyIntent(me, data)) return me.notify("你须先亲自闯过【" + data.area + "】，方可重温。"), false;
+        if (!currentAreaMatches(me, data)) return me.notify("你须身在【" + data.area + "】中方可重温。"), false;
+        if (me.is_fighting && me.is_fighting()) return me.notify("战斗中不能重温试炼。"), false;
+        count = Math.max(1, parseInt(count) || 1);
+        var jl = me.query_jingli ? me.query_jingli() : 0;
+        count = Math.min(count, Math.floor(jl / cfg.energy));
+        if (count <= 0) return me.notify("你的精力不够，重温一次需要" + cfg.energy + "点精力。"), false;
+        if (!me.expend_jingli(cfg.energy * count)) return me.notify("你的精力不够。"), false;
+        var xj = 0, pieces = 0;
+        for (var i = 0; i < count; i++) {
+            xj += 12 + me.random(7);
+            if (me.random(100) < cfg.piece_rate) pieces++;
+        }
+        if (xj > 0) addXuanjing(me, xj);
+        var got = pieces > 0 ? me.add_obj(cfg.piece, pieces) : null;
+        me.set_temp(sweepCountKey(data.key), (parseInt(me.query_temp(sweepCountKey(data.key), 0)) || 0) + count);
+        me.notify("<hiy>你在" + data.area + "中重温剑冢五关" + count + "次。</hiy>");
+        me.notify("<hig>获得玄晶×" + xj + (got ? "、" + (got.color_name || got.name) + "×" + pieces : "") + "。</hig>");
+        return true;
+    }
+    function offerSweep(me) {
+        var data = familyData(me);
+        if (!data || !data.stages || !data.sweep) return me.notify("无名剑静静立着，并无回应。"), false;
+        if (!hasAnyIntent(me, data)) return me.notify("一柄无名之剑静静插在石缝里。你还未闯过剑冢五关，它对你毫无反应。"), false;
+        var done = parseInt(me.query_temp(sweepCountKey(data.key), 0)) || 0;
+        me.notify("即将重温试炼(" + data.area + ")，已重温" + done + "次，每次需要消耗" + data.sweep.energy + "点精力。\n当前精力：" + (me.query_jingli ? me.query_jingli() : 0));
+        me.send_commands("zhenyi sweep 0 1", "扫荡一次", "zhenyi sweep 0 10", "扫荡十次");
+        return true;
+    }
     function xuanjingCount(me) { var obj = me.find_obj_bypath("st/xuanjing"); return obj ? (obj.count || 1) : 0; }
     function requestUpgrade(me, id) {
         if (me.is_fighting()) return me.notify("战斗中不可参悟升级。"), false;
@@ -1361,6 +1408,7 @@
         on_use_pfm: onUsePfm, family_of_key: function (key) { return KEY_TO_FAMILY[key]; },
         trial_hp_scale: trialHpScale,
         puzzle_solved: puzzleSolved, solve_puzzle: solvePuzzle, find_trial: findTrial, start_replay: startReplay, offer_replay: offerReplay,
+        offer_sweep: offerSweep, sweep_count_key: sweepCountKey,
         stage_cleared: function (me, key, id) { var d = findDataByKey(key); return !!(d && (d.stages ? stageCleared(me, d, id) : getLevel(me, key, id) > 0)); }, puzzle_gate: puzzleGate, puzzle_command: puzzleCommand,
         level_grades: LEVEL_GRADES, gm_bypass: gmBypass, clear_trial_temps: clearTrialTemps,
         keys: { acquired: acquiredKey, level: levelKey, clear: clearKey, daily: dailyKey, puzzle: puzzleKey }

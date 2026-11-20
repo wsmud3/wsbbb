@@ -54,7 +54,7 @@ this.pfm = {
         use_type: 2,
         allow_busy: true,
         allow_faint: true,
-        mp: 20,
+        mp: 1890,
         use: function (me, target, lv) {
             // 按当前状态切换（原先记在不随战斗结束清除的 temp 上，换场后切换顺序会错乱）
             var cur = me.status && me.status.find(function (x) { return x.id === "force"; });
@@ -125,7 +125,7 @@ this.pfm = {
         release_time: 4000,
         enable_skill: "force",
         use_type: 2,
-        mp: 20,
+        mp: 2150,
         use: function (me, target, lv) {
             var sealTime = 4000 + parseInt((lv - 1000) / 666) * 1000;
             if (sealTime < 4000) sealTime = 4000;
@@ -170,7 +170,7 @@ this.pfm = {
         release_time: 4000,
         enable_skill: "force",
         use_type: 2,
-        mp: 20,
+        mp: 2150,
         // 持续秒数：0 级 5 秒，每 200 级 +1 秒，最多 10 秒；每秒一跳，跳数 = 秒数
         // 镇守中再次使用：施展 1 秒后可取消镇守（不受 60 秒冷却限制，见 pfm.js 的 try_cancel）。
         // 原先取消逻辑写在 use 里，而 use 要等冷却结束才会被调用，实际上取消不了。

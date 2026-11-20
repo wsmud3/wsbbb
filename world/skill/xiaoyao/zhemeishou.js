@@ -52,7 +52,7 @@ this.pfm = {
         use: function (me, target, lv) {
             var weap = target.query_weapon();
             if (!weap || weap.weapon_type === WEAPON_TYPE.NONE) return me.notify("对方没有兵刃，你不用担心。");
-            if (target.attack_skill && target.attack_skill.id === 'dugujiujian4') {
+            if (target.weapon_locked()) {
                 return me.send_room("<hic>$N使出空手入白刃的绝招, $n手中如无一物，让$P无从下手！\n</hic>", target);
             }
             if (lv + me.random(me.mz) > target.ds) {

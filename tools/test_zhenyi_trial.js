@@ -124,15 +124,12 @@ const completed = {
 };
 assert.strictEqual(WORLD.ZHENYI.complete_trial(completed, "zw", 1), true, "化身死亡标记必须触发试炼结算");
 assert.strictEqual(completed.temp.zy_zw_1, 1, "击杀化身后必须解锁真意");
-assert.strictEqual(completed.temp.zy_trial_completed, "zw_1", "完成试炼后必须保留待确认离场标记");
+assert.strictEqual(completed.temp.zy_trial_active, undefined, "完成试炼后直接离场，不再等待确认");
+assert.ok(completed.messages.some(m => /你已完成试炼/.test(m)) && !completed.messages.some(m => /完成副本/.test(m)), "只在消息栏告知已完成，不提示点击完成副本");
 assert.strictEqual(completed.temp.zy_daily_zw_1, 1, "亲自试炼只在成功完成时增加今日次数");
 WORLD.ZHENYI.complete_trial(completed, "zw", 1);
 assert.strictEqual(completed.temp.zy_daily_zw_1, 1, "重复死亡回调不得重复增加完成次数");
 assert.strictEqual(completed.find_obj_bypath("st/zhenyi_hen#zw_1"), undefined, "手动试炼不应发放悟痕掉落");
-assert.strictEqual(WORLD.ZHENYI.finish_trial_action(completed), true, "完成副本应打开主消息页确认");
-assert.deepStrictEqual(completed.commands, ["zhenyi trial_confirm", "确认完成并离开", "zhenyi trial_cancel", "暂不离开"]);
-assert.strictEqual(WORLD.ZHENYI.confirm_trial(completed), true, "确认完成副本应离开试炼");
-assert.strictEqual(completed.temp.zy_trial_active, undefined, "确认离场后必须清理试炼状态");
 
 const root = path.join(__dirname, "..");
 const roomSource = fs.readFileSync(path.join(root, "os", "room", "room.js"), "utf8");

@@ -63,7 +63,7 @@ this.pfm = {
         name: "混元之气",
         distime: 30000,
         enable_skill: "parry",
-        mp: 20,
+        mp: 1890,
         use_type: 2,
         release_time: 0,
         use: function (me, target, lv) {

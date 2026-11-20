@@ -40,7 +40,8 @@ this.init_trial = function (player, data, intent) {
     this.trial_mode = intent.mode;
     this.trial_v2 = !!data.v2;
     // 坚持类试炼只检查存活时间，武意化身不能被玩家击杀。
-    if (this.trial_mode === "endure") {
+    // 坚持类、悟性类试炼不靠击杀，化身不可被攻击
+    if (this.trial_mode === "endure" || this.trial_mode === "insight") {
         this.on_before_fight = function () { return false; };
         this.on_kill = function () { return false; };
     } else {
@@ -48,11 +49,12 @@ this.init_trial = function (player, data, intent) {
         this.on_kill = null;
     }
     // 剑冢五关等关卡化身名字从简（如「利剑化身」），不挂头衔；其余门派沿用原名。
-    if (intent.is_stage) { this.title = ""; this.name = "<hiy>" + intent.mech + "化身</hiy>"; }
+    if (intent.is_stage && intent.avatar_name) { this.title = intent.avatar_title || ""; this.name = intent.avatar_name; }
+    else if (intent.is_stage) { this.title = ""; this.name = "<hiy>" + intent.mech + "化身</hiy>"; }
     else this.name = "<hiy>" + intent.trial + "·武意化身</hiy>";
     var level = WORLD.ZHENYI.get_level(player, data.key, intent.id) || 1;
     var stats = WORLD.ZHENYI.trial_stats(intent);
-    var rule = intent.mode === "endure" ? "坚持45秒即可通过。" : ("须在" + Math.floor(stats.timeout / 1000) + "秒内击败化身。");
+    var rule = intent.mode === "endure" ? "坚持45秒即可通过。" : (intent.mode === "insight" ? "" : ("须在" + Math.floor(stats.timeout / 1000) + "秒内击败化身。"));
     if (intent.mode === "resource") rule += "期间每5秒损失最大内力的2%。";
     if (this.trial_v2) rule += this.v2_rule_text(intent.mode);
     this.desc = "这是【" + intent.trial + "】凝成的武意化身。" + rule +
@@ -74,6 +76,14 @@ this.init_trial = function (player, data, intent) {
             }
             row[1] = skillLv;
             map.push(row);
+        }
+        // 关卡可指定化身使用的剑法（如剑魔独孤求败的独孤剑诀），装备为剑法位，招架仍用本门剑法
+        if (intent.avatar_sword && typeof SKILL !== "undefined" && SKILL.get(intent.avatar_sword)) {
+            for (var mi = 0; mi < map.length; mi++) {
+                if (Array.isArray(map[mi][2]) && map[mi][2].indexOf("sword") >= 0) map[mi][2] = map[mi][2].filter(function (b) { return b !== "sword"; });
+                else if (map[mi][2] === "sword") map[mi][2] = [];
+            }
+            map.push([intent.avatar_sword, skillLv, "sword"]);
         }
         this.skills = null;
         this.skill_map.apply(this, map);
@@ -111,6 +121,11 @@ this.init_trial = function (player, data, intent) {
         player.set_temp("zy_trial_deadline", deadline);
     }
     this.trial_started = Date.now();
+    if (this.trial_mode === "insight") {
+        // 悟性考校不动手：化身不发起战斗，只在开场后出一剑
+        this.do_kill = function () { return false; };
+        this.insight_handler = this.call_out(this.trial_insight, INSIGHT_DELAY);
+    }
     this.trial_timeout_handler = this.call_out(this.trial_timeout, Math.max(1, deadline - Date.now()));
     this.trial_tick_handler = this.call_out(this.trial_tick, 5000);
     if (this.trial_v2) {
@@ -131,6 +146,7 @@ this.v2_rule_text = function (mode) {
     return this.v2_mode_text(mode, strike) + (V2.DIFF_FY_PER ? "化身剑意凌厉，自带" + V2.DIFF_FY_PER + "%无视防御。" : "");
 };
 this.v2_mode_text = function (mode, strike) {
+    if (mode === "insight") return "化身不与你相斗，只考校你的悟性。";
     if (mode === "precision") return "化身会周期凝聚剑罡（受到伤害降低" + pct(V2.GUARD_REDUCE) + "），须在" + sec(V2.GUARD_WINDOW) + "内连续命中" + V2.GUARD_HITS + "次方能破罡。";
     if (mode === "counter") return "化身剑势每5秒增强一层（每层伤害+" + pct(V2.MOMENTUM_STEP) + "），须在绝招命中后" + sec(V2.UNBIND_WINDOW) + "内以普通攻击命中，方能卸去全部剑势。";
     if (mode === "burst") return "化身每5秒回复" + pct(V2.REGEN_PCT) + "气血，绝招命中可震伤其脏腑、" + sec(V2.REGEN_BLOCK) + "内无法回元；它还会蓄力施展重击（最大气血" + strike + "），蓄力时以绝招命中可将其打断，身法足够灵动也能躲开。";
@@ -231,7 +247,38 @@ this.v2_tick = function (me) {
     }
 };
 
+// 悟性类（剑冢第四关·木剑守拙）：开战后考校悟性——先天悟性 × 后天悟性须达 INSIGHT_NEED；
+// 达到后承受一剑：最大气血 100% 的伤害，只受伤害减免影响（不计防御、不可招架闪避、不经内功与状态减伤），接下即通过。
+// 接不下时保留 1 点气血、判定失败并送出试炼（考校而非死斗，不致死）。
+var INSIGHT_DELAY = 3000, INSIGHT_NEED = 100000;
+this.trial_insight = function () {
+    var me = this.trial_owner;
+    this.insight_handler = null;
+    if (!me || me.hp <= 0 || me.environment !== this.environment || !WORLD.ZHENYI) return;
+    var innate = me.int || 0, acquired = me.query_prop ? me.query_prop("int") || 0 : 0;
+    if (innate * acquired < INSIGHT_NEED) {
+        me.notify("<hiw>你冥思苦想半天，终究未能领悟其中奥妙。</hiw>");
+        this.clear_trial_timers(); me.end_fight && me.end_fight(); this.end_fight && this.end_fight();
+        WORLD.ZHENYI.fail_trial(me);
+        return this.destroy();
+    }
+    me.send_combat("<hiw>$N手中木剑缓缓递出，平平无奇，却似天地万物尽在这一剑之中，$n避无可避——</hiw>\n", me);
+    var reduce = Math.max(0, Math.min(100, me.diff_sh_per || 0));
+    var dmg = Math.floor(me.max_hp * (100 - reduce) / 100);
+    this.clear_trial_timers(); me.end_fight && me.end_fight(); this.end_fight && this.end_fight();
+    if (dmg >= me.hp) {
+        if (me.hp > 1) me.add_hp(1 - me.hp);
+        me.notify("<hir>你终究没能接下这一剑。</hir>");
+        WORLD.ZHENYI.fail_trial(me);
+    } else {
+        if (dmg > 0) me.add_hp(-dmg);
+        me.notify("<hig>你硬生生接下了这一剑，心中豁然开朗——草木竹石，均可为剑。</hig>");
+        WORLD.ZHENYI.complete_trial(me, this.trial_key, this.trial_id);
+    }
+    return this.destroy();
+};
 this.clear_trial_timers = function () {
+    if (this.insight_handler) { clearTimeout(this.insight_handler); this.insight_handler = null; }
     if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
     if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);
     if (this.v2 && this.v2.strikeHandler) { clearTimeout(this.v2.strikeHandler); this.v2.strikeHandler = null; }

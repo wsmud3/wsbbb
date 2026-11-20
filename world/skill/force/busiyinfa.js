@@ -240,7 +240,7 @@ this.pfm = {
 		enable_skill: "force",
 		distime: 35000,
 		allow_busy: false,
-		query_mp: function (me, level) { return 1200; },
+		mp: 1933,
 		query_desc: function (me, lv) {
 			return "对目标施加不可驱散的「幻身」（战斗结束消失）。链接期间，你对目标的伤害50%转化为气血，目标对你的伤害50%转化为内力。累积死印/生印合计7层时触发归元：清除所有负面状态并回复气血内力。";
 		},
@@ -306,7 +306,7 @@ this.pfm = {
 		enable_skill: "force",
 		distime: 45000,
 		allow_busy: true,
-		query_mp: function (me, level) { return 500; },
+		mp: 2020,
 		query_desc: function (me, lv) {
 			lv = lv || 0;
 			return "逆转经脉，" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内受到的伤害降低" + nisheng_dr(lv) + "%，且改为扣除内力而非气血。结束后回复被扣除的内力，并反噬对手等量内力。";
@@ -366,7 +366,7 @@ this.pfm = {
 		enable_skill: "dodge",
 		distime: 25000,
 		allow_busy: false,
-		query_mp: function (me, level) { return 600; },
+		mp: 1847,
 		query_desc: function (me, lv) {
 			lv = lv || 0;
 			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击。";

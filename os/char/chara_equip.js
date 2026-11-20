@@ -17,6 +17,12 @@ CHARACTER.prototype.set_objects = function () {
 
 }
 
+// 兵刃是否不可被卸下（缴械类绝招统一用它判断）：独孤剑诀装备为剑法且手中持剑（无剑），或使用独孤九剑第四重
+CHARACTER.prototype.weapon_locked = function () {
+    var sw = this.skills && this.skills.sword;
+    if (sw && sw.enable_skill === "dugujianjue" && this.query_weapon_type && this.query_weapon_type() === "sword") return true;
+    return !!(this.attack_skill && this.attack_skill.id === "dugujiujian4");
+};
 CHARACTER.prototype.unequip = function (obj, notsend, recover_time = 0) {
     if (!obj || !obj.is_equipment || !this.equipment) return;
     if (obj.uneq(this, notsend) == false) {

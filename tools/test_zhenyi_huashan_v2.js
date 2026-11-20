@@ -102,7 +102,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
 
     // 房间脚本：利剑阁 / 软剑阁 走一遍
     function loadRoom(file) {
-        const room = { actions: {}, inherits() {}, add_action(c, n, f) { this.actions[c] = f; }, set_npc() {} };
+        const room = { actions: {}, inherits() {}, add_action(c, n, f) { this.actions[c] = f; }, set_npc() {}, set_item() {} };
         new Function("WORLD", "WEAPON_TYPE", fs.readFileSync(path.join(__dirname, "../world/map/jz", file), "utf8")).call(room, WORLD, WEAPON_TYPE);
         return room;
     }
@@ -133,6 +133,14 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     mj.actions.jz_sit.call(mj, w);
     assert.ok(Z.puzzle_solved(w, HS, 4), "卸下兵器后通过");
 
+    // 剑渊谷底：紫薇软剑残片——5 分钟内受到剑魔的伤害降低 20%
+    const jy = loadRoom("jianyuandi.js"), zp = huashan(1);
+    jy.actions.pick_fragment.call(jy, zp);
+    const zw = zp.status.find(x => x.id === "jz_ziwei");
+    assert.ok(zw && zw.duration === 300000 && zw.desc === "一股剑意充斥着丹田，你感到对剑的领悟更深一层！", "拾取残片获得紫薇剑意 5 分钟");
+    assert.strictEqual(zw.on_damage(zp, { is_zhenyi_trial: true, trial_key: "jz", trial_id: 5 }, 1000), 800, "受到剑魔伤害降低 20%");
+    assert.strictEqual(zw.on_damage(zp, { is_zhenyi_trial: true, trial_key: "jz", trial_id: 2 }, 1000), 1000, "其他化身不受影响");
+
     // 无剑虚空：谦卑线点化 + 参悟（不领悟、不放行），骄傲线当场开战
     const wx = loadRoom("wujianxukong.js"), h = huashan(5); delete h.temp.zy_jz_5; delete h.temp.zy_level_jz_5; delete h.temp.zy_active;
     [1, 2, 3, 4].forEach(n => { h.temp["zy_stage_jz_" + n] = 1; });
@@ -158,7 +166,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
 // ---------- 7b. 剑冢五关：解一处机关，现一道化身；五关全过领悟无剑 ----------
 {
     assert.strictEqual(HS.list.length, 1, "华山只剩一道真意");
-    assert.deepStrictEqual(HS.stages.map(x => x.mode), ["precision", "counter", "burst", "endure", "master"]);
+    assert.deepStrictEqual(HS.stages.map(x => x.mode), ["precision", "counter", "burst", "insight", "master"]);
     const me = huashan(1); delete me.temp.zy_jz_1; delete me.temp.zy_level_jz_1; delete me.temp.zy_active;
     me.environment = { parent: { id: "jz" } };
     const pass = n => { delete me.temp.zy_trial_completed; me.temp.zy_trial_active = "jz_" + n; return Z.complete_trial(me, "jz", n); };
@@ -279,11 +287,33 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(/最大气血20%/.test(n.v2_rule_text("burst")) && /万剑归宗（最大气血30%）/.test(n.v2_rule_text("master")), "考题说明数值取自参数");
 
     // endure：剑意冲击
-    timers = []; me = huashan(4); n = npc(); n.init_trial(me, HS, stage(4)); n.environment = me.environment = {};
+    timers = []; me = huashan(4); n = npc(); n.init_trial(me, HS, Object.assign({}, stage(4), { mode: "endure" })); n.environment = me.environment = {};   // 坚持类考法（华山第四关已改为悟性考校，其他门派仍用）
     let h = me.hp; run(10000);
     assert.strictEqual(h - me.hp, Math.floor(me.max_hp * 0.15), "无护体全额冲击");
     me.status.push({ id: "force" }); h = me.hp; run(10000);
     assert.strictEqual(h - me.hp, Math.floor(me.max_hp * 0.15 / 3), "紫气东来护体时冲击减为三分之一");
+
+    // insight：木剑守拙——先天悟性 × 后天悟性 ≥ 10 万才出剑；一剑为最大气血 100%，只受伤害减免影响
+    {
+        const calls = []; const f0 = Z.fail_trial, c0 = Z.complete_trial;
+        Z.fail_trial = m => calls.push("fail"); Z.complete_trial = () => calls.push("done");
+        try {
+            timers = []; me = huashan(4); n = npc(); me.add_hp = function (v) { this.hp += v; return v; }; me.int = 20; me.query_prop = () => 0;
+            n.init_trial(me, HS, stage(4)); n.environment = me.environment = {};
+            run(3000);
+            assert.deepStrictEqual(calls, ["fail"], "悟性不足：领悟失败");
+            assert.ok(me.messages.some(m => /冥思苦想半天，终究未能领悟其中奥妙/.test(m)));
+            calls.length = 0; timers = []; me = huashan(4); n = npc(); me.add_hp = function (v) { this.hp += v; return v; }; me.int = 200; me.query_prop = k => k === "int" ? 500 : 0; me.diff_sh_per = 40;
+            n.init_trial(me, HS, stage(4)); n.environment = me.environment = {};
+            run(3000);
+            assert.deepStrictEqual(calls, ["done"], "悟性足够且接下一剑：通过");
+            assert.strictEqual(me.hp, 1000000 - 600000, "一剑为最大气血 100%，只按伤害减免 40% 降低");
+            calls.length = 0; timers = []; me = huashan(4); n = npc(); me.add_hp = function (v) { this.hp += v; return v; }; me.int = 200; me.query_prop = k => k === "int" ? 500 : 0; me.diff_sh_per = 0;
+            n.init_trial(me, HS, stage(4)); n.environment = me.environment = {};
+            run(3000);
+            assert.ok(calls[0] === "fail" && me.hp === 1, "接不下：留 1 点气血并判定失败");
+        } finally { Z.fail_trial = f0; Z.complete_trial = c0; }
+    }
 
     // 非 v2 门派化身行为不变
     timers = []; me = actor(); me.family = { id: "WUDANG" }; n = npc(); n.init_trial(me, Z.DATA.WUDANG, Z.DATA.WUDANG.list[0]);

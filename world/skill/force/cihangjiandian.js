@@ -84,7 +84,7 @@ this.pfm = {
 		use_type: 2,
 		allow_busy: true,
 		allow_faint: true,
-		mp: 59,
+		mp: 1890,
 		use: function (me, target, lv) {
 			me.send_room("<hio>$N催动慈航剑典，剑心流转，进入心有灵犀之境！</hio>");
 			me.add_status({
@@ -118,7 +118,7 @@ this.pfm = {
 		release_time: 4000,
 		enable_skill: "force",
 		use_type: 2,
-		mp: 20,
+		mp: 2150,
 		query_distime: function (me, lv, isref) {
 			var dis = this.distime;
 			if (!(dis >= 0)) dis = me.gjsd;

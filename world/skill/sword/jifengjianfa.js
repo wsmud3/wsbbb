@@ -98,7 +98,7 @@ this.pfm = {
         enable_skill: "sword",
         weapon_type: WEAPON_TYPE.SWORD,
         release_time: 2000,
-        mp: 30,
+        mp: 1786,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用狂风骤雨？");
             lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
@@ -131,7 +131,7 @@ this.pfm = {
         enable_skill: "sword",
         weapon_type: WEAPON_TYPE.SWORD,
         release_time: 2500,
-        mp: 30,
+        mp: 1847,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用风起云涌？");
             lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）

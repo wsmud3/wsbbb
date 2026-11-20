@@ -74,7 +74,7 @@ this.pfm = {
 		distime: 60000,
 		enable_skill: "force",
 		release_time: 0,
-		mp: 20,
+		mp: 2150,
 		use: function (me, target, lv) {
 			if (!target) { me.notify("你需要指定一个目标。"); return; }
 			me.send_room("<hio>$N" + "催动天魔策——「种魔」！一股魔气直灌$n体内，压制其功力！</hio>", target);
@@ -114,7 +114,7 @@ this.pfm = {
 		distime: 60000,
 		enable_skill: "force",
 		release_time: 0,
-		mp: 20,
+		mp: 2150,
 		use: function (me, target, lv) {
 			me.send_room("<hio>$N" + "催动天魔策——「道心」！魔气内敛，道心通明，战力飙升！</hio>");
 			var boost = 30 + parseInt(lv / 200);
@@ -142,7 +142,7 @@ this.pfm = {
 		distime: 60000,
 		enable_skill: "dodge",
 		release_time: 0,
-		mp: 20,
+		mp: 2150,
 		use: function (me, target, lv) {
 			me.send_room("<hio>$N" + "催动天魔策——「鬼影」！身形化作鬼魅残影，出手必中！</hio>");
 			me.add_status({
@@ -166,7 +166,7 @@ this.pfm = {
 		distime: 20000,
 		enable_skill: "unarmed",
 		release_time: 0,
-		mp: 20,
+		mp: 1803,
 		use: function (me, target, lv) {
 			if (!target) { me.notify("你需要指定一个目标。"); return; }
 			me.send_room("<hiy>$N" + "催动天魔策——「拳罡」！一拳轰出，罡风凛冽！</hiy>", target);
@@ -210,7 +210,7 @@ this.pfm = {
 		distime: 60000,
 		enable_skill: "parry",
 		release_time: 0,
-		mp: 20,
+		mp: 2150,
 		use: function (me, target, lv) {
 			me.send_room("<hio>$N" + "催动天魔策——「补天道」！魔气护体，以彼之道还施彼身！</hio>");
 			var zjBoost = 30 + parseInt(lv / 300);

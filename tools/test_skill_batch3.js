@@ -347,6 +347,20 @@ async function main() {
         assert.ok(!me.skills[id] && !book.zc_skill_id, "重置秘籍才清空");
     });
 
+    await check("独孤剑诀：1000 级面板与绝招数值、无剑不可缴械、上古传承归类", () => {
+        const sk = SKILL.get("dugujianjue");
+        const pr = sk.query_enable_prop(1000).sword;
+        assert.deepStrictEqual([pr.gj, pr.gjsd, pr.add_sh_per, pr.mz_per, pr.bj_per], [3000, 400, 10, 10, 4], "1000 级面板");
+        const me0 = { query_prop() { return 0; } };
+        assert.deepStrictEqual([sk.pfm.jianyi.query_mp(me0, 1000), sk.pfm.jianlai.query_mp(me0, 1000)], [96390, 109650], "1000 级内力消耗");
+        assert.ok(/7秒内.*70%最终伤害/.test(sk.pfm.jianyi.query_desc(null, 1000)) && /飞剑持续9秒.*60%攻击力的真实伤害/.test(sk.pfm.jianlai.query_desc(null, 1000)));
+        assert.ok(sk.is_ultimate && FAMILIES.HUASHAN.skills4.indexOf(sk) >= 0 && FAMILIES.HUASHAN.skills.indexOf(sk) < 0, "列入上古传承而非门派武功");
+        const a = mkUser(); learn(a, { dugujianjue: ["sword"] }, 1000); a.query_weapon_type = () => "sword";
+        assert.ok(a.weapon_locked(), "无剑：持剑时不可被卸下");
+        const z = WORLD.ZHENYI.find_trial(WORLD.ZHENYI.DATA.HUASHAN, 5);
+        assert.ok(z.avatar_name === "独孤求败" && /剑魔/.test(z.avatar_title) && z.avatar_sword === "dugujianjue", "第五关化身为剑魔独孤求败，使独孤剑诀");
+    });
+
     // ---------- 4. 时长上限 ----------
     await check("时长上限：生死逆转 30 秒、幻魔 10 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
         const lv = 10000, a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], wunianchangong: [], zhenyanshouyin: [] }, lv); learn(b, {}, 100); fight(a, b);

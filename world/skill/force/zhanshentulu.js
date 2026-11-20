@@ -82,7 +82,7 @@ this.pfm = {
         use_type: 2,
         allow_busy: true,
         allow_faint: true,
-        mp: 20,
+        mp: 2150,
         use: function (me, target, lv) {
             var boost = 30 + parseInt(lv / 100);
             if (boost > 60) boost = 60;
@@ -118,7 +118,7 @@ this.pfm = {
         release_time: 4000,
         enable_skill: "force",
         use_type: 2,
-        mp: 20,
+        mp: 1977,
         use: function (me, target, lv) {
             if (!target) {
                 me.notify("你需要指定一个目标。");

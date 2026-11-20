@@ -106,9 +106,47 @@ function fbx_send(me, buttons, text, feedback, size) {
     me.send_commands.apply(me, args);
 }
 
+// ── 门派禁地的试炼兑换（不是副本，单独列在最前）：目前只有华山「独孤剑冢」——剑冢五关的重温（扫荡）次数换独孤剑诀残页 ──
+// 次数记在 zy_sweep_<key>（WORLD.ZHENYI 扫荡时累计），已兑换掉的记在 fbx_spent_zy_<key>
+function fbx_zy_entry(me) {
+    var Z = WORLD.ZHENYI, data = Z && Z.family_data && Z.family_data(me);
+    if (!data || !data.sweep || !data.stages) return null;
+    var done = parseInt(me.query_temp(Z.sweep_count_key(data.key), 0)) || 0;
+    var spent = parseInt(me.query_temp("fbx_spent_zy_" + data.key, 0)) || 0;
+    return { data: data, done: done, avail: Math.max(0, done - spent), cost: data.sweep.exchange_cost, piece: data.sweep.piece };
+}
+function fbx_show_zy(me, npc, confirm) {
+    var e = fbx_zy_entry(me);
+    if (!e) return fbx_show_areas(me, npc);
+    var feedback = "";
+    if (confirm) {
+        if (e.avail < e.cost) feedback = "<hir>易直非摊手道：「" + e.data.area + "的次数还差 " + (e.cost - e.avail) + " 次，多去重温几趟吧。」</hir>";
+        else {
+            var got = me.add_obj(e.piece, 1);
+            if (!got) feedback = "<hir>易直非挠头道：「哎呀，这东西一时寻不着。」</hir>";
+            else {
+                me.set_temp("fbx_spent_zy_" + e.data.key, (parseInt(me.query_temp("fbx_spent_zy_" + e.data.key, 0)) || 0) + e.cost);
+                feedback = "<hig>易直非从身后的包袱里摸出" + (got.color_name || got.name) + "，郑重地交到你手上。</hig>";
+                me.notify(feedback);
+                e = fbx_zy_entry(me);
+            }
+        }
+    }
+    var info = fbx_obj_name(e.piece), btn = [];
+    if (e.avail >= e.cost) btn.push("fbx_zyc " + npc.id, e.cost + "次兑换" + info.html);
+    btn.push("fbx " + npc.id, "返回");
+    fbx_send(me, btn, e.data.area + "：已重温 " + e.done + " 次，可用 " + e.avail + " 次。每 " + e.cost + " 次可兑换一份" + info.html + "。", feedback);
+}
+
 // 一级：副本（难度）列表
 function fbx_show_areas(me, npc, feedback) {
     var list = fbx_entries(me, npc), all = fbx_all_areas();
+    var zy = npc._fbx_all ? fbx_zy_entry(me) : null;
+    if (zy && zy.done > 0) {
+        var btn0 = ["fbx_zy " + npc.id, zy.data.area];
+        for (var z = 0; z < list.length; z++) btn0.push("fbx_a" + (list[z][0] * 2 + list[z][1]) + " " + npc.id, fbx_label(all[list[z][0]], list[z][1]));
+        return fbx_send(me, btn0, "一个神秘的商人，可以帮你兑换你一直想要却得不到的道具。<br>你要兑换哪处的道具？", feedback, "lg");
+    }
     if (!list.length) {
         return fbx_send(me, [], npc._fbx_all
             ? "易直非翻了翻账本，摇头道：「你还没在哪个能换东西的副本里留下过次数，先去跑几趟吧。」"
@@ -212,6 +250,10 @@ WORLD.FB_EXCHANGE = {
         npc._fbx_all = !!(opts && opts.all);
         // 赌场易直非同时有「神器兑换」，所以那里叫「副本兑换」以示区分；副本入口的易直非直接叫「兑换」
         npc.add_action("fbx", npc._fbx_all ? "副本兑换" : "兑换", function (me) { fbx_show_areas(me, this); });
+        if (npc._fbx_all) {
+            npc.add_action("fbx_zy", null, function (me) { fbx_show_zy(me, this, false); });
+            npc.add_action("fbx_zyc", null, function (me) { fbx_show_zy(me, this, true); });
+        }
         for (var i = 0; i < FBX_MAX_AREA * 2; i++) {
             (function (code) {
                 npc.add_action("fbx_a" + code, null, function (me) { fbx_show_cats(me, this, code); });

@@ -84,7 +84,7 @@ this.pfm = {
         distime: 20000,
         enable_skill: "blade",
         weapon_type: WEAPON_TYPE.BLADE,
-        mp: 20,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
+        mp: 1803,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
         release_time: 4000,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用绝招？");
@@ -131,7 +131,7 @@ this.pfm = {
         distime: 20000,
         enable_skill: "blade",
         weapon_type: WEAPON_TYPE.BLADE,
-        mp: 20,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
+        mp: 1803,   // 与多数 6 品绝招一致（固定 mp 20，引擎按等级放大：20 + lv*20/20）
         release_time: 4000,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用绝招？");

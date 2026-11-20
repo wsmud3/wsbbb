@@ -12,5 +12,14 @@ this.set_item("jz_ziweicanpian", "紫薇软剑残片", "软剑虽已锈蚀，残
 this.add_action("pick_fragment", "拾取残片", function (me) {
     if (me.query_temp("jz_jianyuan_done")) return me.notify("你已经拾取过残片了。");
     me.set_temp("jz_jianyuan_done", 1);
-    me.notify("<hig>你小心翼翼地拾起紫薇软剑的残片。一股「紫薇剑意」涌入体内——在最终决战中，你对独孤剑意的暴击率将提升。</hig>");
+    me.notify("<hig>你小心翼翼地拾起紫薇软剑的残片。一股剑意充斥着丹田，你感到对剑的领悟更深一层！</hig>");
+    // 紫薇剑意：5 分钟内受到剑魔（剑冢第五关独孤求败）的伤害降低 20%（含真实伤害）
+    me.add_status({
+        id: "jz_ziwei", name: "紫薇剑意", desc: "一股剑意充斥着丹田，你感到对剑的领悟更深一层！",
+        duration: 300000, override: 2, no_clear: true,
+        on_damage: function (owner, from, sh) {
+            if (from && from.is_zhenyi_trial && from.trial_key === "jz" && from.trial_id === 5) return Math.floor(sh * 0.8);
+            return sh;
+        }
+    });
 });

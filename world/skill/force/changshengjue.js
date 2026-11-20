@@ -87,7 +87,7 @@ this.pfm = {
 								enable_skill: "force",
 								use_type: 2,
 								allow_busy: true,
-								mp: 20,
+								mp: 2150,
 								use: function (me, target, lv) {
 												me.send_room("<hio>$N催动长生诀，沟通天地之力，周身笼罩在耀眼的光芒之中！</hio>");
 												me.do_recover(me.max_hp);
@@ -114,7 +114,7 @@ this.pfm = {
 								distime: 60000,
 								release_time: 4000,
 								enable_skill: "force",
-								mp: 20,
+								mp: 2150,
 								use: function (me, target, lv) {
 												me.send_room("<hio>$N催动长生诀混沌之力，周身笼罩在混沌真气之中！</hio>");
 												me.add_status({
