@@ -88,7 +88,8 @@ var huanmo_usable = function (me, slot, pfm, lv) {
 	if (pfm.enable_skill && pfm.enable_skill !== slot) return false;          // 必须是装备在这个位置上能用的绝招
 	if (slot === "throwing" && !(me.can_throwing && me.can_throwing())) return false;
 	var need = pfm.weapon_type || HUANMO_WEAPON_SLOT[pfm.enable_skill || slot];
-	if (need && need !== me.query_weapon_type()) return false;                // 武器类型不对（如没装备鞭却出鞭法）
+	if (need && need !== me.query_weapon_type()
+		&& !(WORLD.ZHENYI && WORLD.ZHENYI.weapon_free && WORLD.ZHENYI.weapon_free(me, need))) return false; // 华山真意「无剑·无招」                // 武器类型不对（如没装备鞭却出鞭法）
 	if (me.is_busy && !pfm.allow_busy) return false;
 	return true;
 };

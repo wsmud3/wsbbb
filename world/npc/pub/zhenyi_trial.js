@@ -10,7 +10,7 @@ this.set({
 //   counter   软剑：剑势不断叠加，须绝招后 4 秒内普攻命中卸势（对应「缠兵」）
 //   burst     重剑：化身持续回元，须以绝招命中打断（对应「内伤」）；并有蓄力重击（按躲闪判定）
 //   endure    木剑：周期剑意冲击，有护体状态时大幅减免（对应「护体」）
-//   master    无剑：剑罡 + 重击 + 低血时万剑归宗（综合考校，逼出「无剑之境」）
+//   master    无剑：剑罡 + 重击 + 低血时万剑归宗（综合考校）
 var V2 = {
     GUARD_EVERY: 15000, GUARD_REDUCE: 0.8, GUARD_HITS: 3, GUARD_WINDOW: 5000,
     MOMENTUM_MAX: 10, MOMENTUM_STEP: 0.08, UNBIND_WINDOW: 4000,

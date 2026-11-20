@@ -94,12 +94,14 @@ this.enter = function (me, sk, pfmid) {
         return me.notify("你没有装备暗器，无法使用" + name);
     }
 
+    // 华山真意「无剑·无招」：剑法绝招不拘兵器
+    var weapon_free = function (need) { return WORLD.ZHENYI && WORLD.ZHENYI.weapon_free && WORLD.ZHENYI.weapon_free(me, need); };
     if (pfm.weapon_type) {
-        if (pfm.weapon_type != me.query_weapon_type())
+        if (pfm.weapon_type != me.query_weapon_type() && !weapon_free(pfm.weapon_type))
             return me.notify("你装备的武器不对，无法使用" + name);
     } else {
         let need_weapon = WEAPON[sk];
-        if (need_weapon && need_weapon !== me.query_weapon_type()) {
+        if (need_weapon && need_weapon !== me.query_weapon_type() && !weapon_free(need_weapon)) {
             return me.notify("你装备的武器不对，无法使用" + name);
         }
         // if (!NOWEAPON[pfm.enable_skill]) {

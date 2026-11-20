@@ -229,6 +229,8 @@ CHARACTER.prototype.query_auto_pfm_skills = function () {
     var bases = ["", "force", "unarmed", "dodge", "parry", "bite", "throwing"];
     var weapon = this.query_weapon_type(), base_type = null;
     if (weapon != WEAPON_TYPE.NONE) bases[0] = weapon;
+    // 华山真意「无剑·无招」：不拘兵器施展剑法绝招
+    if (bases[0] !== "sword" && WORLD.ZHENYI && WORLD.ZHENYI.weapon_free && WORLD.ZHENYI.weapon_free(this, "sword")) bases.push("sword");
     if (this.is_player && !this.throwing_name()) {
         bases[6] = "";
     }
@@ -286,6 +288,8 @@ CHARACTER.prototype.init_pfms = function () {
     var bases = ["", "force", "unarmed", "dodge", "parry", "bite", "throwing"];
     var weapon = this.query_weapon_type();
     if (weapon !== WEAPON_TYPE.NONE) bases[0] = weapon;
+    // 华山真意「无剑·无招」：不拘兵器施展剑法绝招
+    if (bases[0] !== "sword" && WORLD.ZHENYI && WORLD.ZHENYI.weapon_free && WORLD.ZHENYI.weapon_free(this, "sword")) bases.push("sword");
     if (this.is_player && !this.throwing_name()) {
         bases[6] = "";
     }

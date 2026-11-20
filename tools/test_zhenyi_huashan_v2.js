@@ -137,25 +137,20 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(!me._zy_armor);
 }
 
-// ---------- 6. 无剑·无招：无剑之境 ----------
+// ---------- 6. 无剑·无招：不拘兵器施展剑法绝招 ----------
 {
-    const me = huashan(5), foe = actor({ is_player: false }), v = Z.values_for(HS, intent(5), 1);
-    me.status.push({ id: "busy", downside: true });
+    assert.strictEqual(intent(5).effect, "jz_swordless");
+    assert.ok(Z.describe(HS, intent(5), 1).startsWith("灭烛见真火，忘剑得神兵。"), "说明带典故");
+    assert.ok(Z.weapon_free(huashan(5), "sword"), "启用无剑：剑法绝招不拘兵器");
+    assert.ok(!Z.weapon_free(huashan(5), "blade"), "只放开剑，刀等其他兵器照旧");
+    assert.ok(!Z.weapon_free(huashan(4), "sword"), "启用其他真意时不生效");
+    const lv0 = huashan(5); delete lv0.temp.zy_level_jz_5; delete lv0.temp.zy_jz_5;
+    assert.ok(!Z.weapon_free(lv0, "sword"), "未获得该真意不生效");
+    // 旧版低血领域已移除：跌破 20% 不再清负面、不再还击
+    const me = huashan(5), foe = actor({ is_player: false });
+    me.hp = 250000; me.status.push({ id: "busy", downside: true });
     Z.modify_damage(me, foe, 100000);
-    assert.ok(!me._zy_domain_used, "未跌破阈值不触发");
-    me.hp = 250000;
-    Z.modify_damage(me, foe, 100000);
-    assert.ok(me._zy_domain_used, "跌破 20% 触发领域");
-    assert.strictEqual(me.cleared, true, "clear_downside 必须传 true 才会真正清除负面");
-    assert.ok(me.status.some(s => s.id === "zy_domain" && s.prop.ig_control), "领域期间免疫控制");
-    assert.ok(!me.status.some(s => s.id === "busy"), "负面状态已清除");
-    assert.strictEqual(foe.taken[0].sh, Math.floor(me.gj * v.counter / 100), "受击自动还击");
-    clock += 1001; Z.modify_damage(me, foe, 1);
-    assert.strictEqual(foe.taken.length, 2, "每秒至多还击一次");
-    clock += v.duration * 1000; Z.modify_damage(me, foe, 1);
-    assert.strictEqual(foe.taken.length, 2, "领域到期不再还击");
-    Z.on_combat_end(me);
-    assert.ok(!me._zy_domain_used, "每场战斗重置");
+    assert.ok(me.status.some(s => s.id === "busy") && !foe.taken.length, "不再触发旧版无剑之境");
 }
 
 // ---------- 7. 禁地机关 ----------
@@ -187,7 +182,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     const lj = loadRoom("lijiange.js"), p = huashan(1); delete p.temp.zy_jz_1;
     lj.actions.jz_walls.call(lj, p);
     const answer = p.temp.zy_pzs_jz_1, wrong = ["east", "south", "west", "north"].find(d => d !== answer);
-    assert.ok(p.messages.pop().includes("微光透出"), "察看四壁时给出正确提示");
+    assert.ok(p.messages.pop().includes("径直穿过"), "察看四壁时给出正确提示");
     assert.strictEqual(p.commands.pop().length, 8, "给出四个方向按钮");
     assert.strictEqual(lj.zy_puzzle(p, wrong), false);
     assert.ok(p.hp < p.max_hp, "选错受剑气所伤");
@@ -298,7 +293,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(Z.get_active(low), "GM 开启旁路后视为满足条件");
 }
 
-console.log("华山 v2 通过：数值框架（十重≤2.5倍一重）、封招/缠兵/内伤/剑意护体/无剑之境、五处禁地机关、化身考题机制、GM 测试旁路均正常；旧门派数值与化身未变。");
+console.log("华山 v2 通过：数值框架（十重≤2.5倍一重）、封招/缠兵/内伤/剑意护体/无剑不拘兵器、五处禁地机关、化身考题机制、GM 测试旁路均正常；旧门派数值与化身未变。");
 
 // ---------- 九阳护体持续时间上限 ----------
 {

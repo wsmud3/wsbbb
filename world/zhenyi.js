@@ -23,7 +23,7 @@
                 zy(2, "软剑·缠丝", "缠兵", "软剑回环", "counter", ["dugujiujian/poqi", "dugujiujian2/poqi", "kuangfengkuaijian/duoming", "kuangfengkuaijian2/duoming", "huashanjianfa/jiang"], "jz_bind"),
                 zy(3, "重剑·崩岳", "内伤", "重剑负山", "burst", ["dugujiujian/poqi", "dugujiujian2/poqi", "huashanjianfa/jiang"], "jz_rupture"),
                 zy(4, "木剑·养意", "护体", "木剑守拙", "endure", ["zixiashengong/xi", "zixiashengong2/xi"], "jz_armor"),
-                zy(5, "无剑·无招", "剑境", "无剑胜有", "master", [], "jz_domain")
+                zy(5, "无剑·无招", "剑境", "无剑胜有", "master", [], "jz_swordless")
             ]
         },
         WUDANG: {
@@ -187,7 +187,8 @@
             case "jz_bind": return { window: 4, duration: 5, weaken: percentValue(0.15 * s), reflect: percentValue(0.10 * s), cooldown: 15 };
             case "jz_rupture": return { duration: 8, pct: 2, cap: percentValue(1.8 * s), cooldown: 25 };
             case "jz_armor": return { shield: percentValue(0.08 * s), duration: 10 };
-            case "jz_domain": return { threshold: 20, duration: 10, counter: percentValue(0.40 * s) };
+            // 无剑：纯机制（不拘兵器施展剑法绝招），没有随重数成长的数值。
+            case "jz_swordless": return {};
             case "jz_edge": return { damage: percentValue((0.025 + level * 0.004) * s), ignore: percentPointValue((5 + level) * s) };
             case "jz_counter": return { damage: percentValue((0.08 + level * 0.008) * s) };
             case "jz_heavy": return { damage: percentValue((0.035 + level * 0.004) * s) };
@@ -300,7 +301,7 @@
             case "jz_bind": return "剑法绝招成功后" + secondsText(v.window) + "内以普通攻击命中，使目标陷入缠兵" + secondsText(v.duration) + "：其对你造成的伤害降低" + percentText(v.weaken) + "，且每次攻击你都会被反震自身攻击力" + percentText(v.reflect) + "的伤害（按其防御结算，每秒至多一次）；" + secondsText(v.cooldown) + "冷却。";
             case "jz_rupture": return "破气诀或剑掌五连环命中后，目标受内伤" + secondsText(v.duration) + "：其每施展一次绝招，失去最大气血" + percentText(v.pct) + "（不超过你攻击力的" + percentText(v.cap) + "，无视防御）；" + secondsText(v.cooldown) + "冷却。";
             case "jz_armor": return "紫气东来成功后，剑意护体" + secondsText(v.duration) + "，吸收相当于最大气血" + percentText(v.shield) + "的伤害。";
-            case "jz_domain": return "每场战斗首次气血低于" + percentText(v.threshold) + "时，清除负面状态并进入无剑之境" + secondsText(v.duration) + "：免疫控制，每次受击自动还击攻击力" + percentText(v.counter) + "的伤害（按其防御结算，每秒至多一次）。";
+            case "jz_swordless": return "灭烛见真火，忘剑得神兵。入无剑之境：无论手持何种兵器或空手，皆可施展已装备的剑法绝招。";
             case "jz_edge": return "绑定绝招命中时，技能伤害提高" + percentText(v.damage) + "，忽视防御提高" + percentText(v.ignore) + "。";
             case "jz_counter": return "成功招架后获得10秒回锋；下一次技能伤害提高" + percentText(v.damage) + "，触发后消耗。";
             case "jz_heavy": return "目标当前气血高于70%时，技能伤害提高" + percentText(v.damage) + "。";
@@ -1152,7 +1153,7 @@
         if (caster.send_combat) caster.send_combat("<hir>$N强运绝招，牵动内伤，口中溢出一缕鲜血！</hir>\n");
     }
     var reflecting = false;
-    // 华山 v2 的受击处理：缠兵（攻击者身上）、剑意护体、无剑之境。
+    // 华山 v2 的受击处理：缠兵（攻击者身上）、剑意护体。
     function jzDefense(me, from, sh, active) {
         var now = Date.now();
         var bind = from && from._zy_bind;
@@ -1176,22 +1177,6 @@
                 if (armor.amount <= 0) { delete me._zy_armor; if (me.remove_status) me.remove_status("zy_armor"); me.notify && me.notify("<hiy>你周身的护体剑意被击散了。</hiy>"); }
             }
         }
-        if (active && active.intent.effect === "jz_domain" && sh > 0) {
-            var v = active.values;
-            if (!me._zy_domain_used && me.max_hp && (me.hp - sh) / me.max_hp < v.threshold / 100) {
-                me._zy_domain_used = true;
-                me._zy_domain_until = now + v.duration * 1000;
-                if (me.clear_downside) me.clear_downside(true);
-                if (me.add_status) me.add_status({ id: "zy_domain", name: "无剑之境", desc: "免疫控制，受击自动还击", duration: v.duration * 1000, override: 2, prop: { ig_control: 1 } });
-                if (me.send_combat) me.send_combat("<him>$N身形一定，手中有剑似无剑——草木竹石，皆可为剑！</him>\n");
-            }
-            if (me._zy_domain_until && now < me._zy_domain_until && from && from.hp > 0 && !reflecting &&
-                !(me._zy_domain_last && now - me._zy_domain_last < 1000)) {
-                me._zy_domain_last = now;
-                reflecting = true;
-                try { from.damage(Math.floor((me.gj || 0) * v.counter / 100), me, 0, { kind: "reflect" }); } finally { reflecting = false; }
-            }
-        }
         return sh;
     }
     function onParry(me) {
@@ -1207,7 +1192,7 @@
         if (me && me.is_zhenyi_trial && me.trial_on_damage) sh = me.trial_on_damage(from, sh);
         var active = getActive(me);
         // 缠兵记录在攻击者身上、护体记录在自身，与当前启用项无关，须在早退前结算。
-        if (me && (me._zy_armor || (from && from._zy_bind) || (active && active.intent.effect === "jz_domain"))) sh = jzDefense(me, from, sh, active);
+        if (me && (me._zy_armor || (from && from._zy_bind))) sh = jzDefense(me, from, sh, active);
         if (!active || !(sh > 0)) return Math.max(0, sh);
         var e = active.intent.effect, v = active.values, reduction = 0;
         if (e === "jz_wood" && me.query_temp("zy_wood_guard")) reduction = v.reduction / 100;
@@ -1230,10 +1215,16 @@
         }
         return Math.max(0, sh);
     }
+    // 无剑·无招：启用期间，需要剑的绝招不再要求手中持剑（任何兵器或空手均可）。其他兵器的绝招不受影响。
+    function weaponFree(me, need) {
+        if (need !== "sword" || !me) return false;
+        var active = getActive(me);
+        return !!(active && active.intent.effect === "jz_swordless");
+    }
     function onKill(me) { var active = getActive(me); if (active && active.intent.effect === "ss_debt") me.set_temp("zy_debt", 1, 120000); }
     function onCombatEnd(me) {
         clearCombatState(me); me.remove_temp("zy_flying"); me.remove_temp("zy_thunder");
-        // 无剑之境每场战斗一次；护体与各类运行时标记随战斗结束清理。
+        // 护体与各类运行时标记随战斗结束清理（旧版无剑之境的标记一并清掉）。
         delete me._zy_domain_used; delete me._zy_domain_until; delete me._zy_domain_last;
         delete me._zy_armor; delete me._zy_bind; delete me._zy_rupture; delete me._zy_seal_hits;
     }
@@ -1243,7 +1234,7 @@
         family_data: familyData, find_by_key: findDataByKey, find_intent: findIntent, migrate: migrate,
         public_owner: publicOwner, is_public_owner: function (owner) { return typeof owner === "string" && owner.indexOf("zhenyi_public:") === 0; },
         allow_public_npc: allowPublicNpc, is_trial_owner: isTrialOwner, is_in_trial: isInTrial, trial_stats: trialStats,
-        grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent,
+        grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent, weapon_free: weaponFree,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,

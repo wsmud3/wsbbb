@@ -262,6 +262,29 @@ async function main() {
         assert.ok(seen[6] && seen[2], "两种层数都覆盖到");
     });
 
+    await check("华山真意「无剑·无招」：空手或持其他兵器也能施展剑法绝招（手动 / 自动出招）", () => {
+        const mk = (active, weaponType) => { const a = mkUser(), b = mkUser(); a.family = FAMILIES.HUASHAN; a.temp.wd100 = 1;
+            learn(a, { dugujiujian: ["sword", "parry"] }, 1000); learn(b, {}, 100); fight(a, b);
+            a.environment = b.environment = { items: [a, b], send_room() {}, item_changed() {} }; b.max_hp = b.hp = 1e12;
+            if (weaponType) a.query_weapon_type = () => weaponType;
+            WORLD.ZHENYI.migrate(a);
+            if (active) { a.set_temp("zy_jz_5", 1); a.set_temp("zy_level_jz_5", 1); a.set_temp("zy_active", "jz_5"); }
+            return { a, b }; };
+        const cmd = Object.values(WORLD.COMMANDS).find(c => c.command === "perform");
+        const pid = Object.keys(SKILL.get("dugujiujian").pfm)[0];
+        let { a } = mk(false);
+        cmd.enter(a, "sword", pid);
+        assert.ok(!a.query_temp("pfm/sword/" + pid), "未启用时空手不能施展剑法绝招");
+        for (const wt of [null, "blade"]) {
+            ({ a } = mk(true, wt));
+            cmd.enter(a, "sword", pid);
+            assert.ok(a.query_temp("pfm/sword/" + pid), (wt || "空手") + "：启用后可手动施展剑法绝招");
+            a.auto_skills = null; a.init_pfms();
+            assert.ok(a.auto_skills.some(x => x.type === "sword"), "自动出招包含剑法绝招");
+            assert.ok(a.query_auto_pfm_skills().some(x => x.type === "sword"), "自动出招配置面板列出剑法绝招");
+        }
+    });
+
     // ---------- 4. 时长上限 ----------
     await check("时长上限：生死逆转 30 秒、幻魔 10 秒，破碎/闭口禅/无念/不死法印/修罗之力 10 秒", () => {
         const lv = 10000, a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], wunianchangong: [], zhenyanshouyin: [] }, lv); learn(b, {}, 100); fight(a, b);
