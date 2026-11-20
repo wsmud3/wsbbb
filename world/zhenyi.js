@@ -300,7 +300,7 @@
         var data = findDataByKey(key);
         if (data && data.stages) {
             var st = findTrial(data, id);
-            if (st && !stageCleared(me, data, id)) offerStage(me, st, "<him>机关已解。剑意自四下汇聚，凝成一道人影拦在前路——【" + st.trial + "】的武意化身现身了。</him>");
+            if (st && !stageCleared(me, data, id) && !opts.no_offer) offerStage(me, st, "<him>机关已解。剑意自四下汇聚，凝成一道人影拦在前路——【" + st.trial + "】的武意化身现身了。</him>");
             return true;
         }
         var intent = findIntent(data, id);
@@ -575,6 +575,35 @@
         if (!area || !area.first) return me.notify("此路暂时不通。"), false;
         if (area.on_enter && area.on_enter(me) === false) return false;
         return me.moveto(area.first, me.name + "沿着小路走远了。", me.name + "走了过来。") !== false;
+    }
+    // 可存档的限时增益（如剑冢「参悟」）：到期时间记在会存档的 temp 上，状态只负责显示与属性；
+    // 下线不会丢，登录 / 重连时按剩余时间重新挂上，到点自然消失。与门派鼓舞同理。
+    var TIMED_BUFFS = {
+        jz_canwu: { name: "参悟", desc: "剑魔点化，心有所悟：悟性+500，练习、学习、打坐效率提高100%",
+            prop: { int: 500, lianxi_per: 100, study_per: 100, dazuo_per: 100 } }
+    };
+    function timedBuffKey(id) { return "zy_buff_" + id; }
+    function applyTimedBuff(me, id, ms) {
+        var def = TIMED_BUFFS[id];
+        if (!def || !(ms > 0) || !me.add_status) return false;
+        if (me.remove_status && me.query_status && me.query_status(id)) me.remove_status(id, true);
+        var prop = {};
+        for (var k in def.prop) prop[k] = def.prop[k];
+        me.add_status({ id: id, name: def.name, desc: def.desc, prop: prop, duration: ms, no_clear: true, override: 2 });
+        return true;
+    }
+    function grantTimedBuff(me, id, ms) {
+        if (!TIMED_BUFFS[id]) return false;
+        me.set_temp(timedBuffKey(id), 1, ms);
+        return applyTimedBuff(me, id, ms);
+    }
+    function restoreTimedBuffs(me) {
+        if (!me || !me.temp) return;
+        for (var id in TIMED_BUFFS) {
+            var rec = me.temp[timedBuffKey(id)];
+            var left = rec && rec.e ? rec.e - Date.now() : 0;
+            if (left > 0 && !(me.query_status && me.query_status(id))) applyTimedBuff(me, id, left);
+        }
     }
     function getLevel(me, key, id) {
         if (!me.query_temp(acquiredKey(key, id), 0)) return 0;
@@ -1271,7 +1300,8 @@
         allow_public_npc: allowPublicNpc, is_trial_owner: isTrialOwner, is_in_trial: isInTrial, trial_stats: trialStats,
         grade_for_level: gradeForLevel, values_for: valuesFor, describe: describeIntent, weapon_free: weaponFree,
         check_unlock: checkUnlock, can_enter_area: canEnterArea, can_enter_hub: canEnterHub, enter_from_hub: enterFromHub,
-        HUB_JD: HUB_JD, HUB_AREA: HUB_AREA, migrate_jd_layout: migrateJdLayout, get_level: getLevel, get_active: getActive,
+        HUB_JD: HUB_JD, HUB_AREA: HUB_AREA, migrate_jd_layout: migrateJdLayout,
+        grant_timed_buff: grantTimedBuff, restore_timed_buffs: restoreTimedBuffs, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,
         confirm_trial: confirmTrial, cancel_trial: cancelTrial,

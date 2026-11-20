@@ -274,6 +274,8 @@ if (!USER._sws_orig_check_unlock) {
         // 先迁移禁地列表位布局，再按新位置自动解锁，避免旧版第 3 位（武当禁地）被误当成山外山。
         try { if (WORLD.ZHENYI && WORLD.ZHENYI.migrate_jd_layout) WORLD.ZHENYI.migrate_jd_layout(this); } catch (e) {}
         try { sws_check_unlock(this); } catch (e) {}
+        // 存档型限时增益（如剑冢「参悟」）：登录 / 重连时按剩余时间重新挂上
+        try { if (WORLD.ZHENYI && WORLD.ZHENYI.restore_timed_buffs) WORLD.ZHENYI.restore_timed_buffs(this); } catch (e) {}
         return USER._sws_orig_check_unlock.apply(this, arguments);
     };
 }
