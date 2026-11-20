@@ -10,6 +10,8 @@ this.set({
 
 this.add_action("jz_dugu_talk", "上前拜见", function (me) {
     if (!WORLD.ZHENYI) return false;
+    // 更新前已通关剑冢、尚未领过首通奖励的角色在此补领
+    if (WORLD.ZHENYI.claim_first_clear_reward(me)) me.notify("<hig>独孤求败微微颔首：「当年你闯过剑冢，我还欠你一份东西。」</hig>");
     if (WORLD.ZHENYI.stage_cleared(me, "jz", 5)) {
         return me.notify("独孤求败望着你，微微颔首：「剑已在你心中，去吧。」");
     }

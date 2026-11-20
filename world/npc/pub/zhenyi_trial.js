@@ -115,8 +115,8 @@ this.init_trial = function (player, data, intent) {
     if (this.trial_v2 && gjScale && gjScale !== 1) this.gj = Math.floor(this.gj * gjScale);
     this.base_gj = this.gj;
 
-    var deadline = player.query_temp("zy_trial_deadline", 0);
-    if (!deadline) {
+    var deadline = stats.timeout > 0 ? player.query_temp("zy_trial_deadline", 0) : 0;   // timeout 0 = 不设时限
+    if (!deadline && stats.timeout > 0) {
         deadline = Date.now() + stats.timeout;
         player.set_temp("zy_trial_deadline", deadline);
     }
@@ -126,7 +126,7 @@ this.init_trial = function (player, data, intent) {
         this.do_kill = function () { return false; };
         this.insight_handler = this.call_out(this.trial_insight, INSIGHT_DELAY);
     }
-    this.trial_timeout_handler = this.call_out(this.trial_timeout, Math.max(1, deadline - Date.now()));
+    if (deadline) this.trial_timeout_handler = this.call_out(this.trial_timeout, Math.max(1, deadline - Date.now()));
     this.trial_tick_handler = this.call_out(this.trial_tick, 5000);
     if (this.trial_v2) {
         this.v2 = { guard: false, nextGuard: Date.now() + 5000, hits: [], momentum: 0, lastPfmHit: 0,
@@ -134,6 +134,18 @@ this.init_trial = function (player, data, intent) {
         if (this.trial_mode === "precision" || this.trial_mode === "master") this.v2.nextGuard = Date.now() + 3000;
         if (!intent.is_stage) player.notify("<hiy>" + this.v2_rule_text(this.trial_mode) + "</hiy>");   // 剑冢五关不在开场念规则
     }
+    // 关卡指定的固定面板（最终 boss 剑魔）：不套攻击 / 气血系数
+    if (intent.avatar_stats) {
+        var as = intent.avatar_stats;
+        if (as.add_sh_per && this.add_prop) this.add_prop("add_sh_per", as.add_sh_per - (this.query_prop("add_sh_per") || 0));   // 补到总值
+        if (as.diff_downside_per && this.add_prop) this.add_prop("diff_downside_per", as.diff_downside_per);
+        this.recount();
+        if (as.bj && this.add_prop) { this.add_prop("bj_per", as.bj - (this.bj || 0)); this.recount(); }
+        if (as.gj) this.gj = this.base_gj = as.gj;
+        if (as.max_hp) this.max_hp = this.hp = as.max_hp;
+        if (as.max_mp) this.max_mp = this.mp = as.max_mp;
+    }
+    if (this.trial_mode === "jianmo") this.jianmo_start();
 };
 
 function pct(v) { return Math.round(v * 100) + "%"; }
@@ -147,6 +159,7 @@ this.v2_rule_text = function (mode) {
 };
 this.v2_mode_text = function (mode, strike) {
     if (mode === "insight") return "化身不与你相斗，只考校你的悟性。";
+    if (mode === "jianmo") return "剑魔每" + sec(JIANMO.GUARD_EVERY) + "凝聚一次剑罡（持续" + sec(JIANMO.GUARD_TIME) + "，化解一切伤害），剑罡期间连中" + JIANMO.BREAK_HITS + "次可将其击碎，" + sec(JIANMO.BREAK_CD) + "内不再凝聚；气血每降低" + pct(JIANMO.FINAL_STEP) + "施展一次万剑归宗，令你迟钝。";
     if (mode === "precision") return "化身会周期凝聚剑罡（受到伤害降低" + pct(V2.GUARD_REDUCE) + "），须在" + sec(V2.GUARD_WINDOW) + "内连续命中" + V2.GUARD_HITS + "次方能破罡。";
     if (mode === "counter") return "化身剑势每5秒增强一层（每层伤害+" + pct(V2.MOMENTUM_STEP) + "），须在绝招命中后" + sec(V2.UNBIND_WINDOW) + "内以普通攻击命中，方能卸去全部剑势。";
     if (mode === "burst") return "化身每5秒回复" + pct(V2.REGEN_PCT) + "气血，绝招命中可震伤其脏腑、" + sec(V2.REGEN_BLOCK) + "内无法回元；它还会蓄力施展重击（最大气血" + strike + "），蓄力时以绝招命中可将其打断，身法足够灵动也能躲开。";
@@ -277,7 +290,71 @@ this.trial_insight = function () {
     }
     return this.destroy();
 };
+// —— 剑魔（剑冢第五关·独孤求败）——
+// 剑罡：每 10 秒凝聚一次、持续 5 秒，特殊免伤 +200%（不计入软上限），期间一切伤害都被化解；
+//       剑罡期间被打中 10 次即被击碎，1 分钟内不再凝聚。
+// 万剑归宗：气血每降低 20%（80% / 60% / 40% / 20%）施展一次，令挑战者陷入「迟钝」。
+var JIANMO = { GUARD_EVERY: 10000, GUARD_TIME: 5000, GUARD_DR: 200, BREAK_HITS: 10, BREAK_CD: 60000,
+    FINAL_STEP: 0.2, SLOW_TIME: 10000, SLOW_PER: 50 };
+this.jianmo_start = function () {
+    var now = Date.now();
+    this.jm = { guard: false, guardEnd: 0, nextGuard: now + JIANMO.GUARD_EVERY, cdUntil: 0, hits: 0, finalAt: 1 - JIANMO.FINAL_STEP };
+    this.jm_handler = this.call_out(this.jianmo_tick, 500);
+};
+this.jianmo_tick = function () {
+    this.jm_handler = null;
+    var st = this.jm, now = Date.now();
+    if (!st || this.hp <= 0) return;
+    if (st.guard && now >= st.guardEnd) this.jianmo_guard_off();
+    if (!st.guard && now >= st.nextGuard && now >= st.cdUntil) {
+        st.guard = true; st.hits = 0; st.guardEnd = now + JIANMO.GUARD_TIME; st.nextGuard = now + JIANMO.GUARD_EVERY;
+        this.add_status({ id: "jianmo_jiangang", name: "剑罡", desc: "剑罡护体，特殊免伤+" + JIANMO.GUARD_DR + "%",
+            duration: JIANMO.GUARD_TIME, override: 2, no_diff: true, prop: { diff_sh_per2: JIANMO.GUARD_DR } });
+        this.send_room("<hiy>$N周身剑罡流转，寻常招式再难伤他分毫！</hiy>");
+    }
+    this.jm_handler = this.call_out(this.jianmo_tick, 500);
+};
+this.jianmo_guard_off = function () {
+    if (!this.jm) return;
+    this.jm.guard = false; this.jm.hits = 0;
+    this.remove_status("jianmo_jiangang", true);
+};
+// 剑罡期间：任何伤害（含真实伤害）都被化解，每一下计一次；满 10 次击碎剑罡并压制 1 分钟
+this.jianmo_absorb = function (from) {
+    var st = this.jm;
+    if (!st || !st.guard) return false;
+    var me = this.trial_owner;
+    if (from && from.notify) from.notify("<hiy>独孤求败身上涌现出剑罡，化解了你这一招。</hiy>");
+    if (++st.hits >= JIANMO.BREAK_HITS) {
+        this.jianmo_guard_off();
+        st.cdUntil = Date.now() + JIANMO.BREAK_CD; st.nextGuard = st.cdUntil;
+        this.send_room("<hic>剑罡在连绵攻势下轰然碎裂，独孤求败一时再难凝聚剑罡！</hic>");
+    }
+    return true;
+};
+// 万剑归宗：每降 20% 气血一次，给挑战者上「迟钝」
+this.jianmo_check_final = function () {
+    var st = this.jm, me = this.trial_owner;
+    if (!st || !me || this.hp <= 0) return;
+    while (st.finalAt > 0 && this.hp <= this.max_hp * st.finalAt) {
+        st.finalAt -= JIANMO.FINAL_STEP;
+        this.send_room("<hir>$N剑指苍穹——「万剑归宗」！万千剑影自虚空倾泻而下，$n只觉周身气机为之一滞！</hir>", me);
+        me.add_status({ id: "jianmo_chidun", name: "迟钝", desc: "被万剑归宗的剑意所慑，攻击速度降低" + JIANMO.SLOW_PER + "%",
+            duration: JIANMO.SLOW_TIME, downside: true, override: 2, prop: { gjsd_per: -JIANMO.SLOW_PER } }, this);
+    }
+};
+["damage", "damage2", "damage3"].forEach(function (fn) {
+    var base = this[fn];   // inherits(NPC) 之后取到的是 CHARACTER 原型上的实现（同 add_hp 的写法）
+    if (typeof base !== "function") return;
+    this[fn] = function (sh, from) {
+        if (this.trial_mode === "jianmo" && sh > 0 && this.jianmo_absorb(from)) return 0;
+        var r = base.apply(this, arguments);
+        if (this.trial_mode === "jianmo") this.jianmo_check_final();
+        return r;
+    };
+}, this);
 this.clear_trial_timers = function () {
+    if (this.jm_handler) { clearTimeout(this.jm_handler); this.jm_handler = null; }
     if (this.insight_handler) { clearTimeout(this.insight_handler); this.insight_handler = null; }
     if (this.trial_timeout_handler) clearTimeout(this.trial_timeout_handler);
     if (this.trial_tick_handler) clearTimeout(this.trial_tick_handler);

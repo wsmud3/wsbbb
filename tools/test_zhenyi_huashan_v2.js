@@ -166,7 +166,7 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
 // ---------- 7b. 剑冢五关：解一处机关，现一道化身；五关全过领悟无剑 ----------
 {
     assert.strictEqual(HS.list.length, 1, "华山只剩一道真意");
-    assert.deepStrictEqual(HS.stages.map(x => x.mode), ["precision", "counter", "burst", "insight", "master"]);
+    assert.deepStrictEqual(HS.stages.map(x => x.mode), ["precision", "counter", "burst", "insight", "jianmo"]);
     const me = huashan(1); delete me.temp.zy_jz_1; delete me.temp.zy_level_jz_1; delete me.temp.zy_active;
     me.environment = { parent: { id: "jz" } };
     const pass = n => { delete me.temp.zy_trial_completed; me.temp.zy_trial_active = "jz_" + n; return Z.complete_trial(me, "jz", n); };
@@ -220,6 +220,15 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(Z.puzzle_gate(me, "jz", 1, "north") && !me.temp.zy_replay_jz, "放弃重走后恢复");
     const fresh = huashan(1); delete fresh.temp.zy_jz_1; fresh.environment = { parent: { id: "jz" } };
     assert.strictEqual(Z.start_replay(fresh, 1), false, "未通关者不能重游");
+}
+
+// ---------- 7d. 首通奖励：领过记标记；更新前已通关的老角色可补领一次 ----------
+{
+    const old = huashan(5); old.items = []; old.add_obj = function (path, n) { const it = { path, count: n, name: "残页" }; this.items.push(it); return it; };
+    assert.ok(Z.claim_first_clear_reward(old) && old.items[0].count === 200, "老角色补领 200 张");
+    assert.ok(!Z.claim_first_clear_reward(old) && old.items.length === 1, "只能补领一次");
+    const fresh = huashan(1); delete fresh.temp.zy_jz_1; fresh.add_obj = old.add_obj; fresh.items = [];
+    assert.ok(!Z.claim_first_clear_reward(fresh), "未通关不能领");
 }
 
 // ---------- 8. 试炼化身 v2 机制 ----------

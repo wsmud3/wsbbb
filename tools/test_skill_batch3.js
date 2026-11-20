@@ -359,6 +359,8 @@ async function main() {
         assert.ok(a.weapon_locked(), "无剑：持剑时不可被卸下");
         const z = WORLD.ZHENYI.find_trial(WORLD.ZHENYI.DATA.HUASHAN, 5);
         assert.ok(z.avatar_name === "独孤求败" && /剑魔/.test(z.avatar_title) && z.avatar_sword === "dugujianjue", "第五关化身为剑魔独孤求败，使独孤剑诀");
+        assert.ok(z.mode === "jianmo" && z.timeout === 0 && z.no_death && z.quit_to === "jindi/huashan", "剑魔：不设时限、不死、可放弃回剑庐");
+        assert.deepStrictEqual(z.avatar_stats, { max_hp: 40000000, max_mp: 500000000, gj: 300000, bj: 70, add_sh_per: 80, diff_downside_per: 80 }, "剑魔面板");
     });
 
     // ---------- 4. 时长上限 ----------

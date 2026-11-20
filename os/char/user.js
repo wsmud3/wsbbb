@@ -631,6 +631,8 @@ USER.prototype.die = function (killer) {
         return true;
     }
     this._death_settled = false;
+    // 真意不死关卡（如剑冢剑魔）：被击倒原地站起，不死亡、不出场
+    if (WORLD.ZHENYI && WORLD.ZHENYI.prevent_death && WORLD.ZHENYI.prevent_death(this, killer)) return false;
     if (this.on_die && this.on_die(killer) === false) {
         this.hp = 1;
         return false;

@@ -35,7 +35,11 @@
                 // 木剑：考校悟性（先天悟性 × 后天悟性 ≥ 10 万），再接一剑（最大气血 100%，只受伤害减免影响）
                 stage(4, "木剑守拙", "insight", "木剑"),
                 // 第五关的化身就是剑魔本人，使独孤剑诀
-                stage(5, "无剑胜有", "master", "无剑", { avatar_name: "独孤求败", avatar_title: "<hir>剑魔</hir>", avatar_sword: "dugujianjue" })
+                // 最终 boss 特殊处理：不套攻击 / 气血系数，面板直接给定；机制见 zhenyi_trial.js 的 jianmo 模式
+                stage(5, "无剑胜有", "jianmo", "无剑", { avatar_name: "独孤求败", avatar_title: "<hir>剑魔</hir>", avatar_sword: "dugujianjue",
+                    // 不设时限、被击倒不出场（原地站起再战），只能打过或在动作栏「完成副本」放弃（算失败，送到云湺山剑庐）
+                    timeout: 0, no_death: true, quit_to: "jindi/huashan",
+                    avatar_stats: { max_hp: 40000000, max_mp: 500000000, gj: 300000, bj: 70, add_sh_per: 80, diff_downside_per: 80 } })
             ]
         },
         WUDANG: {
@@ -328,6 +332,7 @@
     function trialStats(intent) {
         var source = TRIAL_PROFILES[Math.max(1, Math.min(5, parseInt(intent && intent.id) || 1))], stats = {};
         for (var key in source) stats[key] = source[key];
+        if (intent && intent.timeout !== undefined) { stats.timeout = intent.timeout; return stats; }   // 0 = 不设时限
         stats.timeout = intent && intent.mode === "burst" ? 120000 : (intent && intent.mode === "endure" ? 45000 : (intent && intent.mode === "insight" ? 60000 : 180000));
         return stats;
     }
@@ -775,7 +780,7 @@
             return true;
         }
         if (me.query_temp("zy_trial_completed", "") === token(key, intent.id)) return true;
-        if (!me.query_temp("zy_trial_deadline", 0)) me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
+        if (!me.query_temp("zy_trial_deadline", 0) && trialStats(intent).timeout > 0) me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
         if (me.end_fight) me.end_fight();
         var npc = null;
         try { npc = NPC.CLONE("pub/zhenyi_trial"); } catch (e) { npc = null; }
@@ -847,7 +852,7 @@
             }
             me.set_temp("zy_trial_active", token(data.key, intent.id));
             me.remove_temp("zy_trial_entering");
-            me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
+            if (trialStats(intent).timeout > 0) me.set_temp("zy_trial_deadline", Date.now() + trialStats(intent).timeout);
             npc.init_trial(me, data, intent);
             room.item_changed(npc, true);
         } catch (e) {
@@ -875,7 +880,11 @@
             var shouldReturn = currentRoom && (currentRoom.zhenyi_trial_room || isTrialOwner(currentRoom.owner, key));
             var moved = !shouldReturn;
             me.set_temp("zy_trial_exiting", 1);
-            if (shouldReturn && data) {
+            var quitTo = me.query_temp("zy_trial_quit_to", "");
+            if (shouldReturn && quitTo) {
+                me.remove_temp("zy_trial_quit_to");
+                moved = me.moveto(quitTo, me.name + "离开了真意试炼。", me.name + "走了过来。") !== false;
+            } else if (shouldReturn && data) {
                 var trialBaseRoom = ROOM.Get(data.trialRoom);
                 var baseReturn = ROOM.Get(returnPath) || (trialBaseRoom && trialBaseRoom.parent && trialBaseRoom.parent.rooms[0]);
                 var publicRoom = baseReturn && (baseReturn.query_copy(publicOwner(key)) || baseReturn.create_copy(publicOwner(key)));
@@ -973,10 +982,7 @@
                     me.set_temp(acquiredKey(key, it.id), 1); me.set_temp(levelKey(key, it.id), 1); me.set_temp(clearKey(key, it.id), 1);
                     me.notify("<him>五关既过，剑冢深处一片寂然。你忽有所悟——灭烛见真火，忘剑得神兵。你领悟了【" + it.name + "】！</him>");
                     // 首次通关奖励
-                    if (data.first_clear_reward && me.add_obj) {
-                        var fr = data.first_clear_reward, got = me.add_obj(fr.path, fr.count);
-                        if (got) me.notify("<hig>你获得了" + (got.color_name || got.name) + "×" + fr.count + "。</hig>");
-                    }
+                    grantFirstClearReward(me, data);
                 }
             } else {
                 me.notify("<him>化身散作点点剑光——【" + intent.trial + "】已过，剑冢深处的剑意为你让开了一条路。</him>");
@@ -1027,6 +1033,11 @@
             me.send_commands("zhenyi trial_confirm", "确认离开", "zhenyi trial_cancel", "暂不离开");
             return true;
         }
+        if (intent && intent.quit_to) {
+            me.notify("现在离开算作试炼失败，你将被送出" + data.area + "。是否放弃？");
+            me.send_commands("zhenyi trial_quit", "放弃试炼并离开", "zhenyi trial_cancel", "继续挑战");
+            return true;
+        }
         if (intent && intent.mode === "endure") me.notify("请继续坚持至试炼计时结束；达成目标后会自动结算。");
         else me.notify("请先完成试炼目标；击败武意化身后会自动结算。");
         return false;
@@ -1042,6 +1053,30 @@
         }
         if (me.end_fight) me.end_fight();
         returnFromTrial(me, key);
+        return true;
+    }
+    // 主动放弃（仅允许放弃的关卡，如剑魔）：算失败，送到关卡指定的地点
+    function quitTrial(me) {
+        if (!me) return false;
+        var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_"), key = bits && bits[0];
+        var data = findDataByKey(key), intent = findTrial(data, bits && bits[1]);
+        if (!intent || !intent.quit_to) return me.notify("这项试炼不能中途放弃。"), false;
+        me.set_temp("zy_trial_failed", 1);
+        me.set_temp("zy_trial_quit_to", intent.quit_to);
+        me.notify("<hir>你收剑而退，这一次终究没能胜过剑魔。</hir>");
+        if (me.end_fight) me.end_fight();
+        returnFromTrial(me, key);
+        return true;
+    }
+    // 不死关卡（如剑魔）：在试炼场内被击倒时原地站起，不出场、不算死亡
+    function preventDeath(me) {
+        if (!me || !me.is_player) return false;
+        var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_");
+        var data = findDataByKey(bits && bits[0]), intent = findTrial(data, bits && bits[1]);
+        if (!intent || !intent.no_death || !me.environment || !me.environment.zhenyi_trial_room) return false;
+        me.hp = me.max_hp;
+        if (me.notify_hp) me.notify_hp();
+        me.notify("<hir>你被剑魔一剑击倒，眼前一黑，又咬牙撑起了身子……</hir>");
         return true;
     }
     function cancelTrial(me) {
@@ -1076,6 +1111,22 @@
         announceReward(me, intent, granted); return true;
     }
 
+    // 首次通关奖励（如独孤剑诀残页 ×200）：领过即记 zy_frw_<key>。更新前就已通关的老角色没有此标记，可在独孤求败处补领。
+    function firstRewardKey(key) { return "zy_frw_" + key; }
+    function grantFirstClearReward(me, data) {
+        var fr = data && data.first_clear_reward;
+        if (!fr || !me.add_obj || me.query_temp(firstRewardKey(data.key), 0)) return false;
+        var got = me.add_obj(fr.path, fr.count);
+        if (!got) return false;
+        me.set_temp(firstRewardKey(data.key), 1);
+        me.notify("<hig>你获得了" + (got.color_name || got.name) + "×" + fr.count + "。</hig>");
+        return true;
+    }
+    function claimFirstClearReward(me) {
+        var data = familyData(me);
+        if (!data || !data.stages || !hasAnyIntent(me, data)) return false;
+        return grantFirstClearReward(me, data);
+    }
     // 剑冢等关卡式试炼的扫荡：须已通关（领悟真意）；每次消耗 sweep.energy 精力，得玄晶，sweep.piece_rate% 得一张残页；累计次数供易直非兑换
     function sweepCountKey(key) { return "zy_sweep_" + key; }
     function sweepStages(me, data, count) {
@@ -1087,8 +1138,7 @@
         count = Math.max(1, parseInt(count) || 1);
         var jl = me.query_jingli ? me.query_jingli() : 0;
         count = Math.min(count, Math.floor(jl / cfg.energy));
-        if (count <= 0) return me.notify("你的精力不够，重温一次需要" + cfg.energy + "点精力。"), false;
-        if (!me.expend_jingli(cfg.energy * count)) return me.notify("你的精力不够。"), false;
+        if (count <= 0 || !me.expend_jingli(cfg.energy * count)) return offerSweep(me, "<hir>你的精力不够，重温一次需要" + cfg.energy + "点精力。</hir>"), false;
         var xj = 0, pieces = 0;
         for (var i = 0; i < count; i++) {
             xj += 12 + me.random(7);
@@ -1097,17 +1147,21 @@
         if (xj > 0) addXuanjing(me, xj);
         var got = pieces > 0 ? me.add_obj(cfg.piece, pieces) : null;
         me.set_temp(sweepCountKey(data.key), (parseInt(me.query_temp(sweepCountKey(data.key), 0)) || 0) + count);
-        me.notify("<hiy>你在" + data.area + "中重温剑冢五关" + count + "次。</hiy>");
-        me.notify("<hig>获得玄晶×" + xj + (got ? "、" + (got.color_name || got.name) + "×" + pieces : "") + "。</hig>");
+        var result = "<hig>重温" + count + "次，获得玄晶×" + xj + (got ? "、" + (got.color_name || got.name) + "×" + pieces : "") + "。</hig>";
+        me.notify(result);
+        offerSweep(me, result);   // 常驻浮窗刷新次数与精力，可继续扫荡
         return true;
     }
-    function offerSweep(me) {
+    // 重温（扫荡）浮窗：常驻，扫荡后原地刷新次数、精力与结果（feedback）
+    function offerSweep(me, feedback) {
         var data = familyData(me);
         if (!data || !data.stages || !data.sweep) return me.notify("无名剑静静立着，并无回应。"), false;
         if (!hasAnyIntent(me, data)) return me.notify("一柄无名之剑静静插在石缝里。你还未闯过剑冢五关，它对你毫无反应。"), false;
         var done = parseInt(me.query_temp(sweepCountKey(data.key), 0)) || 0;
-        me.notify("即将重温试炼(" + data.area + ")，已重温" + done + "次，每次需要消耗" + data.sweep.energy + "点精力。\n当前精力：" + (me.query_jingli ? me.query_jingli() : 0));
-        me.send_commands("zhenyi sweep 0 1", "扫荡一次", "zhenyi sweep 0 10", "扫荡十次");
+        me.send_commands("zhenyi sweep 0 1", "扫荡一次", "zhenyi sweep 0 10", "扫荡十次", {
+            text: "重温试炼(" + data.area + ")：已重温" + done + "次，每次需要消耗" + data.sweep.energy + "点精力。<br>当前精力：" + (me.query_jingli ? me.query_jingli() : 0),
+            feedback: feedback || "", persistent: true
+        });
         return true;
     }
     function xuanjingCount(me) { var obj = me.find_obj_bypath("st/xuanjing"); return obj ? (obj.count || 1) : 0; }
@@ -1399,7 +1453,7 @@
         grant_timed_buff: grantTimedBuff, restore_timed_buffs: restoreTimedBuffs, get_level: getLevel, get_active: getActive,
         set_active: setActive, forget_family: forgetFamily, serialize: serialize, start_trial: startTrial, ensure_trial_state: ensureTrialState,
         complete_trial: completeTrial, fail_trial: failTrial, finish_trial_action: finishTrialAction,
-        confirm_trial: confirmTrial, cancel_trial: cancelTrial,
+        confirm_trial: confirmTrial, cancel_trial: cancelTrial, quit_trial: quitTrial, prevent_death: preventDeath,
         configure_trial_room: configureTrialRoom, rehydrate_trial_room: rehydrateTrialRoom, add_material: addMaterial, sweep: sweep,
         request_upgrade: requestUpgrade, confirm_upgrade: confirmUpgrade,
         begin_pfm: beginPfm, pfm_cost: pfmCost, pfm_cooldown: pfmCooldown, end_pfm: endPfm,
@@ -1408,7 +1462,7 @@
         on_use_pfm: onUsePfm, family_of_key: function (key) { return KEY_TO_FAMILY[key]; },
         trial_hp_scale: trialHpScale,
         puzzle_solved: puzzleSolved, solve_puzzle: solvePuzzle, find_trial: findTrial, start_replay: startReplay, offer_replay: offerReplay,
-        offer_sweep: offerSweep, sweep_count_key: sweepCountKey,
+        offer_sweep: offerSweep, sweep_count_key: sweepCountKey, claim_first_clear_reward: claimFirstClearReward,
         stage_cleared: function (me, key, id) { var d = findDataByKey(key); return !!(d && (d.stages ? stageCleared(me, d, id) : getLevel(me, key, id) > 0)); }, puzzle_gate: puzzleGate, puzzle_command: puzzleCommand,
         level_grades: LEVEL_GRADES, gm_bypass: gmBypass, clear_trial_temps: clearTrialTemps,
         keys: { acquired: acquiredKey, level: levelKey, clear: clearKey, daily: dailyKey, puzzle: puzzleKey }
