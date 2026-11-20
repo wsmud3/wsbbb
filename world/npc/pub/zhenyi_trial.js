@@ -175,7 +175,8 @@ var baseAddHp = this.add_hp; // inherits(NPC) 之后取到的是 CHARACTER 原�
 this.add_hp = function (v) {
     if (this.v2 && v < 0) {
         if (this.v2.guard) v *= (1 - V2.GUARD_REDUCE);
-        var cap = V2.HIT_CAP > 0 ? Math.max(1, Math.floor(this.max_hp * V2.HIT_CAP)) : 0;
+        // 单次扣血上限（剑魔不设）
+        var cap = V2.HIT_CAP > 0 && this.trial_mode !== "jianmo" ? Math.max(1, Math.floor(this.max_hp * V2.HIT_CAP)) : 0;
         if (cap && -v > cap) v = -(cap + (-v - cap) * (V2.HIT_OVER || 0));
         v = Math.floor(v);
     }
@@ -313,6 +314,17 @@ this.jianmo_tick = function () {
         this.send_room("<hiy>$N周身剑罡流转，寻常招式再难伤他分毫！</hiy>");
     }
     this.jm_handler = this.call_out(this.jianmo_tick, 500);
+};
+// 挑战者被击倒（比试落败）后：剑魔罢手、回满气血，剑罡与万剑归宗重新计
+this.reset_after_win = function (me) {
+    if (this.end_fight) this.end_fight();
+    this.hp = this.max_hp; this.mp = this.max_mp;
+    if (this.trial_mode === "jianmo" && this.jm) {
+        this.jianmo_guard_off();
+        var now = Date.now();
+        this.jm.cdUntil = 0; this.jm.nextGuard = now + JIANMO.GUARD_EVERY; this.jm.finalAt = 1 - JIANMO.FINAL_STEP;
+    }
+    this.send_room("<hiw>$N收剑而立，淡淡道：「再来。」周身伤势转眼尽复。</hiw>");
 };
 this.jianmo_guard_off = function () {
     if (!this.jm) return;

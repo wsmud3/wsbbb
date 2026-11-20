@@ -231,6 +231,16 @@ assert.strictEqual(Z.values_for(Z.DATA.WUDANG, Z.DATA.WUDANG.list[0], 10).damage
     assert.ok(!Z.claim_first_clear_reward(fresh), "未通关不能领");
 }
 
+// ---------- 7e. 剑魔：放弃算整个剑冢试炼失败，五关进度清零 ----------
+{
+    const me = huashan(1); delete me.temp.zy_jz_1; delete me.temp.zy_level_jz_1; delete me.temp.zy_active;
+    [1, 2, 3, 4].forEach(n => { me.temp["zy_stage_jz_" + n] = 1; me.temp["zy_pz_jz_" + n] = 1; });
+    me.temp.zy_trial_active = "jz_5"; me.call_out = () => {};
+    assert.ok(Z.quit_trial(me), "剑魔关可主动放弃");
+    assert.ok([1, 2, 3, 4].every(n => !Z.stage_cleared(me, "jz", n) && !Z.puzzle_solved(me, HS, n)), "五关进度与机关全部清零");
+    assert.strictEqual(me.temp.zy_trial_quit_to, "jindi/huashan", "放弃后送到云湺山剑庐");
+}
+
 // ---------- 8. 试炼化身 v2 机制 ----------
 {
     let timers = [];

@@ -1063,7 +1063,15 @@
         if (!intent || !intent.quit_to) return me.notify("这项试炼不能中途放弃。"), false;
         me.set_temp("zy_trial_failed", 1);
         me.set_temp("zy_trial_quit_to", intent.quit_to);
-        me.notify("<hir>你收剑而退，这一次终究没能胜过剑魔。</hir>");
+        // 放弃算整个剑冢试炼失败：五关进度清零，须从第一关重来（重游中则结束重游，不影响已领悟的真意）
+        if (data.stages) {
+            me.remove_temp(replayKey(data.key));
+            for (var qi = 0; qi < data.stages.length; qi++) {
+                var qid = data.stages[qi].id;
+                me.remove_temp(stageKey(data.key, qid)); me.remove_temp(puzzleKey(data.key, qid)); me.remove_temp("zy_pzhp_" + token(data.key, qid));
+            }
+        }
+        me.notify("<hir>你收剑而退，这一次终究没能胜过剑魔。" + (data.stages && !hasAnyIntent(me, data) ? "剑冢五关的进度已化为乌有。" : "") + "</hir>");
         if (me.end_fight) me.end_fight();
         returnFromTrial(me, key);
         return true;
@@ -1074,9 +1082,16 @@
         var active = me.query_temp("zy_trial_active", ""), bits = active && active.split("_");
         var data = findDataByKey(bits && bits[0]), intent = findTrial(data, bits && bits[1]);
         if (!intent || !intent.no_death || !me.environment || !me.environment.zhenyi_trial_room) return false;
-        me.hp = me.max_hp;
+        // 按比试落败处理：双方罢手，挑战者留 1 点气血、不出场；化身收剑回满气血，可再次出手重新挑战
+        me.hp = 1;
         if (me.notify_hp) me.notify_hp();
-        me.notify("<hir>你被剑魔一剑击倒，眼前一黑，又咬牙撑起了身子……</hir>");
+        if (me.end_fight) me.end_fight();
+        var items = me.environment.items || [];
+        for (var i = 0; i < items.length; i++) {
+            var npc = items[i];
+            if (npc && npc.is_zhenyi_trial && npc.reset_after_win) npc.reset_after_win(me);
+        }
+        me.notify("<hir>你被剑魔一剑击倒，比试落败。养好伤势后，可再向他出手。</hir>");
         return true;
     }
     function cancelTrial(me) {
