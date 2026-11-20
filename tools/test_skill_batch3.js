@@ -155,17 +155,66 @@ async function main() {
         assert.strictEqual(statusOf(b, "busy").duration, 2000);
     });
 
-    await check("不死印法：闪避成功幻影反击；幻魔期间闪避随机施展一个已装备攻击绝招（不清冷却）", () => {
-        const a = mkUser(), b = mkUser(); learn(a, { busiyinfa: ["force", "dodge"], dugujiujian: ["sword"] }, 3000); learn(b, {}, 100); fight(a, b);
-        a.environment = b.environment = { items: [a, b], send_room() {} };
-        const msgs = []; a.send_combat = b.send_combat = t => msgs.push(String(t));
-        SKILL.get("busiyinfa").on_dodge_success(a, b, {});
+    await check("不死印法：闪避成功幻影反击；幻魔期间闪避随机释放可使用的绝招（4 秒内置冷却，挂状态的绝招重算冷却）", () => {
+        const B = SKILL.get("busiyinfa");
+        const mk = (map) => { const a = mkUser(), b = mkUser(); learn(a, map, 3000); learn(b, {}, 100); fight(a, b);
+            a.environment = b.environment = { items: [a, b], send_room() {} }; b.max_hp = b.hp = 1e12;
+            const msgs = []; a.send_combat = b.send_combat = t => msgs.push(String(t)); return { a, b, msgs }; };
+        let { a, b, msgs } = mk({ busiyinfa: ["force", "dodge"], dugujiujian: ["sword"] });
+        B.on_dodge_success(a, b, {});
         assert.ok(msgs.some(m => /幻影反手一击/.test(m)), "幻影反击有提示");
-        SKILL.get("busiyinfa").pfm.huanmo.use(a, b, 3000);
-        a.set_temp("pfm/sword/test_cd", 1, 60000);
-        msgs.length = 0; SKILL.get("busiyinfa").on_dodge_success(a, b, {});
-        assert.ok(msgs.some(m => /触发了/.test(m)), "幻魔期间触发随机绝招");
-        assert.ok(a.query_temp("pfm/sword/test_cd"), "不清除其他冷却");
+        const swordNames = Object.values(SKILL.get("dugujiujian").pfm).map(x => x.name);
+        for (let r = 0; r < 20; r++) {
+            a.remove_temp("busiyinfa_huanmo_trigger");
+            B.pfm.huanmo.use(a, b, 3000); msgs.length = 0; B.on_dodge_success(a, b, {});
+            const m = msgs.find(x => /触发了/.test(x)) || "";
+            assert.ok(!swordNames.some(n => m.indexOf("——" + n + "！") >= 0), "没装备剑时不会使出剑法绝招");
+        }
+        ({ a, b, msgs } = mk({ busiyinfa: ["force", "dodge"], jiuyinbaiguzhao: ["unarmed"] }));
+        a.do_attack = () => 1; a.end_attack = () => {};
+        B.pfm.huanmo.use(a, b, 3000); B.on_dodge_success(a, b, {});
+        const name = (msgs.find(m => /触发了/.test(m)) || "").replace(/<[^>]+>/g, "");
+        assert.ok(name, "幻魔期间触发随机绝招");
+        let key = null;
+        for (const [slot, sid] of [["unarmed", "jiuyinbaiguzhao"], ["force", "busiyinfa"]]) {
+            const pf = SKILL.get(sid).pfm;
+            const k = Object.keys(pf).find(x => name.indexOf("——" + pf[x].name + "！") >= 0);
+            if (k) key = "pfm/" + slot + "/" + k;
+        }
+        assert.ok(key, "识别出触发的绝招");
+        const changed = (b.status || []).length > 0 || (a.status || []).some(s => s.id !== "busiyinfa_huanmo");
+        assert.strictEqual(!!a.query_temp(key), changed, "挂了状态的绝招重新计算冷却，纯伤害绝招不动冷却");
+        msgs.length = 0; B.on_dodge_success(a, b, {});
+        assert.ok(!msgs.some(m => /触发了/.test(m)), "4 秒内置冷却");
+        assert.ok(/随机释放一个可使用的绝招/.test(B.pfm.huanmo.query_desc(a, 3000)));
+        // 不死印法其他部位的绝招可以被触发，幻魔身法本身不会
+        const got = {};
+        for (let r = 0; r < 30; r++) {
+            const t = mk({ busiyinfa: ["force", "dodge"] });
+            B.pfm.huanmo.use(t.a, t.b, 3000); B.on_dodge_success(t.a, t.b, {});
+            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            if (/不死七幻/.test(m)) got.qihuan = 1; if (/生死逆转/.test(m)) got.nisheng = 1; if (/触发了——幻魔身法/.test(m)) got.huanmo = 1;
+        }
+        assert.ok(got.qihuan && got.nisheng && !got.huanmo, "可触发不死七幻、生死逆转，不触发幻魔身法");
+        // 被动（技能面板）挂上的状态不算：参合指被动命中叠「参合」，参合之殇（本身不挂状态）被触发时不进冷却；
+        // 写在绝招里的效果算：六脉神剑·无形剑气命中后的昏迷，被触发时重算冷却
+        const chId = Object.keys(SKILL.get("canhezhi").pfm).find(k => SKILL.get("canhezhi").pfm[k].name === "参合之殇");
+        let seenCH = 0, seenWX = 0;
+        for (let r = 0; r < 80 && (!seenCH || !seenWX); r++) {
+            const t = mk({ busiyinfa: ["force", "dodge"], canhezhi: ["unarmed"] });
+            B.pfm.huanmo.use(t.a, t.b, 3000); B.on_dodge_success(t.a, t.b, {});
+            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            if (/参合之殇/.test(m) && (t.b.status || []).some(x => x.id === "canhe") && !(t.b.status || []).some(x => x.id !== "canhe")) {
+                seenCH++; assert.ok(!t.a.query_temp("pfm/unarmed/" + chId), "被动挂的状态不让绝招进冷却");
+            }
+            const w = mk({ busiyinfa: ["force", "dodge"], liumaishenjian: ["unarmed"] });
+            B.pfm.huanmo.use(w.a, w.b, 3000); B.on_dodge_success(w.a, w.b, {});
+            const wm = (w.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            if (/无形剑气/.test(wm) && (w.b.status || []).some(x => x.id === "liumai_faint")) {
+                seenWX++; assert.ok(w.a.query_temp("pfm/unarmed/wuxing"), "绝招里写的昏迷算绝招挂状态，重算冷却");
+            }
+        }
+        assert.ok(seenCH && seenWX, "两种情况都覆盖到");
     });
 
     // ---------- 4. 时长上限 ----------

@@ -28,7 +28,7 @@ this.query_enable_prop = function (lv) {
 			ds: parseInt(lv * 2.5) + 100,
 			ds_per: parseInt(lv / 100),
 			mz_per: parseInt(lv / 100),
-			desc: "闪避成功时进行幻影反击\n幻魔身法：绝对闪避，期间闪避可触发随机已装备技能",
+			desc: "闪避成功时进行幻影反击\n幻魔身法：绝对闪避，幻魔身法期间，闪避成功时，随机释放一个可使用的绝招",
 		}
 	};
 };
@@ -73,35 +73,83 @@ var huanmo_duration = function (lv) { return Math.max(3000, Math.min(parseInt((l
 // 幻魔身法是否生效：以状态为准（状态不存档，下线即失效）
 var huanmo_active = function (me) { return me.query_status && me.query_status("busiyinfa_huanmo") > 0; };
 
-// 幻魔身法：随机触发已装备攻击技能
+// 幻魔身法：闪避成功时，随机释放一个「可使用」的已装备攻击绝招（内置冷却 4 秒）。
+// 「可使用」指满足正常施展条件（装备位、武器类型、暗器、忙乱、自身 check 等），与该绝招是否在冷却中无关；不消耗内力。
+// 候选：所有已装备技能的绝招（任何部位），只排除幻魔身法本身；随机到不满足条件的（如武器不符）就重新随机。
+// 绝招「本身」给自己或敌人挂了状态（增益/减益）时，该绝招冷却重新开始计算；
+// 由被动（写在技能面板里的效果，以及装备、状态、真意）挂上的状态不算，按纯伤害处理，不影响冷却。
+var HUANMO_TRIGGER_CD = 4000;
+var HUANMO_WEAPON_SLOT = { sword: "sword", blade: "blade", staff: "staff", club: "club", whip: "whip" };
+var huanmo_usable = function (me, slot, pfm, lv) {
+	if (!pfm || typeof pfm.use !== "function") return false;
+	if (pfm.use_type || pfm.no_auto) return false;
+	if (pfm.enable_skill && pfm.enable_skill !== slot) return false;          // 必须是装备在这个位置上能用的绝招
+	if (slot === "throwing" && !(me.can_throwing && me.can_throwing())) return false;
+	var need = pfm.weapon_type || HUANMO_WEAPON_SLOT[pfm.enable_skill || slot];
+	if (need && need !== me.query_weapon_type()) return false;                // 武器类型不对（如没装备鞭却出鞭法）
+	if (me.is_busy && !pfm.allow_busy) return false;
+	return true;
+};
+// 施展期间监视双方的 add_status：不在「被动上下文」里挂上的状态，才算绝招本身挂的。
+// 被动 = 技能面板（启用属性）、装备、状态、真意等钩子，引擎执行它们时 CHARACTER.passive_depth > 0；
+// 写在绝招代码里的效果（包括绝招传给 do_attack 的回调，如无形剑气命中后的昏迷）都算绝招本身。
+var huanmo_cast_watch = function (me, target, fn) {
+	var applied = false, saved = [];
+	var markAdd = function (orig) { return function () { if (!(CHARACTER.passive_depth > 0)) applied = true; return orig.apply(this, arguments); }; };
+	[me, target].forEach(function (obj) {
+		if (!obj || saved.some(function (sv) { return sv[0] === obj; })) return;
+		saved.push([obj, Object.prototype.hasOwnProperty.call(obj, "add_status"), obj.add_status]);
+		obj.add_status = markAdd(obj.add_status);
+	});
+	try { fn(); }
+	finally {
+		for (var k = saved.length - 1; k >= 0; k--) {
+			var sv = saved[k];
+			if (sv[1]) sv[0].add_status = sv[2]; else delete sv[0].add_status;
+		}
+	}
+	return applied;
+};
+var huanmo_restart_cd = function (me, slot, pid, pfm, lv) {
+	var distime = pfm.query_distime(me, lv);
+	if (WORLD.ZHENYI && WORLD.ZHENYI.pfm_cooldown) distime = WORLD.ZHENYI.pfm_cooldown(me, pfm, SKILL.get(me.skills[slot].enable_skill), distime);
+	if (!(distime > 0)) return;
+	if (me.is_player) {
+		me.set_temp("pfm/" + slot + "/" + pid, 1, distime);
+		me.notify('{type:"dispfm",id:"' + slot + "." + pid + '",rtime:0,distime:' + distime + '}');
+	} else if (me.auto_skills) {
+		for (var i = 0; i < me.auto_skills.length; i++) if (me.auto_skills[i].pfm === pfm) me.auto_skills[i].release_time = Date.now() + distime;
+	}
+};
 var huanmo_trigger_pfm = function (me, target) {
-	var cd = me.query_temp("busiyinfa_huanmo_trigger", 0);
-	if (cd > 0) return;
-	// 候选：已装备在武器/拳脚等攻击位上的特殊技能的绝招（内功、轻功、招架位除外）。
-	// 原先只收「冷却时长 <= 0」的绝招（query_distime 返回的是冷却总长，不是剩余冷却），攻击绝招几乎都有冷却，所以从不触发；
-	// 触发后又调用 change_distime 把该绝招的冷却清零，与说明不符。现改为：随机挑一个已装备的攻击绝招免费施展一次，不影响它自己的冷却。
+	if (!target || target.hp <= 0) return;
+	if (me.query_temp("busiyinfa_huanmo_trigger", 0) > 0) return;
 	var pfms = [];
 	for (var slot in me.skills) {
 		var player_skill = me.skills[slot];
-		if (!player_skill || !player_skill.enable_skill) continue;           // 只看已装备的位置
-		if (slot === "force" || slot === "dodge" || slot === "parry") continue;
+		if (!player_skill || !player_skill.enable_skill) continue;           // 只看已装备的位置（任何部位）
+		var isBusi = player_skill.enable_skill === "busiyinfa";
 		var sp_skill = SKILL.get(player_skill.enable_skill);
 		if (!sp_skill || !sp_skill.pfm) continue;
-		for (var pfm_id in sp_skill.pfm) {
-			var pfm = sp_skill.pfm[pfm_id];
-			if (!pfm || typeof pfm.use !== "function") continue;
-			if (pfm.type === "force" || pfm.use_type === 2 || pfm.no_auto) continue;
-			if (pfm.enable_skill && pfm.enable_skill !== slot) continue;
-			pfms.push({ sk: sp_skill, pfm: pfm, id: sp_skill.id, pid: pfm_id });
+		var lv = me.query_skill(sp_skill.id, 0);
+		for (var pid in sp_skill.pfm) {
+			var pfm = sp_skill.pfm[pid];
+			if (isBusi && pid === "huanmo") continue;                          // 幻魔身法本身不会被幻魔身法触发
+			if (huanmo_usable(me, slot, pfm, lv)) pfms.push({ pfm: pfm, pid: pid, slot: slot, lv: lv });
 		}
 	}
-	if (pfms.length > 0) {
-		var chosen = pfms[Math.floor(Math.random() * pfms.length)];
-		var lv = me.query_skill(chosen.id, 0);
-		me.set_temp("busiyinfa_huanmo_trigger", 1, 1500);
-		me.send_combat("<hio>$N如鬼魅般的身影触发了——" + chosen.pfm.name + "！</hio>\n", target);
-		try { chosen.pfm.use(me, target, lv); }
+	// 随机顺序逐个尝试，第一个通过自身 check 的施展（check 可能有副作用，只对选中的调用）
+	for (var n = pfms.length; n > 0; n--) {
+		var k = Math.floor(Math.random() * n);
+		var c = pfms[k]; pfms[k] = pfms[n - 1];
+		if (c.pfm.check && !c.pfm.no_check && !c.pfm.check(me, c.lv)) continue;
+		me.set_temp("busiyinfa_huanmo_trigger", 1, HUANMO_TRIGGER_CD);
+		me.send_combat("<hio>$N如鬼魅般的身影触发了——" + c.pfm.name + "！</hio>\n", target);
+		var applied = false;
+		try { applied = huanmo_cast_watch(me, target, function () { c.pfm.use(me, target, c.lv, c.slot); }); }
 		catch (e) { console.error("huanmo_trigger_pfm error:", (e && e.stack) || e); }
+		if (applied) huanmo_restart_cd(me, c.slot, c.pid, c.pfm, c.lv);
+		return;
 	}
 };
 
@@ -304,7 +352,7 @@ this.pfm = {
 		query_mp: function (me, level) { return 600; },
 		query_desc: function (me, lv) {
 			lv = lv || 0;
-			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，并随机释放一个已装备的攻击技能（1.5秒内最多触发一次）。";
+			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，期间闪避成功时，随机释放一个可使用的绝招。";
 		},
 		use: function (me, target, lv) {
 			if (!me.skills.dodge || me.skills.dodge.enable_skill !== "busiyinfa")

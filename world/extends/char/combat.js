@@ -117,9 +117,9 @@ CHARACTER.prototype.do_attack = function (par) {
 
     if (attackskill.on_before_attack
         && !par.is_throwing
-        && !par.no_append_before) attackskill.on_before_attack(this, target, par);
+        && !par.no_append_before) passive(() => attackskill.on_before_attack(this, target, par));
     if (this.force_skill.on_before_attack && !par.no_append_before) {
-        this.force_skill.on_before_attack(this, target, par);
+        passive(() => this.force_skill.on_before_attack(this, target, par));
     }
 
     this.attack_part = par.part ?? target.query_part();
@@ -140,7 +140,7 @@ CHARACTER.prototype.do_attack = function (par) {
     // True hit modifiers must be prepared before dodge/parry resolution.  The
     // later modify_attack hook remains responsible for damage-only effects.
     if (WORLD.ZHENYI && WORLD.ZHENYI.prepare_attack) {
-        WORLD.ZHENYI.prepare_attack(this, target, par, attackskill);
+        passive(() => WORLD.ZHENYI.prepare_attack(this, target, par, attackskill));
         mz = par.mz ?? mz;
     }
     par.is_dodge = false; par.is_parry = false;
@@ -177,7 +177,7 @@ CHARACTER.prototype.do_attack = function (par) {
 
         if (target.parry_skill.on_parry &&
             !par.no_parry && !target.is_busy && !target.is_faint) {
-            target.parry_skill.on_parry(target, this, par);
+            passive(() => target.parry_skill.on_parry(target, this, par));
         }
         if (par.on_parry) {
             par.on_parry(target, par.is_parry);
@@ -193,10 +193,10 @@ CHARACTER.prototype.do_attack = function (par) {
                 ((par.no_weapon && weapon_type === WEAPON_TYPE.NONE)
                     || (!par.no_weapon && weapon_type !== WEAPON_TYPE.NONE))
                 && !par.is_throwing) {
-                sh += weapon.do_attack(this, target, par);
+                sh += passive(() => weapon.do_attack(this, target, par)) || 0;
             }
             if (attackskill.on_attack && !par.is_throwing) {
-                sh += attackskill.on_attack(this, target, par);
+                sh += passive(() => attackskill.on_attack(this, target, par)) || 0;
             }
             sh = sh * this.attack_part.hert;
             if (!par.no_power) {
@@ -233,7 +233,7 @@ CHARACTER.prototype.do_attack = function (par) {
         }
         let power_gj = par.power_gj ?? 0;
         if (this.force_skill.do_force_attack) {
-            power_gj += this.force_skill.do_force_attack(this, target, par);
+            power_gj += passive(() => this.force_skill.do_force_attack(this, target, par)) || 0;
         }
         if (power_gj > 0 && (!weapon || weapon.weapon_type === WEAPON_TYPE.NONE)) {
             power_gj = power_gj + power_gj * this.query_soft_prop("add_sh_per") / 100; //增加伤害%（玩家经软上限折算）
@@ -265,12 +265,12 @@ CHARACTER.prototype.do_attack = function (par) {
 
         // 真意攻击钩子。管理器会统一拒绝grade 6红技能，避免单个技能漏判。
         if (WORLD.ZHENYI && sh > 0) {
-            sh = WORLD.ZHENYI.modify_attack(this, target, par, sh, attackskill);
+            sh = passive(() => WORLD.ZHENYI.modify_attack(this, target, par, sh, attackskill));
         }
 
         if (target.force_skill.on_force_parry) {
             par.power_gj = power_gj;
-            sh -= target.force_skill.on_force_parry(target, this, sh, par);
+            sh -= passive(() => target.force_skill.on_force_parry(target, this, sh, par)) || 0;
             if (this.hp <= 0 || !target.fight_type) {
                 return;
             }
@@ -289,12 +289,12 @@ CHARACTER.prototype.do_attack = function (par) {
             sh = target.damage(sh, this, par.diff_fy);
 
         if (par.is_parry) {
-            if (WORLD.ZHENYI) WORLD.ZHENYI.on_parry(target);
+            if (WORLD.ZHENYI) passive(() => WORLD.ZHENYI.on_parry(target));
             this.send_combat((par.parry_msg || target.parry_skill.query_parry_action(target, this, weapon_type)) + "\n", target);
             if (sh > 0) {
                 target.send_combat(query_status_msg(target.hp, target.max_hp));
                 target.on_damage && target.on_damage(this, sh);
-                if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
+                if (WORLD.ZHENYI) passive(() => WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill));
             }
             // 状态钩子：招架成功（如斗转星移·星移的反弹）
             // 第 4 个参数是这一击若未被招架、经招架者免伤/防御结算后本应受到的伤害
@@ -330,7 +330,7 @@ CHARACTER.prototype.do_attack = function (par) {
                     , target);
                 target.send_combat(query_status_msg(target.hp, target.max_hp));
                 target.on_damage && target.on_damage(this, sh);
-                if (WORLD.ZHENYI) WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill);
+                if (WORLD.ZHENYI) passive(() => WORLD.ZHENYI.after_attack(this, target, par, sh, attackskill));
                 // 状态钩子：被命中（如万蛊噬天反噬、化毒蚀内力、寒冰减速、护体真焰）
                 if (this.hp > 0 && target.hp > 0) fire_status_hook(target, "on_be_hit", this, par, sh);
 
@@ -420,7 +420,7 @@ CHARACTER.prototype.do_attack = function (par) {
     }
     // ZC passive: 反击(轻功) - counter-attack on successful dodge
     if (par.is_dodge && target.fight_type && this.hp > 0) {
-        if (WORLD.ZHENYI) WORLD.ZHENYI.on_dodge(target);
+        if (WORLD.ZHENYI) passive(() => WORLD.ZHENYI.on_dodge(target));
         // 闪避成功钩子（on_dodge 名不副实：它在「没闪开」时调用）。轻功位技能与状态均可定义
         if (target.dodge_skill && target.dodge_skill.on_dodge_success && !par.no_append_target) {
             try { react(target, () => target.dodge_skill.on_dodge_success(target, this, par), par.is_counter); }
@@ -452,11 +452,11 @@ CHARACTER.prototype.do_attack = function (par) {
                     react(target, () => target.parry_skill.on_parry_over(target, this, par), par.is_counter);
         }
         if (!par.no_append) {
-            attackskill.on_attack_over && attackskill.on_attack_over(this, target, par, sh);
+            attackskill.on_attack_over && passive(() => attackskill.on_attack_over(this, target, par, sh));
             this.force_skill.on_force_over &&
-                this.force_skill.on_force_over(this, target, par, sh);
+                passive(() => this.force_skill.on_force_over(this, target, par, sh));
             // 攻击者自身的回调（NPC可用）
-            this.on_attack_over && this.on_attack_over(this, target, par, sh);
+            this.on_attack_over && passive(() => this.on_attack_over(this, target, par, sh));
         }
     }
     return sh;
@@ -493,14 +493,14 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
     sh = mitigate_damage(this, sh, from, diff_fy);
 
     if (sh > 0 && this.equipment && this.equipment[1] && this.equipment[1].on_defense) {
-        sh = this.equipment[1].on_defense(this, from, sh);
+        sh = passive(() => this.equipment[1].on_defense(this, from, sh));
     }
     if (sh > 0 && this.force_skill.on_damage) {
         // 第 4 个参数把伤害来源类型交给内功：反震/反伤类内功遇到 {kind:"reflect"} 不应再反震
-        sh = this.force_skill.on_damage(this, from, sh, damageContext);
+        sh = passive(() => this.force_skill.on_damage(this, from, sh, damageContext));
     }
 
-    if (WORLD.ZHENYI && sh > 0) sh = WORLD.ZHENYI.modify_damage(this, from, sh);
+    if (WORLD.ZHENYI && sh > 0) sh = passive(() => WORLD.ZHENYI.modify_damage(this, from, sh));
 
     // ZC passive: 守护 - damage reduction as self HP decreases
     var zcGuardian = this.query_prop("zc_guardian") || 0;
@@ -618,8 +618,16 @@ function react(ch, fn, silent) {
     var prev = ch._in_react, prevSilent = ch._react_silent;
     ch._in_react = true;
     if (silent) ch._react_silent = true;
-    try { return fn(); } finally { ch._in_react = prev; ch._react_silent = prevSilent; }
+    try { return passive(fn); } finally { ch._in_react = prev; ch._react_silent = prevSilent; }
 }
+// 被动上下文：执行「技能面板/装备/状态/真意」等被动钩子期间计数 +1。
+// 用来区分「绝招代码本身」与「被动」挂上的状态（如不死印法·幻魔身法判断随机绝招是否挂了状态）。
+CHARACTER.passive_depth = 0;
+function passive(fn) {
+    CHARACTER.passive_depth++;
+    try { return fn(); } finally { CHARACTER.passive_depth--; }
+}
+CHARACTER.passive = passive;
 
 function absorb_by_shield(ch, sh) {
     var list = ch.status.slice();
@@ -647,7 +655,7 @@ CHARACTER.prototype.damage2 = function (sh, from, damageContext) {
 
     }
     if (this.force_skill.on_damage) {
-        sh = this.force_skill.on_damage(this, from, sh, damageContext);
+        sh = passive(() => this.force_skill.on_damage(this, from, sh, damageContext));
         if (!sh) return 0;
     }
     this.add_hp(-sh);
@@ -658,7 +666,7 @@ CHARACTER.prototype.damage3 = function (sh, from) {
 
     this.add_hp(-sh);
     if (this.force_skill.on_damage) {
-        this.force_skill.on_damage(this, from, 0);
+        passive(() => this.force_skill.on_damage(this, from, 0));
     }
     return sh;
 }

@@ -201,7 +201,8 @@ CHARACTER.prototype.end_attack = function (target) {
     if (!target) return;
     if (!this.fight_type) return;
     if (this.attack_skill.on_end_attack) {
-        this.attack_skill.on_end_attack(this, target);
+        if (CHARACTER.passive) CHARACTER.passive(() => this.attack_skill.on_end_attack(this, target));
+        else this.attack_skill.on_end_attack(this, target);
     }
 
     if (this.fight_type === 1 && target.max_hp && target.hp / target.max_hp < 0.3) {
