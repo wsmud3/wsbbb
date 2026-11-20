@@ -223,11 +223,13 @@ this.pfm = {
 				downside: false,
 				override: 2,
 				prop: { zj_per: zjBoost },
-				on_attach: function (p) {
-					p.set_temp("tianmoce_butiandao", 1);
-				},
-				on_expire: function (p) {
-					p.remove_temp("tianmoce_butiandao");
+				// 招架成功恢复气血：写在状态上（原在天魔策的招架后钩子里），融入自创武学后照常生效
+				on_parry_success: function (owner) {
+					var heal = parseInt(owner.max_hp * (0.05 + lv / 200000));
+					if (heal > 0) {
+						owner.do_recover(heal);
+						owner.send_room("<hio>$N的补天道借力打力，伤势随之平复！</hio>");
+					}
 				},
 				start_msg: "<hio>$N的补天道魔气护体，招架之力大增！</hio>",
 				finish_msg: "$N的补天道状态消散了。",
@@ -237,18 +239,6 @@ this.pfm = {
 			var zjBoost = 30 + parseInt(lv / 300);
 			if (zjBoost > 60) zjBoost = 60;
 			return "招架几率提升" + zjBoost + "%，招架成功后恢复气血。";
-		}
-	}
-};
-
-// 补天道：招架成功后吸收伤害恢复气血
-this.on_parry_over = function (me, from, par) {
-		if (me.query_temp("tianmoce_butiandao") && par.is_parry) {
-		var lv = me.query_skill("tianmoce");
-		var heal = parseInt(me.max_hp * (0.05 + lv / 200000));
-		if (heal > 0) {
-			me.do_recover(heal);
-			me.send_room("<hio>$N的补天道借力打力，恢复了" + heal + "点气血！</hio>");
 		}
 	}
 };

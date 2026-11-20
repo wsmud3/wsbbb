@@ -71,43 +71,6 @@ this.on_beginfight = function (me, target) {
 	});
 };
 
-// on_force_over: 心有灵犀 triggers multi-hit on each normal attack (like 狂风快剑)
-this.on_force_over = function (me, target, par, sh) {
-	// Skip if this is already an extra attack (prevent recursion)
-	if (par.no_append) return;
-	if (sh <= 0 || !target || target.hp <= 0) return;
-	// 心有灵犀：每次命中触发额外2-4次攻击
-	if (me.query_temp("cihang_xylx")) {
-		var extra_count = 2 + Math.floor(Math.random() * 3);
-		for (var i = 0; i < extra_count; i++) {
-			if (target.hp <= 0) break;
-			me.do_attack({
-				target: target,
-				gj: parseInt(me.gj * 0.6),
-				mz: me.mz,
-				no_append: true,
-			});
-		}
-	}
-};
-
-this.on_before_attack = function (me, target, par) {
-	// 剑心通明：代码级必中必招架
-	if (me.query_temp("cihang_jxtm")) {
-		par.no_dodge = true;
-		par.no_parry = true;
-	}
-};
-
-this.on_force_parry = function (me, from, sh, par) {
-	// 剑心通明：绝对招架，招架所有伤害（包括物理伤害和内力伤害）
-	if (me.query_temp("cihang_jxtm")) {
-		me.send_room("<hio>$N剑心通明，剑气护体，将$n的攻势尽数化解！</hio>", from);
-		return sh;
-	}
-	return 0;
-};
-
 this.on_damage = function (me, from, sh) {
 	return sh;
 };
@@ -134,11 +97,14 @@ this.pfm = {
 				prop: { ig_control: 1 },
 				start_msg: "<hio>$N心有灵犀，剑意通明，攻击将触发多次！</hio>",
 				finish_msg: "$N的心有灵犀状态消散了。",
-				on_attach: function (p) {
-					p.set_temp("cihang_xylx", 1);
-				},
-				on_expire: function (p) {
-					p.remove_temp("cihang_xylx");
+				// 每次命中追加 2～4 次攻击：写在状态上（原在慈航剑典的 on_force_over），融入自创武学后照常生效
+				on_force_over: function (owner, target, par, sh) {
+					if (sh <= 0 || !target || target.hp <= 0) return;
+					var extra_count = 2 + Math.floor(Math.random() * 3);
+					for (var i = 0; i < extra_count; i++) {
+						if (target.hp <= 0) break;
+						owner.do_attack({ target: target, gj: parseInt(owner.gj * 0.6), mz: owner.mz, no_append: true });
+					}
 				},
 			});
 		},
@@ -186,11 +152,11 @@ this.pfm = {
 				},
 				start_msg: "<hio>$N剑心通明，出招如电，洞悉一切！</hio>",
 				finish_msg: "$N的剑心通明状态消散了。",
-				on_attach: function (p) {
-					p.set_temp("cihang_jxtm", 1);
-				},
-				on_expire: function (p) {
-					p.remove_temp("cihang_jxtm");
+				// 必中必招架、绝对招架：写在状态上（原在慈航剑典的 on_before_attack / on_force_parry）
+				on_before_attack: function (owner, target, par) { par.no_dodge = true; par.no_parry = true; },
+				on_force_parry: function (owner, from, sh) {
+					owner.send_room("<hio>$N剑心通明，剑气护体，将$n的攻势尽数化解！</hio>", from);
+					return sh;
 				},
 			});
 		},

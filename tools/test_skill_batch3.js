@@ -188,7 +188,8 @@ async function main() {
         assert.strictEqual(!!a.query_temp(key), changed, "挂了状态的绝招重新计算冷却，纯伤害绝招不动冷却");
         msgs.length = 0; dodgeOk(a, b);
         assert.ok(!msgs.some(m => /顺势使出/.test(m)), "4 秒内置冷却");
-        assert.ok(/随机释放一个可使用的绝招/.test(B.pfm.huanmo.query_desc(a, 3000)));
+        assert.ok(!/幻影反击|随机释放/.test(B.pfm.huanmo.query_desc(a, 3000)), "绝招说明只写绝对闪避");
+        assert.ok(/随机释放一个可使用的绝招/.test(B.query_enable_prop(3000).dodge.desc), "随机绝招写在轻功面板被动里");
         // 不死印法其他部位的绝招可以被触发，幻魔身法本身不会
         const got = {};
         for (let r = 0; r < 30; r++) {
@@ -409,7 +410,8 @@ async function main() {
     await check("一星混元：双方都在混元之气中，反击不会互相递归", () => {
         const a = mkUser(), b = mkUser(); learn(a, { yixinghunyuan: "parry" }, 10000); learn(b, { yixinghunyuan: "parry" }, 10000); fight(a, b);
         a.max_hp = a.hp = b.max_hp = b.hp = 1e12;
-        for (const c of [a, b]) c.add_status({ id: "yixinghunyuan", name: "混元之气", duration: 60000 });
+        for (const c of [a, b]) SKILL.get("yixinghunyuan").pfm.hunyuan.use(c, c === a ? b : a, 10000);   // 绝对招架 + 连续反击挂在状态上
+        assert.ok(a.status.some(x => x.id === "yixinghunyuan" && x.on_parry && x.on_parry_success), "混元之气自带招架与反击");
         let n = 0; for (const c of [a, b]) { const d = c.do_attack; c.do_attack = function (p) { if (++n > 200) throw new Error("递归"); return d.call(this, p); }; }
         b.do_attack({ target: a, gj: 100, mz: 1 });
         assert.ok(n <= 10, "攻击次数 " + n);
@@ -420,7 +422,9 @@ async function main() {
         const ahp = a.hp, bhp = b.hp;
         a.damage(1000, b, 0);
         assert.ok(b.hp < bhp, "b 被反震"); assert.ok(ahp - a.hp < 2000, "a 没有被反震回来");
-        const c = mkUser(); learn(c, { yinyangjiuzhuan: "force" }, 1000); c.set_temp("yinyang_jiuzhu", 1); fight(c, a);
+        const c = mkUser(); learn(c, { yinyangjiuzhuan: "force" }, 1000); fight(c, a);
+        SKILL.get("yinyangjiuzhuan").pfm.zhuanyinyang.use(c, a, 1000);   // 切到九烛（反震写在九烛状态上）
+        assert.ok(c.status.some(x => x.name === "九烛"), "进入九烛");
         c.max_hp = c.hp = 1e12; const a2 = a.hp, c2 = c.hp;
         c.damage(1000, a, 0);
         assert.ok(a.hp < a2, "a 被九烛反震");
@@ -432,8 +436,9 @@ async function main() {
         const ahp = a.hp;
         b.do_attack({ target: a, gj: 100, mz: 1 }); // 闪开 → 不死印法反击 b；b 的九阳不应再反震 a
         assert.strictEqual(a.hp, ahp);
-        const r = mkUser(); learn(r, {}, 100); r.set_temp("sk_ranmu", 1000, 60000); fight(r, b); r.end_attack = () => {};
-        const rhp = r.hp; SKILL.get("ranmudao").on_parry_over(r, b, { is_parry: false });
+        const r = mkUser(); learn(r, {}, 100); fight(r, b); r.end_attack = () => {};
+        SKILL.get("ranmudao").pfm.hu.use(r, b, 250);
+        const rhp = r.hp; r.status.find(x => x.name === "真焰").on_be_hit(r, b);
         assert.strictEqual(r.hp, rhp, "燃木反伤不被九阳反震");
     });
 

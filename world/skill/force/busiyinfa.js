@@ -195,7 +195,7 @@ this.on_dodge_success = function (me, from, par) {
 };
 
 // ---------------------------------------------------------------
-// 内功被动：逆守 + 内力为盾 + 生死锁链 + 幻魔身法绝对闪避
+// 内功被动：逆守（受伤 30% 化为内力）、生死印（附加伤害并回血）
 // ---------------------------------------------------------------
 this.on_damage = function (me, from, sh, ctx) {
 	var isReflect = ctx && ctx.kind === "reflect"; // 反震/反伤来的伤害：照常化解，但不再反击
@@ -205,34 +205,7 @@ this.on_damage = function (me, from, sh, ctx) {
 	// 这里不再按「内功位受伤后清零」处理——那种写法只在内功也装不死印法时生效，且判定上仍算被打中。
 	if (me.query_temp("busiyinfa_huanmo")) me.remove_temp("busiyinfa_huanmo"); // 清理旧版写入存档、不过期的标记
 
-	// 内力为盾：以MP抵消伤害
-	if (me.query_temp("busiyinfa_nisheng")) {
-		var availableMp = me.mp;
-		if (availableMp >= sh) {
-			me._nisheng_deducted = (me._nisheng_deducted || 0) + sh;
-			me.add_mp(-sh);
-			me.send_combat("<him>$N逆转经脉，以内力硬接下这一击！</him>\n");
-			return 0;
-		} else if (availableMp > 0) {
-			me._nisheng_deducted = (me._nisheng_deducted || 0) + availableMp;
-			me.add_mp(-availableMp);
-			sh = sh - availableMp;
-			me.send_combat("<him>$N内力已竭，余劲透体而入！</him>\n");
-		}
-	}
-
-	if (sh <= 0) return sh;
-
-	// 生死锁链：链接目标的伤害50%转化为内力
-	if (qihuan_link_valid(me) && from && from.id === me.query_temp("busiyinfa_qihuan_target")) {
-		var mpGain = Math.floor(sh * 0.5);
-		if (mpGain > 0) {
-			me.add_mp(mpGain);
-			me.send_combat("<hio>生死锁链流转，$N将来袭的劲力化作了内力。</hio>\n");
-		}
-		me.add_temp("busiyinfa_shengyin", 1);
-		qihuan_guiyuan(me);
-	}
+	// 生死逆转的内力挡伤、不死七幻的生死锁链都是绝招自身效果，写在它们挂的状态上（见 pfm），融入自创武学后照常生效。
 
 	// 逆守被动：受伤30%转化为内力
 	var nishouMp = Math.floor(sh * 0.3);
@@ -254,16 +227,6 @@ this.on_force_over = function (me, target, par, sh) {
 		if (dealt > 0) me.send_combat("<hir>生死印轰然引爆，对$n造成" + dealt + "点伤害，$N的伤势随之平复几分！</hir>\n", target);
 	}
 
-	// 生死锁链：对链接目标的伤害50%转化为气血
-	if (qihuan_link_valid(me) && me.query_temp("busiyinfa_qihuan_target") === target.id) {
-		var heal = Math.floor(sh * 0.5);
-		if (heal > 0) {
-			me.do_recover(heal);
-			me.send_combat("<hio>生死锁链流转，$N的伤势随之平复几分。</hio>\n");
-		}
-		me.add_temp("busiyinfa_siyin", 1);
-		qihuan_guiyuan(me);
-	}
 };
 
 // ---------------------------------------------------------------
@@ -283,8 +246,6 @@ this.pfm = {
 		},
 		use: function (me, target, lv) {
 			if (!target) return false;
-			if (!me.skills.force || me.skills.force.enable_skill !== "busiyinfa")
-			return me.notify("不死七幻需要将不死印法装备为内功才可使用。");
 
 			me.remove_temp("busiyinfa_qihuan_target");
 			me.remove_temp("busiyinfa_siyin");
@@ -306,6 +267,34 @@ this.pfm = {
 			}, me);
 
 			me.set_temp("busiyinfa_qihuan_target", target.id);
+			// 生死锁链：链接期间对目标的伤害 50% 化为气血、目标对你的伤害 50% 化为内力，各记死印 / 生印，合计 7 层归元。
+			// 写在自身的「生死锁链」状态上，融入自创武学后照常生效。
+			me.add_status({
+				id: "busiyinfa_lian", name: "生死锁链", desc: "与幻身之敌生死相连：伤敌化为气血，受伤化为内力",
+				duration: 86400000, override: 2, no_clear: true, only_combat: true,
+				on_force_over: function (owner, t, par, sh) {
+					if (!(sh > 0) || !t || !qihuan_link_valid(owner) || owner.query_temp("busiyinfa_qihuan_target") !== t.id) return;
+					var heal = Math.floor(sh * 0.5);
+					if (heal > 0) {
+						owner.do_recover(heal);
+						owner.send_combat("<hio>生死锁链流转，$N的伤势随之平复几分。</hio>\n");
+					}
+					owner.add_temp("busiyinfa_siyin", 1);
+					qihuan_guiyuan(owner);
+				},
+				on_damage: function (owner, from, sh) {
+					if (sh > 0 && from && qihuan_link_valid(owner) && from.id === owner.query_temp("busiyinfa_qihuan_target")) {
+						var mpGain = Math.floor(sh * 0.5);
+						if (mpGain > 0) {
+							owner.add_mp(mpGain);
+							owner.send_combat("<hio>生死锁链流转，$N将来袭的劲力化作了内力。</hio>\n");
+						}
+						owner.add_temp("busiyinfa_shengyin", 1);
+						qihuan_guiyuan(owner);
+					}
+					return sh;
+				}
+			});
 			me.send_room("<hio>$N双手结印，眼中生死二气交替流转，一道无形的锁链将$N与$n的命运联结在一起！</hio>", target);
 			return true;
 		}
@@ -323,9 +312,6 @@ this.pfm = {
 			return "逆转经脉，" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内受到的伤害降低" + nisheng_dr(lv) + "%，且改为扣除内力而非气血。结束后回复被扣除的内力，并反噬对手等量内力。";
 		},
 		use: function (me, target, lv) {
-			if (!me.skills.force || me.skills.force.enable_skill !== "busiyinfa")
-			return me.notify("生死逆转需要将不死印法装备为内功才可使用。");
-
 			me._nisheng_deducted = 0;
 			me.add_status({
 				id: "force",
@@ -334,11 +320,25 @@ this.pfm = {
 				desc: "受到的伤害降低" + nisheng_dr(lv) + "%，并由内力承担",
 				override: 2,
 				prop: { diff_sh_per2: nisheng_dr(lv) },   // 免伤 buff 走特殊免伤，在软上限之后叠加
-				on_attach: function (p) {
-					p.set_temp("busiyinfa_nisheng", 1);
+				// 受到的伤害由内力承担：写在状态上（原在不死印法的内功受伤钩子里），融入自创武学后照常生效
+				on_damage: function (p, from, sh) {
+					if (!(sh > 0)) return sh;
+					var availableMp = p.mp;
+					if (availableMp >= sh) {
+						p._nisheng_deducted = (p._nisheng_deducted || 0) + sh;
+						p.add_mp(-sh);
+						p.send_combat("<him>$N逆转经脉，以内力硬接下这一击！</him>\n");
+						return 0;
+					} else if (availableMp > 0) {
+						p._nisheng_deducted = (p._nisheng_deducted || 0) + availableMp;
+						p.add_mp(-availableMp);
+						p.send_combat("<him>$N内力已竭，余劲透体而入！</him>\n");
+						return sh - availableMp;
+					}
+					return sh;
 				},
 				on_expire: function (p) {
-					p.remove_temp("busiyinfa_nisheng");
+					p.remove_temp("busiyinfa_nisheng");   // 清理旧版标记
 					var deducted = p._nisheng_deducted || 0;
 					if (deducted > 0) {
 						p.add_mp(deducted);
@@ -369,12 +369,11 @@ this.pfm = {
 		query_mp: function (me, level) { return 600; },
 		query_desc: function (me, lv) {
 			lv = lv || 0;
-			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击，每次闪避触发幻影反击，期间闪避成功时，随机释放一个可使用的绝招。";
+			return "邪王独步天下的鬼魅身法。" + (huanmo_duration(lv) / 1000) + "秒内绝对闪避所有攻击。";
 		},
+		// 幻影反击、幻魔期间闪避随机释放绝招都是不死印法装备为轻功时的面板被动（见 query_enable_prop / on_dodge_success），
+		// 不属于本绝招；融入自创武学只得绝对闪避（有意为之：避免借高频幻魔放大自创武学融合的绝招池）。
 		use: function (me, target, lv) {
-			if (!me.skills.dodge || me.skills.dodge.enable_skill !== "busiyinfa")
-			return me.notify("幻魔身法需要将不死印法装备为轻功才可使用。");
-
 			me.remove_temp("busiyinfa_huanmo_trigger");
 			me.remove_temp("busiyinfa_huanmo");
 			// 与凌波微步相同：持续期间闪避 +999999，走正常闪避判定（闪避成功才触发幻影反击与随机技能）
@@ -382,7 +381,7 @@ this.pfm = {
 				id: "busiyinfa_huanmo",
 				name: "幻魔身法",
 				duration: huanmo_duration(lv),
-				desc: "绝对闪避所有攻击，闪避反击并可触发随机技能",
+				desc: "绝对闪避所有攻击",
 				override: 2,
 				prop: { ds: 999999 },
 				on_expire: function (p) {

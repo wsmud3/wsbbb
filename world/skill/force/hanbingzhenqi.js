@@ -20,10 +20,6 @@ this.query_enable_prop = function (lv) {
 		}
 	}
 
-// 寒冰诀期间（内功位）：每次攻击附加 4000 点寒冰伤害（作为内力伤害并入本次攻击）
-this.do_force_attack = function (me, target, par) {
-	return me.query_status("hanbing") ? 4000 : 0;
-};
 
 this.pfm = {
 		pfm1: {
@@ -37,6 +33,8 @@ this.pfm = {
 					id: "hanbing",
 					name: "寒冰",
 					desc: "伤害附加4000寒冰伤害，攻击者将被减速35%",
+					// 每次攻击附加 4000 点寒冰伤害（并入本次内力攻击）：写在状态上，融入自创武学后照常生效
+					do_force_attack: function () { return 4000; },
 					duration: 10000 + parseInt(lv * 10),
 					// 冰甲：被命中时令攻击者 15 秒内攻击间隔延长 35%（gjsd_per 负值为减速）
 					on_be_hit: function (owner, attacker) {

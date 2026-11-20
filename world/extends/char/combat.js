@@ -121,6 +121,7 @@ CHARACTER.prototype.do_attack = function (par) {
     if (this.force_skill.on_before_attack && !par.no_append_before) {
         passive(() => this.force_skill.on_before_attack(this, target, par));
     }
+    if (!par.no_append_before) status_hooks(this, "on_before_attack", target, par);
 
     this.attack_part = par.part ?? target.query_part();
 
@@ -179,6 +180,7 @@ CHARACTER.prototype.do_attack = function (par) {
             !par.no_parry && !target.is_busy && !target.is_faint) {
             passive(() => target.parry_skill.on_parry(target, this, par));
         }
+        if (!par.no_parry && !target.is_busy && !target.is_faint) status_hooks(target, "on_parry", this, par);
         if (par.on_parry) {
             par.on_parry(target, par.is_parry);
         }
@@ -235,6 +237,7 @@ CHARACTER.prototype.do_attack = function (par) {
         if (this.force_skill.do_force_attack) {
             power_gj += passive(() => this.force_skill.do_force_attack(this, target, par)) || 0;
         }
+        power_gj += status_hooks_sum(this, "do_force_attack", target, par);   // 状态附带的内力附加攻击
         if (power_gj > 0 && (!weapon || weapon.weapon_type === WEAPON_TYPE.NONE)) {
             power_gj = power_gj + power_gj * this.query_soft_prop("add_sh_per") / 100; //增加伤害%（玩家经软上限折算）
             if (par.iscirt)
@@ -271,6 +274,13 @@ CHARACTER.prototype.do_attack = function (par) {
         if (target.force_skill.on_force_parry) {
             par.power_gj = power_gj;
             sh -= passive(() => target.force_skill.on_force_parry(target, this, sh, par)) || 0;
+            if (this.hp <= 0 || !target.fight_type) {
+                return;
+            }
+        }
+        if (sh > 0 && has_status_hook(target, "on_force_parry")) {
+            par.power_gj = power_gj;
+            sh -= status_hooks_sum(target, "on_force_parry", this, sh, par);
             if (this.hp <= 0 || !target.fight_type) {
                 return;
             }
@@ -457,6 +467,8 @@ CHARACTER.prototype.do_attack = function (par) {
                 passive(() => this.force_skill.on_force_over(this, target, par, sh));
             // 攻击者自身的回调（NPC可用）
             this.on_attack_over && passive(() => this.on_attack_over(this, target, par, sh));
+            status_hooks(this, "on_attack_over", target, par, sh);
+            status_hooks(this, "on_force_over", target, par, sh);
         }
     }
     return sh;
@@ -495,6 +507,8 @@ CHARACTER.prototype.damage = function (sh, from, diff_fy, damageContext) {
     if (sh > 0 && this.equipment && this.equipment[1] && this.equipment[1].on_defense) {
         sh = passive(() => this.equipment[1].on_defense(this, from, sh));
     }
+    // 状态自带的受伤回调（如护盾式减伤、反震）先于内功被动结算：被动看到的是状态处理后的伤害
+    if (sh > 0) sh = status_hooks_damage(this, from, sh, damageContext);
     if (sh > 0 && this.force_skill.on_damage) {
         // 第 4 个参数把伤害来源类型交给内功：反震/反伤类内功遇到 {kind:"reflect"} 不应再反震
         sh = passive(() => this.force_skill.on_damage(this, from, sh, damageContext));
@@ -600,6 +614,56 @@ function mitigate_damage(ch, sh, from, diff_fy) {
 // 目前用于 on_be_hit(owner, attacker, par, sh)（被普攻/绝招命中且造成伤害后）
 // 与 on_parry_success(owner, attacker, par, parried_sh)（招架成功后）。
 // 回调抛错只记日志，不打断战斗流程（攻击多在定时器里执行，异常逃出会让进程退出）。
+// 状态自带的战斗回调：与技能钩子同名、同参数（第一个参数是状态的主人），在对应技能钩子之后、按被动上下文执行。
+// 绝招把自身效果挂在它施加的状态上（而不是写进技能的面板钩子），融入自创武学时效果才会随绝招一起走。
+//   on_before_attack(me, target, par)        攻击前
+//   on_parry(me, attacker, par)               招架判定（可改 par.is_parry）
+//   on_attack_over / on_force_over(me, target, par, sh)   攻击结算后
+//   do_force_attack(me, target, par) → 返回附加的内力攻击
+//   on_force_parry(me, from, sh, par) → 返回化解的伤害量
+//   on_damage(me, from, sh, ctx) → 返回调整后的伤害
+function status_hook_list(ch, name) {
+    if (!ch || !ch.status || !ch.status.length) return null;
+    var list = null;
+    for (var i = 0; i < ch.status.length; i++) {
+        var st = ch.status[i];
+        if (st && typeof st[name] === "function") (list || (list = [])).push(st);
+    }
+    return list;
+}
+function has_status_hook(ch, name) { return !!status_hook_list(ch, name); }
+function status_hooks(ch, name, a, b, c) {
+    var list = status_hook_list(ch, name);
+    if (!list) return;
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i];
+        if (ch.status.indexOf(st) < 0) continue; // 前面的回调已把它移除
+        try { passive(() => st[name](ch, a, b, c)); }
+        catch (e) { console.error("status hook %s/%s error:", st.id, name, (e && e.stack) || e); }
+    }
+}
+function status_hooks_sum(ch, name, a, b, c) {
+    var list = status_hook_list(ch, name), total = 0;
+    if (!list) return 0;
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i];
+        if (ch.status.indexOf(st) < 0) continue;
+        try { total += passive(() => st[name](ch, a, b, c)) || 0; }
+        catch (e) { console.error("status hook %s/%s error:", st.id, name, (e && e.stack) || e); }
+    }
+    return total;
+}
+function status_hooks_damage(ch, from, sh, ctx) {
+    var list = status_hook_list(ch, "on_damage");
+    if (!list) return sh;
+    for (var i = 0; i < list.length && sh > 0; i++) {
+        var st = list[i];
+        if (ch.status.indexOf(st) < 0) continue;
+        try { var v = passive(() => st.on_damage(ch, from, sh, ctx)); if (typeof v === "number") sh = v; }
+        catch (e) { console.error("status hook %s/on_damage error:", st.id, (e && e.stack) || e); }
+    }
+    return sh;
+}
 function fire_status_hook(ch, name, a, b, c) {
     if (!ch || !ch.status || !ch.status.length) return;
     var list = ch.status.slice();
@@ -654,6 +718,8 @@ CHARACTER.prototype.damage2 = function (sh, from, damageContext) {
         this.damages[from.id] = damag;
 
     }
+    sh = status_hooks_damage(this, from, sh, damageContext);
+    if (!sh) return 0;
     if (this.force_skill.on_damage) {
         sh = passive(() => this.force_skill.on_damage(this, from, sh, damageContext));
         if (!sh) return 0;

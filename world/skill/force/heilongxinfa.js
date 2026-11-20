@@ -25,18 +25,6 @@ this.learn_condition = {
     }
 };
 
-this.on_force_parry = function (me, target) {
-    let sh = me.query_temp('sk_heilong');
-    if (sh > 0) {
-        me.send_combat(
-            '<blk>$n被$N的黑龙护体反弹了' + sh + '点伤害！！</blk>\n',
-            target
-        );
-        target.damage2(sh, me, { kind: "reflect" });
-        me.end_attack(target);
-    }
-    return 0;
-}
 this.pfm = {
     power:
     {
@@ -60,17 +48,21 @@ this.pfm = {
             if (is_fy) {
                 prop.diff_sh = is_fy;
             }
-            if (is_sh > 0) {
-                me.set_temp('sk_heilong', is_sh, time);
-            }
-
             me.add_status({
                 id: "force",
                 name: "黑龙护体",
                 desc: "运用黑龙护体，提升自身防御力",
                 prop: prop,
                 duration: time,
-                finish_msg: "$N的黑龙护体运行完毕，将内力收回丹田。"
+                finish_msg: "$N的黑龙护体运行完毕，将内力收回丹田。",
+                // 黑龙反弹（装备带「黑龙反伤」时）：写在状态上（原在黑龙心法的内力卸力钩子里），融入自创武学后照常生效
+                on_force_parry: is_sh > 0 ? function (owner, from) {
+                    if (!from || from === owner || from.hp <= 0) return 0;
+                    owner.send_combat('<blk>$n被$N的黑龙护体反弹了' + is_sh + '点伤害！！</blk>\n', from);
+                    from.damage2(is_sh, owner, { kind: "reflect" });
+                    owner.end_attack(from);
+                    return 0;
+                } : undefined,
             });
         },
         query_desc: function (me, lv) {

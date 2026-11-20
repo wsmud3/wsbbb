@@ -30,17 +30,6 @@ this.query_enable_prop = function (lv) {
         },
     };
 }
-this.on_force_parry = function (me, target, sh) {
-    var lv = me.query_temp("xqs");
-    if (lv) {
-        var hp = me.do_recover(lv * sh / 100);
-        if (hp) {
-            me.send_room("<hiy>$N全身罡气流转，似乎更加精神奕奕。</hiy>");
-            return hp;
-        }
-    }
-    return 0;
-}
 
 this.pfm = {
     power:
@@ -103,9 +92,11 @@ this.pfm = {
                 desc: "增加你的防御，和吸收伤害",
                 duration: time,
                 prop: prop,
-                on_attach: p => p.set_temp('xqs', gj, time),
-                on_expire: function (p) {
-                    p.remove_temp('xqs');
+                // 吸收伤害化为气血：写在状态上（原在龙象功的内力卸力钩子里），融入自创武学后照常生效
+                on_force_parry: function (owner, from, sh) {
+                    var hp = owner.do_recover(gj * sh / 100);
+                    if (hp) owner.send_room("<hiy>$N全身罡气流转，似乎更加精神奕奕。</hiy>");
+                    return hp || 0;
                 },
                 finish_msg: "$N的象驱势运行完毕，将内力收回丹田。"
             });

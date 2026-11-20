@@ -74,16 +74,6 @@ this.on_before_attack = function (me, target, par) {
 };
 this.on_force_over = function (me, target, par, sh) {
 	clear_qisha_bonus(me);
-	if (sh > 0 && me.query_status("tushen")) {
-		var lv = me.query_skill("tushendafa");
-		var healPer = 5 + Math.floor(lv / 500);
-		var lostHp = me.max_hp - me.hp;
-		var heal = Math.floor(lostHp * healPer / 100);
-		if (heal > 0) {
-			me.do_recover(heal);
-			me.send_room("<hig>$N屠神之力涌动，恢复了" + heal + "点气血。</hig>");
-		}
-	}
 };
 this.on_attack_over = function (me, target, par, sh) {
 	clear_qisha_bonus(me);
@@ -112,7 +102,16 @@ this.pfm = {
 					diff_fy_per: diff_fy,
 					gjsd_per: gjsd,
 				},
-				finish_msg: "$N身上的屠神之力渐渐消散。"
+				finish_msg: "$N身上的屠神之力渐渐消散。",
+				// 命中后按已损气血回复：写在状态上（原在屠神大法的 on_force_over），按施展时的等级计算，融入自创武学后照常生效
+				on_force_over: function (owner, t, par, sh) {
+					if (!(sh > 0)) return;
+					var heal = Math.floor((owner.max_hp - owner.hp) * (5 + Math.floor(lv / 500)) / 100);
+					if (heal > 0) {
+						owner.do_recover(heal);
+						owner.send_room("<hig>$N屠神之力涌动，伤势随之平复几分。</hig>");
+					}
+				}
 			});
 		},
 		query_desc: function (me, lv) {

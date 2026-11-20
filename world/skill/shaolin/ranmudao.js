@@ -42,15 +42,6 @@ this.on_attack = function (me, target) {
     me.send_combat("<red>$n被烈焰划过，身上一道焦黑</red>", target);
     return me.fy;
 }
-this.on_parry_over = function (me, target, par) {
-    // 护体真焰：被敌人命中后才反伤（招架住不算命中，闪开时引擎不调用本钩子）；原先招架成功时反而伤害翻倍
-    let sh = me.query_temp("sk_ranmu");
-    if (sh && !par.is_parry) {
-        target.send_combat("<HIR>$n的护体真气灼伤了$N的真元！！</HIR>", me);
-        target.damage2(sh, me, { kind: "reflect" });
-        me.end_attack(target);
-    }
-}
 this.pfm = {
     hu:
     {
@@ -64,7 +55,6 @@ this.pfm = {
             var time = 8000 + lv * 5;
             if (time > 200000) time = 200000;
             let add_fy = lv * 2 + 500;
-            me.set_temp("sk_ranmu", add_fy, time);
             me.add_status({
                 id: "weapon",
                 name: "真焰",
@@ -72,6 +62,13 @@ this.pfm = {
                 duration: time,
                 prop: {
                     fy: add_fy
+                },
+                // 被命中后反伤（招架住、闪开不算）：写在状态上（原在燃木刀的招架后钩子里），融入自创武学后照常生效
+                on_be_hit: function (owner, attacker) {
+                    if (!attacker || attacker === owner || attacker.hp <= 0) return;
+                    attacker.send_combat("<HIR>$n的护体真气灼伤了$N的真元！！</HIR>", owner);
+                    attacker.damage2(add_fy, owner, { kind: "reflect" });
+                    owner.end_attack(attacker);
                 }
             });
         },

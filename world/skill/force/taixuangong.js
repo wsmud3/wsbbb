@@ -10,15 +10,6 @@ this.learn_condition = {
 	skill: { force: 500 }
 };
 
-// 白首太玄期间：附加伤害加倍 + 命中后恢复攻击力40%气血
-this.on_force_over = function (me, target, par, sh) {
-	if (sh > 0 && me.query_temp("taixuan_bstx")) {
-		var heal = Math.floor(me.gj * 0.4);
-		if (heal > 0) {
-			me.do_recover(heal);
-		}
-	}
-};
 
 this.query_enable_prop = function (lv) {
 	return {
@@ -81,11 +72,9 @@ this.pfm = {
 				prop: { add_sh_per: parseInt(lv * 8 / 1000) },
 				start_msg: "<HIG>$N白首太玄，功力倍增！</HIG>",
 				finish_msg: "$N的白首太玄效果消失了。",
-				on_attach: function (p) {
-					p.set_temp("taixuan_bstx", 1);
-				},
-				on_expire: function (p) {
-					p.remove_temp("taixuan_bstx");
+				// 命中后恢复攻击力 40% 气血：写在状态上（原在太玄功的 on_force_over），融入自创武学后照常生效
+				on_force_over: function (owner, target, par, sh) {
+					if (sh > 0) { var heal = Math.floor(owner.gj * 0.4); if (heal > 0) owner.do_recover(heal); }
 				},
 			});
 		},

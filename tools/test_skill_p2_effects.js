@@ -117,9 +117,10 @@ async function main() {
     check("狂风快剑(高阶)·夺命连环：三剑全中后续发", () => {
         const [a, b] = pair(); const c = spy(a, true);
         P("kuangfengkuaijian2", "duoming").use(a, b, 1000);
-        assert.ok(a.query_temp("kuangfeng"));
-        SKILL.get("kuangfengkuaijian2").on_attack_over(a, b, {});
-        assert.strictEqual(c.length, 6); assert.strictEqual(a.query_temp("kuangfeng"), 2);
+        const st = a.status.find(x => x.id === "kuangfeng_lianhuan");
+        assert.ok(st && st.kf_count === 1, "三剑全中挂上夺命连环");
+        st.on_attack_over(a, b, {});       // 续发写在状态上：融入自创武学同样生效
+        assert.strictEqual(c.length, 6); assert.strictEqual(a.status.find(x => x.id === "kuangfeng_lianhuan").kf_count, 2);
     });
     check("万佛朝宗：按实际伤害 30% 回血", () => {
         const [a, b] = pair(); spy(a, () => 10000); a.hp = 1;

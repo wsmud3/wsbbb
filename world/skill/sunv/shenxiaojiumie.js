@@ -25,14 +25,6 @@
 			var bonus = Math.floor(sh * 0.3);
 			target.damage(bonus, me);
 		}
-		if (target.hp > 0 && me.query_status("shenxiao_yanglei")) {
-			var mpPct = 0.03;
-			var ylBonus = Math.floor(me.mp * mpPct);
-			if (ylBonus > 0) {
-				target.damage(ylBonus, me);
-				me.send_combat("<HIG>阳雷迸发，额外造成" + ylBonus + "点伤害！</HIG>\n", target);
-			}
-		}
 	};
 
 	this.pfm = {
@@ -88,6 +80,15 @@
 					prop: {},
 					start_msg: "<HIG>$N周身阳雷缠绕，杖上电光闪烁！</HIG>",
 					finish_msg: "$N的阳雷之力渐渐消散。",
+					// 每次造成伤害附加当前内力一定比例的额外伤害：写在状态上（原在神霄九灭的 on_attack_over），融入自创武学后照常生效
+					on_attack_over: function (owner, t, par, sh) {
+						if (!(sh > 0) || !t || t.hp <= 0) return;
+						var ylBonus = Math.floor(owner.mp * (0.03));
+						if (ylBonus > 0) {
+							t.damage(ylBonus, owner);
+							owner.send_combat("<HIG>阳雷迸发，额外造成" + ylBonus + "点伤害！</HIG>\n", t);
+						}
+					},
 				});
 			},
 			query_desc: function (me, lv) {

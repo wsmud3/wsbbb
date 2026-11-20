@@ -24,16 +24,6 @@ this.query_enable_prop = function (lv) {
 };
 
 // 九烛状态下的反震：被命中后对敌人造成伤害（随等级成长）
-this.on_damage = function (me, from, sh, ctx) {
-    // 反震/反伤造成的伤害不再反震（ctx.kind === "reflect"）
-    if (me.query_temp("yinyang_jiuzhu") && from && from.hp > 0 && sh > 0 && !(ctx && ctx.kind === "reflect")) {
-        var lv = me.query_skill("yinyangjiuzhuan");
-        var reboundDmg = parseInt(12000 * lv / 1000);
-        from.damage(reboundDmg, me, 0, { kind: "reflect" });
-        me.send_room("<hiy>$N的九烛之力反震，将" + reboundDmg + "点伤害反弹给$n！</hiy>", from);
-    }
-    return sh;
-};
 
 // 进场驱散：驱散房间内所有敌人的增益buff
 this.on_beginfight = function (me, target) {
@@ -66,11 +56,12 @@ this.pfm = {
         allow_faint: true,
         mp: 20,
         use: function (me, target, lv) {
-            var isJiuzhu = me.query_temp("yinyang_jiuzhu");
+            // 按当前状态切换（原先记在不随战斗结束清除的 temp 上，换场后切换顺序会错乱）
+            var cur = me.status && me.status.find(function (x) { return x.id === "force"; });
+            var isJiuzhu = !!(cur && cur.name === "九烛");
 
             if (isJiuzhu) {
                 // 当前是九烛，切换到九幽
-                me.remove_temp("yinyang_jiuzhu");
                 me.send_room("<hiy>$N催动阴阳九转，阴阳流转——九烛灭，九幽生！</hiy>");
                 var jy_gj = parseInt(30 + lv / 100);
                 var jy_fy = parseInt(30 + lv / 100);
@@ -90,7 +81,6 @@ this.pfm = {
                 });
             } else {
                 // 当前是九幽或无状态，切换到九烛
-                me.set_temp("yinyang_jiuzhu", 1);
                 me.send_room("<hiy>$N催动阴阳九转，阴阳流转——九幽隐，九烛明！</hiy>");
                 var jz_hp = parseInt(45 + lv / 100);
                 var jz_dr = parseInt(15 + lv / 100);
@@ -105,6 +95,15 @@ this.pfm = {
                     only_combat: true,
                     prop: { hp_per: jz_hp, diff_sh_per2: jz_dr },
                     start_msg: "<hio>$N周身烛光笼罩，进入九烛状态——气血如烛火不灭！</hio>",
+                    // 被命中反震：写在状态上（原在阴阳九转的受伤钩子里），按施展时的等级计算，融入自创武学后照常生效
+                    on_damage: function (owner, from, sh, ctx) {
+                        if (from && from !== owner && from.hp > 0 && sh > 0 && !(ctx && ctx.kind === "reflect")) {
+                            var reboundDmg = parseInt(12000 * lv / 1000);
+                            from.damage(reboundDmg, owner, 0, { kind: "reflect" });
+                            owner.send_room("<hiy>$N的九烛之力反震，将" + reboundDmg + "点伤害反弹给$n！</hiy>", from);
+                        }
+                        return sh;
+                    },
                     finish_msg: "$N的九烛状态消散了。",
                 });
             }

@@ -45,37 +45,30 @@ this.query_enable_prop = function (lv) {
         }
     };
 }
-this.on_attack_over = function (me, target, par) {
-    let kf_count = me.query_temp("kuangfeng");
-    if (kf_count) {
-        me.send_room("<hir>$N一击奏效，手中快剑如狂风般继续攻来</hir>\n");
-        var isMIss = false;
-
-        var per = 10 - parseInt(me.query_skill('kuangfengkuaijian', 0) / 100);
-        if (per < 3) per = 3;
-
-        let mz = me.mz;
-        mz = parseInt(mz - mz * (kf_count - 1) * per / 100);
-        if (mz < 0) mz = 0;
-
-        for (var i = 0; i < 3; i++) {
-            if (!me.do_attack({
-                target: target,
-                gj: me.gj,
-                mz: mz,
-                no_append: true
-            })) {
-                isMIss = true;
+// 夺命连环续发：三剑全中后挂「夺命连环」状态，之后每次攻击结算时再连出三剑，每轮命中递减，任一剑落空即收招。
+// 续发写在状态上（而不是技能的面板钩子），融入自创武学后同样生效；命中递减按施展时的等级计算。
+function kf_lianhuan(lv, count) {
+    return {
+        id: "kuangfeng_lianhuan", name: "夺命连环", desc: "三剑全中，快剑如狂风般继续攻出",
+        duration: 5000, override: 2, kf_lv: lv, kf_count: count,
+        on_attack_over: function (me, target, par) {
+            if (!target || target.hp <= 0) return;
+            var st = this;
+            me.send_room("<hir>$N一击奏效，手中快剑如狂风般继续攻来</hir>\n");
+            var isMiss = false;
+            var per = 10 - parseInt((st.kf_lv || 0) / 100);
+            if (per < 3) per = 3;
+            var mz = parseInt(me.mz - me.mz * (st.kf_count - 1) * per / 100);
+            if (mz < 0) mz = 0;
+            for (var i = 0; i < 3; i++) {
+                if (!me.do_attack({ target: target, gj: me.gj, mz: mz, no_append: true })) isMiss = true;
             }
+            me.remove_status("kuangfeng_lianhuan", true);
+            if (isMiss) me.send_room("<hic>$N一击未能奏效，收招后退</hic>");
+            else me.add_status(kf_lianhuan(st.kf_lv, st.kf_count + 1));
+            if (par.is_dodge || par.is_parry) me.end_attack(target);
         }
-        if (isMIss) {
-            me.send_room("<hic>$N一击未能奏效，收招后退</hic>");
-            me.remove_temp("kuangfeng");
-        } else {
-            me.set_temp("kuangfeng", kf_count + 1, 5000);
-        }
-        if (par.is_dodge || par.is_parry) me.end_attack(target);
-    }
+    };
 }
 this.pfm = {
     duoming:
@@ -85,7 +78,7 @@ this.pfm = {
         enable_skill: "sword",
         mp: 20,
         use: function (me, target, lv) {
-            if (me.query_temp('kuangfeng')) return me.notify("你的夺命连环还没释放完。");
+            if (me.query_status("kuangfeng_lianhuan")) return me.notify("你的夺命连环还没释放完。");
 
             me.send_room("<hir>$N一声清啸，手中$W犹如狂风般劈头向$n刺去。</hir>\n", target);
             var isMIss = false;
@@ -102,7 +95,7 @@ this.pfm = {
             if (isMIss) {
                 me.send_room("<hic>$N一击未能奏效，收招后退</hic>");
             } else {
-                me.set_temp("kuangfeng", 1, 5000);
+                me.add_status(kf_lianhuan(lv, 1));
             }
             me.end_attack(target);
         },

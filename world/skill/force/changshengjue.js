@@ -53,20 +53,6 @@ this.on_beginfight = function (me, target) {
 				}
 };
 
-this.on_force_parry = function (me, from, sh, par) {
-				if (me.query_temp("changsheng_hundun") && sh > 0) {
-								var cap = Math.floor(me.max_hp * 0.13);
-								if (sh > cap) {
-												var excess = sh - cap;
-												me.do_recover(excess);
-												me.add_mp(parseInt(excess));
-												me.send_room("<hio>$N的混沌真气流转不息，将来袭的劲力化作了气血与内力！</hio>");
-												return excess;
-								}
-				}
-				return 0;
-};
-
 this.on_damage = function (me, from, sh) {
 	var lv = me.query_skill("changshengjue", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
 				if (sh <= 0) return sh;
@@ -138,11 +124,15 @@ this.pfm = {
 																duration: 3000 + parseInt(lv * 10),
 																downside: false,
 																override: 2,
-																on_attach: function (p) {
-																				p.set_temp("changsheng_hundun", 1);
-																},
-																on_expire: function (p) {
-																				p.remove_temp("changsheng_hundun");
+																// 单次受伤封顶写在状态上（原在长生诀的内力卸力钩子里），融入自创武学后照常生效
+																on_force_parry: function (owner, from, sh) {
+																				var cap = Math.floor(owner.max_hp * 0.13);
+																				if (!(sh > cap)) return 0;
+																				var excess = sh - cap;
+																				owner.do_recover(excess);
+																				owner.add_mp(parseInt(excess));
+																				owner.send_room("<hio>$N的混沌真气流转不息，将来袭的劲力化作了气血与内力！</hio>");
+																				return excess;
 																},
 																finish_msg: "$N的混沌真气消散了。",
 												});

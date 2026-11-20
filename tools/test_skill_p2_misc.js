@@ -50,10 +50,11 @@ async function main() {
     await check("燃木刀法：被招架不再翻倍，只在命中时反伤", () => {
         const sk = SKILL.get("ranmudao");
         const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
-        a.set_temp("sk_ranmu", 1000, 60000); a.end_attack = () => {};
-        let hp0 = b.hp; sk.on_parry_over(a, b, { is_parry: true });
-        assert.strictEqual(b.hp, hp0, "招架时不反伤");
-        sk.on_parry_over(a, b, { is_parry: false });
+        a.end_attack = () => {};
+        sk.pfm.hu.use(a, b, 250);                  // 护体真焰：add_fy = 250×2+500 = 1000
+        const st = a.status.find(x => x.id === "weapon" && x.name === "真焰");
+        assert.ok(st && !st.on_parry_success, "反伤挂在「被命中」回调上，招架时不触发");
+        let hp0 = b.hp; st.on_be_hit(a, b);
         assert.strictEqual(hp0 - b.hp, 1000, "命中时反伤 1000（不翻倍）");
     });
     await check("不死印法：闪避成功才幻影反击，没闪开不反击", () => {

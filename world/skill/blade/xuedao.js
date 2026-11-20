@@ -43,11 +43,6 @@
 			par.gj = parseInt(par.gj * 100 / mult);
 			par.mz = parseInt(par.mz * 100 / mult);
 		}
-		// 嗜血: drain 1% of current HP per attack
-		if (me.query_status("xuedao_shixue") && sh > 0) {
-			var drain = Math.max(1, Math.floor(me.hp * 0.01));
-			me.damage(drain, me);
-		}
 	};
 
 	this.query_enable_prop = function (lv) {
@@ -83,6 +78,10 @@
 					},
 					start_msg: "<HIR>$N双目赤红，施展了「嗜血」大法，攻势变得凌厉无比！</HIR>",
 					finish_msg: "$N的「嗜血」效果消失了。",
+					// 每次攻击消耗 1% 当前气血：挂在状态上，融入自创武学后照常生效
+					on_attack_over: function (owner, t, par, sh) {
+						if (sh > 0) owner.damage(Math.max(1, Math.floor(owner.hp * 0.01)), owner);
+					},
 				});
 				me.do_attack({target: target});
 				me.end_attack(target);

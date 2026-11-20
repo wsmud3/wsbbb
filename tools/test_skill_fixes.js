@@ -190,13 +190,13 @@ async function main() {
         const a = mkUser(), b = mkUser();
         learn(a, { hanbingzhenqi: "force" }, 1000); learn(b, {}, 100); fight(a, b);
         SKILL.get("hanbingzhenqi").pfm.pfm1.use(a, b, 1000);
-        assert.strictEqual(a.force_skill.do_force_attack(a, b, {}), 4000);
+        assert.strictEqual(statusOf(a, "hanbing").do_force_attack(a, b, {}), 4000, "附加伤害写在状态上，融入自创武学同样生效");
         const g0 = b.gjsd;
         b.do_attack({ target: a, gj: 1000, mz: 1e9, no_dodge: true, no_parry: true });
         assert.ok(statusOf(b, "hanbing_slow"), "攻击者被冻结");
         assert.ok(b.gjsd > g0, "攻击间隔变长");
     });
-    check("神霄九灭(含进阶)·阳雷：杖法位 on_attack_over 附加当前内力伤害", () => {
+    check("神霄九灭(含进阶)·阳雷：阳雷状态在每次攻击结算时附加当前内力伤害", () => {
         for (const id of ["shenxiaojiumie", "shenxiaojiumie2"]) {
             const sk = SKILL.get(id);
             assert.ok(!sk.on_force_over, id + " 不再依赖内功位钩子");
@@ -204,7 +204,7 @@ async function main() {
             a.max_mp = a.mp = 100000;
             sk.pfm.yanglei.use(a, b, 1000);
             const hp0 = b.hp; b.fy = 0; b.diff_sh_per = 0;
-            sk.on_attack_over(a, b, {}, 100);
+            a.status.find(x => x.id.indexOf("shenxiao_yanglei") === 0).on_attack_over(a, b, {}, 100);   // 阳雷写在状态上，融入自创武学同样生效
             assert.ok(hp0 - b.hp >= 2999, id + " 阳雷附加 " + (hp0 - b.hp));
         }
     });

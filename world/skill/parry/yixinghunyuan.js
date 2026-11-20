@@ -36,19 +36,9 @@ this.query_enable_prop = function (lv) {
     };
 }
 
-//被动：受到攻击时概率反击一次（每100级1%，1万级100%）
-//混元之气期间：绝对招架，每次招架成功就连续反击 2+lv/1000 次（上限5次）
-this.on_parry_over = function (me, target, par) {
-    var lv = me.query_skill("yixinghunyuan", 0);
-    if (!lv) return;
-    var cnt = 1;
-    if (me.query_status("yixinghunyuan")) {
-        //混元之气期间：每招架一次连续反击 N 次
-        cnt = Math.min(5, 2 + parseInt(lv / 1000));
-    } else if (me.random(10000) >= lv) {
-        //被动概率反击未触发
-        return;
-    }
+//被动（面板）：受到攻击时概率反击一次（每100级1%，1万级100%）
+//混元之气（绝招）的绝对招架与连续反击写在其状态上，见 pfm.hunyuan，融入自创武学后照常生效
+var hunyuan_counter = function (me, target, cnt) {
     for (var i = 0; i < cnt; i++) {
         if (target.hp <= 0 || !target.fight_type) break;
         me.do_attack({
@@ -57,14 +47,15 @@ this.on_parry_over = function (me, target, par) {
         });
     }
     me.end_attack(target);
+};
+this.on_parry_over = function (me, target, par) {
+    var lv = me.query_skill("yixinghunyuan", 0);
+    if (!lv) return;
+    if (me.query_status("yixinghunyuan")) return;   // 混元之气期间由状态自身反击
+    if (me.random(10000) >= lv) return;              // 被动概率反击未触发
+    hunyuan_counter(me, target, 1);
 }
 
-//绝对招架：混元之气期间强制招架成功
-this.on_parry = function (me, target, par) {
-    if (me.query_status("yixinghunyuan")) {
-        par.is_parry = true;
-    }
-}
 
 this.pfm = {
     hunyuan:
@@ -83,6 +74,11 @@ this.pfm = {
                 desc: "移形混元之混元之气，绝对招架，每次招架成功便连续反击",
                 duration: Math.min(30000, 10000 + lv * 2),
                 only_combat: true,
+                // 绝对招架，每次招架成功连续反击：按施展时的等级计算
+                on_parry: function (owner, attacker, par) { par.is_parry = true; },
+                on_parry_success: function (owner, attacker) {
+                    if (attacker && attacker.hp > 0) hunyuan_counter(owner, attacker, Math.min(5, 2 + parseInt(lv / 1000)));
+                },
                 start_msg: "<hiy>$N周身的混元之气流转不息，敌人的攻击尽数被卸开！</hiy>",
                 finish_msg: "<wht>$N周身的混元之气渐渐消散。</wht>"
             });

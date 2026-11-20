@@ -101,7 +101,7 @@ this.pfm = {
         mp: 30,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用狂风骤雨？");
-            lv = me.query_skill ? me.query_skill("jifengjianfa", lv || 0) : (lv || 0);
+            lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             var wind = me.query_status ? me.query_status("jifeng_fengyi") : 0;
             var percent = 200 + lv / 10 + wind * (20 + lv / 20);
             var gj = Math.floor(me.gj * percent / 100);
@@ -118,7 +118,7 @@ this.pfm = {
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            lv = me.query_skill ? me.query_skill("jifengjianfa", lv || 0) : (lv || 0);
+            lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             var wind = me.query_status ? me.query_status("jifeng_fengyi") : 0;
             var percent = 200 + lv / 10 + wind * (20 + lv / 20);
             return "化作狂风骤雨斩向敌手：造成" + Math.round(percent) + "%攻击力的伤害，所持风意层数越高，伤害越强。";
@@ -134,7 +134,7 @@ this.pfm = {
         mp: 30,
         use: function (me, target, lv) {
             if (!target) return me.notify("你要对谁使用风起云涌？");
-            lv = me.query_skill ? me.query_skill("jifengjianfa", lv || 0) : (lv || 0);
+            lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             if (!(target.hp > 0)) return;
 
             var lostHp = (target.max_hp || 0) - target.hp;
@@ -155,7 +155,7 @@ this.pfm = {
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            lv = me.query_skill ? me.query_skill("jifengjianfa", lv || 0) : (lv || 0);
+            lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             var pct = 30 + lv / 20;
             if (pct > 50) pct = 50;
             return "风起云涌：造成" + pct + "%（上限50%）敌方已损失气血的伤害，并恢复等量的气血。";
