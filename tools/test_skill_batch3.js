@@ -198,6 +198,20 @@ async function main() {
             if (/不死七幻/.test(m)) got.qihuan = 1; if (/生死逆转/.test(m)) got.nisheng = 1; if (/触发了——幻魔身法/.test(m)) got.huanmo = 1;
         }
         assert.ok(got.qihuan && got.nisheng && !got.huanmo, "可触发不死七幻、生死逆转，不触发幻魔身法");
+        // 先手动放过（敌人已带幻身、自己已在逆转中），再被触发：刷新被拒但效果仍在，同样重算冷却。走真实攻击 → 真实闪避
+        const re = {};
+        for (let r = 0; r < 60 && !(re.qihuan && re.nisheng); r++) {
+            const t = mk({ busiyinfa: ["force", "dodge"] });
+            B.pfm.qihuan.use(t.a, t.b, 3000); B.pfm.nisheng.use(t.a, t.b, 3000);
+            t.a.max_hp = t.a.hp = t.b.max_hp = t.b.hp = 1e12; t.msgs.length = 0;
+            B.pfm.huanmo.use(t.a, t.b, 3000);
+            for (let i = 0; i < 5 && !t.msgs.some(m => /触发了/.test(m)); i++) t.b.do_attack({ target: t.a });
+            const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
+            for (const pid of ["qihuan", "nisheng"]) if (m.indexOf("——" + B.pfm[pid].name + "！") >= 0) {
+                re[pid] = 1; assert.ok(t.a.query_temp("pfm/force/" + pid), B.pfm[pid].name + "已生效时再被触发也重算冷却");
+            }
+        }
+        assert.ok(re.qihuan && re.nisheng, "两个都覆盖到");
         // 被动（技能面板）挂上的状态不算：参合指被动命中叠「参合」，参合之殇（本身不挂状态）被触发时不进冷却；
         // 写在绝招里的效果算：六脉神剑·无形剑气命中后的昏迷，被触发时重算冷却
         const chId = Object.keys(SKILL.get("canhezhi").pfm).find(k => SKILL.get("canhezhi").pfm[k].name === "参合之殇");
@@ -254,6 +268,18 @@ async function main() {
         const by = SKILL.get("busiyinfa").pfm;
         by.nisheng.use(a, b, lv); assert.strictEqual(statusOf(a, "force").duration, 30000);
         assert.ok(/30秒内/.test(by.nisheng.query_desc(a, lv)));
+        // 生死逆转：受到的伤害降低（特殊免伤，最高 60%），不降低自己的攻击
+        assert.strictEqual(statusOf(a, "force").prop.diff_sh_per2, 60, "10000 级封顶 60%");
+        assert.ok(!("gj_per" in statusOf(a, "force").prop), "不再降低攻击");
+        assert.ok(/受到的伤害降低60%/.test(by.nisheng.query_desc(a, lv)) && !/攻击伤害降低/.test(by.nisheng.query_desc(a, lv)));
+        assert.ok(/受到的伤害降低40%/.test(by.nisheng.query_desc(a, 1000)), "1000 级 40%");
+        {
+            const x = mkUser(), y = mkUser(); learn(x, { busiyinfa: ["force", "dodge"] }, 1000); learn(y, {}, 100); fight(x, y);
+            const gj0 = x.gj, dsp0 = x.diff_sh_per;
+            by.nisheng.use(x, y, 1000);
+            assert.strictEqual(x.gj, gj0, "攻击不变");
+            assert.ok(Math.abs(x.diff_sh_per - dsp0 - 40) < 1e-9, "免伤 +40%");
+        }
         // 幻魔身法：同凌波微步，最长 10 秒、最短 3 秒；持续期间闪避 +999999（真正闪避，不依赖内功位）
         by.huanmo.use(a, b, lv); assert.strictEqual(statusOf(a, "busiyinfa_huanmo").duration, 10000);
         assert.strictEqual(statusOf(a, "busiyinfa_huanmo").prop.ds, 999999);

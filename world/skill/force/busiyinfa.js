@@ -69,6 +69,8 @@ var qihuan_link_valid = function (me) {
 };
 
 // 幻魔身法时长：同凌波微步，lv×10 毫秒，最短 3 秒、最长 10 秒
+// 生死逆转：受到的伤害降低 30+等级/100 %，最高 60%（3000 级到顶）
+var nisheng_dr = function (lv) { return Math.min(30 + parseInt((lv || 0) / 100), 60); };
 var huanmo_duration = function (lv) { return Math.max(3000, Math.min(parseInt((lv || 0) * 10), 10000)); };
 // 幻魔身法是否生效：以状态为准（状态不存档，下线即失效）
 var huanmo_active = function (me) { return me.query_status && me.query_status("busiyinfa_huanmo") > 0; };
@@ -95,8 +97,16 @@ var huanmo_usable = function (me, slot, pfm, lv) {
 // 写在绝招代码里的效果（包括绝招传给 do_attack 的回调，如无形剑气命中后的昏迷）都算绝招本身。
 var huanmo_cast_watch = function (me, target, fn) {
 	var applied = false, saved = [];
-	// 只算真正挂上的状态（add_status 失败时返回 false，如目标已死、免控、同名状态不可覆盖）
-	var markAdd = function (orig) { return function () { var own = !(CHARACTER.passive_depth > 0); var r = orig.apply(this, arguments); if (own && r !== false) applied = true; return r; }; };
+	// 状态挂上了，或者调用后身上已有这个状态（如敌人已带幻身时再放不死七幻，刷新被拒但效果仍在）都算；
+	// 挂不上又不存在（目标已死、免控等，如参合之殇的昏迷没打出来）不算
+	var markAdd = function (orig) {
+		return function (buff) {
+			var own = !(CHARACTER.passive_depth > 0);
+			var r = orig.apply(this, arguments);
+			if (own && (r !== false || (buff && buff.id && this.query_status && this.query_status(buff.id) > 0))) applied = true;
+			return r;
+		};
+	};
 	[me, target].forEach(function (obj) {
 		if (!obj || saved.some(function (sv) { return sv[0] === obj; })) return;
 		saved.push([obj, Object.prototype.hasOwnProperty.call(obj, "add_status"), obj.add_status]);
@@ -309,7 +319,7 @@ this.pfm = {
 		query_mp: function (me, level) { return 500; },
 		query_desc: function (me, lv) {
 			lv = lv || 0;
-			return "逆转经脉，" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内受到的伤害改为扣除内力而非气血，攻击伤害降低" + (30 + parseInt(lv / 100)) + "%。结束后回复被扣除的内力，并反噬对手等量内力。";
+			return "逆转经脉，" + (Math.min(parseInt(lv * 10), 30000) / 1000) + "秒内受到的伤害降低" + nisheng_dr(lv) + "%，且改为扣除内力而非气血。结束后回复被扣除的内力，并反噬对手等量内力。";
 		},
 		use: function (me, target, lv) {
 			if (!me.skills.force || me.skills.force.enable_skill !== "busiyinfa")
@@ -320,9 +330,9 @@ this.pfm = {
 				id: "force",
 				name: "逆转",
 				duration: Math.min(parseInt(lv * 10), 30000),
-				desc: "受到的伤害由内力承担，攻击伤害降低" + (30 + parseInt(lv / 100)) + "%",
+				desc: "受到的伤害降低" + nisheng_dr(lv) + "%，并由内力承担",
 				override: 2,
-				prop: { gj_per: -(30 + parseInt(lv / 100)) },
+				prop: { diff_sh_per2: nisheng_dr(lv) },   // 免伤 buff 走特殊免伤，在软上限之后叠加
 				on_attach: function (p) {
 					p.set_temp("busiyinfa_nisheng", 1);
 				},
