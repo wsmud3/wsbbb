@@ -32,11 +32,14 @@ this.query_enable_prop = function (lv) {
 			mz: parseInt(lv * 1.5) + 20,
 			bj_per: 4,
 			int: parseInt(lv * 169.0 / 1000),
-			desc: "命中后叠加参合状态，每层增加参合之殇30%伤害",
+			desc: "命中后使敌人受到的伤害增加" + canhe_sh(lv) + "可叠加10层",
 		}
 	};
 }
 
+// 参合状态每层使目标受到的伤害固定增加 等级+1 点（diff_sh 为固定免伤，取负即固定增伤），最多 10 层；
+// 参合之殇另按层数每层 +30% 伤害。
+var canhe_sh = function (lv) { return parseInt(lv || 0) + 1; };
 // 被动：命中时叠加参合层数
 this.on_attack_over = function (me, target, par, sh) {
 	var lv = me.query_skill("canhezhi", 0); // 原先引用了未定义的 lv，触发即 ReferenceError
@@ -44,7 +47,8 @@ this.on_attack_over = function (me, target, par, sh) {
 		target.add_status({
 			id: "canhe",
 			name: "参合",
-			desc: "参合指力层层叠加，每层增加参合之殇30%伤害",
+			desc: "参合指力层层叠加，每层使受到的伤害增加" + canhe_sh(lv) + "点",
+			prop: { diff_sh: -canhe_sh(lv) },
 			duration: 10000 + parseInt(lv * 5),
 			override: 1,
 			max_count: 10,

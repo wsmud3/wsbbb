@@ -95,14 +95,20 @@ var huanmo_usable = function (me, slot, pfm, lv) {
 // 写在绝招代码里的效果（包括绝招传给 do_attack 的回调，如无形剑气命中后的昏迷）都算绝招本身。
 var huanmo_cast_watch = function (me, target, fn) {
 	var applied = false, saved = [];
-	var markAdd = function (orig) { return function () { if (!(CHARACTER.passive_depth > 0)) applied = true; return orig.apply(this, arguments); }; };
+	// 只算真正挂上的状态（add_status 失败时返回 false，如目标已死、免控、同名状态不可覆盖）
+	var markAdd = function (orig) { return function () { var own = !(CHARACTER.passive_depth > 0); var r = orig.apply(this, arguments); if (own && r !== false) applied = true; return r; }; };
 	[me, target].forEach(function (obj) {
 		if (!obj || saved.some(function (sv) { return sv[0] === obj; })) return;
 		saved.push([obj, Object.prototype.hasOwnProperty.call(obj, "add_status"), obj.add_status]);
 		obj.add_status = markAdd(obj.add_status);
 	});
+	// 触发本身发生在闪避被动钩子里（passive_depth > 0），被触发的绝招是一次主动施展：
+	// 施展期间把深度清零，绝招内部再调用的被动钩子会重新计深度。
+	var depth = CHARACTER.passive_depth;
+	CHARACTER.passive_depth = 0;
 	try { fn(); }
 	finally {
+		CHARACTER.passive_depth = depth;
 		for (var k = saved.length - 1; k >= 0; k--) {
 			var sv = saved[k];
 			if (sv[1]) sv[0].add_status = sv[2]; else delete sv[0].add_status;

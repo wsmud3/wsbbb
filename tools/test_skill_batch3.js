@@ -157,22 +157,24 @@ async function main() {
 
     await check("不死印法：闪避成功幻影反击；幻魔期间闪避随机释放可使用的绝招（4 秒内置冷却，挂状态的绝招重算冷却）", () => {
         const B = SKILL.get("busiyinfa");
+        // 引擎里 on_dodge_success 在被动上下文中调用（react → passive），测试按同样方式调用
+        const dodgeOk = (x, y) => CHARACTER.passive(() => B.on_dodge_success(x, y, {}));
         const mk = (map) => { const a = mkUser(), b = mkUser(); learn(a, map, 3000); learn(b, {}, 100); fight(a, b);
-            a.environment = b.environment = { items: [a, b], send_room() {} }; b.max_hp = b.hp = 1e12;
+            a.environment = b.environment = { items: [a, b], send_room() {}, item_changed() {} }; b.max_hp = b.hp = 1e12;
             const msgs = []; a.send_combat = b.send_combat = t => msgs.push(String(t)); return { a, b, msgs }; };
         let { a, b, msgs } = mk({ busiyinfa: ["force", "dodge"], dugujiujian: ["sword"] });
-        B.on_dodge_success(a, b, {});
+        dodgeOk(a, b);
         assert.ok(msgs.some(m => /幻影反手一击/.test(m)), "幻影反击有提示");
         const swordNames = Object.values(SKILL.get("dugujiujian").pfm).map(x => x.name);
         for (let r = 0; r < 20; r++) {
             a.remove_temp("busiyinfa_huanmo_trigger");
-            B.pfm.huanmo.use(a, b, 3000); msgs.length = 0; B.on_dodge_success(a, b, {});
+            B.pfm.huanmo.use(a, b, 3000); msgs.length = 0; dodgeOk(a, b);
             const m = msgs.find(x => /触发了/.test(x)) || "";
             assert.ok(!swordNames.some(n => m.indexOf("——" + n + "！") >= 0), "没装备剑时不会使出剑法绝招");
         }
         ({ a, b, msgs } = mk({ busiyinfa: ["force", "dodge"], jiuyinbaiguzhao: ["unarmed"] }));
         a.do_attack = () => 1; a.end_attack = () => {};
-        B.pfm.huanmo.use(a, b, 3000); B.on_dodge_success(a, b, {});
+        B.pfm.huanmo.use(a, b, 3000); dodgeOk(a, b);
         const name = (msgs.find(m => /触发了/.test(m)) || "").replace(/<[^>]+>/g, "");
         assert.ok(name, "幻魔期间触发随机绝招");
         let key = null;
@@ -184,14 +186,14 @@ async function main() {
         assert.ok(key, "识别出触发的绝招");
         const changed = (b.status || []).length > 0 || (a.status || []).some(s => s.id !== "busiyinfa_huanmo");
         assert.strictEqual(!!a.query_temp(key), changed, "挂了状态的绝招重新计算冷却，纯伤害绝招不动冷却");
-        msgs.length = 0; B.on_dodge_success(a, b, {});
+        msgs.length = 0; dodgeOk(a, b);
         assert.ok(!msgs.some(m => /触发了/.test(m)), "4 秒内置冷却");
         assert.ok(/随机释放一个可使用的绝招/.test(B.pfm.huanmo.query_desc(a, 3000)));
         // 不死印法其他部位的绝招可以被触发，幻魔身法本身不会
         const got = {};
         for (let r = 0; r < 30; r++) {
             const t = mk({ busiyinfa: ["force", "dodge"] });
-            B.pfm.huanmo.use(t.a, t.b, 3000); B.on_dodge_success(t.a, t.b, {});
+            B.pfm.huanmo.use(t.a, t.b, 3000); dodgeOk(t.a, t.b);
             const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
             if (/不死七幻/.test(m)) got.qihuan = 1; if (/生死逆转/.test(m)) got.nisheng = 1; if (/触发了——幻魔身法/.test(m)) got.huanmo = 1;
         }
@@ -202,19 +204,48 @@ async function main() {
         let seenCH = 0, seenWX = 0;
         for (let r = 0; r < 80 && (!seenCH || !seenWX); r++) {
             const t = mk({ busiyinfa: ["force", "dodge"], canhezhi: ["unarmed"] });
-            B.pfm.huanmo.use(t.a, t.b, 3000); B.on_dodge_success(t.a, t.b, {});
+            B.pfm.huanmo.use(t.a, t.b, 3000); dodgeOk(t.a, t.b);
             const m = (t.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
             if (/参合之殇/.test(m) && (t.b.status || []).some(x => x.id === "canhe") && !(t.b.status || []).some(x => x.id !== "canhe")) {
                 seenCH++; assert.ok(!t.a.query_temp("pfm/unarmed/" + chId), "被动挂的状态不让绝招进冷却");
             }
             const w = mk({ busiyinfa: ["force", "dodge"], liumaishenjian: ["unarmed"] });
-            B.pfm.huanmo.use(w.a, w.b, 3000); B.on_dodge_success(w.a, w.b, {});
+            B.pfm.huanmo.use(w.a, w.b, 3000); dodgeOk(w.a, w.b);
             const wm = (w.msgs.find(x => /触发了/.test(x)) || "").replace(/<[^>]+>/g, "");
             if (/无形剑气/.test(wm) && (w.b.status || []).some(x => x.id === "liumai_faint")) {
                 seenWX++; assert.ok(w.a.query_temp("pfm/unarmed/wuxing"), "绝招里写的昏迷算绝招挂状态，重算冷却");
             }
         }
         assert.ok(seenCH && seenWX, "两种情况都覆盖到");
+    });
+
+    await check("参合指：每层参合使受到的伤害固定增加 等级+1；幻魔触发参合之殇打出昏迷才进冷却（走真实闪避）", () => {
+        const C = SKILL.get("canhezhi"), B = SKILL.get("busiyinfa");
+        assert.strictEqual(C.query_enable_prop(1000).unarmed.desc, "命中后使敌人受到的伤害增加1001可叠加10层");
+        const a = mkUser(), b = mkUser(); learn(a, { canhezhi: ["unarmed"] }, 1000); learn(b, {}, 100); fight(a, b);
+        b.max_hp = b.hp = 1e12;
+        const d0 = b.damage(5000, a);
+        for (let i = 0; i < 12; i++) C.on_attack_over(a, b, {}, 1);
+        assert.strictEqual(b.query_status("canhe"), 10, "最多 10 层");
+        b.max_hp = b.hp = 1e12;
+        assert.strictEqual(b.damage(5000, a) - d0, 10010, "10 层固定多受 10010 伤害");
+        b.remove_status("canhe", true);
+        assert.strictEqual(b.query_prop("diff_sh"), 0, "层数清除后恢复");
+        const seen = {};
+        for (let r = 0; r < 120 && !(seen[6] && seen[2]); r++) for (const st of [6, 2]) {
+            const x = mkUser(), y = mkUser(); learn(x, { busiyinfa: ["force", "dodge"], canhezhi: ["unarmed"] }, 3000); learn(y, {}, 100); fight(x, y);
+            x.environment = y.environment = { items: [x, y], send_room() {}, item_changed() {} };
+            y.add_status({ id: "canhe", name: "参合", duration: 60000, override: 1, count: st, max_count: 10, prop: { diff_sh: -1 } });
+            x.max_hp = x.hp = y.max_hp = y.hp = 1e12;
+            const log = []; x.send_combat = y.send_combat = x.send_room = y.send_room = t => log.push(String(t));
+            B.pfm.huanmo.use(x, y, 3000);
+            for (let i = 0; i < 5 && !log.some(m => /触发了/.test(m)); i++) y.do_attack({ target: x });   // 真实攻击 → 真实闪避
+            if (!log.some(m => /触发了——参合之殇/.test(m.replace(/<[^>]+>/g, "")))) continue;
+            seen[st] = 1;
+            assert.strictEqual(!!y.is_faint, st >= 5, st + " 层时" + (st >= 5 ? "" : "不") + "昏迷");
+            assert.strictEqual(!!x.query_temp("pfm/unarmed/pfm1"), st >= 5, st + " 层时" + (st >= 5 ? "" : "不") + "进冷却");
+        }
+        assert.ok(seen[6] && seen[2], "两种层数都覆盖到");
     });
 
     // ---------- 4. 时长上限 ----------
