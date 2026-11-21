@@ -1,7 +1,7 @@
 	this.inherits(SKILL);
 	this.name = "八卦棍法";
 	this.id = "baguagunfa";
-	this.grade = 3;
+	this.grade = 2;
 	this.is_public = true;
 	this.attack_actions = [
 		"$N手中棍棒一抖，八卦棍法乾位出击，直取$n的$l",
