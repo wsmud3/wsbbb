@@ -120,6 +120,18 @@ async function main() {
         me.init(); me.recount();
         assert.ok(!me.skills.niutou, "旧存档里的基础牛头登录时被清掉");
     });
+    check("重复的催心掌（无绝招，cuixinzhang）已删除：保留有绝招的摧心掌，旧存档清掉不报错", () => {
+        assert.ok(!SKILL.get("cuixinzhang"), "技能文件已删除");
+        assert.ok(SKILL.get("cuixinzhang2") && SKILL.get("cuixinzhang2").pfm, "摧心掌保留且有绝招");
+        const src = require("fs").readFileSync(__dirname + "/../world/npc/pub/wudao.js", "utf8");
+        assert.ok(!/"cuixinzhang"/.test(src), "武道塔 NPC 不再引用");
+        const me = mkUser("cxz_save");
+        me.skills = { unarmed: { level: 500, exp: 0, enable_skill: "cuixinzhang" }, cuixinzhang: { level: 500, exp: 0, unarmed: true }, force: { level: 100, exp: 0 } };
+        me.init(); me.recount();
+        assert.ok(!me.skills.cuixinzhang); assert.strictEqual(me.skills.unarmed.enable_skill, null);
+        const bc = OBJ.CREATE("book/bc#cuixinzhang"); assert.ok(bc && !bc.skill, "旧残页不再对应技能");
+    });
+
     // ---------- 7. 移花接木 ----------
     check("移花接木：无移花时绝招照常生效；移花增益期间化解对方下一招后增益结束，减益保留", () => {
         const a = mkUser("yh_a"), b = mkUser("yh_b");

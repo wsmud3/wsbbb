@@ -67,7 +67,7 @@ this.skills_def = [
         ],
         [
             ["force", 1700], ["unarmed", 1700], ["sword", 1700], ["parry", 1700], ["dodge", 1700],
-            ["kuihuashengong", 1700, ["force", "dodge"]], ["cuixinzhang", 1700, "unarmed"],
+            ["kuihuashengong", 1700, ["force", "dodge"]], ["cuixinzhang2", 1700, "unarmed"],
             ["bixiejianfa", 1700, ["sword", "parry"]]
         ],
         [
