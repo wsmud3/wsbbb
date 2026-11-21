@@ -5,6 +5,7 @@
 //                                   · 境界设为武士；之后可找金古易「提升境界」自由调整
 //                                   · 可无限叛师（叛师符无冷却、不消耗）
 //                                   · 首次设置时发放 1 万本武道、1 万块元晶、1 张叛师符
+//                                   · 发放测试专用的无限精力丹、无限扫荡符、无限洗髓丹、无限变性丹（缺哪个补哪个）
 //   sktest unfix [玩家]             取消测试号（解除技能锁定与测试特权，等级/境界/物品保留）
 // [玩家] 填在线玩家的 id 或名字，不填就是自己。
 // 标记都存在 temp 里（skill_fixed / test_char），下线重登仍然有效。技能锁定后学习、练习、读书、
@@ -17,6 +18,8 @@ this.allow_die = true;
 this.allow_level = 5;
 
 var DEFAULT_LEVEL = 3000;
+// 测试号专用的无限道具：每次 fix 时缺哪个补哪个（不可交易，普通玩家拿到也用不了）
+var TEST_TOOLS = [["cash/test_jing", "无限精力丹"], ["cash/test_saodang", "无限扫荡符"], ["cash/test_xi", "无限洗髓丹"], ["cash/test_bian", "无限变性丹"]];
 var TEST_ITEMS = [["book/wudao", 10000], ["st/yuanjing", 10000], ["cash/tuoli", 1]];
 var LEVEL_NAMES = ["普通百姓", "武士", "武师", "宗师", "武圣", "武帝", "武神"];
 
@@ -106,6 +109,12 @@ this.enter = function (me, arg) {
             target.set_temp("test_char_items", 1);
             gave = "，并获得 1 万本武道、1 万块元晶、1 张叛师符";
         }
+        var tools = [];
+        TEST_TOOLS.forEach(function (it) {
+            if (target.find_obj_bypath(it[0])) return;
+            if (target.add_obj(it[0], 1)) tools.push(it[1]);
+        });
+        if (tools.length) gave += (gave ? "，" : "，并获得") + tools.join("、");
         target.save && target.save();
         target.notify("<hiy>你已成为测试号：新学会" + learned + "门技能，全部" + all.length + "门技能（基础武功、公共武学及原有技能）等级固定为" + level + "级；境界设为武士，可找金古易调整；可无限叛师" + gave + "。</hiy>");
         if (target !== me) me.notify("已将" + target.name + "设为测试号：新学会" + learned + "门，全部" + all.length + "门技能固定为" + level + "级" + gave + "。");

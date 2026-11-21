@@ -70,20 +70,29 @@ function fb_saodang(me, path, isdiff, count) {
     count = parseInt(count);
 
     if (me.query_jingli() < area.expend) return me.notify("你的精力不够，无法扫荡副本。");
-    var fu = me.find_obj_bypath("cash/saodang");
-    if (!fu || fu.count < count) return me.notify_fail("你的扫荡符不够继续扫荡了。");
+    var fu = sweep_ticket(me);
+    if (!fu || (!fu.unlimited && fu.count < count)) return me.notify_fail("你的扫荡符不够继续扫荡了。");
     if (count == 1) return fb_quick(me, area, isdiff);
     me.call_interval(fb_quick.bind(me, me, area, isdiff), 500, count, x => {
         me.notify(area.name + "扫荡完成。");
     });
 }
 
+// 扫荡用的符：测试号身上有无限扫荡符时用它（不消耗，掉落不变），否则用普通扫荡符
+this.sweep_ticket = sweep_ticket;   // 供测试
+function sweep_ticket(me) {
+    if (me.is_test_char && me.is_test_char()) {
+        var inf = me.find_obj_bypath("cash/test_saodang");
+        if (inf) return { unlimited: true, count: 1 };
+    }
+    return me.find_obj_bypath("cash/saodang");
+}
 function fb_quick(me, area, isdiff) {
 
     var drops = area.query_drops(isdiff, me);
     if (!drops || !drops.length) return me.notify_fail('这里不能快速完成。');
 
-    var fu = me.find_obj_bypath("cash/saodang");
+    var fu = sweep_ticket(me);
 
     if (!fu || !fu.count) return me.notify_fail("你的扫荡符不够继续扫荡了。");
     if (me.query_jingli() < area.expend) {
@@ -97,7 +106,7 @@ function fb_quick(me, area, isdiff) {
     if (me.expend_jingli(area.expend) == false) { return me.notify_fail("你的精力不够，不能开启副本。"); }
 
 
-    me.remove_obj(fu, 1);
+    if (!fu.unlimited) me.remove_obj(fu, 1);
     var max_score = area.query_exp();
     me.add_exp(max_score, max_score);
     me.add_temp("fb_count", 1);

@@ -8,6 +8,7 @@ this.set({
 });
 this.on_use = function (me) {
     if (!me.is_player) return me.notify_fail("你不能使用" + this.name + "。");
+    me.remove_temp("xi_free");
     var count = me.str + me.con + me.dex + me.int;
     var max = 30 + count - 80;
     me.notify("请说出你的先天属性(臂力 根骨 身法 悟性)，每项15-" + max + "，总计" + count + "，比如:20 20 20 20");
@@ -24,6 +25,7 @@ function readnumber(me, cmd) {
     }
     if (cmd == 'quxiao') {
         me.wait_input = null;
+        me.remove_temp("xi_free");
         me.notify('已取消使用洗髓丹。');
         return;
     }
@@ -53,11 +55,16 @@ function readnumber(me, cmd) {
 }
 function checkResult(me, str) {
     if (str == "ok") {
-        var obj = me.find_obj_bypath('cash/xi');
-        if (!obj || !obj.count) {
-            return me.notify('你身上没有洗髓丹。');
+        // 测试号用无限洗髓丹（cash/test_xi）发起时不扣除
+        var free = me.query_temp("xi_free") && me.is_test_char && me.is_test_char() && me.find_obj_bypath('cash/test_xi');
+        if (!free) {
+            var obj = me.find_obj_bypath('cash/xi');
+            if (!obj || !obj.count) {
+                return me.notify('你身上没有洗髓丹。');
+            }
+            me.remove_obj(obj, 1);
         }
-        me.remove_obj(obj, 1);
+        me.remove_temp("xi_free");
         me.str = me.query_temp("re_str");
         me.con = me.query_temp("re_con");
         me.int = me.query_temp("re_int");

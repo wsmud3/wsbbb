@@ -81,7 +81,8 @@ async function main() {
         me.add_obj = function (path, n) { got[path] = (got[path] || 0) + n; return { unit_name: () => "" }; };
         cmd.enter(me, "fix"); cmd.enter(me, "fix");
         assert.ok(me.is_test_char()); assert.strictEqual(me.level, 1);
-        assert.deepStrictEqual(got, { "book/wudao": 10000, "st/yuanjing": 10000, "cash/tuoli": 1 });
+        assert.deepStrictEqual(got, { "book/wudao": 10000, "st/yuanjing": 10000, "cash/tuoli": 1,
+            "cash/test_jing": 2, "cash/test_saodang": 2, "cash/test_xi": 2, "cash/test_bian": 2 });   // mock 的 add_obj 不进背包，所以第二次 fix 也会补
         for (const path of Object.keys(got)) assert.ok(OBJ.CREATE(path), path + " 物品存在");
         assert.ok(OBJ.CREATE("st/yuanjing").name === "元晶" && OBJ.CREATE("book/wudao").name === "武道");
         assert.ok(!mkUser().is_test_char(), "普通玩家不是测试号");
@@ -141,6 +142,57 @@ async function main() {
         const n = mkUser(); n.skills.literate = { level: 3000, exp: 0, addin: [500, 501] };
         o.recalc_level(n, SKILL.get("literate"), n.skills.literate, 0);
         assert.ok(n.skills.literate.level < 3000, "普通角色照旧换算：" + n.skills.literate.level);
+    });
+    check("测试专用无限道具：不可交易、价值 0，fix 时缺哪个补哪个", () => {
+        for (const path of ["cash/test_jing", "cash/test_saodang", "cash/test_xi", "cash/test_bian"]) {
+            const o = OBJ.CREATE(path); assert.ok(o, path);
+            assert.ok(!o.transable && !(o.value > 0), path + " 不可交易、不值钱");
+        }
+        const me = mkUser(); me.user_level = 5; cmd.enter(me, "fix"); cmd.enter(me, "fix");
+        for (const path of ["cash/test_jing", "cash/test_saodang", "cash/test_xi", "cash/test_bian"])
+            assert.strictEqual(me.items.filter(i => i.path === path).reduce((n, i) => n + (i.count || 1), 0), 1, path + " 只有 1 个");
+    });
+    const useItem = (me, path, par) => { const o = me.find_obj_bypath(path); WORLD.COMMANDS.use.enter(me, o.id, par); return me.find_obj_bypath(path); };
+    const testChar = () => { const me = mkUser(); me.user_level = 5; me.environment = { item_changed() {}, item_json() { return ""; }, send() {}, items: [], is_fb() { return false; } }; me.is_fighting = () => false; cmd.enter(me, "fix"); return me; };
+    check("无限精力丹：测试号用后精力补满且不消耗；普通玩家不能用", () => {
+        const me = testChar(); me.set_temp("ex_jl", 200); assert.ok(me.query_jingli() < 100);
+        assert.ok(useItem(me, "cash/test_jing"), "用后还在");
+        assert.ok(me.query_jingli() >= 10000, "精力 " + me.query_jingli());
+        assert.ok(useItem(me, "cash/test_jing") && me.query_jingli() >= 10000, "可反复使用");
+        const n = mkUser(); n.environment = me.environment; n.is_fighting = () => false; OBJ.clone_to("cash/test_jing", n, 1); n.set_temp("ex_jl", 200);
+        useItem(n, "cash/test_jing"); assert.ok(n.query_jingli() < 100, "普通玩家无效");
+    });
+    check("无限扫荡符：测试号扫荡用它（不消耗），没有它或普通玩家用普通扫荡符", () => {
+        const cr = WORLD.COMMANDS.cr;
+        const me = testChar(); const t = cr.sweep_ticket(me);
+        assert.ok(t && t.unlimited && t.count > 0, "测试号用无限扫荡符");
+        const n = mkUser(); OBJ.clone_to("cash/test_saodang", n, 1);
+        assert.ok(!cr.sweep_ticket(n), "普通玩家持有无限扫荡符也不生效");
+        OBJ.clone_to("cash/saodang", n, 3); const nt = cr.sweep_ticket(n);
+        assert.ok(nt && !nt.unlimited && nt.count === 3, "普通玩家用普通扫荡符");
+        const src = require("fs").readFileSync(__dirname + "/../world/cmd/action/cr.js", "utf8");
+        assert.ok(/if \(!fu\.unlimited\) me\.remove_obj\(fu, 1\);/.test(src), "无限扫荡符不扣除");
+        assert.ok(/var drops = area\.query_drops\(isdiff, me\);/.test(src), "掉落走同一套 query_drops");
+    });
+    check("无限洗髓丹：测试号确认后属性改变、丹不消耗；普通洗髓丹照旧扣除", () => {
+        const me = testChar(); me.str = me.con = me.dex = me.int = 20;
+        useItem(me, "cash/test_xi"); assert.ok(me.wait_input, "进入输入流程");
+        me.wait_input(me, "x 30 20 15 15"); me.wait_input(me, "ok");
+        assert.deepStrictEqual([me.str, me.con, me.dex, me.int], [30, 20, 15, 15]);
+        assert.ok(me.find_obj_bypath("cash/test_xi"), "无限洗髓丹还在");
+        OBJ.clone_to("cash/xi", me, 1);
+        useItem(me, "cash/xi"); me.wait_input(me, "x 20 20 20 20"); me.wait_input(me, "ok");
+        assert.ok(!me.find_obj_bypath("cash/xi"), "普通洗髓丹被扣除");
+        const n = mkUser(); n.environment = me.environment; n.is_fighting = () => false; OBJ.clone_to("cash/test_xi", n, 1);
+        useItem(n, "cash/test_xi"); assert.ok(!n.wait_input, "普通玩家不能用");
+    });
+    check("无限变性丹：测试号确认后变性、丹不消耗；普通玩家不能用", () => {
+        const me = testChar(); me.gender = 1; me.add_status = () => {}; me.send_room = () => {};
+        useItem(me, "cash/test_bian"); useItem(me, "cash/test_bian");
+        assert.strictEqual(me.gender, 2); assert.ok(me.find_obj_bypath("cash/test_bian"), "还在");
+        useItem(me, "cash/test_bian"); useItem(me, "cash/test_bian"); assert.strictEqual(me.gender, 1, "可反复使用");
+        const n = mkUser(); n.gender = 1; n.environment = me.environment; n.is_fighting = () => false; OBJ.clone_to("cash/test_bian", n, 1);
+        useItem(n, "cash/test_bian"); useItem(n, "cash/test_bian"); assert.strictEqual(n.gender, 1, "普通玩家无效");
     });
     check("unfix 后恢复正常", () => {
         const me = mkUser(); me.user_level = 5; cmd.enter(me, "fix"); cmd.enter(me, "unfix");
