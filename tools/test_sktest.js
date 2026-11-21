@@ -27,12 +27,26 @@ async function main() {
     const ids = cmd.skill_ids();
     const lvOf = (me) => ids.map(id => me.skills[id] && me.skills[id].level);
 
-    check("技能范围：10 门基础 + 全部公共武学，不含门派武学", () => {
+    check("技能范围：10 门基础 + 全部公共武学（不属于门派），不含门派、NPC 专用、自创", () => {
         for (const b of ["force", "dodge", "parry", "sword", "blade", "club", "staff", "whip", "unarmed", "throwing"]) assert.ok(ids.includes(b), b);
-        assert.ok(!ids.includes("bite"));
-        for (const id of ids) { const s = SKILL.get(id); assert.ok(s.type === SKILL_TYPES.BASE || s.is_public, id); }
-        assert.ok(ids.includes("anranxiaohunzhang") && ids.includes("liumaishenjian"));
-        assert.ok(ids.length >= 25, "共 " + ids.length + " 门");
+        for (const id of ["bite", "lvliu_force", "lvliu_sword", "xuanmingshenzhang_m"]) assert.ok(!ids.includes(id), id + " 是怪物/NPC 专用，不应在名单里");
+        for (const id of ["literate", "lianyao", "lunyu"]) assert.ok(ids.includes(id), id + " 知识技能要包含");
+        for (const id of ids) assert.ok(SKILL.get(id).family !== FAMILIES.MONSTER, id + " 是怪物技能");
+        for (const id of ["anranxiaohunzhang", "liumaishenjian", "hujiadaofa", "jiuyangshengong", "pixiejianfa", "xiuluodao"]) assert.ok(ids.includes(id), id + " 是公共武学");
+        // 与游戏自己的公共技能池一致：FAMILIES.NONE 下所有非隐藏的武学都要在
+        const pool = Object.values(WORLD.SKILLS).filter(s => s.type !== SKILL_TYPES.BASE && !s.is_custom && !s.is_hidden && (!s.family || s.family === FAMILIES.NONE));
+        for (const s of pool) assert.ok(ids.includes(s.id), s.id + "(" + s.name + ") 漏了");
+        for (const id of ids) { const s = SKILL.get(id); assert.ok(s.type === SKILL_TYPES.BASE || s.is_public || !s.family || s.family === FAMILIES.NONE, id + " 是门派武学"); }
+        assert.ok(ids.length > 100, "共 " + ids.length + " 门");
+    });
+    check("原有技能（含门派武学、知识）也设为固定等级；客户端收到刷新", () => {
+        const me = mkUser(); me.user_level = 5;
+        me.skills.huashanjianfa = { level: 120, exp: 5 }; me.skills.force = { level: 50, exp: 0 };
+        cmd.enter(me, "fix");
+        for (const id of ["huashanjianfa", "literate", "force"]) assert.strictEqual(me.skills[id].level, 3000, id);
+        assert.ok(lvOf(me).every(l => l === 3000));
+        assert.ok(me.log.some(t => /dialog:"skills",item:\{"id":"hujiadaofa"/.test(t)), "新学技能推送给客户端");
+        assert.ok(me.log.some(t => /dialog:"skills",id:"huashanjianfa",level:3000/.test(t)), "原有技能等级推送给客户端");
     });
     check("非 GM 不能用", () => {
         const me = mkUser(); me.user_level = 0; cmd.enter(me, "fix");
@@ -98,6 +112,35 @@ async function main() {
         const o = OBJ.CREATE("drug/exp#5");
         assert.ok(o && o.name !== "九转金丹" && o.exp < 1e6, o && o.name + " " + o.exp);
         assert.ok(!/九转金丹|exp#5/.test(require("fs").readFileSync(__dirname + "/../world/npc/yz/zhubanxian.js", "utf8")));
+    });
+    check("武道进阶：测试号等阶照常提升，等级不换算（保持 3000）；普通角色照旧换算", () => {
+        const slot = SKILL.PROPERTIES.findIndex(d => d && d.positions && d.positions.indexOf("weapon") >= 0);
+        assert.ok(slot >= 0, "找到武器部位进阶");
+        const run = (fixed) => {
+            const me = mkUser(); me.user_level = 5;
+            if (fixed) cmd.enter(me, "fix");
+            else { me.skills.hujiadaofa = { level: 3000, exp: 0 }; me.init_skill(); me.recount(); }
+            const sk = me.skills.hujiadaofa; sk.addin = sk.addin || [];
+            OBJ.clone_to("book/wudao", me, 100);
+            const g0 = SKILL.get("hujiadaofa").query_grade(me);
+            WORLD.COMMANDS.lingwu.enter(me, "hujiadaofa", "weapon", String(slot));
+            return { g0, g1: SKILL.get("hujiadaofa").query_grade(me), lv: sk.level, log: me.log.join("\n") };
+        };
+        const t = run(true);
+        assert.ok(t.g1 > t.g0, "测试号等阶提升了 " + t.g0 + "→" + t.g1 + "\n" + t.log.slice(-300));
+        assert.strictEqual(t.lv, 3000, "测试号等级不变");
+        const n = run(false);
+        assert.ok(n.g1 > n.g0 && n.lv < 3000, "普通角色进阶后等级照旧换算：" + n.lv);
+    });
+    check("读书写字残页进阶：测试号等级不换算", () => {
+        const me = mkUser(); me.user_level = 5; cmd.enter(me, "fix");
+        const o = OBJ.CREATE("book/lt#500"); assert.ok(o && o.recalc_level, "残页可创建");
+        const sk = me.skills.literate; sk.addin = [500, 501];   // 模拟等阶已提升
+        o.recalc_level(me, SKILL.get("literate"), sk, 0);
+        assert.strictEqual(sk.level, 3000);
+        const n = mkUser(); n.skills.literate = { level: 3000, exp: 0, addin: [500, 501] };
+        o.recalc_level(n, SKILL.get("literate"), n.skills.literate, 0);
+        assert.ok(n.skills.literate.level < 3000, "普通角色照旧换算：" + n.skills.literate.level);
     });
     check("unfix 后恢复正常", () => {
         const me = mkUser(); me.user_level = 5; cmd.enter(me, "fix"); cmd.enter(me, "unfix");

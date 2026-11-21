@@ -1,14 +1,14 @@
 // 测试号 GM 命令。仅 user_level >= 5 可用。
 //   sktest                         查看帮助与当前状态
 //   sktest fix [等级] [玩家]        把角色设为测试号：
-//                                   · 学会全部基础武功 + 公共武学，设为指定等级（默认 3000）并锁定技能等级
+//                                   · 学会全部基础武功 + 公共武学（不属于门派的武学）+ 知识技能，连同原有技能一起设为指定等级（默认 3000）并锁定
 //                                   · 境界设为武士；之后可找金古易「提升境界」自由调整
 //                                   · 可无限叛师（叛师符无冷却、不消耗）
 //                                   · 首次设置时发放 1 万本武道、1 万块元晶、1 张叛师符
 //   sktest unfix [玩家]             取消测试号（解除技能锁定与测试特权，等级/境界/物品保留）
 // [玩家] 填在线玩家的 id 或名字，不填就是自己。
 // 标记都存在 temp 里（skill_fixed / test_char），下线重登仍然有效。技能锁定后学习、练习、读书、
-// 技能书、残页/领悟重算等级、放弃技能都不会改变等级（见 CHARACTER.prototype.skill_fixed）。
+// 技能书、武道进阶/残页的等级换算、放弃技能都不会改变等级（见 CHARACTER.prototype.skill_fixed）。
 this.inherits(COMMAND);
 this.command = "sktest";
 this.allow_busy = true;
@@ -32,13 +32,20 @@ this.set_level = function (me, lv) {
     return lv;
 };
 // 玩家可学的基础武功（与武馆教习一致；基本咬技是宠物用的，不算）
+// 怪物/NPC 专用技能（绿柳山庄 NPC、玄冥二老），不给测试号
+var NPC_ONLY = ["lvliu_force", "lvliu_unarmed", "lvliu_dodge", "lvliu_sword", "xuanmingshenzhang_m"];
 var BASE_IDS = ["force", "dodge", "parry", "sword", "blade", "club", "staff", "whip", "unarmed", "throwing"];
 
 this.skill_ids = function () {
     var ids = BASE_IDS.filter(function (id) { return !!SKILL.get(id); });
+    // 公共武学 = 不属于任何门派（或标了 is_public）的武学；知识技能（读书写字、炼药术、《论语》）也包含。
+    // 排除怪物/NPC 专用技能和玩家自创技能。
     Object.keys(WORLD.SKILLS || {}).sort().forEach(function (id) {
         var s = WORLD.SKILLS[id];
-        if (s && s.is_public && s.id === id && s.type !== SKILL_TYPES.BASE && s.type !== SKILL_TYPES.KNOWLEDGE && ids.indexOf(id) < 0) ids.push(id);
+        if (!s || s.id !== id || s.type === SKILL_TYPES.BASE || s.is_custom || NPC_ONLY.indexOf(id) >= 0) return;
+        if (s.family && s.family === FAMILIES.MONSTER) return;
+        var noFamily = !s.family || s.family === FAMILIES.NONE;
+        if ((noFamily || s.is_public) && ids.indexOf(id) < 0) ids.push(id);
     });
     return ids;
 };
@@ -65,9 +72,28 @@ this.enter = function (me, arg) {
         if (target.state && target.set_state) target.set_state(null);   // 中断正在进行的学习/练习
 
         var ids = this.skill_ids();
+        // 角色原本已学的技能（含门派武学、知识类、自创）也统一设为固定等级
+        var owned = Object.keys(target.skills || {}).filter(function (id) { return SKILL.get(id) && ids.indexOf(id) < 0; });
+        var all = ids.concat(owned), learned = 0;
         target._skill_fix_bypass = true;
         try {
-            ids.forEach(function (id) { target.set_skill(id, level); });
+            all.forEach(function (id) {
+                var isNew = !(target.skills && target.skills[id]);
+                target.set_skill(id, level);
+                var item = target.skills[id];
+                if (!item) return;
+                item.exp = 0;
+                if (isNew) learned++;
+                // 通知客户端刷新技能列表（不然要重新登录才看得到新学的技能和新等级）
+                if (isNew) {
+                    var str = ['{type:"dialog",dialog:"skills",item:'];
+                    SKILL.get(id).item_to_json(str, item, target);
+                    str.push("}");
+                    target.notify(str.join(""));
+                } else {
+                    target.notify('{type:"dialog",dialog:"skills",id:"' + id + '",level:' + item.level + ',exp:0}');
+                }
+            });
         } finally {
             target._skill_fix_bypass = false;
         }
@@ -81,8 +107,8 @@ this.enter = function (me, arg) {
             gave = "，并获得 1 万本武道、1 万块元晶、1 张叛师符";
         }
         target.save && target.save();
-        target.notify("<hiy>你已成为测试号：学会全部基础武功与公共武学（共" + ids.length + "门），等级固定为" + level + "级；境界设为武士，可找金古易调整；可无限叛师" + gave + "。</hiy>");
-        if (target !== me) me.notify("已将" + target.name + "设为测试号：" + ids.length + "门技能固定为" + level + "级" + gave + "。");
+        target.notify("<hiy>你已成为测试号：新学会" + learned + "门技能，全部" + all.length + "门技能（基础武功、公共武学及原有技能）等级固定为" + level + "级；境界设为武士，可找金古易调整；可无限叛师" + gave + "。</hiy>");
+        if (target !== me) me.notify("已将" + target.name + "设为测试号：新学会" + learned + "门，全部" + all.length + "门技能固定为" + level + "级" + gave + "。");
         return;
     }
     if (action === "unfix") {
@@ -99,7 +125,7 @@ this.enter = function (me, arg) {
 
 this.help = function () {
     return [
-        "sktest fix [等级] [玩家]   设为测试号：全部基础 + 公共武学固定为指定等级（默认 3000）、境界武士（金古易可调）、无限叛师，首次发 1 万武道和 1 万元晶",
+        "sktest fix [等级] [玩家]   设为测试号：全部基础 + 公共武学 + 原有技能固定为指定等级（默认 3000）、境界武士（金古易可调）、无限叛师，首次发 1 万武道和 1 万元晶",
         "sktest unfix [玩家]        取消测试号（解除技能锁定与测试特权）",
         "[玩家] 为在线玩家的 id 或名字，不填为自己。",
     ].join("\n");
