@@ -12,17 +12,16 @@ this.set({
     family: FAMILIES.NONE
 });
 this.skill_map(
-    ["force", 5000],
-    ["dodge", 5000],
-    ["parry", 5000],
-    ["sword", 5000],
-    ["blade", 5000],
-    ["club", 5000],
-    ["staff", 5000],
-    ["whip", 5000],
-    ["unarmed", 5000],
-    ["throwing", 5000],
-    ["niutou", 3000]
+    ["force", 500],
+    ["dodge", 500],
+    ["parry", 500],
+    ["sword", 500],
+    ["blade", 500],
+    ["club", 500],
+    ["staff", 500],
+    ["whip", 500],
+    ["unarmed", 500],
+    ["throwing", 500]
     // 武馆只教基本功：原先列在这里的 7 门 6 品武学（逆仙魔诀、天地棋盘、天地同寿、修罗刀、
     // 慈航剑典、闪电五连鞭、大品天仙诀）已移除
 );
@@ -45,7 +44,7 @@ this.on_accept = function (me, obj, count) {
 
     }
     if (count < 10000) return me.notify_fail("武馆教习瞪了你一眼：100两白银，不二价，没钱就一边玩去。");
-    me.send_room("武馆教习收下$N的钱，拍了拍$N的肩膀：不错，以后你就是本馆的弟子了，本武馆包教基本武技到300级，随到随学，不限学时，全国连锁。");
+    me.send_room("武馆教习收下$N的钱，拍了拍$N的肩膀：不错，以后你就是本馆的弟子了，本武馆包教基本武技到500级，随到随学，不限学时，全国连锁。");
     me.set_temp("wg_sr", 1);
 
     if (!me.query_temp("sm_tm")) {

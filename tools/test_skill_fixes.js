@@ -110,6 +110,16 @@ async function main() {
         for (const id in jx.skills) { const s = SKILL.get(id); assert.ok(!s || s.grade < 6, id + " 品级 " + (s && s.grade)); }
     });
 
+    check("武馆教习：基本功只教到 500 级，基础牛头已删除", () => {
+        const jx = NPC.CLONE("pub/jiaoxi");
+        assert.ok(!SKILL.get("niutou"), "基础牛头技能文件已删除");
+        assert.ok(!jx.skills.niutou, "教习不再教基础牛头");
+        for (const id in jx.skills) assert.strictEqual(jx.query_skill(id, 0), 500, id + " 应为 500 级");
+        const me = mkUser("nt_save");
+        me.skills = { niutou: { level: 3000, exp: 0 }, force: { level: 100, exp: 0 } };
+        me.init(); me.recount();
+        assert.ok(!me.skills.niutou, "旧存档里的基础牛头登录时被清掉");
+    });
     // ---------- 7. 移花接木 ----------
     check("移花接木：无移花时绝招照常生效；移花增益期间化解对方下一招后增益结束，减益保留", () => {
         const a = mkUser("yh_a"), b = mkUser("yh_b");
