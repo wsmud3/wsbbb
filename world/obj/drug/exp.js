@@ -21,7 +21,8 @@ this.on_create = function (path, par) {
     }
     par = par.substr(1);
     var lv = parseInt(par);
-    if (!(lv > 0 && lv < 6)) return;
+    // 九转金丹（原 #5）已删除：旧存档里的 drug/exp#5 按普通朱果处理
+    if (!(lv > 0 && lv < 5)) return;
     switch (lv) {
         case 1:
             this.name = "朱果";
@@ -50,13 +51,6 @@ this.on_create = function (path, par) {
             this.pot = 40000;
             this.value = 120000;
             this.desc = "一颗红色果子，吃了增加120000经验，40000潜能";
-            break;
-        case 5:
-            this.name = "九转金丹";
-            this.exp = 2500000000;
-            this.pot = 99999999999999;
-            this.value = 120000;
-            this.desc = "老君炼制的九转金丹";
             break;
         default:
             this.name = "朱果";
