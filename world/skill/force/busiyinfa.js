@@ -379,7 +379,7 @@ this.pfm = {
 			// 与凌波微步相同：持续期间闪避 +999999，走正常闪避判定（闪避成功才触发幻影反击与随机技能）
 			me.add_status({
 				id: "busiyinfa_huanmo",
-				name: "幻魔身法",
+				name: "幻魔",
 				duration: huanmo_duration(lv),
 				desc: "绝对闪避所有攻击",
 				override: 2,
