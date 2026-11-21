@@ -4,6 +4,7 @@ this.allow_state = true;
 this.allow_fight = false;
 this.regex = /^(?:(\d+)\s)?(\w+)\s+from\s+(.+?)$/;
 this.enter = function (me, par, sk, target) {
+    if (me.skill_fixed && me.skill_fixed()) return me.notify(CHARACTER.SKILL_FIXED_MSG);
     if (!sk) return me.notify("你要学习什么技能？");
     target = me.find_obj(target, me.environment);
     if (!target) return me.notify("你要跟谁学习技能？");

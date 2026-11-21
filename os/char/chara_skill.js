@@ -66,8 +66,19 @@ CHARACTER.prototype.remove_skill = function (skillid) {
     baseskill.on_remove && baseskill.on_remove(this);
     return true;
 }
+// 技能等级固定（GM 测试号，见 world/cmd/admin/sktest.js）：存档标记 temp.skill_fixed = 固定等级。
+// 固定后任何途径都不能改变技能等级（学习/练习/读书/残页/领悟/放弃/set_skill）。
+CHARACTER.SKILL_FIXED_MSG = "你的技能等级已被固定，无法再改变。";
+CHARACTER.prototype.skill_fixed = function () {
+    return (this.query_temp && parseInt(this.query_temp("skill_fixed"))) || 0;
+}
+// 测试号（GM 用 sktest fix 设置）：叛师无限制、可找金古易自由调整境界
+CHARACTER.prototype.is_test_char = function () {
+    return !!(this.is_player && this.query_temp && this.query_temp("test_char"));
+}
 //增加技能
 CHARACTER.prototype.set_skill = function (skid, level) {
+    if (this.skill_fixed() && !this._skill_fix_bypass) return;
     if (!this.skills) this.skills = {};
     var item = this.skills[skid];
     var skill_base = SKILL.get(skid);

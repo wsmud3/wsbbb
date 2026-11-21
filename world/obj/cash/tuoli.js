@@ -8,7 +8,8 @@ this.set({
 });
 this.on_use = function (me) {
     if (!me.is_player) return me.notify_fail("你不能使用" + this.name + "。");
-    if (me.query_temp('tuolicd')) return me.notify_fail("你刚脱离门派没多久，频繁的背叛师门会被武林中人所不齿的。");
+    var testChar = me.is_test_char && me.is_test_char();   // 测试号：无限叛师（无冷却、不消耗）
+    if (!testChar && me.query_temp('tuolicd')) return me.notify_fail("你刚脱离门派没多久，频繁的背叛师门会被武林中人所不齿的。");
     if (!me.family || me.family == FAMILIES.NONE)
     return me.notify_fail("你还没有门派，不需要叛师。");
     if (WORLD.ZHENYI && WORLD.ZHENYI.is_in_trial && WORLD.ZHENYI.is_in_trial(me))
@@ -71,8 +72,12 @@ this.on_use = function (me) {
         //me.remove_temp("master");
         me.remove_temp("family");
         me.remove_temp("family_level");
-        me.set_temp('tuolicd', 1, UTIL.diff_time());
         WORLD.DATA.reset_famtops(me, fam);
+        if (testChar) {
+            me.notify("<hig>测试号：叛师符不消耗，可随时再次叛师。</hig>");
+            return false;
+        }
+        me.set_temp('tuolicd', 1, UTIL.diff_time());
 
 
     } else {

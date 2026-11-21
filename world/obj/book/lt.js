@@ -66,7 +66,7 @@ this.recalc_level = function (me, skill_base, sk, old_grd) {
     var per_exp = (new_level + 1) * (new_grd + 1) * 5;
     var new_exp = per_exp > 0 ? Math.floor(remaining / per_exp * 100) : 0;
 
-    if (new_level !== sk.level) {
+    if (new_level !== sk.level && !(me.skill_fixed && me.skill_fixed())) {   // 技能等级固定时进阶照常、等级不变
         sk.level = new_level;
         sk.exp = new_exp;
     }

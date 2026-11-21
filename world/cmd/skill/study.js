@@ -2,6 +2,7 @@
 this.command = "study";
 this.allow_fight = false;
 this.enter = function (me, bookid) {
+    if (me.skill_fixed && me.skill_fixed()) return me.notify(CHARACTER.SKILL_FIXED_MSG);
     if (!bookid) return me.notify("你要学习什么技能？");
 
     if (bookid.length < 4) return this.study_from_books(me, bookid);

@@ -44,6 +44,7 @@
 	function testLevel(me) {
 
 	    me.send_room("$N向$n恭敬的问道：敢问老先生，" + me.callme() + "武功境界如何？\n", this);
+	    if (me.is_test_char && me.is_test_char()) return showTestLevels.call(this, me);
 
 	    if (me.level == 4) {
 	        return checkWS(me);
@@ -172,6 +173,24 @@
 	    }
 
 	}
+	// 测试号（sktest fix）：境界可在这里自由调整，不检查条件
+	var TEST_LEVEL_NAMES = ["普通百姓", "武士", "武师", "宗师", "武圣", "武帝", "武神"];
+	function showTestLevels(me) {
+	    var cmds = [];
+	    for (var i = 0; i < TEST_LEVEL_NAMES.length; i++) {
+	        if (i === me.level) continue;
+	        cmds.push("ask " + this.id + " about 测试境界" + i, TEST_LEVEL_NAMES[i]);
+	    }
+	    me.notify("金古易对你说道：你是测试弟子，当前境界" + TEST_LEVEL_NAMES[me.level || 0] + "，想调整到哪个境界？");
+	    me.send_commands.apply(me, cmds);
+	}
+	for (var tl = 0; tl < TEST_LEVEL_NAMES.length; tl++) (function (lv) {
+	    this.set_ask("测试境界" + lv, function (me) {
+	        if (!(me.is_test_char && me.is_test_char())) return false;
+	        WORLD.COMMANDS.sktest.set_level(me, lv);
+	        me.notify("金古易对你点点头：好，你现在是" + TEST_LEVEL_NAMES[lv] + "境界了。");
+	    });
+	}).call(this, tl);
 	function checkWS(me) {
 	    if (me.query_temp("wd")) {
 	        return me.notify("金古易对你说道：武道塔的守门人，连我都看不出他的境界，他肯定知道些什么。");

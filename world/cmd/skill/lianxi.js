@@ -5,6 +5,7 @@ this.regex = /^(\w+)(?:\s+(\d+))?$/;
 this.allow_state = true;
 
 this.enter = function (me, skid, par) {
+    if (me.skill_fixed && me.skill_fixed()) return me.notify(CHARACTER.SKILL_FIXED_MSG);
     if (!me.skills) return;
     if (!(me.pot > 0)) return me.send('你的潜能不足。');
     if (me.state && me.state.id !== 'lianxi')

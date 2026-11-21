@@ -1299,6 +1299,7 @@ str.push('"');
     str.push('}');
 }
 SKILL.prototype.add_exp = function (me, exp) {
+    if (me.skill_fixed && me.skill_fixed()) return;   // 技能等级已固定
     var skill = me.skills[this.id];
     if (!skill) {
         skill = {

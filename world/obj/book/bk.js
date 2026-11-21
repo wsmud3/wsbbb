@@ -27,6 +27,7 @@ this.on_create = function (path, par) {
     if (!this.grade) this.value = 1000;
 }
 this.on_use = function (me) {
+    if (me.skill_fixed && me.skill_fixed()) return me.notify(CHARACTER.SKILL_FIXED_MSG);
 
     var skill_base = SKILL.get(this.skill );
     if (!skill_base) return me.notify('你不能从里面学到东西。');

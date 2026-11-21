@@ -4,6 +4,7 @@ this.command = "fangqi";
 this.allow_fight = false;
 this.regex = /^(\w+)(?:\s+(\w+))?$/;
 this.enter = function (me, skillid, sid) {
+    if (me.skill_fixed && me.skill_fixed()) return me.notify(CHARACTER.SKILL_FIXED_MSG);
     if (!me.skills) return me.notify("你还不会任何技能。");
     var skill = me.skills[skillid];
     if (!skill) return me.notify("你还不会这个技能。");
