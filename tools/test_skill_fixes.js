@@ -197,34 +197,39 @@ async function main() {
         assert.ok(/fam\.skill_levels = null;/.test(require("fs").readFileSync(__dirname + "/../os/skill/skill.js", "utf8")), "update 里清缓存");
     });
 
-    check("武道塔守护者：先天属性 20+层数/3、气血 1~99 层 1000+层数²×150 / 100 层 1000+层数²×1250、不额外加防御；各档技能都存在；100 层用原版第 11 档", () => {
+    check("武道塔守护者：按玩家进度标定的曲线（逐层递增、标定点吻合）、90~99 层免控、第一百层与上 1~5 层", () => {
         const n = NPC.CLONE("pub/wudao");
         for (const tier of n.skills_def) for (const r of tier) assert.ok(SKILL.get(r[0]), "技能表里的 " + r[0] + " 不存在");
-        assert.strictEqual(n.skills_def.length, 11);
-        const g = NPC.CLONE("pub/wudao"); g.init_from(null, 100);
-        assert.strictEqual(g.str, 53); assert.strictEqual(g.max_hp, 1000 + 100 * 100 * 1250 + g.query_prop("max_hp"));
-        assert.ok(g.skills.liumaishenjian && g.skills.liumaishenjian.level === 5000, "100 层六脉神剑 5000");
-        assert.ok(!(g.query_prop("fy") >= 100 * 500), "没有额外的 层数×500 防御");
-        assert.ok(g.ds < 10e4 && g.gj < 10e4, "100 层闪避/攻击在原版量级：" + g.ds + "/" + g.gj);
-        const f99 = NPC.CLONE("pub/wudao"); f99.init_from(null, 99); assert.strictEqual(f99.max_hp, 1000 + 99 * 99 * 150 + f99.query_prop("max_hp"), "99 层按原框架（另加技能自带的气血）");
-        const f50 = NPC.CLONE("pub/wudao"); f50.init_from(null, 50); assert.strictEqual(f50.max_hp, 1000 + 50 * 50 * 150 + f50.query_prop("max_hp"));
-        // 第一百层（ta100 不传层号）= 原版 100 层；上 1~5 层（ta2 传 1~5）从 3000 万起逐层 +500 万，技能每层 +500 级
-        const t100 = NPC.CLONE("pub/wudao_boss100"); t100.init_from(null);
-        assert.strictEqual(t100.max_hp, 1000 + 100 * 100 * 1250 + t100.query_prop("max_hp"), "第一百层 1250 万");
-        assert.ok(t100.skills.liumaishenjian.level === 5000 && t100.skills.force.level === 4000 && t100.str === 53);
-        assert.ok(t100.gj < 10e4 && t100.zj < 10e4, "不再有亿级加成：" + t100.gj + "/" + t100.zj);
-        let prev = 0;
-        for (let n = 1; n <= 5; n++) {
-            const b = NPC.CLONE("pub/wudao_boss100"); b.init_from(null, n);
-            assert.strictEqual(b.max_hp, 30000000 + (n - 1) * 5000000 + b.query_prop("max_hp"), "上" + n + "层气血");
-            assert.strictEqual(b.skills.liumaishenjian.level, 5000 + (n - 1) * 500);
-            assert.ok(b.gj >= prev, "逐层不减"); prev = b.gj;
+        const at = lv => { const g = NPC.CLONE("pub/wudao"); g.init_from(null, lv); return g; };
+        // 标定点
+        for (const [lv, gj, mz, ds, hp] of [[10, 1500, 1500, 1000, 30000], [30, 20000, 18000, 10000, 250000], [65, 35000, 33000, 20000, 1000000], [89, 95000, 95000, 50000, 3000000], [90, 100000, 100000, 60000, 3000000], [99, 120000, 120000, 70000, 5000000]]) {
+            const g = at(lv);
+            assert.ok(g.gj === gj && g.mz === mz && g.ds === ds && g.zj === ds && g.max_hp === hp, lv + " 层：" + [g.gj, g.mz, g.ds, g.zj, g.max_hp].join("/"));
+            assert.strictEqual(g.fy, Math.round(gj * 0.3), lv + " 层防御 = 攻击×0.3");
         }
-        const src = require("fs").readFileSync(__dirname + "/../world/map/wudao/ta2.js", "utf8");
-        assert.ok(/npc\.init_from\(me, level\)/.test(src), "上 N 层把层号传给守护者");
+        // 逐层不减
+        let prev = at(1);
+        for (let lv = 2; lv <= 99; lv++) { const g = at(lv); for (const k of ["gj", "mz", "ds", "zj", "fy", "max_hp"]) assert.ok(g[k] >= prev[k], lv + " 层 " + k + " 比上一层低"); prev = g; }
+        // 免控只在 90~99 层
+        assert.ok(!at(89).query_prop("ig_control") && at(90).query_prop("ig_control") && at(99).query_prop("ig_control"));
+        const g95 = at(95); g95.hp = g95.max_hp; assert.strictEqual(g95.add_status({ id: "faint", is_faint: true, duration: 3000, downside: true }), false, "95 层不吃昏迷");
+        // 增减益照常生效
+        const g50 = at(50); const ds0 = g50.ds; g50.add_status({ id: "x", name: "x", duration: 5000, downside: true, prop: { ds_per: -50 } }); g50.recount();
+        assert.strictEqual(g50.ds, Math.round(ds0 / 2));
+        // 第一百层 / 上 1~5 层
+        const t100 = NPC.CLONE("pub/wudao_boss100"); t100.init_from(null);
+        assert.ok(t100.gj === 130000 && t100.mz === 130000 && t100.ds === 80000 && t100.max_hp === 12500000);
+        assert.ok(t100.skills.liumaishenjian.level === 5000 && t100.skills.force.level === 4000);
+        let last = t100;
+        for (let k = 1; k <= 5; k++) {
+            const b = NPC.CLONE("pub/wudao_boss100"); b.init_from(null, k);
+            assert.strictEqual(b.max_hp, 30000000 + (k - 1) * 5000000, "上" + k + "层气血");
+            assert.strictEqual(b.gj, Math.round(130000 * (1 + 0.1 * k)));
+            assert.strictEqual(b.skills.liumaishenjian.level, 5000 + (k - 1) * 500);
+            assert.ok(b.gj > last.gj); last = b;
+        }
+        assert.ok(/npc\.init_from\(me, level\)/.test(require("fs").readFileSync(__dirname + "/../world/map/wudao/ta2.js", "utf8")), "上 N 层把层号传给守护者");
     });
-
-    // ---------- 7. 移花接木 ----------
     check("移花接木：无移花时绝招照常生效；移花增益期间化解对方下一招后增益结束，减益保留", () => {
         const a = mkUser("yh_a"), b = mkUser("yh_b");
         learn(a, { yihuajiemu: "parry" }, 1000);

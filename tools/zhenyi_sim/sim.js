@@ -16,7 +16,7 @@ const MP = parseInt(process.env.MP || 0);              // 额外内力上限（�
 const SET = process.env.SET || "huashan";              // huashan=本门 / best=任意最强
 const EQ = (process.env.EQ || "eq/lv0/jian").split(",");
 const VERBOSE = !!process.env.V;
-require("./boot.js")().then(process.env.SIMLIB ? () => require(process.env.SIMLIB)() : main).catch(e => { console.error(e); process.exit(1); });
+require("./boot.js")().then(process.env.SIMLIB ? () => require(require("path").resolve(process.env.SIMLIB))() : main).catch(e => { console.error(e); process.exit(1); });
 
 // —— 虚拟时钟 ——
 let T = Date.now(); const Q = []; let seq = 0;
