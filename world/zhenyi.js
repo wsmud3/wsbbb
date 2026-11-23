@@ -265,7 +265,8 @@
     }
     function hasTower100(me) { return me.query_temp("wd_level", 0) >= 100 || !!me.query_temp("wd100", 0); }
     // GM 测试旁路：仅 user_level >= 5 且手动开启 zytest bypass 时，视为已满足境界与武道塔条件（门派仍须匹配）。
-    function gmBypass(me) { return !!(me && (me.user_level || 0) >= 5 && me.query_temp("zy_gm_bypass", 0)); }
+    // 测试号（sktest fix）同样视为满足。
+    function gmBypass(me) { return !!(me && (((me.user_level || 0) >= 5 && me.query_temp("zy_gm_bypass", 0)) || (me.is_test_char && me.is_test_char()))); }
     function realmReady(me) { return gmBypass(me) || me.level >= 5; }
     function towerReady(me) { return gmBypass(me) || hasTower100(me); }
     function canUnlock(me, data) { return !!(me && data && familyId(me) === KEY_TO_FAMILY[data.key] && realmReady(me) && towerReady(me)); }

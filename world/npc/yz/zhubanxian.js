@@ -44,7 +44,6 @@
 	function testLevel(me) {
 
 	    me.send_room("$N向$n恭敬的问道：敢问老先生，" + me.callme() + "武功境界如何？\n", this);
-	    if (me.is_test_char && me.is_test_char()) return showTestLevels.call(this, me);
 
 	    if (me.level == 4) {
 	        return checkWS(me);
@@ -74,8 +73,7 @@
 	            && me.max_mp >= 1000) {
 
 	            me.notify("金古易对你说道：恭喜" + me.call() + "，你已经踏入武士境界，习武之路你才刚起步，努力修炼吧！");
-	            me.level_up();
-	            this.send_master(me);
+	            if (me.level_up()) this.send_master(me);
 	        } else {
 
 	            me.notify("金古易对你说道：这位" + me.call() + "，等你把基本内功，基本拳脚，基本招架，基本轻功练到100级，至少装备一种特殊技能，内力到1000就可以提升到武士境界了。");
@@ -94,8 +92,7 @@
 
 	        if (skillsOk1 && mpOk1) {
 	            me.notify("金古易对你说道：恭喜" + me.call() + "，你已经踏入武师境界，习武之路荆棘满地，唯有坚持努力方能使你踏上成功之路！");
-	            me.level_up();
-	            this.send_master(me);
+	            if (me.level_up()) this.send_master(me);
 	        } else {
 	            var lacks1 = [];
 	            if (!skillsOk1) lacks1.push("技能达到300级");
@@ -117,15 +114,18 @@
 	        if (skillsOk && mpOk) {
 	            if (rdemOk) {
 	                me.notify("金古易对你说道：恭喜" + me.call() + "成为一代宗师，但要切记，习武之路荆棘满地，唯有戒骄戒躁继续努力方能更进一步！");
-	                this.do_command("chat", "哈哈，不错，不错，恭喜" + me.name + "成为一代宗师！");
-
-	                USERTASK.GET('yamen').on_finish(me);
-	                USERTASK.GET('sm').on_finish(me);
+	                // 之前已领过宗师突破奖励（测试号降境界后再升）：广播、任务结算、师父奖励、称号都不再重复
+	                var firstZS = me.levelup_will_reward();
+	                if (firstZS) {
+	                    this.do_command("chat", "哈哈，不错，不错，恭喜" + me.name + "成为一代宗师！");
+	                    USERTASK.GET('yamen').on_finish(me);
+	                    USERTASK.GET('sm').on_finish(me);
+	                }
 
 	                me.level_up();
 	                me.commands_json = null;
-	                this.send_master(me);
-	                if (me.query_temp('sr', 0) === 1 && !WORLD.DATA.query_temp('first_sr')) {
+	                if (firstZS) this.send_master(me);
+	                if (firstZS && me.query_temp('sr', 0) === 1 && !WORLD.DATA.query_temp('first_sr')) {
 	                    me.notify("<hig>你获得称号【武馆馆主】。</hig>");
 	                    me.add_title('武馆馆主', 'sr');
 	                    WORLD.DATA.set_temp('first_sr', 1);
@@ -156,7 +156,7 @@
 	        if (skillsOk3 && mpOk3) {
 	            if (shjdOk) {
 	                me.notify("金古易对你抱拳道：恭喜" + me.call() + "更进一步踏入武圣境界，望" + me.call() + "能百尺杆头更进一步！");
-	                this.do_command("chat", "哈哈哈，圣君出世，武林之福，恭贺新晋武圣" + me.name + "！");
+	                if (me.levelup_will_reward()) this.do_command("chat", "哈哈哈，圣君出世，武林之福，恭贺新晋武圣" + me.name + "！");
 	                me.level_up();
 	            } else {
 	                me.notify("金古易对你说道：这位" + me.call() + "，你只需练成三花聚顶就可以提升到武圣境界了。");
@@ -173,25 +173,53 @@
 	    }
 
 	}
-	// 测试号（sktest fix）：境界可在这里自由调整，不检查条件
+	// ==================== 测试号（sktest fix）专用 ====================
+	// 按钮只在测试号点开金古易时出现（query_commands 按玩家生成），对应的动作不带名字、不进公共按钮列表；
+	// 普通玩家即使手动输入命令也会被拒绝。
 	var TEST_LEVEL_NAMES = ["普通百姓", "武士", "武师", "宗师", "武圣", "武帝", "武神"];
+	var TEST_XUANJING = 10000;   // 每次领取的玄晶数量，不限次数
+	function isTest(me) { return !!(me && me.is_test_char && me.is_test_char()); }
 	function showTestLevels(me) {
 	    var cmds = [];
 	    for (var i = 0; i < TEST_LEVEL_NAMES.length; i++) {
 	        if (i === me.level) continue;
-	        cmds.push("ask " + this.id + " about 测试境界" + i, TEST_LEVEL_NAMES[i]);
+	        cmds.push("sktlv" + i + " " + this.id, TEST_LEVEL_NAMES[i]);
 	    }
 	    me.notify("金古易对你说道：你是测试弟子，当前境界" + TEST_LEVEL_NAMES[me.level || 0] + "，想调整到哪个境界？");
 	    me.send_commands.apply(me, cmds);
 	}
 	for (var tl = 0; tl < TEST_LEVEL_NAMES.length; tl++) (function (lv) {
-	    this.set_ask("测试境界" + lv, function (me) {
-	        if (!(me.is_test_char && me.is_test_char())) return false;
+	    this.add_action("sktlv" + lv, null, function (me) {
+	        if (!isTest(me)) return me.notify("金古易瞥了你一眼，没有理你。");
 	        WORLD.COMMANDS.sktest.set_level(me, lv);
 	        me.notify("金古易对你点点头：好，你现在是" + TEST_LEVEL_NAMES[lv] + "境界了。");
 	    });
 	}).call(this, tl);
+	this.add_action("sktlevel", null, function (me) {
+	    if (!isTest(me)) return me.notify("金古易瞥了你一眼，没有理你。");
+	    showTestLevels.call(this, me);
+	});
+	this.add_action("sktxj", null, function (me) {
+	    if (!isTest(me)) return me.notify("金古易瞥了你一眼，没有理你。");
+	    var obj = me.add_obj("st/xuanjing", TEST_XUANJING);
+	    if (!obj) return me.notify("金古易对你说道：你的背包太满了，先清理一下吧。");
+	    me.notify("<hig>金古易递给你" + TEST_XUANJING + "块" + obj.color_name + "。（测试号可无限领取）</hig>");
+	});
+	this.query_commands = function (player) {
+	    var base = NPC.prototype.query_commands.call(this, player);
+	    if (!isTest(player)) return base;
+	    var json = JSON.parse(base);
+	    json.commands.push({ cmd: "sktlevel " + this.id, name: "<hiy>调整境界(测试)</hiy>" },
+	        { cmd: "sktxj " + this.id, name: "<hiy>领取玄晶(测试)</hiy>" });
+	    return JSON.stringify(json);
+	};
 	function checkWS(me) {
+	    // 五气朝元已完成（如测试号降境界后再升）：进度保留，直接踏入武帝
+	    if ((me.query_temp("wd_absorbed", 0) & 0x1F) === 0x1F) {
+	        me.notify("金古易对你哈哈一笑道：你早已五气朝元，帝君之境本就是你的，去吧！");
+	        me.level_up();
+	        return;
+	    }
 	    if (me.query_temp("wd")) {
 	        return me.notify("金古易对你说道：武道塔的守门人，连我都看不出他的境界，他肯定知道些什么。");
 	    }

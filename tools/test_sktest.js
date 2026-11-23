@@ -99,15 +99,102 @@ async function main() {
         assert.ok(!t.query_temp("tuolicd"));
         o.on_use(n); const r2 = o.on_use(n); assert.notStrictEqual(r2, false, "普通玩家消耗"); assert.ok(n.query_temp("tuolicd"), "普通玩家有冷却");
     });
-    check("金古易：测试号可自由调整境界，普通玩家不行", () => {
+    check("金古易：测试号可自由调整境界、无限领玄晶；按钮只对测试号可见，普通玩家不行", () => {
         const npc = NPC.CLONE("yz/zhubanxian");
         const t = mkUser(); t.user_level = 5; cmd.enter(t, "fix");
-        assert.notStrictEqual(npc.on_ask(t, "测试境界5"), false); assert.strictEqual(t.level, 5);
-        npc.on_ask(t, "测试境界0"); assert.strictEqual(t.level, 0);
-        const n = mkUser(); n.level = 1; assert.strictEqual(npc.on_ask(n, "测试境界6"), false); assert.strictEqual(n.level, 1);
-        t.log = []; let cmds = null; t.send_commands = (...a) => { cmds = a; };
-        npc.actions.levelup.action.call(npc, t);
-        assert.ok(cmds && cmds.some(c => /测试境界6/.test(c)), "提升境界给测试号列出可选境界");
+        const n = mkUser(); n.level = 1;
+        const act = (me, c) => me.do_item_action(npc, c, [me]);
+        // 按钮
+        const tj = JSON.parse(npc.query_commands(t)), nj = JSON.parse(npc.query_commands(n));
+        assert.ok(tj.commands.some(c => /调整境界/.test(c.name)) && tj.commands.some(c => /领取玄晶/.test(c.name)), "测试号看到测试按钮");
+        assert.ok(!nj.commands.some(c => /测试|sktlv|sktxj|sktlevel/.test(c.name + c.cmd)), "普通玩家看不到任何测试按钮：" + JSON.stringify(nj.commands.map(c => c.name)));
+        assert.ok(!JSON.parse(npc.query_commands(n)).commands.some(c => /测试/.test(c.name)), "测试号先点过也不会污染普通玩家的缓存");
+        // 调整境界
+        act(t, "sktlv5"); assert.strictEqual(t.level, 5);
+        act(t, "sktlv0"); assert.strictEqual(t.level, 0);
+        act(n, "sktlv6"); assert.strictEqual(n.level, 1, "普通玩家不能调境界");
+        let cmds = null; t.send_commands = (...a) => { cmds = a; };
+        act(t, "sktlevel");
+        assert.ok(cmds && cmds.some(c => /^sktlv6 /.test(c)), "调整境界(测试)列出可选境界");
+        // 玄晶
+        const xj = me => me.items.filter(i => i.path === "st/xuanjing").reduce((a, i) => a + i.count, 0);
+        act(t, "sktxj"); act(t, "sktxj"); act(t, "sktxj");
+        assert.strictEqual(xj(t), 30000, "可反复领取");
+        act(n, "sktxj"); assert.strictEqual(xj(n), 0, "普通玩家领不到");
+    });
+    // 准备一个能按正常流程过金古易考核的测试号
+    const readyChar = () => {
+        const me = mkUser(); me.user_level = 5;
+        me.environment = { item_changed() {}, item_json() { return ""; }, send() {}, items: [], is_fb() { return false; } };
+        cmd.enter(me, "fix");
+        for (const [b, sk] of [["force", "jiuyangshengong"], ["unarmed", "anranxiaohunzhang"], ["sword", "xuantiejianfa"], ["parry", "qiankundanuoyi"], ["dodge", "xuanxubu"]]) me.enable_skill(b, sk);
+        me.max_mp = 2000000; me.mp = me.max_mp; me.query_status = () => null;
+        me.callme = me.call = () => "阁下";
+        return me;
+    };
+    check("测试号按正常流程提升境界：每个境界的突破奖励只发一次，降境界再升不重复发", () => {
+        const npc = NPC.CLONE("yz/zhubanxian"); const me = readyChar();
+        let master = 0, chats = 0, tasks = 0;
+        npc.send_master = () => { master++; }; npc.do_command = (c) => { if (c === "chat") chats++; };
+        const realGet = USERTASK.GET; USERTASK.GET = () => ({ on_finish() { tasks++; } });
+        try {
+            me.set_temp("rdem", 1); me.set_temp("shjd", 3);
+            me.level = 0; me.remove_temp("lvup_top");
+            const up = () => npc.actions.levelup.action.call(npc, me);
+            const mp0 = me.limit_mp, exp0 = me.exp;
+            up(); up(); up(); up();
+            assert.strictEqual(me.level, 4, "正常流程升到武圣");
+            assert.strictEqual(me.limit_mp - mp0, 1000 + 5000 + 10000 + 20000, "第一次领到全部内力上限奖励");
+            assert.ok(me.exp > exp0); assert.strictEqual(master, 3, "武士、武师、宗师各调一次师父奖励"); 
+            assert.strictEqual(tasks, 2, "宗师结算一次衙门/师门任务"); assert.strictEqual(chats, 2, "宗师、武圣各广播一次");
+            // 降回普通百姓再走一遍
+            npc.actions.sktlv0.action.call(npc, me); assert.strictEqual(me.level, 0);
+            const mp1 = me.limit_mp, exp1 = me.exp;
+            up(); up(); up(); up();
+            assert.strictEqual(me.level, 4, "进度保留（任督二脉、三花聚顶），可以再升回武圣");
+            assert.strictEqual(me.limit_mp, mp1, "内力上限不再增加"); assert.strictEqual(me.exp, exp1, "经验潜能不再发");
+            assert.strictEqual(master, 3, "师父奖励不重复"); assert.strictEqual(tasks, 2, "任务结算不重复"); assert.strictEqual(chats, 2, "不重复广播");
+            assert.ok(me.log.some(m => /已领取过.*突破奖励/.test(m)), "提示已领过");
+        } finally { USERTASK.GET = realGet; }
+    });
+    check("五气朝元、登临武神的进度保留：降境界后可再升武帝、武神，奖励不重复", () => {
+        const npc = NPC.CLONE("yz/zhubanxian"); const me = readyChar();
+        me.level = 4; me.set_temp("lvup_top", 6); me.set_temp("wd_absorbed", 0x1F);
+        const mp0 = me.limit_mp, f0 = me.query_temp("fenpei", 0);
+        npc.actions.levelup.action.call(npc, me);
+        assert.strictEqual(me.level, 5, "五气已朝元，金古易处直接踏入武帝");
+        const room = ROOM.Get("zhanshen/wushendian"); assert.ok(room, "武神殿");
+        me.set_temp("zhanshen_wushen", 1);
+        room.on_enter(me);
+        assert.strictEqual(me.level, 6, "已登临过武神，降境界后可再次登临");
+        assert.strictEqual(me.limit_mp, mp0); assert.strictEqual(me.query_temp("fenpei", 0), f0, "先天属性不重复给");
+        // 首次登临照常发奖励
+        const n = readyChar(); n.level = 5; n.remove_temp("lvup_top"); n.set_temp("zhanshen_tapotian", 1);
+        const nm = n.limit_mp; room.on_enter(n);
+        assert.strictEqual(n.level, 6); assert.strictEqual(n.limit_mp - nm, 500000, "首次登临武神照常发奖励");
+    });
+    check("sktest：重复 fix 不重置境界；top 可手动补记录；改境界前自动记下已领奖励", () => {
+        const me = mkUser(); me.user_level = 5; me.level = 3; cmd.enter(me, "fix");
+        assert.strictEqual(me.level, 1); assert.strictEqual(me.levelup_reward_top(), 3, "原境界记为已领");
+        me.level = 4; cmd.enter(me, "fix"); assert.strictEqual(me.level, 4, "重复 fix 不动境界");
+        cmd.enter(me, "top 6"); assert.strictEqual(me.levelup_reward_top(), 6);
+        assert.ok(!mkUser().levelup_will_reward || mkUser().levelup_will_reward(), "普通新角色首次突破照常发奖励");
+    });
+    check("测试号：全部副本、禁地已解锁，扫荡不用先通关；真意禁地免境界与武道塔条件（门派仍须匹配）", () => {
+        const t = mkUser(); t.user_level = 5; cmd.enter(t, "fix"); const n = mkUser();
+        const fb = Object.assign(Object.create(AREA.prototype), { fb_index: 33 }), jd = Object.assign(Object.create(AREA.prototype), { jd_index: 3 });
+        assert.ok(fb.is_unlock(t) && jd.is_unlock(t) && t.isenable_area(2), "测试号全部解锁");
+        assert.ok(!fb.is_unlock(n) && !jd.is_unlock(n) && !n.isenable_area(2), "普通玩家不受影响");
+        t.log = []; WORLD.COMMANDS.jh.enter(t, null, "lock");
+        assert.ok(t.log.some(m => /unlock:9999,unlock2:2147483647/.test(m)), "江湖面板显示全部解锁：" + t.log.join("|"));
+        const src = require("fs").readFileSync(__dirname + "/../world/cmd/action/cr.js", "utf8");
+        assert.ok(/if \(me\.is_test_char && me\.is_test_char\(\)\) \{\s*\/\/ 测试号：所有副本（普通\/困难）都可直接扫荡/.test(src), "扫荡解锁检查对测试号跳过");
+        const Z = WORLD.ZHENYI;
+        t.family = FAMILIES.HUASHAN; t.level = 1; n.family = FAMILIES.HUASHAN; n.level = 1;
+        assert.ok(Z.gm_bypass(t) && !Z.gm_bypass(n));
+        assert.ok(Z.can_enter_hub(t, false), "测试号武士境界也能进云湺山");
+        assert.ok(!Z.can_enter_hub(n, false), "普通玩家仍需武帝 + 武道塔");
+        assert.ok(Z.can_enter_area(t, "huashan_jz", false) || Z.can_enter_area(t, Z.family_data(t).key, false), "测试号能进本门禁地");
     });
     check("九转金丹已删除：drug/exp#5 不再是九转金丹，金古易福利不再发", () => {
         const o = OBJ.CREATE("drug/exp#5");

@@ -59,7 +59,9 @@ function fb_saodang(me, path, isdiff, count) {
     if (me.is_full(-10)) return me.notify("你身上东西太多了!");
     var area = next_room.parent;
     var unlock_name = isdiff ? "fb_sao1" : "fb_sao0";
-    if (area.unlock_index) {
+    if (me.is_test_char && me.is_test_char()) {
+        // 测试号：所有副本（普通/困难）都可直接扫荡，不用先单人通关
+    } else if (area.unlock_index) {
         if (me.query_temp('fb_sao' + area.fb_index, 0) !== (isdiff ? 2 : 1))
             return me.notify("你需要" + area.name + (isdiff ? "(困难)" : "(普通)") + "单人模式完成100%才可以扫荡副本!");
     } else {

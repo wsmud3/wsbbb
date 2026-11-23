@@ -13,6 +13,7 @@ this.enter = function (me, type, arg, isstart) {
     if (WORLD.ZHENYI) WORLD.ZHENYI.check_unlock(me, true);
     var unlock = me.query_temp("fb", 0);
     var unlock2 = me.query_temp("fb2", 0);
+    if (me.is_test_char && me.is_test_char()) { unlock = 9999; unlock2 = 0x7fffffff; }   // 测试号：面板上全部显示已解锁
     if (arg == "lock")
         return me.send(`{type:"dialog",dialog:"jh",unlock:${unlock},unlock2:${unlock2}}`);
     if (!this.map_json) {

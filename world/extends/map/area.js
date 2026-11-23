@@ -14,6 +14,7 @@ AREA.prototype.clear_copy = function (me) {
         room.clear_copy(me);
 }
 AREA.prototype.is_unlock = function (me) {
+    if (me && me.is_test_char && me.is_test_char()) return true;   // 测试号：全部副本、禁地已解锁
     if (this.jd_index >= 0)
         return me.isenable_area(this);
     return (this.unlock_index ?? this.fb_index) <= me.query_temp("fb", 0);

@@ -6,12 +6,14 @@ this.set_npc(["zhanshen/chiyou", 1]);
 this.no_relive = true;
 
 this.on_enter = function (me) {
-    if (me.query_temp("zhanshen_wushen")) {
+    // 已登临过武神：进度保留。境界还在武神则只是共鸣；境界被降下来（测试号）则可再次登临，奖励不重复发
+    var relive = me.query_temp("zhanshen_wushen") && me.level < 6;
+    if (me.query_temp("zhanshen_wushen") && !relive) {
         me.notify("武神殿中一片宁静，你感受到历代武神残留的意志与你产生共鸣。");
         return;
     }
 
-    if (!me.query_temp("zhanshen_tapotian")) {
+    if (!relive && !me.query_temp("zhanshen_tapotian")) {
         me.notify("<hir>武神殿的大门紧闭，一股无形的力量将你推回。</hir>");
         me.notify("你需要先踏破九重天，方能进入武神殿。");
         me.moveto("zhanshen/jiuchongtian");
@@ -28,27 +30,35 @@ this.on_enter = function (me) {
         me.notify("<hiz>历代武神的意志如潮水般涌入你的体内，你感受到前所未有的力量在经脉中奔涌！</hiz>\n");
 
         var sk = me.skill_limit();
+        var reward = me.levelup_reward_top ? 6 > me.levelup_reward_top() : true;
         me.level = 6;
         // 自动完成战神殿副本
         if (me.environment && me.environment.parent && me.environment.parent.id === "zhanshen") {
             me.add_fbscore(me.environment.parent.score);
         }
         me.notify("<hiy>恭喜你提升到了" + me.get_level_desc() + "境界！</hiy>");
-        me.add_exp(2000000, 2000000);
         var now_sk = me.skill_limit();
-        me.limit_mp += 500000;
-        me.add_temp("fenpei", 1);
-        me.set_temp("wushen_rwd", 1);
-        me.notify("<hiw>你的最大内力限制增加了500000。</hiw>");
+        if (reward) {
+            me.add_exp(2000000, 2000000);
+            me.limit_mp += 500000;
+            me.add_temp("fenpei", 1);
+            me.set_temp("wushen_rwd", 1);
+            me.notify("<hiw>你的最大内力限制增加了500000。</hiw>");
+            me.notify("<hiw>你的先天属性增加了1点。</hiw>");
+            me.mark_levelup_rewarded && me.mark_levelup_rewarded(6);
+        } else {
+            me.notify("<hic>你此前已领取过武神境界的突破奖励，本次不再发放。</hic>");
+        }
         me.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-        me.notify("<hiw>你的先天属性增加了1点。</hiw>");
         me.color_name = null;
         me.environment.item_changed(me, true);
         me.send('{type:"levelup",level:6}');
 
-        // 全服谣言
-        var rumorMsg = '{"type":"msg","ch":"rumor","content":"听说某人踏入神道"}';
-        WORLD.sendAll(rumorMsg);
+        // 全服谣言（再次登临不重复广播）
+        if (reward) {
+            var rumorMsg = '{"type":"msg","ch":"rumor","content":"听说某人踏入神道"}';
+            WORLD.sendAll(rumorMsg);
+        }
 
         // 各方NPC祝贺
         me.notify("\n<hiy>天地间回荡起一道苍老而威严的声音——</hiy>");

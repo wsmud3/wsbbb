@@ -2,11 +2,13 @@
 //   sktest                         查看帮助与当前状态
 //   sktest fix [等级] [玩家]        把角色设为测试号：
 //                                   · 学会全部基础武功 + 公共武学（不属于门派的武学）+ 知识技能，连同原有技能一起设为指定等级（默认 3000）并锁定
-//                                   · 境界设为武士；之后可找金古易「提升境界」自由调整
+//                                   · 首次设置时境界设为武士；之后可按正常流程找金古易提升境界（突破奖励每个境界只发一次，
+//                                     任督二脉/三花聚顶/五气朝元等进度保留），也可用金古易的「调整境界(测试)」直接改
 //                                   · 可无限叛师（叛师符无冷却、不消耗）
 //                                   · 首次设置时发放 1 万本武道、1 万块元晶、1 张叛师符
 //                                   · 发放测试专用的无限精力丹、无限扫荡符、无限洗髓丹、无限变性丹（缺哪个补哪个）
 //   sktest unfix [玩家]             取消测试号（解除技能锁定与测试特权，等级/境界/物品保留）
+//   sktest top <境界0~6> [玩家]     设定已领过突破奖励的最高境界（本功能上线前就设过的测试号，原境界没有记录，用它补）
 // [玩家] 填在线玩家的 id 或名字，不填就是自己。
 // 标记都存在 temp 里（skill_fixed / test_char），下线重登仍然有效。技能锁定后学习、练习、读书、
 // 技能书、武道进阶/残页的等级换算、放弃技能都不会改变等级（见 CHARACTER.prototype.skill_fixed）。
@@ -23,9 +25,12 @@ var TEST_TOOLS = [["cash/test_jing", "无限精力丹"], ["cash/test_saodang", "
 var TEST_ITEMS = [["book/wudao", 10000], ["st/yuanjing", 10000], ["cash/tuoli", 1]];
 var LEVEL_NAMES = ["普通百姓", "武士", "武师", "宗师", "武圣", "武帝", "武神"];
 
-// 直接设定境界（不检查条件、不发升级奖励），金古易给测试号调整境界时也用这个
+// 直接设定境界（不检查条件、不发突破奖励），金古易给测试号调整境界时也用这个。
+// 改之前先把当前境界记为“已领过突破奖励”，之后按正常流程升回来不会重复领奖励；
+// 任督二脉、三花聚顶、五气朝元、登临武神等进度都存在 temp 里，这里不动，升回来时直接沿用。
 this.set_level = function (me, lv) {
     lv = Math.max(0, Math.min(LEVEL_NAMES.length - 1, parseInt(lv) || 0));
+    if (me.mark_levelup_rewarded) me.mark_levelup_rewarded(me.level || 0);
     me.level = lv;
     me.color_name = null;
     me.commands_json = null;
@@ -101,8 +106,9 @@ this.enter = function (me, arg) {
             target._skill_fix_bypass = false;
         }
         target.set_temp("skill_fixed", level);
+        var firstTime = !target.query_temp("test_char");
         target.set_temp("test_char", 1);
-        this.set_level(target, 1);
+        if (firstTime) this.set_level(target, 1);   // 只在第一次设为测试号时把境界设为武士，之后重复 fix 不动境界
         var gave = "";
         if (!target.query_temp("test_char_items")) {
             TEST_ITEMS.forEach(function (it) { target.add_obj(it[0], it[1]); });
@@ -116,9 +122,19 @@ this.enter = function (me, arg) {
         });
         if (tools.length) gave += (gave ? "，" : "，并获得") + tools.join("、");
         target.save && target.save();
-        target.notify("<hiy>你已成为测试号：新学会" + learned + "门技能，全部" + all.length + "门技能（基础武功、公共武学及原有技能）等级固定为" + level + "级；境界设为武士，可找金古易调整；可无限叛师" + gave + "。</hiy>");
+        target.notify("<hiy>你已成为测试号：新学会" + learned + "门技能，全部" + all.length + "门技能（基础武功、公共武学及原有技能）等级固定为" + level + "级；" + (firstTime ? "境界设为武士，" : "") + "可按正常流程或找金古易「调整境界(测试)」改境界；可无限叛师" + gave + "。</hiy>");
         if (target !== me) me.notify("已将" + target.name + "设为测试号：新学会" + learned + "门，全部" + all.length + "门技能固定为" + level + "级" + gave + "。");
         return;
+    }
+    if (action === "top") {
+        // 手动设定“已领过突破奖励的最高境界”（给本功能上线前就设过的测试号补记录）
+        var lvTop = parseInt(parts[1]);
+        if (!(lvTop >= 0 && lvTop < LEVEL_NAMES.length)) return me.notify("用法：sktest top <境界 0~6> [玩家]（0 普通百姓 … 6 武神）");
+        var tp = parts[2] ? find_player(parts[2]) : me;
+        if (!tp) return me.notify("找不到在线玩家：" + parts[2]);
+        tp.set_temp("lvup_top", lvTop);
+        tp.save && tp.save();
+        return me.notify((tp === me ? "你" : tp.name) + "已领过突破奖励的最高境界设为" + LEVEL_NAMES[lvTop] + "，此境界及以下再次突破不发奖励。");
     }
     if (action === "unfix") {
         var t = parts[1] ? find_player(parts[1]) : me;
@@ -129,13 +145,15 @@ this.enter = function (me, arg) {
         return me.notify((t === me ? "你" : t.name) + "已不再是测试号：技能等级锁定与测试特权已解除。");
     }
     var cur = me.skill_fixed ? me.skill_fixed() : 0;
-    return me.notify(this.help() + "\n\n当前：" + (me.is_test_char() ? "测试号，" : "") + (cur ? "技能等级固定为" + cur + "级" : "技能未锁定"));
+    var topNow = me.levelup_reward_top ? me.levelup_reward_top() : 0;
+    return me.notify(this.help() + "\n\n当前：" + (me.is_test_char() ? "测试号，" : "") + (cur ? "技能等级固定为" + cur + "级" : "技能未锁定") + "，已领突破奖励至" + LEVEL_NAMES[topNow]);
 };
 
 this.help = function () {
     return [
         "sktest fix [等级] [玩家]   设为测试号：全部基础 + 公共武学 + 原有技能固定为指定等级（默认 3000）、境界武士（金古易可调）、无限叛师，首次发 1 万武道和 1 万元晶",
         "sktest unfix [玩家]        取消测试号（解除技能锁定与测试特权）",
+        "sktest top <境界0~6> [玩家] 设定已领过突破奖励的最高境界（给早先设的测试号补记录）",
         "[玩家] 为在线玩家的 id 或名字，不填为自己。",
     ].join("\n");
 };

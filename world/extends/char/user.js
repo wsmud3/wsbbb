@@ -57,69 +57,57 @@ USER.prototype.recount = function () {
     if (this._reapply_zc_stacks) this._reapply_zc_stacks();
 }
 
+// 境界突破奖励（经验/潜能、内力上限、先天属性）。下标 = 突破后的境界。
+var LEVELUP_REWARDS = [null,
+    { exp: 10000, mp: 1000, mp_msg: "你的内力限制增加了1000。" },
+    { exp: 100000, mp: 5000 },
+    { exp: 200000, mp: 10000 },
+    { exp: 500000, mp: 20000 },
+    { exp: 1000000, mp: 50000 },
+    { exp: 2000000, mp: 500000, fenpei: 1, no_sk_msg: true },
+];
+// 已领过突破奖励的最高境界：存档 temp.lvup_top；没有记录的老角色按当前境界算（升到当前境界时已经领过）。
+// 测试号可以降境界后再按流程升上来，境界不超过这个值时不再重复发放突破奖励。
+USER.prototype.levelup_reward_top = function () {
+    var top = parseInt(this.query_temp("lvup_top", 0)) || 0;
+    return Math.max(top, this.level || 0);
+}
+// 记一笔“已领到 lv 境界的突破奖励”（降境界前调用，保证之后再升上来不会重复领）
+USER.prototype.mark_levelup_rewarded = function (lv) {
+    var top = Math.max(parseInt(this.query_temp("lvup_top", 0)) || 0, lv || 0);
+    if (top > 0) this.set_temp("lvup_top", top);
+}
+// 本次突破是否发奖励（不改状态）：给金古易等调用方判断是否发师父奖励、广播等
+USER.prototype.levelup_will_reward = function () {
+    return (this.level || 0) + 1 > this.levelup_reward_top();
+}
+// 返回 true 表示本次发放了突破奖励；false 表示此前已领过（或已到顶）。
 USER.prototype.level_up = function () {
-    if (!this.level) {
-        var sk = this.skill_limit();
-        this.level = 1;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(10000, 10000);
-        var now_sk = this.skill_limit();
-        this.limit_mp += 1000;
-        this.notify("<hiw>你的内力限制增加了1000。</hiw>");
-        this.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-
-    } else if (this.level == 1) {
-        var sk = this.skill_limit();
-        this.level = 2;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(100000, 100000);
-        var now_sk = this.skill_limit();
-        this.limit_mp += 5000;
-        this.notify("<hiw>你的最大内力限制增加了5000。</hiw>");
-        this.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-    } else if (this.level == 2) {
-        var sk = this.skill_limit();
-        this.level = 3;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(200000, 200000);
-        var now_sk = this.skill_limit();
-        this.limit_mp += 10000;
-        this.notify("<hiw>你的最大内力限制增加了10000。</hiw>");
-        this.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-
-    } else if (this.level == 3) {
-        var sk = this.skill_limit();
-        this.level = 4;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(500000, 500000);
-        var now_sk = this.skill_limit();
-        this.limit_mp += 20000;
-        this.notify("<hiw>你的最大内力限制增加了20000。</hiw>");
-        this.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-    } else if (this.level == 4) {
-        var sk = this.skill_limit();
-        this.level = 5;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(1000000, 1000000);
-        var now_sk = this.skill_limit();
-        this.limit_mp += 50000;
-        this.notify("<hiw>你的最大内力限制增加了50000。</hiw>");
-        this.notify("<hiw>你的技能等级限制增加了" + (now_sk - sk) + "。</hiw>");
-    } else if (this.level == 5) {
-        var sk = this.skill_limit();
-        this.level = 6;
-        this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
-        this.add_exp(2000000, 2000000);
-        this.limit_mp += 500000;
-        this.add_temp("fenpei", 1);
-        this.set_temp("wushen_rwd", 1);
-        this.notify("<hiw>你的最大内力限制增加了500000。</hiw>");
-        this.notify("<hiw>你的先天属性增加了1点。</hiw>");
+    var lv = (this.level || 0) + 1;
+    if (lv >= LEVELUP_REWARDS.length) return false;
+    var reward = lv > this.levelup_reward_top(), r = LEVELUP_REWARDS[lv];
+    var sk = this.skill_limit();
+    this.level = lv;
+    this.notify("<hiy>恭喜你提升到了" + this.get_level_desc() + "境界。</hiy>");
+    if (reward) {
+        this.add_exp(r.exp, r.exp);
+        this.limit_mp += r.mp;
+        this.notify("<hiw>" + (r.mp_msg || "你的最大内力限制增加了" + r.mp + "。") + "</hiw>");
+        if (r.fenpei) {
+            this.add_temp("fenpei", r.fenpei);
+            this.set_temp("wushen_rwd", 1);
+            this.notify("<hiw>你的先天属性增加了1点。</hiw>");
+        }
+        this.mark_levelup_rewarded(lv);
+    } else {
+        this.notify("<hic>你此前已领取过" + this.get_level_desc() + "境界的突破奖励，本次不再发放。</hic>");
     }
+    if (!r.no_sk_msg) this.notify("<hiw>你的技能等级限制增加了" + (this.skill_limit() - sk) + "。</hiw>");
     this.color_name = null;
     this.environment.item_changed(this, true);
     this.send(`{type:"levelup",level:${this.level}}`);
     this.check_unlock_sect_jds();
+    return reward;
 }
 USER.prototype.is_team = function (p) {
     if (!p || !p.team) return;
@@ -151,6 +139,7 @@ USER.prototype.enable_area = function () {
 }
 USER.prototype.isenable_area = function (fb) {
     if (!fb) return false;
+    if (this.is_test_char()) return true;   // 测试号：全部禁地已解锁（sktest）
     if (typeof fb === 'number') {
         return this.query_bool('fb2', fb);
     }
