@@ -81,7 +81,8 @@ FAMILY.prototype.query_skill = function (grade) {
         }
     }
     if (grade >= this.skill_levels.length) grade = this.skill_levels.length - 1;
-    var skills = this.skill_levels[grade];
+    // 运行中删除/替换过技能（后台删除技能、热更新）时，缓存里可能留着已经不存在的旧对象：抽到它会生成无效残页
+    var skills = (this.skill_levels[grade] || []).filter(function (s) { return SKILL.get(s.id) === s; });
     if (!skills || skills.length === 0) return null;
     return skills.random();
 }
@@ -98,7 +99,7 @@ FAMILY.prototype.query_skills = function (grade) {
         }
     }
     if (grade >= this.skill_levels.length) grade = this.skill_levels.length - 1;
-    return this.skill_levels[grade] || [];
+    return (this.skill_levels[grade] || []).filter(function (s) { return SKILL.get(s.id) === s; });
 }
 FAMILY.prototype.add_gongji = function (me, count) {
     if (!count) return;

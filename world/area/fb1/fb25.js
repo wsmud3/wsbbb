@@ -112,7 +112,7 @@ this.hmy_shield = function (df, from, sh) {
 
 this.drops = [
     "book/bc#kuihuashengong",
-    "book/bc#pixiejianfa",
+    "book/bc#bixiejianfa",
     "eq/lv3/shangguanyun_pifeng",
     "eq/lv3/tongbaixiong_jiezhi",
     "eq/lv3/yanglianting_xiangquan",
@@ -124,5 +124,5 @@ this.drops = [
 	    { obj: "money/silver", min: 1, max: 10 },
 	    { obj: ["eq/lv3/shangguanyun_pifeng", "eq/lv3/tongbaixiong_jiezhi", "eq/lv3/yanglianting_xiangquan", "eq/lv3/jiabu_huyaosuo"], odds: 250 },
 	    { obj: "eq/lv4/xiuhuazhen", odds: 90 },
-	    { obj: ["book/bc#kuihuashengong", "book/bc#pixiejianfa"], odds: 2900 },
+	    { obj: ["book/bc#kuihuashengong", "book/bc#bixiejianfa"], odds: 2900 },
 	];

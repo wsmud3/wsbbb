@@ -75,7 +75,7 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			// 按说明：用「前一个攻击你的武器或拳脚绝招」攻击敌人，等级取你的斗转星移等级。
-			// 绝招记录在内存 mem "sk/last_hit_pfm"（pfm.js / auto_combat.js 在绝招释放成功后写到目标身上，60 秒有效，不存档）。
+			// 绝招记录在内存 mem "sk/last_hit_pfm"（pfm.js / auto_combat.js 在绝招释放成功后写到目标身上，10 秒内有效（超时清空，被新绝招打中则覆盖），不存档）。
 			// 没有可用的记录时退回原效果：以对方的攻击力和命中反击一次。
 			var DZ_BASES = ["sword", "blade", "club", "staff", "whip", "unarmed"];
 			var lastId = me.query_mem("sk/last_hit_pfm");

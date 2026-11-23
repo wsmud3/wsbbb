@@ -13,7 +13,7 @@
 									bj_per: 5,
 									diff_fy_per: 10,
 									skill: {
-													pixiejianfa: 100,
+													bixiejianfa: 100,
 													kuihuashengong: 100,
 									},
 					},

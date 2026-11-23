@@ -15,19 +15,19 @@ this.set({
 });
 
 this.init_from = function (player, level) {
-    var scalar = 100 + Math.floor(level * 1000);
-    this.con = this.dex = this.int = this.str = scalar;
+    // 四项先天属性按原框架：20 + 层数/3。五项战斗属性主要来自所装技能（见 skills_def）
+    this.con = this.dex = this.int = this.str = 20 + parseInt(level / 3);
     if (level > 100) level = 100;
     const grade1 = Math.floor(level / 10);
     this.name = UTIL.random_name(this.gender);
-    this.skill_map.apply(this, this.skills_def[Math.min(grade1, 9)]);
+    this.skill_map.apply(this, this.skills_def[Math.min(grade1, this.skills_def.length - 1)]);   // 100 层用原版第 11 档
     var color = ["hig", "hic", "hiy", "hiz", "hio", "ord"][Math.min(parseInt(level / 20), 5)];
     this.title = "<" + color + ">武道塔守护者</" + color + ">";
     this.set_objects(['eq/lv0/cloth', 1, 1], ["eq/lv0/jian", 1, 1]);
 
-    this.hp = this.max_hp = 5000 + level * level * 200;
+    // 气血：1~99 层按原框架 1000 + 层数² × 150；100 层起按官方服手感改为 1000 + 层数² × 1250（100 层 1250 万）
+    this.hp = this.max_hp = 1000 + level * level * (level >= 100 ? 1250 : 150);
     this.mp = this.max_mp = parseInt(this.hp / 2);
-    this.add_prop("fy", level * 500);
     this.init();
     this.recount();
 
@@ -72,7 +72,7 @@ this.skills_def = [
         ],
         [
             ["force", 2000], ["unarmed", 2000], ["sword", 2000], ["parry", 2000], ["dodge", 2000],
-            ["jiuyangshengong", 2000, "force"], ["chuanxinzhang", 2000, "unarmed"],
+            ["jiuyangshengong", 2000, "force"], ["chuanxinzhang2", 2000, "unarmed"],
             ["dugujiujian", 2000, "sword"], ["taijiquan", 2000, "parry"], ["kuihuashengong", 2000, "dodge"],
         ],
         [
@@ -82,7 +82,12 @@ this.skills_def = [
         ],
         [
             ["force", 3000], ["unarmed", 3000], ["sword", 3000], ["parry", 3000], ["dodge", 3000],
-            ["jiuyinshengong", 3000, "force"], ["jiuyinbaiguzhao", 3000, "unarmed"],
+            ["jiuyinshengong", 3000, "force"], ["jiuyinbaiguzhao2", 3000, "unarmed"],
             ["taijijian", 3000, "sword"], ["qiankundanuoyi", 3000, "parry"], ["lingboweibu2", 3000, "dodge"],
+        ],
+        [   // 100 层（原版）
+            ["force", 4000], ["unarmed", 4000], ["sword", 4000], ["parry", 4000], ["dodge", 4000],
+            ["jiuyangshengong", 5000, "force"], ["liumaishenjian", 5000, "unarmed"],
+            ["xuantiejianfa", 5000, "sword"], ["qiankundanuoyi", 5000, "parry"], ["lingboweibu2", 5000, "dodge"],
         ]
     ];

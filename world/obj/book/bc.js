@@ -16,6 +16,7 @@ this.on_create = function (path, par) {
         return;
     }
     this.skill = skill.id;
+    if (par !== skill.id) this.path = path + "#" + skill.id;   // 旧 id（见 SKILL.RENAMED）的残页按新 id 归一
     this.grade = skill.grade;
     this.name = skill.name + "残页";
     this.desc = "一本武功秘籍碎片，需要" + ["十", "三十", "五十", "一百", "二百", "五百"][this.grade - 1] + "份这样的残页就可以合成一本完整的" + skill.color_name + "秘籍。";

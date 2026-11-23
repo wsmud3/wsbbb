@@ -97,9 +97,9 @@ CHARACTER.prototype.use_pfm = function (target, pfm, level, sktype) {
         try { isrelease = pfm.use(this, target, level, sktype) !== false; }
         finally { delete this._zy_casting; }
         // 记录「对目标施展的绝招」，供斗转星移·斗转使用
-        if (isrelease && target && target !== this && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, 60000);
+        if (isrelease && target && target !== this && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, CHARACTER.PFM_MEM_TIME);
         // 记录自己上一个绝招（空明拳·左右互搏读取），与手动出招一致；只在内存里，不存档
-        if (isrelease) { this.set_mem("sk/last_pfm_id", pfm.id, 30000); this.set_mem("sk/last_pfm_lv", level, 30000); }
+        if (isrelease) { this.set_mem("sk/last_pfm_id", pfm.id, CHARACTER.PFM_MEM_TIME); this.set_mem("sk/last_pfm_lv", level, CHARACTER.PFM_MEM_TIME); }
     }
     if (isrelease !== false) {
         this.add_mp(-pfm.query_mp(this, level) || 0);

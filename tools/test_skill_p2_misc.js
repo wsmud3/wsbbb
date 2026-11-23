@@ -36,7 +36,7 @@ const statusOf = (ch, id) => (ch.status || []).find(s => s.id === id);
 
 async function main() {
     await check("九阳真焰 / 刺目：未命中不挂减益，命中才挂", () => {
-        for (const [sk, pid, sid] of [["jiuyangshengong", "zhenyan", "force"], ["pixiejianfa", "cimu", "pixie_shiming"]]) {
+        for (const [sk, pid, sid] of [["jiuyangshengong", "zhenyan", "force"], ["bixiejianfa", "cimu", "pixie_shiming"]]) {
             const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
             a.end_attack = () => {};
             a.do_attack = () => 0;

@@ -4,6 +4,27 @@ CHARACTER.prototype.query_skill = function (name, def) {
     if (!this.skills || !this.skills[name]) return def || 0;
     return this.skills[name].level + this.query_prop(name);
 }
+// 技能改 id 后迁移角色身上的记录：技能本身、基本技能上的装备关系、技能组（见 SKILL.RENAMED）
+CHARACTER.prototype.migrate_renamed_skills = function () {
+    var map = SKILL.RENAMED || {};
+    for (var oldId in map) {
+        var newId = map[oldId];
+        if (this.skills[oldId]) {
+            if (!this.skills[newId]) this.skills[newId] = this.skills[oldId];
+            else if ((this.skills[oldId].level || 0) > (this.skills[newId].level || 0)) this.skills[newId] = this.skills[oldId];
+            delete this.skills[oldId];
+        }
+        for (var k in this.skills) {
+            var it = this.skills[k];
+            if (it && it.enable_skill === oldId) it.enable_skill = newId;
+            if (it && it[oldId] !== undefined) { if (it[newId] === undefined) it[newId] = it[oldId]; delete it[oldId]; }
+        }
+        if (this.sk_groups) for (var g = 0; g < this.sk_groups.length; g++) {
+            var grp = this.sk_groups[g];
+            if (Array.isArray(grp)) for (var j = 0; j < grp.length; j++) if (grp[j] === oldId) grp[j] = newId;
+        }
+    }
+};
 CHARACTER.prototype.skill_map = function () {
     //给NPC初始化技能用的，不做任何判断
     this.skills = this.skills || {};
@@ -211,6 +232,13 @@ CHARACTER.prototype.query_mem = function (name, def) {
 };
 CHARACTER.prototype.remove_mem = function (name) {
     if (this._mem) delete this._mem[name];
+};
+// 空明拳·左右互搏（上一个自己用的绝招）/ 斗转星移·斗转（上一个打自己的绝招）的记录有效期
+CHARACTER.PFM_MEM_TIME = 10000;
+// 清掉上述记录；旧版本曾把 sk/last_pfm_id、sk/last_pfm_lv 写进存档 temp，登录时一并清除
+CHARACTER.prototype.clear_pfm_memory = function () {
+    this.remove_mem("sk/last_pfm_id"); this.remove_mem("sk/last_pfm_lv"); this.remove_mem("sk/last_hit_pfm");
+    if (this.temp) { delete this.temp["sk/last_pfm_id"]; delete this.temp["sk/last_pfm_lv"]; delete this.temp["sk/last_hit_pfm"]; }
 };
 CHARACTER.prototype.query_status = function (sid) {
     if (!this.status) return 0;

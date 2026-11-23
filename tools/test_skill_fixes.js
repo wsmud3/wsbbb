@@ -132,6 +132,98 @@ async function main() {
         const bc = OBJ.CREATE("book/bc#cuixinzhang"); assert.ok(bc && !bc.skill, "旧残页不再对应技能");
     });
 
+    check("空明拳·左右互搏 / 斗转星移·斗转：记录 10 秒内有效，超时清空，新绝招覆盖；登录清掉旧存档残留", () => {
+        const realNow = Date.now; let now = realNow();
+        Date.now = () => now;
+        try {
+            assert.strictEqual(CHARACTER.PFM_MEM_TIME, 10000);
+            const a = mkUser("zy_a"), b = mkUser("zy_b");
+            const T = CHARACTER.PFM_MEM_TIME;
+            const replayed = [];
+            const xd = SKILL.get("xuedao"), xpid = Object.keys(xd.pfm).find(k => xd.pfm[k].name === "血海魔刀");
+            const realUse = xd.pfm[xpid].use; xd.pfm[xpid].use = () => { replayed.push("血海魔刀"); };
+            a.do_attack = () => 0; a.end_attack = () => {}; a.with_temp_prop = (k, pr, fn) => fn();
+            try {
+                const zy = SKILL.get("kongmingquan").pfm.pfm2, dz = SKILL.get("douzhuanxingyi").pfm.pfm2;
+                a.set_mem("sk/last_pfm_id", "xuedao/" + xpid, T); a.set_mem("sk/last_pfm_lv", 1000, T);
+                now += 9000; zy.use(a, b, 1000); assert.deepStrictEqual(replayed, ["血海魔刀"], "10 秒内可复用");
+                a.set_mem("sk/last_pfm_id", "xuedao/" + xpid, T);
+                now += 10001; zy.use(a, b, 1000); assert.strictEqual(replayed.length, 1, "超过 10 秒清空，不再复用");
+                // 斗转：被打中的记录同样 10 秒
+                a.set_mem("sk/last_hit_pfm", "xuedao/" + xpid, T);
+                now += 10001; dz.use(a, b, 1000); assert.strictEqual(replayed.length, 1, "斗转超过 10 秒不再复制");
+                a.set_mem("sk/last_hit_pfm", "xuedao/" + xpid, T); now += 5000; dz.use(a, b, 1000);
+                assert.strictEqual(replayed.length, 2, "斗转 10 秒内可复制");
+                // 新绝招覆盖
+                a.set_mem("sk/last_pfm_id", "xuedao/" + xpid, T); a.set_mem("sk/last_pfm_id", "kongmingquan/pfm1", T);
+                assert.strictEqual(a.query_mem("sk/last_pfm_id"), "kongmingquan/pfm1");
+            } finally { xd.pfm[xpid].use = realUse; }
+            // 旧版本写进存档的残留
+            const c = mkUser("zy_c"); c.temp["sk/last_pfm_id"] = "xuedao/" + xpid; c.temp["sk/last_pfm_lv"] = 3000;
+            c.set_mem("sk/last_pfm_id", "xuedao/" + xpid, T);
+            c.clear_pfm_memory();
+            assert.ok(!c.temp["sk/last_pfm_id"] && !c.temp["sk/last_pfm_lv"] && !c.query_mem("sk/last_pfm_id"), "清掉存档残留与内存记录");
+            const src = require("fs").readFileSync(__dirname + "/../os/char/user.js", "utf8");
+            assert.ok(/do_login = function \(\) \{\s*try \{ this\.clear_pfm_memory\(\); \}/.test(src), "登录时清除");
+            assert.ok(/relogin = function \(newUser\) \{\s*if \(!newUser\.socket\) return;\s*try \{ this\.clear_pfm_memory\(\); \}/.test(src), "断线重连时清除");
+            for (const f of ["world/cmd/battle/pfm.js", "world/extends/char/auto_combat.js"]) {
+                const t = require("fs").readFileSync(__dirname + "/../" + f, "utf8");
+                assert.ok(!/sk\/last_(pfm_id|pfm_lv|hit_pfm)", [^,]+, (30000|60000)/.test(t) && /PFM_MEM_TIME/.test(t), f + " 用 10 秒");
+            }
+        } finally { Date.now = realNow; }
+    });
+
+    check("武道塔残页：守门人奖励不再抽基础技能（秘籍碎片）；公共池跳过运行中已删除的技能、热更新后能抽到新对象", () => {
+        const src = require("fs").readFileSync(__dirname + "/../world/task/wd_task.js", "utf8");
+        assert.ok(/SKILL_TYPES\.BASE \|\| !\(sk\.grade >= 1\)/.test(src), "守门人奖励排除 0 品基础技能");
+        for (const b of ["force", "sword", "dodge"]) { const o = OBJ.CREATE("book/bc#" + b); assert.ok(!o.skill, b + " 确实生成不了残页"); }
+        const fam = FAMILIES.NONE; fam.skill_levels = null;
+        const victim = fam.skills.find(s => s.grade === 3);
+        const saved = WORLD.SKILLS[victim.id];
+        try {
+            delete WORLD.SKILLS[victim.id];                 // 模拟运行中被删除
+            for (let i = 0; i < 300; i++) assert.notStrictEqual(fam.query_skill(3), victim, "抽到已删除技能");
+            assert.ok(!fam.query_skills(3).includes(victim));
+        } finally { WORLD.SKILLS[victim.id] = saved; }
+        fam.skill_levels = null;
+        const g1 = fam.query_skills(1); assert.ok(g1.length > 0 && g1.every(s => SKILL.get(s.id) === s));
+        // 热更新同 id：update() 会让缓存失效，新对象能被抽到
+        const old = fam.query_skills(2)[0]; const neo = Object.create(old); neo.id = old.id; neo.grade = old.grade; neo.family = old.family;
+        WORLD.SKILLS[old.id] = neo;
+        try {
+            const ary = fam.skills; ary[ary.indexOf(old)] = neo; fam.skill_levels = null;
+            assert.ok(fam.query_skills(2).includes(neo) && !fam.query_skills(2).includes(old));
+        } finally { WORLD.SKILLS[old.id] = old; fam.skills[fam.skills.indexOf(neo)] = old; fam.skill_levels = null; }
+        assert.ok(/fam\.skill_levels = null;/.test(require("fs").readFileSync(__dirname + "/../os/skill/skill.js", "utf8")), "update 里清缓存");
+    });
+
+    check("武道塔守护者：先天属性 20+层数/3、气血 1~99 层 1000+层数²×150 / 100 层 1000+层数²×1250、不额外加防御；各档技能都存在；100 层用原版第 11 档", () => {
+        const n = NPC.CLONE("pub/wudao");
+        for (const tier of n.skills_def) for (const r of tier) assert.ok(SKILL.get(r[0]), "技能表里的 " + r[0] + " 不存在");
+        assert.strictEqual(n.skills_def.length, 11);
+        const g = NPC.CLONE("pub/wudao"); g.init_from(null, 100);
+        assert.strictEqual(g.str, 53); assert.strictEqual(g.max_hp, 1000 + 100 * 100 * 1250 + g.query_prop("max_hp"));
+        assert.ok(g.skills.liumaishenjian && g.skills.liumaishenjian.level === 5000, "100 层六脉神剑 5000");
+        assert.ok(!(g.query_prop("fy") >= 100 * 500), "没有额外的 层数×500 防御");
+        assert.ok(g.ds < 10e4 && g.gj < 10e4, "100 层闪避/攻击在原版量级：" + g.ds + "/" + g.gj);
+        const f99 = NPC.CLONE("pub/wudao"); f99.init_from(null, 99); assert.strictEqual(f99.max_hp, 1000 + 99 * 99 * 150 + f99.query_prop("max_hp"), "99 层按原框架（另加技能自带的气血）");
+        const f50 = NPC.CLONE("pub/wudao"); f50.init_from(null, 50); assert.strictEqual(f50.max_hp, 1000 + 50 * 50 * 150 + f50.query_prop("max_hp"));
+        // 第一百层（ta100 不传层号）= 原版 100 层；上 1~5 层（ta2 传 1~5）从 3000 万起逐层 +500 万，技能每层 +500 级
+        const t100 = NPC.CLONE("pub/wudao_boss100"); t100.init_from(null);
+        assert.strictEqual(t100.max_hp, 1000 + 100 * 100 * 1250 + t100.query_prop("max_hp"), "第一百层 1250 万");
+        assert.ok(t100.skills.liumaishenjian.level === 5000 && t100.skills.force.level === 4000 && t100.str === 53);
+        assert.ok(t100.gj < 10e4 && t100.zj < 10e4, "不再有亿级加成：" + t100.gj + "/" + t100.zj);
+        let prev = 0;
+        for (let n = 1; n <= 5; n++) {
+            const b = NPC.CLONE("pub/wudao_boss100"); b.init_from(null, n);
+            assert.strictEqual(b.max_hp, 30000000 + (n - 1) * 5000000 + b.query_prop("max_hp"), "上" + n + "层气血");
+            assert.strictEqual(b.skills.liumaishenjian.level, 5000 + (n - 1) * 500);
+            assert.ok(b.gj >= prev, "逐层不减"); prev = b.gj;
+        }
+        const src = require("fs").readFileSync(__dirname + "/../world/map/wudao/ta2.js", "utf8");
+        assert.ok(/npc\.init_from\(me, level\)/.test(src), "上 N 层把层号传给守护者");
+    });
+
     // ---------- 7. 移花接木 ----------
     check("移花接木：无移花时绝招照常生效；移花增益期间化解对方下一招后增益结束，减益保留", () => {
         const a = mkUser("yh_a"), b = mkUser("yh_b");

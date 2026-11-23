@@ -13,7 +13,7 @@
 		"$n脚下玄虚变幻，一步踏出，似左实右，$N的招式尽数打在空处",
 		"$n施展玄虚步的最高境界，身形化作一道残影，从$N的攻势缝隙中穿过"
 	];
-	this.desc = "源自道家的无上轻功，脚踏玄虚，身形飘渺，练至极处可踏空而行";
+	this.desc = "这是龙木二岛主在侠客岛的石室中领悟到一式轻功";
 	this.can_enables = ["dodge"];
 	this.learn_condition = {
 		max_mp: 4000,
@@ -26,16 +26,15 @@
 				ds: lv * 2 + 100,
 				dex: parseInt(lv * 251.0 / 1000),
 				ds_per: 4,
+				desc: "当你躲闪成功后顺势反击敌人",
 			},
 		}
 	}
 
-	// 闪避时进行反击的被动
-	this.on_dodge = function (me, attacker, par) {
+	// 躲闪成功后顺势反击（没有内置冷却）。注意引擎的 on_dodge 是在「没躲开」时调用，躲闪成功要用 on_dodge_success
+	this.on_dodge_success = function (me, attacker, par) {
 		if (!attacker || attacker.hp <= 0) return;
-		if (par && par.is_counter) return;              // 对方的反击不再反击
-		if (me.query_mem("xuanxu_counter_cd")) return;  // 内置冷却 5 秒（记在内存里，不存档）
-		me.set_mem("xuanxu_counter_cd", 1, 5000);
+		if (par && par.is_counter) return;              // 对方的反击不再反击，避免互相反击
 		var lv = me.query_skill("xuanxubu", 0);
 		var gj = lv * 3 + 500;
 		me.send_room("<hiz>$N脚踏玄虚，身形一晃，趁势反击而出！</hiz>", attacker);
@@ -56,9 +55,10 @@
 	this.pfm = {
 		pfm1: {
 			name: "幻影",
-			distime: 30000,
+			distime: 45000,
 			enable_skill: "dodge",
-			mp: 30,
+			release_time: 500,
+			mp: 18,
 			use: function (me, target, lv) {
 				var duration = 8000;
 				me.add_status({

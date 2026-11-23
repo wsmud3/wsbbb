@@ -14,6 +14,7 @@ this.on_create = function (path, par) {
     var skill = SKILL.get(par);
     if (!skill) return;
     this.skill = skill.id;
+    if (par !== skill.id) this.path = path + "#" + skill.id;   // 旧 id（见 SKILL.RENAMED）的秘籍按新 id 归一
     this.grade = skill.grade;
     var cc = this.query_grade_color();
     this.name = skill.name + "秘籍";

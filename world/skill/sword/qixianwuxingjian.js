@@ -21,57 +21,81 @@
 		"$n长笑一声，$w划出一道光弧，剑鸣之声令$N心神一滞，攻势登时缓了下来",
 		"$n以剑气激荡$w，嗡鸣声化作无形屏障，$N只觉耳中嗡响，招式再难递进半分"
 	];
-	this.desc = "梅庄黄钟公所创的奇门剑法，以剑为琴，以音伤人，无形无影，防不胜防";
-	this.can_enables = ["sword", "parry"];
+	this.desc = "梅庄大庄主黄钟公所创绝技，以琴音为剑，无形无质却暗藏杀机，可伤人于无形之中";
+	this.can_enables = ["sword"];
 	this.learn_condition = {
 		max_mp: 5000,
 		skill: {
 			sword: 500
 		}
 	};
+	// 1000 级：攻击 +1320 命中 +1620 身法 +108；唯一：攻击时有概率打出音波伤人
 	this.query_enable_prop = function (lv) {
 		return {
 			sword: {
-				gj: lv * 2 + 15,
-				mz: lv * 1.5 + 20,
-				gjsd: 200
-			},
-			parry: {
-				zj: parseInt(lv * 2310 / 1000),
-				diff_sh_per: 4,
-				int: parseInt(lv * 127.0 / 1000),
+				gj: parseInt(lv * 1.3) + 20,
+				mz: parseInt(lv * 1.6) + 20,
+				dex: parseInt(lv * 108 / 1000),
+				desc: "唯一：攻击时有概率打出音波伤人"
 			}
 		};
-	}
+	};
+	// 音波：剑法攻击命中后 20% 概率追加一道音波，造成 50% 攻击力的伤害（不可闪避招架）
+	var YINBO_RATE = 20, YINBO_GJ = 0.5;
+	this.on_attack_over = function (me, target, par, sh) {
+		if (!target || target === me || target.hp <= 0 || !(sh > 0) || (par && (par.is_dodge || par.is_parry || par.is_counter))) return;
+		if (Math.random() * 100 >= YINBO_RATE) return;
+		var dealt = target.damage(Math.floor(me.gj * YINBO_GJ), me);
+		if (dealt > 0) me.send_combat("<HIC>剑鸣铮然，一道无形音波随之而至，" + target.name + "受到了" + dealt + "点伤害！</HIC>\n", target);
+	};
 	this.pfm = {
-		huangzhongdalu: {
-			name: "黄钟大吕",
-			distime: 30000,
+		qijueyin: {
+			name: "七绝音",
+			distime: 36000,
 			enable_skill: "sword",
-			release_time: 3600,
-			mp: 20,
+			release_time: 4000,
+			mp: 54,
 			use: function (me, target, lv) {
-				me.send_room("<HIY>$N神色肃穆，将$w高举过顶，内力灌注剑身——「黄钟大吕」！刹那间，$w发出一声震天动地的宏亮剑鸣，犹如古刹钟声，无形的音波化作实质的涟漪，以$N为中心向四周狂涌而出，$n身处其中，只觉五脏六腑都被这黄钟大吕之音震得翻腾不已！</HIY>", target);
-				me.do_attack({target: target, gj: me.gj * 1.8});
-				target.add_status({
-					id: "huangzhong_xuanyun",
-					name: "眩晕",
-					desc: "被黄钟大吕震得头晕目眩，命中降低",
-					duration: 5000 + parseInt(lv * 5),
-					only_combat: true,
-					downside: true,
-					override: 2,
-					prop: {
-						mz_per: -(20 + parseInt(lv / 100)),
-						ds_per: -(10 + parseInt(lv / 100)),
-					},
-					start_msg: "<HIY>$n被那宏大无匹的钟吕之音震得耳中嗡鸣不止，眼前金星乱冒，一时间头重脚轻！</HIY>",
-					finish_msg: "$n耳中的嗡鸣渐渐消散，恢复了清醒。",
-				}, me);
+				me.send_room("<HIC>$N以$w代琴，指尖连拨，七道无形弦音直取$n心脉——「七绝音」！</HIC>", target);
+				for (var i = 0; i < 7; i++) {
+					if (target.hp <= 0 || me.hp <= 0) break;
+					me.do_attack({ target: target, gj: me.gj, mz: me.mz, attack_msg: "", no_append: true });
+				}
 				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {
-				return "以剑作钟，发出震天动地的黄钟大吕之音，对敌人造成180%伤害，并使其命中降低" + (20 + parseInt(lv / 100)) + "%、躲闪降低" + (10 + parseInt(lv / 100)) + "%，持续" + (5 + parseInt(lv * 5 / 1000)) + "秒。";
+				return "发出七道弦音攻击目标心脉。";
+			}
+		},
+		moyin: {
+			name: "魔音贯耳",
+			distime: 47000,
+			enable_skill: "sword",
+			release_time: 4000,
+			mp: 72,
+			use: function (me, target, lv) {
+				var par = { target: target, gj: me.gj, mz: me.mz,
+					attack_msg: "<HIM>$N剑锋一颤，一缕魔音直贯$n双耳，侵入心脉——「魔音贯耳」！</HIM>" };
+				var hit = me.do_attack(par);
+				if (par.is_dodge || par.is_parry) hit = 0;
+				if (hit > 0 && target.hp > 0) {
+					target.add_status({
+						id: "qixian_moyin",
+						name: "魔音贯耳",
+						desc: "防御、躲闪降低30%",
+						duration: 12000,
+						only_combat: true,
+						downside: true,
+						override: 2,
+						prop: { fy_per: -30, ds_per: -30 },
+						start_msg: "<HIM>$N被魔音侵入心脉，心神大乱！</HIM>",
+						finish_msg: "$N渐渐摆脱了魔音的侵扰。",
+					}, me);
+				}
+				me.end_attack(target);
+			},
+			query_desc: function (me, lv) {
+				return "以魔音侵入目标心脉，命中后使其防御躲闪降低30%，持续12秒。";
 			}
 		}
 	};

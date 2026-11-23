@@ -158,7 +158,9 @@ this.reward = function (me, lv) {
     var skill_pool = [];
     for (var skid in WORLD.SKILLS) {
         var sk = WORLD.SKILLS[skid];
+        if (!sk || sk.id !== skid) continue;           // 别名/残留条目不算
         if (sk.type === SKILL_TYPES.KNOWLEDGE) continue;
+        if (sk.type === SKILL_TYPES.BASE || !(sk.grade >= 1)) continue;   // 基础技能没有残页（会变成无效的「秘籍碎片」）
         if (sk.family === FAMILIES.MONSTER) continue;
         if (sk.family && sk.family !== FAMILIES.NONE) continue;
         if (sk.is_custom) continue;

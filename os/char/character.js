@@ -306,6 +306,7 @@ CHARACTER.prototype.init = function () {
         }
     }
     if (this.is_player) this.score = 0;
+    if (this.skills) this.migrate_renamed_skills();
     if (this.skills) {
         for (let item in this.skills) {
             var base_skill = SKILL.get(item);

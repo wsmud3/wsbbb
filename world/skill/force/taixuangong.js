@@ -18,10 +18,23 @@ this.query_enable_prop = function (lv) {
 			add_sh_per: 8,
 			diff_busy: 4,
 			limit_mp: lv * 286,
-			desc: "十步杀一人：对附近敌人快速攻击，突破防御，命中增加攻击次数\n白首太玄：附加伤害加倍，命中恢复攻击力40%气血\n唯一：将你内力的80%转化为气血",
+			desc: "当你命中敌人会造成" + taixuan_extra(lv) + "内功伤害，不可招架\n唯一：将你内力的80%转化为气血",
 		},
 	}
 }
+// 太玄附加伤害：每级 4 点（1000 级 4000）；白首太玄期间加倍
+function taixuan_extra(lv) { return lv * 4; }
+// 命中（未被闪避）就附加内功伤害；招架挡不住这部分
+this.on_force_over = function (me, target, par, sh) {
+	if (!target || target === me || target.hp <= 0 || (par && par.is_dodge)) return;
+	var lv = me.query_skill("taixuangong", 0);
+	var extra = taixuan_extra(lv);
+	var st = me.status && me.status.find(function (x) { return x.taixuan_double; });
+	if (st) extra *= 2;
+	if (!(extra > 0)) return;
+	var dealt = target.damage(extra, me);
+	if (dealt > 0) me.send_combat("<HIW>太玄内劲透体而入，" + target.name + "受到了" + dealt + "点内功伤害！</HIW>\n", target);
+};
 
 this.pfm = {
 	shibu: {
@@ -29,8 +42,8 @@ this.pfm = {
 		distime: 30000,
 		allow_busy: true, // 说明：无视忙乱
 		enable_skill: "force",
-		release_time: 3096,
-		mp: 35,
+		release_time: 4000,
+		mp: 18,
 		use: function (me, target, lv) {
 			me.send_room("<HIW>$N长啸一声，太玄功运转——「十步杀一人」！</HIW>", target);
 			// 按说明：每名敌人先攻击一次，命中则再追加一次，直到落空（每名敌人最多 10 次，取「十步」之意，防止无限连击）。
@@ -56,10 +69,10 @@ this.pfm = {
 	},
 	baishou: {
 		name: "白首太玄",
-		distime: 30000,
+		distime: 45000,
 		enable_skill: "force",
-		release_time: 3096,
-		mp: 35,
+		release_time: 4000,
+		mp: 18,
 		use: function (me, target, lv) {
 			me.send_room("<HIG>$N将太玄功力运转周身——「白首太玄」！</HIG>");
 			me.add_status({
@@ -69,7 +82,7 @@ this.pfm = {
 				duration: 3000 + parseInt(lv * 10),
 				downside: false,
 				override: 2,
-				prop: { add_sh_per: parseInt(lv * 8 / 1000) },
+				taixuan_double: true,   // 太玄功的命中附加伤害（on_force_over）看到这个标记就加倍
 				start_msg: "<HIG>$N白首太玄，功力倍增！</HIG>",
 				finish_msg: "$N的白首太玄效果消失了。",
 				// 命中后恢复攻击力 40% 气血：写在状态上（原在太玄功的 on_force_over），融入自创武学后照常生效

@@ -1,6 +1,6 @@
 	this.inherits(SKILL);
 	this.name = "辟邪剑法";
-	this.id = "pixiejianfa";
+	this.id = "bixiejianfa";
 	this.grade = 5;
 	this.attack_actions = [
 		"$N剑法快如鬼魅，一道寒光闪过，已然刺到$n身前",

@@ -32,7 +32,7 @@ async function main() {
         for (const id of ["bite", "lvliu_force", "lvliu_sword", "xuanmingshenzhang_m"]) assert.ok(!ids.includes(id), id + " 是怪物/NPC 专用，不应在名单里");
         for (const id of ["literate", "lianyao", "lunyu"]) assert.ok(ids.includes(id), id + " 知识技能要包含");
         for (const id of ids) assert.ok(SKILL.get(id).family !== FAMILIES.MONSTER, id + " 是怪物技能");
-        for (const id of ["anranxiaohunzhang", "liumaishenjian", "hujiadaofa", "jiuyangshengong", "pixiejianfa", "xiuluodao"]) assert.ok(ids.includes(id), id + " 是公共武学");
+        for (const id of ["anranxiaohunzhang", "liumaishenjian", "hujiadaofa", "jiuyangshengong", "bixiejianfa", "xiuluodao"]) assert.ok(ids.includes(id), id + " 是公共武学");
         // 与游戏自己的公共技能池一致：FAMILIES.NONE 下所有非隐藏的武学都要在
         const pool = Object.values(WORLD.SKILLS).filter(s => s.type !== SKILL_TYPES.BASE && !s.is_custom && !s.is_hidden && (!s.family || s.family === FAMILIES.NONE));
         for (const s of pool) assert.ok(ids.includes(s.id), s.id + "(" + s.name + ") 漏了");

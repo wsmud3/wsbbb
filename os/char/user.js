@@ -137,6 +137,7 @@ this.send(this.login_message)
 }
 USER.prototype.relogin = function (newUser) {
 if (!newUser.socket) return;
+try { this.clear_pfm_memory(); } catch (e) {}
 
 newUser.socket.user = null;
 this.socket = newUser.socket;
@@ -444,6 +445,7 @@ USER.prototype.restore_item_buffs = function () {
 }
 
 USER.prototype.do_login = function () {
+try { this.clear_pfm_memory(); } catch (e) {}
 try { this.init(); } catch (e) {}
 try { this.recount(); } catch (e) {}
 try { this.restore_item_buffs(); } catch (e) { console.error("restore_item_buffs 失败(" + this.id + ")：", e && e.message); }

@@ -24,7 +24,7 @@ this.skill_map(
     ["force", 2672],
     ["unarmed", 2672],
     ["kuihuashengong", 2672, "force"],
-    ["pixiejianfa", 2672, "unarmed"]);
+    ["bixiejianfa", 2672, "unarmed"]);
 this.set_drop({
     obj: "money/silver",
     min: 100,
@@ -33,7 +33,7 @@ this.set_drop({
     obj: ["book/bc#kuihuashengong"],
     odds: 5000
 }, {
-    obj: ["book/bc#pixiejianfa"],
+    obj: ["book/bc#bixiejianfa"],
     odds: 5000
 }, {
     obj: ["eq/lv4/xiuhuazhen"],

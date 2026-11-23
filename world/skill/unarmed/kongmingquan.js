@@ -71,7 +71,7 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			var lastPfmId = me.query_mem("sk/last_pfm_id");
-			// 找到上一个绝招（pfm.js / auto_combat.js 释放成功时在内存里记录 sk/last_pfm_id / sk/last_pfm_lv，30 秒内有效，不存档）
+			// 找到上一个绝招（pfm.js / auto_combat.js 释放成功时在内存里记录 sk/last_pfm_id / sk/last_pfm_lv，10 秒内有效（超时清空，再放新绝招则覆盖），不存档）
 			var lastPfm = null;
 			if (lastPfmId && lastPfmId !== "kongmingquan/pfm2" && !me._zuoyou_hubo) {
 				var lp = String(lastPfmId).split("/");

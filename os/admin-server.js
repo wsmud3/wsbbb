@@ -673,9 +673,17 @@ function handleRequest(req, res) {
                     var skillPath = path.join(__dirname, '..', 'world', 'skill') + path.sep;
                     var fkey = skillPath + type + '/' + name;
                     delete BASE.ITEMS[fkey];
-                    // 从WORLD.SKILLS中移除（如果已加载）
+                    // 从WORLD.SKILLS中移除（如果已加载），并移出门派技能池，免得武道塔等随机奖励继续抽到它
                     if (WORLD && WORLD.SKILLS) {
+                        var removed = WORLD.SKILLS[name];
                         delete WORLD.SKILLS[name];
+                        if (removed) {
+                            var fam = removed.family || FAMILIES.NONE;
+                            ["skills", "skills0", "skills2", "skills3", "skills4"].forEach(function (k) {
+                                if (Array.isArray(fam[k])) fam[k] = fam[k].filter(function (s) { return s !== removed; });
+                            });
+                            fam.skill_levels = null;
+                        }
                     }
                     if (fs.existsSync(fp)) {
                         fs.unlinkSync(fp);

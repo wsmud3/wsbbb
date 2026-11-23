@@ -168,10 +168,11 @@ this.enter = function (me, sk, pfmid) {
             isrelease = pfm.use(me, target, lv, sk) != false;
             if (isrelease) {
                 // 记录最后使用的绝招（供左右互搏等技能使用）
-                me.set_mem("sk/last_pfm_id", pfm.id, 30000);
-                me.set_mem("sk/last_pfm_lv", lv, 30000);
-                // 记录「对目标施展的绝招」，供斗转星移·斗转使用
-                if (target && target !== me && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, 60000);
+                // 10 秒内有效：超过 10 秒没接着用就清空；期间再放新绝招则覆盖为新绝招
+                me.set_mem("sk/last_pfm_id", pfm.id, CHARACTER.PFM_MEM_TIME);
+                me.set_mem("sk/last_pfm_lv", lv, CHARACTER.PFM_MEM_TIME);
+                // 记录「对目标施展的绝招」，供斗转星移·斗转使用（同样 10 秒）
+                if (target && target !== me && target.set_mem) target.set_mem("sk/last_hit_pfm", pfm.id, CHARACTER.PFM_MEM_TIME);
             }
         } catch (e) {
             // 绝招脚本内部抛错时，伤害/效果往往已经结算了一部分，但异常会一路穿出

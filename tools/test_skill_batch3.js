@@ -448,13 +448,18 @@ async function main() {
     });
 
     // ---------- 8 / 10. 反击冷却与防递归 ----------
-    await check("玄虚步：被打中反击有 5 秒内置冷却；双方都装不会互相无限反击", () => {
+    await check("玄虚步：躲闪成功后反击（无冷却），被打中不反击；双方都装不会互相无限反击", () => {
         const a = mkUser(), b = mkUser(); learn(a, { xuanxubu: "dodge" }, 1000); learn(b, { xuanxubu: "dodge" }, 1000); fight(a, b);
-        a.max_hp = a.hp = b.max_hp = b.hp = 1e12; a.ds = b.ds = 0; a.zj = b.zj = 0;
+        a.max_hp = a.hp = b.max_hp = b.hp = 1e12; a.zj = b.zj = 0; b.ds = 0;
         let n = 0; const da = a.do_attack; a.do_attack = function (p) { n++; return da.call(this, p); };
-        b.do_attack({ target: a, gj: 100, mz: 1e9 });
-        b.do_attack({ target: a, gj: 100, mz: 1e9 });
-        assert.strictEqual(n, 1, "5 秒内只反击 1 次");
+        a.ds = 1e12; b.do_attack({ target: a, gj: 100, mz: 1 }); b.do_attack({ target: a, gj: 100, mz: 1 });
+        assert.strictEqual(n, 2, "两次都躲开，两次都反击");
+        a.ds = 0; b.do_attack({ target: a, gj: 100, mz: 1e9 });
+        assert.strictEqual(n, 2, "被打中不反击");
+        // 双方都高闪避：反击本身被躲开也不会再触发反击，不会互相递归
+        a.ds = b.ds = 1e12; let guard = 0; const db = b.do_attack; b.do_attack = function (p) { if (++guard > 50) throw new Error("递归"); return db.call(this, p); };
+        b.do_attack({ target: a, gj: 100, mz: 1 });
+        assert.ok(guard < 5, "反击次数 " + guard);
     });
     await check("一星混元：双方都在混元之气中，反击不会互相递归", () => {
         const a = mkUser(), b = mkUser(); learn(a, { yixinghunyuan: "parry" }, 10000); learn(b, { yixinghunyuan: "parry" }, 10000); fight(a, b);
