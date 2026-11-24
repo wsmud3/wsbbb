@@ -27,6 +27,6 @@ function start_work(me) {
 }
 function do_work(me) {
 
-    var exp = WORLD.DATA.exp100(me);
+    var exp = WORLD.DATA.get_exp(me);
     me.add_exp(exp, exp, 100 + me.random(20));
 }

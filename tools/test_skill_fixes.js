@@ -220,6 +220,15 @@ async function main() {
         me.skills.juemengun.addin = [ATK]; delete me.skills.juemengun.addin_cost; me.init_skill(); me.recount();
         L.enter(me, "juemengun", "reset", String(ATK)); assert.strictEqual(books(), 38, "无记录按 1→2 品价钱 8 本退");
     });
+    check("工作收益恢复原版：挖矿/钓鱼/采药/打工每跳经验 = 境界基础值 + 随机 0~4，加成不再 ×100", () => {
+        assert.ok(!WORLD.DATA.exp100, "exp100 已删除");
+        const me = mkUser("work_exp"); me.level = 4;
+        for (let i = 0; i < 20; i++) { const e = WORLD.DATA.get_exp(me); assert.ok(e >= 50 && e <= 54, "武圣每跳 " + e); }
+        for (const f of ["world/cmd/action/wk.js", "world/cmd/action/diaoyu.js", "world/cmd/action/caiyao.js", "world/map/yz/work.js", "world/map/yz/garments.js", "world/map/yz/yaopu.js"]) {
+            const src = require("fs").readFileSync(__dirname + "/../" + f, "utf8");
+            assert.ok(!/exp100|_exp", 0\) \* 100|_qn.\) \* 100|exps\[me\.level\]\) \* 100/.test(src), f + " 还有 ×100");
+        }
+    });
     check("武道塔守护者：按玩家进度标定的曲线（逐层递增、标定点吻合）、90~99 层免控、第一百层与上 1~5 层", () => {
         const n = NPC.CLONE("pub/wudao");
         for (const tier of n.skills_def) for (const r of tier) assert.ok(SKILL.get(r[0]), "技能表里的 " + r[0] + " 不存在");

@@ -25,9 +25,9 @@ this.enter = function (me) {
 }
 
 function on_check(me) {
-    var exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("caiyao_exp", 0) * 100
-        + me.query_prop('caiyao_exp') * 100;
+    var exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("caiyao_exp", 0)
+        + me.query_prop('caiyao_exp');
     let grade = me.query_prop('caiyao1');
     let str = "有概率采集到橙色及以下药材";
     let rare = rare_chance(me);
@@ -49,8 +49,8 @@ function do_cai(me) {
     if (obj) {
         me.send_room("<hig>$N采到一株" + obj.color_name + "。</hig>");
     }
-    let exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("caiyao_exp", 0) * 100;
-    let pot = exp + me.query_prop('ly_qn') * 100;
+    let exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("caiyao_exp", 0);
+    let pot = exp + me.query_prop('ly_qn');
     me.add_exp(exp, pot, 0);
 }

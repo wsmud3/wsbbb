@@ -25,11 +25,11 @@ function start_work(me) {
     return true;
 }
 function on_check(me) {
-    var exp = (me.random(5) + WORLD.DATA.exps[me.level]) * 100;
+    var exp = (me.random(5) + WORLD.DATA.exps[me.level]);
     return me.send('你正在打工，每10秒增加' + exp + "点经验和潜能，1两<wht>白银</wht>。")
 }
 function do_work(me) {
 
-    var exp = WORLD.DATA.exp100(me);
+    var exp = WORLD.DATA.get_exp(me);
     me.add_exp(exp, exp, 100 + me.random(20));
 }

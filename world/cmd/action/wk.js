@@ -41,9 +41,9 @@ this.enter = function (me) {
 }
 
 function on_check(me) {
-    var exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("kuang_exp", 0) * 100;
-    var pot = exp + me.query_prop('gsj_qn') * 100;
+    var exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("kuang_exp", 0);
+    var pot = exp + me.query_prop('gsj_qn');
     var up = upgrade_chance(me);
     me.send(`你正在挖矿，每10秒获得${exp}经验，${pot}潜能，有概率挖到<hig>玄晶</hig>和其他宝石` + (up > 0 ? `，挖到宝石时有${Math.round(up * 100)}%几率成色更高一级` : "") + `。`);
 }
@@ -65,10 +65,10 @@ function do_diaoyu(me) {
     }
 
 
-    var exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("kuang_exp", 0) * 100;
+    var exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("kuang_exp", 0);
 
-    var pot = exp + me.query_prop('gsj_qn') * 100;
+    var pot = exp + me.query_prop('gsj_qn');
     me.add_exp(exp, pot, 0);
 
 }

@@ -26,10 +26,10 @@ this.enter = function (me) {
 }
 
 function on_check(me) {
-    var exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("diaoyu_exp", 0) * 100;
+    var exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("diaoyu_exp", 0);
 
-    var pot = exp + me.query_prop('lsj_qn') * 100;
+    var pot = exp + me.query_prop('lsj_qn');
     let er = this.yuer;
 
     let grade = me.query_prop('diaoyu1') + ((er && er.grade) || 0) * 5;
@@ -68,9 +68,9 @@ function do_diaoyu(me) {
         er = query_er(me);
         this.yuer = er;
     }
-    var exp = WORLD.DATA.exp100(me)
-        + WORLD.DATA.query_temp("diaoyu_exp", 0) * 100;
-    var pot = exp + me.query_prop('lsj_qn') * 100;
+    var exp = WORLD.DATA.get_exp(me)
+        + WORLD.DATA.query_temp("diaoyu_exp", 0);
+    var pot = exp + me.query_prop('lsj_qn');
     me.add_exp(exp, pot, 0);
     if (!er) {
         me.notify("你身上的鱼饵用完了，只好收起了钓竿。");

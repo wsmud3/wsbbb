@@ -10,9 +10,7 @@ DATA.get_exp = function (me) {
     return me.random(5) + this.exps[me.level];
 }
 
-DATA.exp100 = function (me) {
-    return (me.random(5) + this.exps[me.level]) * 100;
-}
+// 挖矿/钓鱼/采药/打工每 10 秒一跳的经验用 get_exp（原版 1 倍）。曾有 exp100（×100），2026-11-23 按用户要求恢复原版收益后删除
 
 
 
