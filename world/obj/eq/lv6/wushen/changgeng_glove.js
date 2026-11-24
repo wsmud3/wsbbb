@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "长庚",
-    desc: "一副古朴的拳套，毫无光泽，只是望着便有肃杀之感\n特效：战意：每次攻击触发战意，增加5%破防和终伤，最多叠加5层"
+    desc: "一副古朴的拳套，毫无光泽，只是望着便有肃杀之感"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -15,6 +15,7 @@ this.set({
         mz_per: 17,
         gjsd_per: 17,
         distime_per: 20,
+        desc: "战意：每次攻击触发战意，增加5%破防和终伤，最多叠加5层",
     },
 });
 

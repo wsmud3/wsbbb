@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "朱雀骨环",
-    desc: "妖神朱雀的遗骨所制的手环，环身火焰缭绕，锋芒毕露\n特效：朱雀神力：释放后对敌人造成其已损失气血10%的伤害；敌人气血不高于18%时直接斩杀"
+    desc: "妖神朱雀的遗骨所制的手环，环身火焰缭绕，锋芒毕露"
     ,
     unit: "只",
     eq_type: EQUIP_TYPE.WRIST,
@@ -16,6 +16,7 @@ this.set({
         mz_per: 19,
         expend_mp_per: 16,
         add_sh_per: 13,
+        desc: "朱雀神力：释放后对敌人造成其已损失气血10%的伤害；敌人气血不高于18%时直接斩杀",
     },
 });
 

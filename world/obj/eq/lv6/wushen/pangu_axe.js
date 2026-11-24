@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "盘古斧",
-    desc: "传说中盘古开天辟地时候使用的一把斧头，可以作为大剑使用\n特效：残缺：每次攻击降低敌人战斗属性30%，持续10秒"
+    desc: "传说中盘古开天辟地时候使用的一把斧头，可以作为大剑使用"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -16,6 +16,7 @@ this.set({
         add_sh_per: 20,
         diff_fy_per: 17,
         add_bjsh_per: 53,
+        desc: "残缺：每次攻击降低敌人战斗属性30%，持续10秒",
     },
 });
 

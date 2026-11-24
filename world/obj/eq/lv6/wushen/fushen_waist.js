@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "缚神索",
-    desc: "丐帮至宝，缚神灭鬼\n特效：缚神：使用后束缚房间内所有敌人10秒，群攻cd60s"
+    desc: "丐帮至宝，缚神灭鬼"
     ,
     unit: "条",
     eq_type: EQUIP_TYPE.WAIST,
@@ -16,6 +16,7 @@ this.set({
         str: 440,
         gj_per: 13,
         busy_per: 17,
+        desc: "缚神：使用后束缚房间内所有敌人10秒，群攻cd60s",
     },
 });
 

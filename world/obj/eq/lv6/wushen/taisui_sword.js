@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "太岁",
-    desc: "天下百万共剑主监兵佩剑，锈迹斑斑，但锋锐之感直逼面庞\n特效：太岁：消耗自身所有气血内力，对敌人造成巨额伤害"
+    desc: "天下百万共剑主监兵佩剑，锈迹斑斑，但锋锐之感直逼面庞"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -17,6 +17,7 @@ this.set({
         gj_per: 17,
         gjsd_per: 27,
         diff_fy_per: 20,
+        desc: "太岁：消耗自身所有气血内力，对敌人造成巨额伤害",
     },
 });
 

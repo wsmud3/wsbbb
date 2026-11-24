@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "太阴",
-    desc: "一柄通体暗紫的小剑，剑身上处处布满碎痕，弥漫着阵阵寒意，似乎冻结着周围的时间。\n特效：太阴：使用后减缓敌人攻击速度和冷却时间60秒"
+    desc: "一柄通体暗紫的小剑，剑身上处处布满碎痕，弥漫着阵阵寒意，似乎冻结着周围的时间。"
     ,
     unit: "枚",
     eq_type: EQUIP_TYPE.THROWING,
@@ -16,6 +16,7 @@ this.set({
         diff_fy_per: 8,
         add_bjsh_per: 11,
         bj_per: 13,
+        desc: "太阴：使用后减缓敌人攻击速度和冷却时间60秒",
     },
 });
 

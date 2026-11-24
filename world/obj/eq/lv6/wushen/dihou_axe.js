@@ -3,18 +3,19 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "地候",
-    desc: "一人多高的大斧，似如破铜烂铁，但阵阵杀意却直冲脑海\n特效：地候：暴击时附加目标2%最大气血的伤害"
+    desc: "一人多高的大斧，似如破铜烂铁，但阵阵杀意却直冲脑海"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
     weapon_type: WEAPON_TYPE.BLADE,
     hole_count: 5,
     prop: {
-        gj: 2178,
-        str: 484,
+        gj: 1980,
+        str: 440,
         gj_per: 17,
         add_sh_per: 17,
         diff_fy_per: 20,
+        desc: "地候：暴击时附加目标2%最大气血的伤害",
     },
 });
 

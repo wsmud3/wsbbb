@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "荧惑",
-    desc: "长三尺九寸，刀身漆黑如幽冥，刀刃间隐隐有血光流动\n特效：噬血：使用后5秒内，对敌人造成伤害的50%转为自身气血、50%转为自身内力"
+    desc: "长三尺九寸，刀身漆黑如幽冥，刀刃间隐隐有血光流动"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -17,6 +17,7 @@ this.set({
         bj_per: 20,
         diff_fy_per: 17,
         add_bjsh_per: 31,
+        desc: "噬血：使用后5秒内，对敌人造成伤害的50%转为自身气血、50%转为自身内力",
     },
 });
 

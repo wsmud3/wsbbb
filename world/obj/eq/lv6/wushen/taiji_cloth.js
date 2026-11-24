@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "先天太极图",
-    desc: "武当至宝，先天太极\n特效：太极护体：激活后8秒内无视所有伤害"
+    desc: "武当至宝，先天太极"
     ,
     unit: "件",
     eq_type: EQUIP_TYPE.CLOTH,
@@ -16,6 +16,7 @@ this.set({
         diff_sh_per: 13,
         fy_per: 13,
         zj_per: 17,
+        desc: "太极护体：激活后8秒内无视所有伤害",
     },
 });
 

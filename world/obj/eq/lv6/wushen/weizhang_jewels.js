@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "周年庆微章",
-    desc: "武神传说周年纪念微章\n特效：周年赐福：使用后24小时内提高悟性、练习、学习、打坐效率"
+    desc: "武神传说周年纪念微章"
     ,
     unit: "个",
     eq_type: EQUIP_TYPE.JEWELS,
@@ -15,6 +15,7 @@ this.set({
         lianxi_per: 40,
         study_per: 40,
         dazuo_per: 40,
+        desc: "周年赐福：使用后24小时内提高悟性、练习、学习、打坐效率",
     },
 });
 

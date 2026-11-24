@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "女娲石",
-    desc: "传说中女娲补天遗留下来的一块五彩神石\n特效：女娲：使用后复活附近所有阵亡的队友，恢复30%气血内力，冷却30分"
+    desc: "传说中女娲补天遗留下来的一块五彩神石"
     ,
     unit: "个",
     eq_type: EQUIP_TYPE.JEWELS,
@@ -16,6 +16,7 @@ this.set({
         hp_per: 27,
         con: 440,
         int: 440,
+        desc: "女娲：使用后复活附近所有阵亡的队友，恢复30%气血内力，冷却30分",
     },
 });
 

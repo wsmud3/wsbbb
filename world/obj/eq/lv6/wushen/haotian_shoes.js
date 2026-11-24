@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "昊天靴",
-    desc: "华山至宝，追风踏月\n特效：追风：激活后清除自身异常状态，10秒内免疫所有控制效果"
+    desc: "华山至宝，追风踏月"
     ,
     unit: "双",
     eq_type: EQUIP_TYPE.SHOES,
@@ -16,6 +16,7 @@ this.set({
         diff_downside_per: 13,
         gjsd_per: 13,
         add_sh_per: 13,
+        desc: "追风：激活后清除自身异常状态，10秒内免疫所有控制效果",
     },
 });
 

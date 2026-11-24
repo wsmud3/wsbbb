@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "鹰刀",
-    desc: "破碎虚空后遗留的神器，里面蕴含着无上的武学至理\n特效：鹰击：攻击时有20%几率使敌人昏迷3秒，触发后15秒内不会再次触发"
+    desc: "破碎虚空后遗留的神器，里面蕴含着无上的武学至理"
     ,
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
@@ -16,6 +16,7 @@ this.set({
         gj_per: 17,
         bj_per: 17,
         diff_fy_per: 20,
+        desc: "鹰击：攻击时有20%几率使敌人昏迷3秒，触发后15秒内不会再次触发",
     },
 });
 

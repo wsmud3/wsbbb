@@ -201,7 +201,7 @@ EQUIPMENT.prototype.get_desc = function (me) {
         str.push("<");
         str.push(this.query_grade_color());
         str.push(">");
-        str.push(UTIL.prop_toString(this.prop));
+        str.push(UTIL.prop_toString(this.query_show_prop()));
 
         str.push("</");
         str.push(this.query_grade_color());
@@ -223,6 +223,16 @@ EQUIPMENT.prototype.get_desc = function (me) {
     return str.join("");
 }
 
+
+// 装备说明里显示的属性：hide_props 里的键照常生效（计入角色面板），只是不在装备说明里列出，
+// 例如锦斓袈裟「免疫暴击」靠暴击抵抗实现，装备上只写特效，不写实现用的数值。
+EQUIPMENT.prototype.query_show_prop = function () {
+    var hide = this.hide_props;
+    if (!hide || !hide.length) return this.prop;
+    var out = {};
+    for (var k in this.prop) if (hide.indexOf(k) < 0) out[k] = this.prop[k];
+    return out;
+};
 
 EQUIPMENT.prototype.query_quality = function () {
     return this.qualities[this.grade];

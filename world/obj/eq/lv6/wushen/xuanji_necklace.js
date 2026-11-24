@@ -3,7 +3,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "璇玑",
-    desc: "滉漾明光，仙之至宝\n特效：不灭：当你受到致命一击时不会立即死亡，冷却10分钟"
+    desc: "滉漾明光，仙之至宝"
     ,
     unit: "条",
     eq_type: EQUIP_TYPE.NECKLACE,
@@ -14,6 +14,7 @@ this.set({
         dex: 440,
         int: 440,
         per: 8,
+        desc: "不灭：当你受到致命一击时不会立即死亡，冷却10分钟",
     },
 });
 

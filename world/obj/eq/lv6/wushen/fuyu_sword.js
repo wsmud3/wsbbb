@@ -2,7 +2,7 @@ this.inherits(EQUIPMENT);
 this.set({
     grade: 6,
     name: "覆雨剑",
-    desc: "浪翻云的随身配剑，长达四尺九寸。剑身如水般流转不定，挥动时带起漫天水雾，仿佛洞庭湖的烟雨都被凝于此剑之中。\n特效：覆雨：攻击时召唤剑雨，对敌人造成额外水属性伤害。",
+    desc: "浪翻云的随身配剑，长达四尺九寸。剑身如水般流转不定，挥动时带起漫天水雾，仿佛洞庭湖的烟雨都被凝于此剑之中。",
     unit: "把",
     eq_type: EQUIP_TYPE.WEAPON,
     weapon_type: WEAPON_TYPE.SWORD,
@@ -14,6 +14,7 @@ this.set({
         mz_per: 17,
         add_sh_per: 17,
         gjsd_per: 20,
+        desc: "覆雨：攻击时召唤剑雨，对敌人造成额外水属性伤害",
     },
 });
 
