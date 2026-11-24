@@ -19,6 +19,9 @@ this.learn_condition = {
 				skill: { unarmed: 400 }
 };
 
+// 无情（被动）：敌人每失去 1% 气血，伤害和命中提高 wuqing_per(lv)%。
+// 成长 1+√(min(lv,2000)/2000) 取整（被动超模，所以限制成长上限）：2000 级前 1%，2000 级起 2%。
+function wuqing_per(lv) { return parseInt(1 + Math.sqrt(Math.min(lv || 0, 2000) / 2000)); }
 this.on_before_attack = function (me, target, par) {
 				if (!target || target.hp <= 0) return;
 				var hp_percent = target.hp / target.max_hp;
@@ -28,7 +31,7 @@ this.on_before_attack = function (me, target, par) {
 		if (!par.mz) par.mz = me.mz;
 		var sk = me.skills[this.id];
 		var lv = sk ? sk.level : 0;
-		var scale = 1 + Math.sqrt(Math.min(lv, 2000) / 2000);
+		var scale = wuqing_per(lv);
 		par.gj = parseInt(par.gj * (100 + missing * scale) / 100);
 		par.mz = parseInt(par.mz * (100 + missing * scale) / 100);
 		par.wuqing = missing;
@@ -39,7 +42,7 @@ this.on_attack_over = function (me, target, par, sh) {
 				if (par.wuqing) {
 		var sk = me.skills[this.id];
 		var lv = sk ? sk.level : 0;
-		var scale = 1 + Math.sqrt(Math.min(lv, 2000) / 2000);
+		var scale = wuqing_per(lv);
 		var mult = 100 + par.wuqing * scale;
 		par.gj = parseInt(par.gj * 100 / mult);
 		par.mz = parseInt(par.mz * 100 / mult);
@@ -49,9 +52,9 @@ this.on_attack_over = function (me, target, par, sh) {
 this.query_enable_prop = function (lv) {
 				return {
 		unarmed: {
-												gj: 1300,
-												mz: 1220,
-												desc: "无情：敌人每失去1%气血，你的九阴白骨爪伤害和命中提高1%~2%（随等级成长，非线性的，2000级满）"
+												gj: parseInt(lv * 1.3),
+												mz: parseInt(lv * 1.22),
+												desc: "无情：敌人每失去1%气血，你的九阴白骨爪伤害和命中提高" + wuqing_per(lv) + "%"
 								}
 	};
 }

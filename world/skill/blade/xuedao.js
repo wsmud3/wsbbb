@@ -17,32 +17,19 @@
 		me.set_temp("xuedao_start_hp", me.hp);
 	};
 
-	this.on_before_attack = function (me, target, par) {
-		if (!target || target.hp <= 0) return;
+	// 血祭（被动）：以进入战斗时的气血为准，每减少 1% 气血，伤害提高 (1 + 每 1000 级 1)%，只加伤害不加命中。
+	// 在技能级 on_attack 里按基础伤害返回附加值，等效乘算（之后再乘部位系数、增伤、暴击）。
+	function xueji_per(lv) { return 1 + Math.floor((lv || 0) / 1000); }
+	this.xueji_per = xueji_per;
+	this.on_attack = function (me, target, par) {
+		if (!par || par.is_throwing) return 0;
 		var start_hp = me.query_temp("xuedao_start_hp");
-		if (!start_hp || start_hp <= me.hp) return;
+		if (!start_hp || start_hp <= me.hp) return 0;
 		var missing = Math.floor((1 - me.hp / start_hp) * 100);
-		if (missing > 0) {
-			if (!par.gj) par.gj = me.gj;
-			if (!par.mz) par.mz = me.mz;
-			var sk = me.skills[this.id];
-			var lv = sk ? sk.level : 0;
-			var scale = 1 + Math.sqrt(Math.min(lv, 2000) / 2000);
-			par.gj = parseInt(par.gj * (100 + missing * scale) / 100);
-			par.mz = parseInt(par.mz * (100 + missing * scale) / 100);
-			par.xuedao_missing = missing;
-		}
-	};
-
-	this.on_attack_over = function (me, target, par, sh) {
-		if (par.xuedao_missing) {
-			var sk = me.skills[this.id];
-			var lv = sk ? sk.level : 0;
-			var scale = 1 + Math.sqrt(Math.min(lv, 2000) / 2000);
-			var mult = 100 + par.xuedao_missing * scale;
-			par.gj = parseInt(par.gj * 100 / mult);
-			par.mz = parseInt(par.mz * 100 / mult);
-		}
+		if (!(missing > 0)) return 0;
+		var sk = me.skills && me.skills[this.id];
+		var base = par.gj ?? me.gj;
+		return base * missing * xueji_per(sk ? sk.level : 0) / 100;
 	};
 
 	this.query_enable_prop = function (lv) {
@@ -51,7 +38,7 @@
 				gj: parseInt(lv * 2200 / 1000),
 				mz: parseInt(lv * 2200 / 1000),
 				add_sh_per: 4,
-				desc: "血祭：进入战斗后，你的气血每减少1%，造成的伤害和命中提高1%~2%（随等级成长，非线性的，2000级满）",
+				desc: "血祭：进入战斗后，你的气血每减少1%，造成的伤害提高" + xueji_per(lv) + "%",
 			},
 		}
 	}

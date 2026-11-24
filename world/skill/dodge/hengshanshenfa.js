@@ -53,7 +53,7 @@ this.pfm = {
         query_desc: function (me, lv) {
             var duration = (1000 + lv * 10) / 1000;
             var per = 10 + parseInt(lv / 100);
-            return "恒山身法之灵虚，" + duration + "秒内增加你" + per + "%躲闪，防御提高" + per + "%，冷却30秒，每100级增加一秒持续时间和百分一防御/躲闪。";
+            return "恒山身法之灵虚，" + duration + "秒内增加你" + per + "%躲闪，防御提高" + per + "%，冷却30秒。";
         },
     },
 };
