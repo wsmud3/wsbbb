@@ -11,13 +11,14 @@ this.learn_condition = {
 	max_mp: 4000,
 	skill: { force: 400 }
 };
+// 面板按 1000 级数值折算为随等级成长；百分比项 1000 级保持原值，每 300 级 +1%。
 this.query_enable_prop = function (lv) {
 	return {
 								force: {
-			gj: 2020,
-			con: 254,
-			fy: 2030,
-			limit_mp: 158000,
+			gj: parseInt(lv * 2020 / 1000),
+			con: parseInt(lv * 254 / 1000),
+			fy: parseInt(lv * 2030 / 1000),
+			limit_mp: lv * 158,
 			desc: "唯一：将你内力的70%转化为气血"
 								}
 	};

@@ -19,12 +19,13 @@
 	max_mp: 4000,
 	skill: { dodge: 400 }
 	};
+	// 面板按 1000 级数值折算为随等级成长；百分比项 1000 级保持原值，每 300 级 +1%。
 	this.query_enable_prop = function (lv) {
 	return {
 									dodge: {
-				ds: 1810,
-				str: 254,
-				dex: 254,
+				ds: parseInt(lv * 1810 / 1000),
+				str: parseInt(lv * 254 / 1000),
+				dex: parseInt(lv * 254 / 1000),
 									},
 		}
 	};
