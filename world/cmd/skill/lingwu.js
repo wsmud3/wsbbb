@@ -28,6 +28,18 @@ this.enter = function (player, skid, arg1, arg2) {
     }
 };
 
+// ==================== 武道进阶消耗 ====================
+// 每次消耗 2 × (当前品级 + 1)² 本武道：1→2 品 8 本、2→3 品 18、3→4 品 32、4→5 品 50，1 品进满约 108 本
+// （设计目标：武道塔通关后每天 1 本，开服就通关也要约三个月才能进满一门 1 品技能）。
+// 特殊进阶项（百分比类：暴击、最终伤害、伤害减免）贵 20%；同品级内差距不大。
+var WUDAO_SPECIAL_PROPS = ["bj_per", "add_sh_per", "diff_sh_per"];
+function wudao_cost(grd, slot_def) {
+    var base = 2 * (grd + 1) * (grd + 1);
+    if (slot_def && WUDAO_SPECIAL_PROPS.indexOf(slot_def.prop) >= 0) base = Math.ceil(base * 1.2);
+    return base;
+}
+this.wudao_cost = wudao_cost;
+
 // ==================== POSITION MAPPING ====================
 var POSITION_GROUPS = {
     weapon: ["sword", "blade", "staff", "club", "whip", "throwing"],
@@ -371,7 +383,7 @@ function execute_global_slot(player, skid, skill_base, sk, position, slot_idx) {
     if (slot_def.count > 1 && cnt >= slot_def.count)
         return player.notify(slot_def.name + "已达到最大进阶次数。");
 
-    var cost = grd + 1;
+    var cost = wudao_cost(grd, slot_def);
     var item = player.find_obj_bypath("book/wudao");
     if (!item)
         return player.notify("<red>你的武道书不够！需要" + cost + "本武道。</red>");
@@ -384,6 +396,9 @@ function execute_global_slot(player, skid, skill_base, sk, position, slot_idx) {
     // and removes props that were never added, canceling out the new slot's effect.
     skill_base.release_prop(player, player.query_skill(skid));
     sk.addin.push(slot_idx);
+    // 记下这次实际花了多少本，重置时原样退还（消耗随品级和进阶项不同）
+    if (!sk.addin_cost) sk.addin_cost = {};
+    sk.addin_cost[slot_idx] = cost;
     recalc_level(player, skill_base, sk, old_grd);
     skill_base.attach_prop(player, player.query_skill(skid));
     player.recount();
@@ -588,7 +603,12 @@ function combat_reset_flow(player, skid, skill_base, sk, arg2) {
 
         var old_total_grd = skill_base.grade + sk.addin.length + (sk.ref ? 1 : 0);
         var new_total_grd = skill_base.grade + (sk.addin.length - 1) + (sk.ref ? 1 : 0);
+        // 武道进阶按进阶时记下的实际花费退还；没有记录的老进阶按新公式估算（退这一级的价钱）。门派进阶照旧
         var item_refund = old_total_grd;
+        if (!is_specific) {
+            var rec = sk.addin_cost && sk.addin_cost[slot_idx];
+            item_refund = rec > 0 ? rec : wudao_cost(new_total_grd, slot_def);
+        }
 
         // Pot refund: exp difference from grade decrease
         var pot_refund = 0;
@@ -602,14 +622,12 @@ function combat_reset_flow(player, skid, skill_base, sk, arg2) {
         // the removed slot's props are never cleaned up (leaked).
         skill_base.release_prop(player, player.query_skill(skid));
         sk.addin.splice(pos, 1);
+        if (sk.addin_cost) delete sk.addin_cost[slot_idx];
         skill_base.attach_prop(player, player.query_skill(skid));
         player.recount();
 
         player.pot += pot_refund;
-        for (var r = 0; r < item_refund; r++) {
-            var ref_item = OBJ.CREATE(item_path);
-            if (ref_item) player.add_obj(ref_item);
-        }
+        if (item_refund > 0) player.add_obj(item_path, item_refund);
 
         var reset_grd = skill_base.query_grade(player);
         var display_name = slot_def ? slot_def.name : "门派进阶";
@@ -664,11 +682,11 @@ function show_specific_slots(player, skid, skill_base, sk) {
 
 function show_combat_positions(player, skid, skill_base, sk, positions) {
     var grd = skill_base.query_grade(player);
-    var cost = grd + 1;
+    var cost = wudao_cost(grd);
     var str = [];
     var cmds = [];
 
-    str.push(skill_base.query_color_name(player) + " 请选择进阶部位（当前" + grd + "级，消耗<hic>武道" + cost + "本</hic>）：");
+    str.push(skill_base.query_color_name(player) + " 请选择进阶部位（当前" + grd + "级，消耗<hic>武道" + cost + "本起</hic>）：");
 
     for (var i = 0; i < positions.length; i++) {
         var pname = positions[i];
@@ -705,16 +723,14 @@ function show_combat_positions(player, skid, skill_base, sk, positions) {
 function show_combat_slots(player, skid, skill_base, sk, position) {
     var lv = sk.level;
     var grd = skill_base.query_grade(player);
-    var cost = grd + 1;
     var pos_display = POSITION_NAMES[position] || position;
     var next_gc = GRADE_COLORS[grd + 1] || "hio";
     var has_item = !!player.find_obj_bypath("book/wudao");
     var item_count = has_item ? (player.find_obj_bypath("book/wudao").count || 1) : 0;
-    var enough = has_item && item_count >= cost;
     var str = [];
     var cmds = [];
 
-    str.push(skill_base.query_color_name(player) + " — " + pos_display + "部位（当前" + grd + "级→<" + next_gc + ">" + (grd + 1) + "级</" + next_gc + ">，消耗武道" + cost + "本）：");
+    str.push(skill_base.query_color_name(player) + " — " + pos_display + "部位（当前" + grd + "级→<" + next_gc + ">" + (grd + 1) + "级</" + next_gc + ">，现有武道" + item_count + "本）：");
 
     var slots = get_slots_for_position(position);
     for (var i = 0; i < slots.length; i++) {
@@ -727,6 +743,8 @@ function show_combat_slots(player, skid, skill_base, sk, position) {
         var maxed = (slot.count === 1 || !slot.count) ? owned : false;
         var sc = maxed ? "blk" : next_gc;
 
+        var cost = wudao_cost(grd, slot);
+        var enough = has_item && item_count >= cost;
         var label = "<" + sc + ">◆ " + slot.name + "  " + slot.format(parseInt(slot.value(lv, grd))) + "</" + sc + "> <hio>消耗武道" + cost + "本</hio>";
         if (maxed)
             label += " <blk>已拥有</blk>";

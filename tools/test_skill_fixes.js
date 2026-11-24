@@ -197,15 +197,39 @@ async function main() {
         assert.ok(/fam\.skill_levels = null;/.test(require("fs").readFileSync(__dirname + "/../os/skill/skill.js", "utf8")), "update 里清缓存");
     });
 
+    check("武道进阶消耗：2×(品级+1)² 本，1 品进满约 108 本，特殊项贵 20%；进阶记下实际花费、重置按记录退还", () => {
+        const L = WORLD.COMMANDS.lingwu, P = SKILL.PROPERTIES;
+        const ATK = 12, BJ = 9;   // 进攻之道（普通）、残暴之心（特殊）
+        assert.deepStrictEqual([1, 2, 3, 4].map(g => L.wudao_cost(g, P[ATK])), [8, 18, 32, 50]);
+        assert.strictEqual([1, 2, 3, 4].reduce((a, g) => a + L.wudao_cost(g, P[ATK]), 0), 108);
+        assert.deepStrictEqual([1, 2, 3, 4].map(g => L.wudao_cost(g, P[BJ])), [10, 22, 39, 60]);
+        const me = mkUser("wd_cost"); me.skills.club = { level: 3000, exp: 0 }; me.skills.juemengun = { level: 3000, exp: 0 };
+        me.enable_skill("club", "juemengun"); me.init_skill(); me.recount();
+        const books = () => { const o = me.find_obj_bypath("book/wudao"); return o ? o.count : 0; };
+        OBJ.clone_to("book/wudao", me, 30);
+        const sb = SKILL.get("juemengun"); assert.strictEqual(sb.grade, 1, "绝门棍 1 品");
+        L.enter(me, "juemengun", "weapon", String(ATK));                       // 1→2 品，8 本
+        assert.strictEqual(books(), 22); assert.strictEqual(me.skills.juemengun.addin_cost[ATK], 8);
+        L.enter(me, "juemengun", "weapon", String(BJ));                        // 2→3 品，特殊项 22 本
+        assert.strictEqual(books(), 0); assert.strictEqual(sb.query_grade(me), 3);
+        L.enter(me, "juemengun", "weapon", "13");                              // 3→4 品要 32 本，书不够
+        assert.strictEqual(sb.query_grade(me), 3, "书不够进不了");
+        L.enter(me, "juemengun", "reset", String(BJ)); assert.strictEqual(books(), 22, "退还当时花的 22 本");
+        L.enter(me, "juemengun", "reset", String(ATK)); assert.strictEqual(books(), 30);
+        // 老存档里没有花费记录的进阶：按新公式估算退还这一级的价钱
+        me.skills.juemengun.addin = [ATK]; delete me.skills.juemengun.addin_cost; me.init_skill(); me.recount();
+        L.enter(me, "juemengun", "reset", String(ATK)); assert.strictEqual(books(), 38, "无记录按 1→2 品价钱 8 本退");
+    });
     check("武道塔守护者：按玩家进度标定的曲线（逐层递增、标定点吻合）、90~99 层免控、第一百层与上 1~5 层", () => {
         const n = NPC.CLONE("pub/wudao");
         for (const tier of n.skills_def) for (const r of tier) assert.ok(SKILL.get(r[0]), "技能表里的 " + r[0] + " 不存在");
         const at = lv => { const g = NPC.CLONE("pub/wudao"); g.init_from(null, lv); return g; };
         // 标定点
-        for (const [lv, gj, mz, ds, hp] of [[10, 1500, 1500, 1000, 30000], [30, 20000, 18000, 10000, 250000], [65, 35000, 33000, 20000, 1000000], [89, 95000, 95000, 50000, 3000000], [90, 100000, 100000, 60000, 3000000], [99, 120000, 120000, 70000, 5000000]]) {
+        const K = n.WD_GJ_SCALE; assert.ok(K > 0 && K <= 1, "攻击系数");
+        for (const [lv, gj, mz, ds, hp] of [[10, 1500, 1500, 1000, 30000], [30, 10000, 18000, 6000, 100000], [65, 35000, 33000, 20000, 700000], [89, 50000, 95000, 35000, 900000], [90, 60000, 100000, 40000, 1300000], [99, 60000, 120000, 50000, 1300000]]) {
             const g = at(lv);
-            assert.ok(g.gj === gj && g.mz === mz && g.ds === ds && g.zj === ds && g.max_hp === hp, lv + " 层：" + [g.gj, g.mz, g.ds, g.zj, g.max_hp].join("/"));
-            assert.strictEqual(g.fy, Math.round(gj * 0.3), lv + " 层防御 = 攻击×0.3");
+            assert.ok(g.gj === Math.round(gj * K) && g.mz === mz && g.ds === ds && g.zj === ds && g.max_hp === hp, lv + " 层：" + [g.gj, g.mz, g.ds, g.zj, g.max_hp].join("/"));
+            assert.strictEqual(g.fy, Math.round(gj * 0.3), lv + " 层防御 = 攻击原值×0.3");
         }
         // 逐层不减
         let prev = at(1);
@@ -218,13 +242,14 @@ async function main() {
         assert.strictEqual(g50.ds, Math.round(ds0 / 2));
         // 第一百层 / 上 1~5 层
         const t100 = NPC.CLONE("pub/wudao_boss100"); t100.init_from(null);
-        assert.ok(t100.gj === 130000 && t100.mz === 130000 && t100.ds === 80000 && t100.max_hp === 12500000);
+        assert.ok(t100.gj === Math.round(115000 * K) && t100.mz === 195000 && t100.ds === 55000 && t100.max_hp === 12500000, [t100.gj, t100.mz, t100.ds, t100.max_hp].join("/"));
+        assert.strictEqual(t100.max_mp, 1500000, "第一百层内力按武帝玩家量给，不按血量一半");
         assert.ok(t100.skills.liumaishenjian.level === 5000 && t100.skills.force.level === 4000);
         let last = t100;
         for (let k = 1; k <= 5; k++) {
             const b = NPC.CLONE("pub/wudao_boss100"); b.init_from(null, k);
             assert.strictEqual(b.max_hp, 30000000 + (k - 1) * 5000000, "上" + k + "层气血");
-            assert.strictEqual(b.gj, Math.round(130000 * (1 + 0.1 * k)));
+            assert.strictEqual(b.gj, Math.round(115000 * (1 + 0.1 * k) * K));
             assert.strictEqual(b.skills.liumaishenjian.level, 5000 + (k - 1) * 500);
             assert.ok(b.gj > last.gj); last = b;
         }
