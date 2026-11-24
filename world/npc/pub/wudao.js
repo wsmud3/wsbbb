@@ -25,11 +25,11 @@ this.set({
 var WD_ANCHORS = [
     [1,    260,     260,     300,       1250],
     [10,   1500,    1500,    1000,      30000],
-    [30,   20000,   18000,   10000,     250000],
-    [65,   35000,   33000,   20000,     1000000],
-    [89,   95000,   95000,   50000,     3000000],
-    [90,   100000,  100000,  60000,     3000000],
-    [99,   120000,  120000,  70000,     5000000],
+    [30,   10000,   18000,   6000,      100000],
+    [65,   35000,   33000,   20000,     700000],
+    [89,   50000,   95000,   35000,     900000],
+    [90,   60000,   100000,  40000,     1300000],
+    [99,   60000,   120000,  50000,     1300000],
 ];
 function wd_interp(level, col) {
     var a = WD_ANCHORS;
@@ -43,9 +43,13 @@ function wd_interp(level, col) {
     }
     return a[a.length - 1][col];
 }
+// 攻击系数：标定点里的攻击按「写死面板」的高气血玩家定的；按真实构造的玩家（模拟器 REALM 模式）复核后整体下调。
+// 防御仍按下调前的攻击 ×0.3，不让守护者跟着变脆。第一百层/上五层（wudao_boss100）共用这个系数。
+var WD_GJ_SCALE = 0.5;
+this.WD_GJ_SCALE = WD_GJ_SCALE;
 this.wd_stats = function (level) {
     var gj = wd_interp(level, 1);
-    return { gj: gj, mz: wd_interp(level, 2), ds: wd_interp(level, 3), zj: wd_interp(level, 3), fy: Math.round(gj * 0.3), hp: wd_interp(level, 4) };
+    return { gj: Math.round(gj * WD_GJ_SCALE), mz: wd_interp(level, 2), ds: wd_interp(level, 3), zj: wd_interp(level, 3), fy: Math.round(gj * 0.3), hp: wd_interp(level, 4) };
 };
 this.init_from = function (player, level) {
     level = Math.max(1, Math.min(99, parseInt(level) || 1));   // 第一百层及以上由 wudao_boss100 负责
