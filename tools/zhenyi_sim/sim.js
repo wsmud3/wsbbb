@@ -18,13 +18,16 @@
 //     PUBLIC 不指定时按境界上限从「玩家优先刷的强力公共武学」里按权重抽一门（PUBLIC=none 不带）。
 //     装备：境界对应等级（EQLV 可改）的全部装备里按部位挑最好的混搭，满精炼（REFINE，默认 12）；武器、暗器用自制装备
 //     （宗师起；满精炼，5 条百分比攻击/命中词条，不算重铸；CUSTOM=0/1 关闭/强制）；先天属性 ATTR（默认 20）；
-//     内力 MPV（默认按境界典型值）；撑面板：用不上的基础部位各装一门 ≤2 品公共武学（FILLER=0 关闭）；
+//     技能等级默认按境界（300/800/1500/2200/2300，LV 可改）；内力打满到自身上限（境界奖励+技能+武帝起五气朝元 150 万，MPV 可改）；撑面板：用不上的基础部位各装一门 ≤2 品公共武学（FILLER=0 关闭）；
 //     武道进阶：宗师起，按武道书预算（BOOKS，默认宗师 30、武圣 80、近武帝 150）逐次进阶、书不够就停，走游戏真实消耗；
 //     门数上限 ADVSK（默认宗师 2~3、武圣 4、近武帝 6），攻击→命中→臂力→暴击，先进剩余次数多的。
 //     不必再给 PANEL：面板由技能、装备、先天、内力按真实公式算出，战斗中自身增益正常叠加。
 //     SHOWSKILLS=1 打印学到的技能与装备搭配  SHOWPANEL=1 打印面板
 // 华山禁地五项试炼的真实引擎模拟：玩家拥有全部 grade<6 技能、均为 LV 级，开自动出招。
-const LV = parseInt(process.env.LV || 3000), RUNS = parseInt(process.env.RUNS || 5);
+// 技能等级：REALM 模式下不给 LV 时按境界后期取默认值（境界条件等级 + 经验上限，半年多到武帝的节奏）
+const REALM_LV = [100, 300, 800, 1500, 2200, 2300, 3000];
+const LV = parseInt(process.env.LV || (process.env.REALM !== undefined && process.env.REALM !== "" ? REALM_LV[parseInt(process.env.REALM)] : 3000));
+const RUNS = parseInt(process.env.RUNS || 5);
 const MP = parseInt(process.env.MP || 0);              // 额外内力上限（如五气朝元 1500000）
 const SET = process.env.SET || "huashan";              // huashan=本门 / best=任意最强
 const EQ = (process.env.EQ || "eq/lv0/jian").split(",");
@@ -69,8 +72,9 @@ function drawPublic(cap, idx) {
     }
     return "";
 }
-// 境界对应的典型「内力」（max_mp）：武圣约 50 万、武帝 120~180 万（用户给）；武士~宗师为估计
-const REALM_MP = [3000, 10000, 50000, 200000, 500000, 1500000, 3000000];
+// 内力：玩家打坐很快，基本都打满到上限。上限 = 境界提升累计奖励 + 技能加成（内功、基本内功等）+ 五气朝元（武帝起 +150 万）。
+// MPV 可直接指定。
+const LEVELUP_LIMIT_MP = [0, 1000, 6000, 16000, 36000, 86000, 586000];
 const BASE_SLOTS = ["force", "unarmed", "sword", "blade", "club", "staff", "whip", "throwing", "parry", "dodge"];
 let shown = false;
 // 混搭装备：在 eqlv 等级的全部装备（各门派套装 + 普通装备）里，按部位挑「对攻命最有用」的一件。
@@ -279,7 +283,10 @@ function makePlayer(idx) {
     for (const p of eqList) { const o = typeof p === "string" ? OBJ.CREATE(p, 1) : p; if (!o) { console.log("no obj", p); continue; } me.items.push(o); if (me.equip(o) === false) console.log("equip fail", p); }
     if (REALM !== null) { const adv = applyAdvance(me, map, idx); if (process.env.SHOWSKILLS && !shown) console.log("武道进阶:", adv.join(" ") || "无"); }
     me.max_mp = me.limit_mp + me.query_prop("limit_mp");
-    if (REALM !== null) { const mpv = parseInt(process.env.MPV || REALM_MP[REALM]); me.max_mp = mpv; me.limit_mp = Math.max(me.limit_mp, mpv); }
+    if (REALM !== null) {
+        me.limit_mp = LEVELUP_LIMIT_MP[REALM] + (REALM >= 5 ? 1500000 : 0) + MP;
+        me.max_mp = process.env.MPV ? parseInt(process.env.MPV) : me.limit_mp + me.query_prop("limit_mp");
+    }
     me.init_skill(); me.recount(); me.hp = me.max_hp; me.mp = me.max_mp;
     if (process.env.SHOWSKILLS) shown = true;
     const B = parseFloat(process.env.BOOST || 1), G = parseInt(process.env.GJSD || 0);
