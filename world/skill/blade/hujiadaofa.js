@@ -26,11 +26,11 @@ this.learn_condition = {
 this.query_enable_prop = function (lv) {
 	return {
 			blade: {
-				gj: lv * 15 + 10,
-				dex: Math.floor(lv * 1.25),
+				gj: parseInt(lv * 1.5) + 10,   // 原版 lv*1.5+10（曾误写成 lv*15，是同档技能的十倍）
+				dex: parseInt(lv / 8),
 			},
 			parry: {
-				zj: lv * 15 + 4,
+				zj: parseInt(lv * 1.5) + 4,
 				desc: "招架成功后立刻反击敌人，5秒冷却",
 			},
 		}
