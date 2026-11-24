@@ -20,6 +20,8 @@ PERFORM.prototype.query_releasetime = function (me, lv) {
 }
 
 PERFORM.prototype.query_distime = function (me, lv, isref) {
+    // fixed_distime：冷却固定，不吃任何冷却缩减（如火舞旋风·天地同寿 120 秒）
+    if (this.fixed_distime) return parseInt(this.distime);
     var dis = this.distime;
     if (!(dis >= 0)) dis = me.gjsd;
     if (isref) dis = dis * 2;

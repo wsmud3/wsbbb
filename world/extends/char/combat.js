@@ -144,27 +144,7 @@ CHARACTER.prototype.do_attack = function (par) {
         passive(() => WORLD.ZHENYI.prepare_attack(this, target, par, attackskill));
         mz = par.mz ?? mz;
     }
-    par.is_dodge = false; par.is_parry = false;
-    if (target.is_faint || this.is_shadow) {
-        par.is_dodge = false;
-        par.is_parry = false;
-    }
-    else if (target.is_rash) {
-        par.is_dodge = false;
-        par.is_parry = (target.is_busy || par.no_parry) ? false : Math.random() * (target.zj / 2) + target.zj / 2 > mz;
-    } else if (this.is_miss && !par.no_dodge) {
-        par.is_dodge = true;
-        par.is_parry = (target.is_busy || par.no_parry) ? false : Math.random() * (target.zj / 2) + target.zj / 2 > mz;
-    } else if (target.is_miss || par.no_dodge) {
-        par.is_dodge = false;
-        par.is_parry = (target.is_busy || par.no_parry) ? false : (Math.random() * (target.zj / 2) + target.zj / 2 > mz);
-    } else if (target.is_busy || par.no_parry) {
-        par.is_dodge = Math.random() * (target.ds / 2) + target.ds / 2 > mz;
-        par.is_parry = false;
-    } else {
-        par.is_dodge = Math.random() * (target.ds / 2) + target.ds / 2 > mz;
-        par.is_parry = Math.random() * (target.zj / 2) + target.zj / 2 > mz;
-    }
+    roll_hit(this, target, par, mz);
     if (par.is_dodge) {
         if (par.on_dodge) par.on_dodge(target);
     } else if (target.dodge_skill.on_dodge) {
@@ -632,6 +612,36 @@ function status_hook_list(ch, name) {
     return list;
 }
 function has_status_hook(ch, name) { return !!status_hook_list(ch, name); }
+// 闪避/招架判定（普通攻击与需要「和普通攻击一样的命中判定」的绝招共用），结果写入 par.is_dodge / par.is_parry
+function roll_hit(me, target, par, mz) {
+    par.is_dodge = false; par.is_parry = false;
+    if (target.is_faint || me.is_shadow) {
+        par.is_dodge = false;
+        par.is_parry = false;
+    }
+    else if (target.is_rash) {
+        par.is_dodge = false;
+        par.is_parry = (target.is_busy || par.no_parry) ? false : Math.random() * (target.zj / 2) + target.zj / 2 > mz;
+    } else if (me.is_miss && !par.no_dodge) {
+        par.is_dodge = true;
+        par.is_parry = (target.is_busy || par.no_parry) ? false : Math.random() * (target.zj / 2) + target.zj / 2 > mz;
+    } else if (target.is_miss || par.no_dodge) {
+        par.is_dodge = false;
+        par.is_parry = (target.is_busy || par.no_parry) ? false : (Math.random() * (target.zj / 2) + target.zj / 2 > mz);
+    } else if (target.is_busy || par.no_parry) {
+        par.is_dodge = Math.random() * (target.ds / 2) + target.ds / 2 > mz;
+        par.is_parry = false;
+    } else {
+        par.is_dodge = Math.random() * (target.ds / 2) + target.ds / 2 > mz;
+        par.is_parry = Math.random() * (target.zj / 2) + target.zj / 2 > mz;
+    }
+}
+// 供绝招调用：按普通攻击的规则判定是否命中（不造成伤害）。mz 默认取自身命中。
+CHARACTER.prototype.roll_hit = function (target, par, mz) {
+    par = par || {};
+    roll_hit(this, target, par, mz ?? par.mz ?? this.mz);
+    return !par.is_dodge && !par.is_parry;
+};
 function status_hooks(ch, name, a, b, c) {
     var list = status_hook_list(ch, name);
     if (!list) return;

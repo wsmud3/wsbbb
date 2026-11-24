@@ -280,47 +280,6 @@
 	    });
 
 	}
-	this.add_action("fuli", "领取福利", claimFuli);
-	function claimFuli(me) {
-		if (me.query_temp("jinyiyi_fuli_claimed")) {
-			return me.notify("金古易对你微微一笑：你已经领取过福利了，贪心可不好哦。");
-		}
-		if (me.items && me.items.length >= 80) {
-			return me.notify("金古易对你说道：你的背包太满了，先清理一下吧。");
-		}
-
-		// 一整套 lv6/wushen 装备
-		var eqList = [
-			"changgeng_glove", "chiyouzhixue", "dihou_axe", "fushen_waist",
-			"fuyu_sword", "haotian_shoes", "jinding_head", "jinlan_cape",
-			"nvwa_jewels", "pangu_axe", "qibao_ring", "shenhunsuipian",
-			"shennong_jewels", "shenqisuipian", "taiji_cloth", "taisui_sword",
-			"taiyin_throw", "weizhang_jewels", "xuanji_necklace", "xuanyuan_sword",
-			"ying_blade", "yinghuo_blade", "yishan_pick", "zaohua",
-			"zhanshenjia", "zhuque_wrist"
-		];
-		for (var i = 0; i < eqList.length; i++) {
-			me.add_obj("eq/lv6/wushen/" + eqList[i], 1);
-		}
-
-		// 秘籍（天地棋盘、逆仙魔诀、大品天仙诀、闪电五连鞭已删除）
-		var skillBooks = [
-			"xiuluodao", "tianditongshou",
-			"yixinghunyuan",
-			"fuyujianfa", "changshengjue", "cihangjiandian"
-		];
-		for (var i = 0; i < skillBooks.length; i++) {
-			me.add_obj("book/book#" + skillBooks[i], 1);
-		}
-
-		// 货币
-		me.add_money(1000000 * 10000);  // 100w黄金
-		me.add_obj("book/wudao", 1000000);  // 100w武道
-
-		me.set_temp("jinyiyi_fuli_claimed", 1);
-		me.notify("<hio>金古易对你笑道：这些福利你收好，望你勤加修炼，早日成为一代宗师！</hio>");
-		me.notify("<hio>你获得了全套武神装备、十本秘籍、100万黄金、100万武道！</hio>");
-	}
 	this.on_die = function () {
 	    this.call_out(this.relive, 10000);
 	}

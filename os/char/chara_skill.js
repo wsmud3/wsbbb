@@ -17,6 +17,8 @@ CHARACTER.prototype.migrate_renamed_skills = function () {
         for (var k in this.skills) {
             var it = this.skills[k];
             if (it && it.enable_skill === oldId) it.enable_skill = newId;
+            // 改 id 时连同可装备部位一起变了（如天地同寿拳法→火舞旋风剑法）：装在新技能不支持的部位上的解除
+            if (it && it.enable_skill === newId) { var nb = SKILL.get(newId); if (nb && nb.can_enables && nb.can_enables.indexOf(k) < 0) { it.enable_skill = null; if (this.skills[newId]) delete this.skills[newId][k]; } }
             if (it && it[oldId] !== undefined) { if (it[newId] === undefined) it[newId] = it[oldId]; delete it[oldId]; }
         }
         if (this.sk_groups) for (var g = 0; g < this.sk_groups.length; g++) {

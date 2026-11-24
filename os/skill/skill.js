@@ -1475,7 +1475,7 @@ SKILL.prototype.update = function (fname) {
     }
 }
 // 改过 id 的技能：旧 id → 新 id。SKILL.get 兼容旧 id（老存档里的残页/秘籍路径），角色身上的技能在 init 时迁移。
-SKILL.RENAMED = { pixiejianfa: "bixiejianfa" };
+SKILL.RENAMED = { pixiejianfa: "bixiejianfa", tianditongshou: "huowuxuanfeng" };
 SKILL.get = function (id) {
     return WORLD.SKILLS[id] || (SKILL.RENAMED[id] && WORLD.SKILLS[SKILL.RENAMED[id]]);
 }
