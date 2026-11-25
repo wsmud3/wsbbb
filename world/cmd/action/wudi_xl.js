@@ -134,15 +134,12 @@ function find_npc(room_path, npc_name) {
 function start_absorb(me, loc) {
     // 检查当前内力
     if (me.mp < 1500000) {
-        return me.notify("你当前内力不足150万，无法吸收" + loc.element + "。请先打坐恢复内力。");
+        return me.notify("你内力不济，引不动此处的灵气，先打坐恢复些内力吧。");
     }
 
-    // 检查技能条件
+    // 检查技能条件（不把具体条件告诉玩家）
     if (!check_skill_condition(me, loc)) {
-        var sk_names = {force: "内功", parry: "招架", unarmed: "拳脚", dodge: "轻功"};
-        var requirement = loc.base_skill === "weapon" ? "任意武器技能及对应的橙色特殊技能达到2500级" :
-            "基本" + sk_names[loc.base_skill] + "及对应的橙色特殊技能达到2500级";
-        return me.notify("须" + requirement + "，方能吸收" + loc.element + "。");
+        return me.notify("你的修为暂且不够。");
     }
 
     // 检查背包里是否有聚元珠
@@ -296,8 +293,11 @@ this.enter = function (me, location_key) {
     // 检查是否已击败此处的影子
     var defeated = me.query_temp("wd_defeated", 0);
     if (!(defeated & (1 << loc.index))) {
-        // 还没击败影子，需要先召唤
+        // 还没击败影子，需要先召唤；技能条件不满足就唤不出影子（不把具体条件告诉玩家）
         var shadow = has_shadow(me);
+        if (!shadow && !check_skill_condition(me, loc)) {
+            return me.notify("你的修为暂且不够。");
+        }
         if (shadow) {
             return me.notify("试炼之影仍在眼前，先击败它再说吧！");
         }

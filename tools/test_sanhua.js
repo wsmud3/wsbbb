@@ -1,5 +1,6 @@
 "use strict";
-// 三花聚顶回归测试：提示不再给玩家看公式与消耗；测试号可反复挑战已完成的花，奖励只发一次。
+// 境界修炼回归测试：三花聚顶提示不再给玩家看公式与消耗，测试号可反复挑战已完成的花、奖励只发一次；
+// 五气朝元不满足条件时只提示「修为暂且不够」，守门人只给地点。
 // 运行：node tools/test_sanhua.js
 const assert = require("assert");
 let failed = 0, passed = 0;
@@ -71,6 +72,20 @@ async function main() {
         assert.strictEqual(me.max_mp, mp0 + 10000, "重开不再加内力上限");
         assert.ok(me.log.some(s => /重温试炼/.test(s)));
         assert.ok(!me.log.some(s => /伤害\/|击未破|累计/.test(s)), "提示不报伤害与次数");
+    });
+
+    check("五气朝元：技能条件不满足时唤不出试炼之影，只提示修为暂且不够", () => {
+        const me = mkUser(false); me.level = 4; me.set_temp("wd_quest", 1);
+        me.environment = { path: "huashan/jueding", items: [me], item_changed() { throw new Error("不该召唤影子"); } };
+        WORLD.COMMANDS["wudi_xl"].enter(me, "huashan");
+        assert.ok(me.log.some(s => s === "你的修为暂且不够。"), me.log.join("|"));
+        assert.ok(!me.log.some(s => /2500|150万|橙色/.test(s)));
+    });
+    check("守门人只说在五岳，不点明地点和条件", () => {
+        const src = require("fs").readFileSync(require("path").join(__dirname, "../world/npc/pub/wudao_men.js"), "utf8");
+        assert.ok(!/2500|一百五十万|需任意武器|需内功|需招架|需拳脚|需轻功/.test(src));
+        for (const n of ["华山绝顶", "泰山玉皇顶", "恒山见性峰", "衡山祝融殿", "嵩山封禅台"]) assert.ok(src.indexOf(n) < 0, n);
+        assert.ok(src.indexOf("五岳") >= 0);
     });
 
     console.log((failed ? "三花测试失败 " : "三花测试通过 ") + passed + "/" + (passed + failed));
