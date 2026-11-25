@@ -18,24 +18,28 @@ this.query_enable_prop = function (lv) {
 			add_sh_per: parseInt(lv / 100),
 			diff_fy_per: parseInt(lv / 100),
 			limit_mp: lv * 900,
-			desc: "震慑：进入战斗时所有敌人降低躲闪和招架15%\n灵动：战斗开始5秒内无法被控制\n唯一：将你内力的120%转化为气血",
+			desc: "震慑：进入战斗时所有敌人降低躲闪和招架" + zhenshe_per(lv) + "%\n灵动：战斗开始5秒内无法被控制\n唯一：将你内力的120%转化为气血",
 		},
 	};
 };
 
+// 震慑：躲闪、招架 -(5 + lv/300)%（2300 级 12%）
+function zhenshe_per(lv) { return 5 + parseInt((lv || 0) / 300); }
+
 // 每个新敌人进战时施加震慑（不可驱散的增益buff，效果为减益，类似和氏璧和长生诀）
 this.on_new_enemy = function (me, target) {
 	if (target && target.hp > 0) {
+		var per = zhenshe_per(me.query_skill("cihangjiandian", 0));
 		target.add_status({
 			id: "cihang_zhenshe",
 			name: "震慑",
-			desc: "被慈航剑典剑意震慑，躲闪和招架降低15%",
+			desc: "被慈航剑典剑意震慑，躲闪和招架降低" + per + "%",
 			duration: 86400000,
 			downside: false,
 			no_clear: true,
 			override: 2,
 			only_combat: true,
-			prop: { ds_per: -15, zj_per: -15 },
+			prop: { ds_per: -per, zj_per: -per },
 		}, me);
 	}
 };

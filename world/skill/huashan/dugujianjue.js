@@ -109,7 +109,8 @@ this.pfm = {
                 id: "dugujianjue_jianlai", name: "剑来", desc: "飞剑环绕，每次攻击附加攻击力" + per + "%的真实伤害",
                 duration: jianlai_time(lv), override: 2,
                 on_attack_over: function (owner, t, par, sh) {
-                    if (!t || t.hp <= 0 || t === owner) return;
+                    // 可以被闪避，招架挡不住
+                    if (!t || t.hp <= 0 || t === owner || (par && par.is_dodge)) return;
                     var dmg = Math.floor(owner.gj * per / 100);
                     if (dmg > 0) {
                         var dealt = t.damage2(dmg, owner);
@@ -120,7 +121,7 @@ this.pfm = {
             });
         },
         query_desc: function (me, lv) {
-            return "召唤飞剑攻击附近敌人，飞剑持续" + (jianlai_time(lv) / 1000) + "秒，你的攻击会对敌人造成" + jianlai_per(lv) + "%攻击力的真实伤害";
+            return "召唤飞剑攻击附近敌人，飞剑持续" + (jianlai_time(lv) / 1000) + "秒，你的攻击会对敌人造成" + jianlai_per(lv) + "%攻击力的真实伤害（可被闪避，无法招架）";
         }
     }
 };

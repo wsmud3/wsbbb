@@ -48,6 +48,10 @@ this.on_attack = function (me, target, par) {
     return base * ratio;
 };
 
+// 火舞：持续 10 + lv×0.002 秒，攻速、攻击 +(15 + lv/150)%（2300 级 14.6 秒、30%）
+function huowu_time(lv) { return 10000 + parseInt((lv || 0) * 2); }
+function huowu_per(lv) { return 15 + parseInt((lv || 0) / 150); }
+
 this.pfm = {
     huoyun: {
         name: "火云漫天",
@@ -58,14 +62,15 @@ this.pfm = {
         mp: 35,
         use: function (me, target, lv) {
             me.send_room("<HIR>$N长剑一引，剑身烈焰翻腾，霎时间火云漫天，$N身形随火势旋舞不休！</HIR>", target);
+            var hw = huowu_per(lv);
             me.add_status({
                 id: "huowu",
                 name: "火舞",
-                desc: "攻击速度+30%，攻击+30%，每次攻击恢复1%最大气血",
-                duration: 15000,
+                desc: "攻击速度+" + hw + "%，攻击+" + hw + "%，每次攻击恢复1%最大气血",
+                duration: huowu_time(lv),
                 prop: {
-                    gjsd_per: 30,
-                    gj_per: 30,
+                    gjsd_per: hw,
+                    gj_per: hw,
                 },
                 start_msg: "<HIR>$N周身火光缭绕，剑势如狂风烈焰！</HIR>",
                 finish_msg: "$N周身的火光渐渐熄灭了。",
@@ -87,7 +92,7 @@ this.pfm = {
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            return "进入「火舞」状态15秒：攻击速度提高30%，攻击提高30%，每次攻击恢复1%最大气血，随即出剑攻击";
+            return "进入「火舞」状态" + (huowu_time(lv) / 1000) + "秒：攻击速度提高" + huowu_per(lv) + "%，攻击提高" + huowu_per(lv) + "%，每次攻击恢复1%最大气血，随即出剑攻击";
         }
     },
     tianditongshou: {
@@ -115,14 +120,15 @@ this.pfm = {
                 me.end_attack(target);
                 return;
             }
-            target.damage3(dmg, me);
-            me.send_combat("<HIR>$n受到" + dmg + "点伤害！</HIR>\n", target);
+            // 走正常受伤流程：吃伤害减免、防御、护盾和免死
+            var dealt = target.damage(dmg, me) || 0;
+            me.send_combat("<HIR>$n受到" + dealt + "点伤害！</HIR>\n", target);
             me.add_status(weak_status());
             if (target.hp > 0) target.add_status(weak_status());
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            return "燃尽自身气血只留一口气，对敌人造成等量伤害（可被闪避、招架，落空也会燃尽气血）；之后你陷入虚弱60秒，敌人若被击中且未死也陷入虚弱60秒";
+            return "燃尽自身气血只留一口气，对敌人造成等量伤害（受伤害减免、护盾影响，可被闪避、招架，落空也会燃尽气血）；之后你陷入虚弱60秒，敌人若被击中且未死也陷入虚弱60秒";
         }
     }
 };
@@ -130,7 +136,7 @@ this.pfm = {
 // 虚弱：攻击、命中、防御、躲闪、招架全部 -90%，持续 60 秒
 function weak_status() {
     return {
-        id: "huowu_xuruo",
+        id: "xuruo",
         name: "虚弱",
         desc: "攻击、命中、防御、躲闪、招架降低90%",
         duration: 60000,

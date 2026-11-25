@@ -42,12 +42,12 @@ this.pfm = {
 				me.add_status({
 					id: "kumu",
 					name: "枯木",
-					desc: "气血增加20%",
+					desc: "气血增加" + (10 + parseInt(lv / 200)) + "%",
 					duration: 20000 + parseInt(lv * 10),
-					prop: { hp_per: 20 },
+					prop: { hp_per: 10 + parseInt(lv / 200) },
 				})},
 			query_desc: function (me, lv) {
-				return "枯木逢春——增加你20%气血，移除你自身的负面状态。";
+				return "枯木逢春——增加你" + (10 + parseInt(lv / 200)) + "%气血，移除你自身的负面状态。";
 			}
 		}
 	};

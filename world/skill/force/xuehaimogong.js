@@ -48,19 +48,23 @@ this.pfm = {
 							who.min_hp = who._xueji_min_hp;
 							delete who._xueji_min_hp;
 						}
+						// 虚弱：与火舞旋风·天地同寿的虚弱同一个 id、同样的属性（-90%），但固定 30 秒，不受负面抵抗影响、不可驱散
 						who.add_status({
-							id: "xueji_p",
-							name: "血虚",
-							desc: "战斗属性减少" + (30 + parseInt(lv / 100)) + "%",
-							duration: 21000,
+							id: "xuruo",
+							name: "虚弱",
+							desc: "攻击、命中、防御、躲闪、招架降低90%",
+							duration: 30000,
 							downside: true,
 							no_diff: true,
-							prop: { gj_per: -(30 + parseInt(lv / 100)), fy_per: -(30 + parseInt(lv / 100)), mz_per: -(30 + parseInt(lv / 100)), ds_per: -(30 + parseInt(lv / 100)), zj_per: -(30 + parseInt(lv / 100)) },
+							no_clear: true,
+							prop: { gj_per: -90, mz_per: -90, fy_per: -90, ds_per: -90, zj_per: -90 },
+							start_msg: "<HIB>$N气血两亏，变得十分虚弱。</HIB>",
+							finish_msg: "$N渐渐从虚弱中恢复过来。",
 						});
 					},
 				})},
 			query_desc: function (me, lv) {
-				return "血祭——消耗你25%的最大气血，在" + (4 + parseInt(lv * 5 / 1000)) + "秒内增加你" + (10 + parseInt(lv / 100)) + "%的战斗属性，并且不会死亡，效果结束后21秒内自身减少" + (30 + parseInt(lv / 100)) + "%战斗属性。";
+				return "血祭——消耗你25%的最大气血，在" + (4 + parseInt(lv * 5 / 1000)) + "秒内增加你" + (10 + parseInt(lv / 100)) + "%的战斗属性，并且不会死亡，效果结束后陷入虚弱30秒：攻击、命中、防御、躲闪、招架降低90%。";
 			}
 		}
 	};

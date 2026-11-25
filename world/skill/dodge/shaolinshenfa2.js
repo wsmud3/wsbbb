@@ -38,7 +38,7 @@
 				name: "一苇渡江",
 				desc: "一苇渡江之卸力诀，增加你的防御",
 				prop: {
-																	fy: 1000
+																	fy: parseInt(lv)
 				},
 				duration: parseInt(lv * 10),
 				override: 1,

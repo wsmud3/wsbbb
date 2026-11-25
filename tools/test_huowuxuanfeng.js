@@ -52,10 +52,10 @@ async function main() {
         assert.strictEqual(SK().on_attack(me, null, { gj: 3000 }), 1500, "绝招指定的攻击力也按比例");
         assert.strictEqual(SK().on_attack(me, null, { is_throwing: true }), 0);
     });
-    check("火云漫天：火舞状态 攻速/攻击 +30%，每次攻击回 1% 最大气血，并出一剑", () => {
+    check("火云漫天：火舞状态 攻速/攻击 +(15+lv/150)%（1000 级 21%、12 秒），每次攻击回 1% 最大气血，并出一剑", () => {
         const me = mkUser(), t = mkUser(); const calls = []; me.do_attack = p => { calls.push(p); return 1; }; me.end_attack = () => {};
         SK().pfm.huoyun.use(me, t, 1000);
-        const s = st(me, "huowu"); assert.ok(s && s.prop.gjsd_per === 30 && s.prop.gj_per === 30 && s.duration === 15000);
+        const s = st(me, "huowu"); assert.ok(s && s.prop.gjsd_per === 21 && s.prop.gj_per === 21 && s.duration === 12000);
         assert.strictEqual(calls.length, 1);
         me.hp = me.max_hp / 2; s.on_attack_over(me, t, {}, 1); assert.strictEqual(me.hp, me.max_hp / 2 + me.max_hp / 100);
     });
@@ -68,21 +68,32 @@ async function main() {
     });
     check("天地同寿：自身气血扣到 1，敌人受等量伤害，双方虚弱 60 秒；敌人死了不挂", () => {
         const me = mkUser(), t = mkUser(); me.end_attack = () => {}; me.roll_hit = () => true;
-        me.hp = 300000; t.max_hp = t.hp = 1e6;
+        me.hp = 300000; t.max_hp = t.hp = 1e6; t.fy = 0; t.diff_sh_per = 0;
         SK().pfm.tianditongshou.use(me, t, 1000);
         assert.strictEqual(me.hp, 1); assert.strictEqual(t.hp, 1e6 - 299999);
-        const a = st(me, "huowu_xuruo"), b = st(t, "huowu_xuruo");
+        // 吃伤害减免：50% 免伤只受一半
+        const mr = mkUser(), tr = mkUser(); mr.end_attack = () => {}; mr.roll_hit = () => true;
+        mr.hp = 200001; tr.max_hp = tr.hp = 1e6; tr.fy = 0; tr.diff_sh_per = 50;
+        SK().pfm.tianditongshou.use(mr, tr, 1000);
+        assert.strictEqual(tr.hp, 1e6 - 100000, "伤害减免生效");
+        // 吃护盾：护盾先吸收
+        const ms = mkUser(), ts = mkUser(); ms.end_attack = () => {}; ms.roll_hit = () => true;
+        ms.hp = 100001; ts.max_hp = ts.hp = 1e6; ts.fy = 0; ts.diff_sh_per = 0;
+        ts.status.push({ id: "test_shield", shield: 1e9, prop: {} });
+        SK().pfm.tianditongshou.use(ms, ts, 1000);
+        assert.strictEqual(ts.hp, 1e6, "护盾吸收全部伤害");
+        const a = st(me, "xuruo"), b = st(t, "xuruo");
         assert.ok(a && b && a.duration === 60000 && ["gj_per","mz_per","fy_per","ds_per","zj_per"].every(k => a.prop[k] === -90));
         const me2 = mkUser(), t2 = mkUser(); me2.end_attack = () => {}; me2.roll_hit = () => true; me2.hp = 500000; t2.hp = 1000; t2.max_hp = 1e6;
         SK().pfm.tianditongshou.use(me2, t2, 1000);
-        assert.ok(t2.hp <= 0 && !st(t2, "huowu_xuruo") && st(me2, "huowu_xuruo"));
+        assert.ok(t2.hp <= 0 && !st(t2, "xuruo") && st(me2, "xuruo"));
         const me3 = mkUser(), t3 = mkUser(); me3.end_attack = () => {}; me3.hp = 1; const h = t3.hp;
         SK().pfm.tianditongshou.use(me3, t3, 1000); assert.strictEqual(t3.hp, h, "只剩 1 点血时放不出");
     });
     check("天地同寿：普通命中判定，被闪开也扣到 1 血、自己虚弱，敌人不挂；冷却固定 120 秒不吃冷却缩减", () => {
         const me = mkUser(), t = mkUser(); me.end_attack = () => {}; me.mz = 10; t.ds = t.zj = 1e9; me.hp = 300000; const h = t.hp;
         SK().pfm.tianditongshou.use(me, t, 1000);
-        assert.ok(me.hp === 1 && t.hp === h && st(me, "huowu_xuruo") && !st(t, "huowu_xuruo"), "命中远低于闪避时落空，但气血照扣");
+        assert.ok(me.hp === 1 && t.hp === h && st(me, "xuruo") && !st(t, "xuruo"), "命中远低于闪避时落空，但气血照扣");
         assert.ok(me.log.some(x => x.includes("我跟你们拼了")), "出招描述");
         t.ds = t.zj = 0; me.mz = 1e9; assert.ok(me.roll_hit(t, {}), "命中远高于闪避招架时命中");
         const p = SK().pfm.tianditongshou; me.query_prop = () => 99;

@@ -41,9 +41,9 @@ this.pfm = {
 																desc: "先天太极之真武除邪增加你的气血，招架和伤害减免",
 																duration: 20000 + parseInt(lv * 10),
 																prop: {
-																				diff_sh_per2: 32,
+																				diff_sh_per2: 20 + parseInt(lv / 200),
 																				zj_per: 22 + parseInt(lv / 100),
-																				hp_per: 32
+																				hp_per: 20 + parseInt(lv / 200)
 																}, on_expire: function (p) {
 																				if (p.hp > p.max_hp) {
 																								p.hp = p.max_hp;
@@ -51,10 +51,10 @@ this.pfm = {
 																				}
 																}
 												});
-												me.do_recover(parseInt(me.max_hp * 0.32));
+												me.do_recover(parseInt(me.max_hp * (20 + parseInt(lv / 200)) / 100));
 								},
 								query_desc: function (me, lv) {
-												return"将太极真气运转周身，" + (20 + parseInt(lv * 10 / 1000)) + "秒内增加你32%气血,招架增加" + (22 + parseInt(lv / 100)) + "%,受到的伤害减少32%";
+												return"将太极真气运转周身，" + (20 + parseInt(lv * 10 / 1000)) + "秒内增加你" + (20 + parseInt(lv / 200)) + "%气血,招架增加" + (22 + parseInt(lv / 100)) + "%,受到的伤害减少" + (20 + parseInt(lv / 200)) + "%";
 								}
 				},
 				sanqing:

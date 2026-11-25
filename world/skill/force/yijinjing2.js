@@ -119,13 +119,13 @@ this.pfm = {
 																desc: "大幅减少你受到的伤害",
 																duration: parseInt(lv * 10),
 																prop: {
-																				diff_sh_per2: 60
+																				diff_sh_per2: 40 + parseInt(lv / 100)
 																}
 												});
 
 								},
 								query_desc: function (me, lv) {
-												return"减少你受到的伤害，" + (parseInt(lv * 10 / 1000)) + "秒内增加60%伤害减免。";
+												return"减少你受到的伤害，" + (parseInt(lv * 10 / 1000)) + "秒内增加" + (40 + parseInt(lv / 100)) + "%伤害减免。";
 								}
 				}
 };

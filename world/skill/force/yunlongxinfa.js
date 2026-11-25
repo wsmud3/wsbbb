@@ -29,12 +29,12 @@ this.pfm = {
 				me.add_status({
 					id: "yunlong",
 					name: "云龙",
-					desc: "攻击增加1000点",
+					desc: "攻击增加" + parseInt(lv) + "点",
 					duration: 10000 + parseInt(lv * 10),
-					prop: { gj: 1000 },
+					prop: { gj: parseInt(lv) },
 				})},
 			query_desc: function (me, lv) {
-				return "提升全身潜力，在" + ((10000 + parseInt(lv * 10)) / 1000) + "秒内，提升自身攻击力1000点。";
+				return "提升全身潜力，在" + ((10000 + parseInt(lv * 10)) / 1000) + "秒内，提升自身攻击力" + parseInt(lv) + "点。";
 			}
 		}
 	};

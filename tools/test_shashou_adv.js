@@ -74,10 +74,10 @@ async function main() {
         const d = mkUser(); spy(a, false); P("mantianhuayu2", "wu").use(a, d, 1000); assert.ok(st(d, "rash"), "定影必中：这一击被闪开也定身");
         c = spy(a, true); P("mantianhuayu2", "luo").use(a, b, 1000, "sword"); assert.ok(c.every(x => x.is_throwing === false), "剑法位落花");
     });
-    check("无痕：免疫控制 + 躲闪 40%，3 秒 + 每 200 级 1 秒，上限 8 秒", () => {
+    check("无痕：免疫控制 + 躲闪 (20+lv/100)%，3 秒 + 每 200 级 1 秒，上限 8 秒", () => {
         const a = mkUser(), b = mkUser();
         P("taxuexunmei2", "power").use(a, b, 500);
-        const s = st(a, "dodge"); assert.ok(s && s.duration === 5000 && s.prop.ds_per === 40);
+        const s = st(a, "dodge"); assert.ok(s && s.duration === 5000 && s.prop.ds_per === 25);
         a.status = []; P("taxuexunmei2", "power").use(a, b, 3000); assert.strictEqual(st(a, "dodge").duration, 8000);
         assert.ok(a.ig_control > 0, "免疫控制");
     });

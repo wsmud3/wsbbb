@@ -7,7 +7,7 @@ this.set({
     eq_type: EQUIP_TYPE.CLOTH,
     hole_count: 4,
     group_name: "mp_set_lv5",
-    prop: { fy: 420, dex: 35, str: 35, add_sh_per: 500, releasetime_per: 10 },
+    prop: { fy: 420, dex: 35, str: 35, add_sh_per: 5, releasetime_per: 10 },
 });
 this.family = FAMILIES.HUASHAN;
 this.group_prop = function (count) {

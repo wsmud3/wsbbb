@@ -47,14 +47,14 @@
 					me.add_status({
 						id: "changxian",
 						name: "唱仙",
-						desc: "攻击、防御、命中、躲闪、招架增加101点（可叠加）",
+						desc: "攻击、防御、命中、躲闪、招架增加" + parseInt((10 + lv) / 10) + "点（可叠加）",
 						duration: 5000 + parseInt(lv * 10),
 						override: 1,
 						max_count: 10,
-						prop: { gj: 101, fy: 101, mz: 101, ds: 101, zj: 101 },
+						prop: { gj: parseInt((10 + lv) / 10), fy: parseInt((10 + lv) / 10), mz: parseInt((10 + lv) / 10), ds: parseInt((10 + lv) / 10), zj: parseInt((10 + lv) / 10) },
 					})},
 				query_desc: function (me, lv) {
-					return "蛇岛奇功之唱仙法" + (5 + parseInt(lv * 10 / 1000)) + "秒增加你的攻击，防御，命中，躲闪，招架101，可叠加最多10层";
+					return "蛇岛奇功之唱仙法" + (5 + parseInt(lv * 10 / 1000)) + "秒增加你的攻击，防御，命中，躲闪，招架" + parseInt((10 + lv) / 10) + "，可叠加最多10层";
 				}
 			},
 		pfm2: {

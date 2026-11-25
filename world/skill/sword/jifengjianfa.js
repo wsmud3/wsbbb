@@ -90,6 +90,9 @@ this.on_recount_gjsd = function (me) {
 };
 
 // ========== 绝招 ==========
+// 狂风骤雨倍率：基础 200% + lv/100% + 风意层数 ×(2 + lv/200)%（2300 级满 30 层约 628%）
+function kuangfeng_percent(lv, wind) { return 200 + lv / 100 + (wind || 0) * (2 + lv / 200); }
+
 this.pfm = {
     // 狂风骤雨：200% + lv/10 + 风意*(20% + lv/20)
     kuangfeng: {
@@ -103,7 +106,7 @@ this.pfm = {
             if (!target) return me.notify("你要对谁使用狂风骤雨？");
             lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             var wind = me.query_status ? me.query_status("jifeng_fengyi") : 0;
-            var percent = 200 + lv / 10 + wind * (20 + lv / 20);
+            var percent = kuangfeng_percent(lv, wind);
             var gj = Math.floor(me.gj * percent / 100);
 
             me.send_room("<HIC>$N剑光暴涨，卷起漫天狂风骤雨，直向$n倾泻而下！</HIC>", target);
@@ -120,7 +123,7 @@ this.pfm = {
         query_desc: function (me, lv) {
             lv = lv || (me.query_skill ? me.query_skill("jifengjianfa", 0) : 0);   // 以施展时传入的等级为准（融入自创武学时即自创技能等级）
             var wind = me.query_status ? me.query_status("jifeng_fengyi") : 0;
-            var percent = 200 + lv / 10 + wind * (20 + lv / 20);
+            var percent = kuangfeng_percent(lv, wind);
             return "化作狂风骤雨斩向敌手：造成" + Math.round(percent) + "%攻击力的伤害，所持风意层数越高，伤害越强。";
         }
     },

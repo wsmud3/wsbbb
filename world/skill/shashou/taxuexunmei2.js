@@ -43,14 +43,14 @@ this.pfm = {
             me.add_status({
                 id: "dodge",
                 name: "无痕",
-                desc: "免疫控制，躲闪增加40%",
+                desc: "免疫控制，躲闪增加" + (20 + parseInt(lv / 100)) + "%",
                 duration: t,
                 ig_control: t,
-                prop: { ds_per: 40 }
+                prop: { ds_per: 20 + parseInt(lv / 100) }
             });
         },
         query_desc: function (me, lv) {
-            return (wuhen_time(lv) / 1000) + "秒内免疫控制，并增加40%躲闪";
+            return (wuhen_time(lv) / 1000) + "秒内免疫控制，并增加" + (20 + parseInt(lv / 100)) + "%躲闪";
         }
     }
 };

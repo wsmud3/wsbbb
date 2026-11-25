@@ -18,24 +18,28 @@ this.query_enable_prop = function (lv) {
             con: parseInt(lv * 1.0),
             int: parseInt(lv * 1.0),
             limit_mp: lv * 1050,
-            desc: "震慑：降低附近敌人15%的防御和免伤\n破碎：每次攻击附加最大内力1%的伤害（空手时加倍），并吸收部分伤害\n唯一：将你内力的140%转化为气血",
+            desc: "震慑：降低附近敌人" + zhenshe_per(lv) + "%的防御和免伤\n破碎：每次攻击附加最大内力1%的伤害（空手时加倍），并吸收部分伤害\n唯一：将你内力的140%转化为气血",
         },
     };
 };
 
-// 震慑：每个新敌人进入战斗时降低15%防御和免伤
+// 震慑：防御、免伤 -(5 + lv/300)%（2300 级 12%）
+function zhenshe_per(lv) { return 5 + parseInt((lv || 0) / 300); }
+
+// 震慑：每个新敌人进入战斗时降低防御和免伤
 this.on_new_enemy = function (me, target) {
     if (target && target.hp > 0) {
+        var per = zhenshe_per(me.query_skill("zhanshentulu", 0));
         target.add_status({
             id: "zhanshentulu_zhenshe",
             name: "震慑",
-            desc: "被战神图录震慑，防御和免伤降低15%",
+            desc: "被战神图录震慑，防御和免伤降低" + per + "%",
             duration: 86400000,
             downside: false,
             no_clear: true,
             override: 2,
             only_combat: true,
-            prop: { fy_per: -15, diff_sh_per: -15 },
+            prop: { fy_per: -per, diff_sh_per: -per },
         }, me);
     }
 };

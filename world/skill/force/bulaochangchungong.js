@@ -59,6 +59,10 @@ this.query_enable_prop = function (lv) {
     };
 };
 
+// 迟钝：绝招冷却、出招时间各延长 1000 + lv/2 毫秒，攻速 -(5 + lv/200)%（2300 级 2.15 秒、16%）
+function chidun_ms(lv) { return 1000 + parseInt((lv || 0) / 2); }
+function chidun_gjsd(lv) { return 5 + parseInt((lv || 0) / 200); }
+
 this.pfm = {
     changchun: {
         name: "不老长春",
@@ -111,17 +115,19 @@ this.pfm = {
                 for (var i = 0; i < me.enemy.length; i++) {
                     var t = me.enemy[i];
                     if (t && t.hp > 0) {
+                        var cd_ms = chidun_ms(lv), cd_sd = chidun_gjsd(lv);
                         t.add_status({
                             id: "bulao_chidun",
                             name: "迟钝",
-                            desc: "技能释放速度和冷却时间减慢3秒",
+                            desc: "绝招冷却和出招时间延长" + (cd_ms / 1000) + "秒，攻击速度降低" + cd_sd + "%",
                             duration: 12000 + parseInt(lv * 5),
                             only_combat: true,
                             downside: true,
                             prop: {
                                 // 引擎读取的 key 是 releasetime / distime（负值为延长）；原先写成 release_time，没人读
-                                releasetime: -3000,
-                                distime: -3000,
+                                releasetime: -cd_ms,
+                                distime: -cd_ms,
+                                gjsd_per: -cd_sd,
                             },
                             start_msg: "<HIM>$N被「唯我独尊」的霸气震慑，招式运转迟缓！</HIM>",
                             finish_msg: "$N从「唯我独尊」的震慑中恢复。",
@@ -135,7 +141,7 @@ this.pfm = {
             }
         },
         query_desc: function (me, lv) {
-            return "震慑附近敌人，使对方难以释放技能，" + (12 + parseInt(lv * 5 / 1000)) + "秒内技能释放速度和冷却时间减慢3秒。";
+            return "震慑附近敌人，使对方难以释放技能，" + (12 + parseInt(lv * 5 / 1000)) + "秒内绝招冷却和出招时间延长" + (chidun_ms(lv) / 1000) + "秒，攻击速度降低" + chidun_gjsd(lv) + "%。";
         }
     }
 };

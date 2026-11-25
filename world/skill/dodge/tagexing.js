@@ -44,12 +44,12 @@
 					me.add_status({
 						id: "tagexing",
 						name: "踏歌",
-						desc: "攻击增加2000点，躲闪增加2500点",
+						desc: "攻击增加" + parseInt(lv * 2) + "点，躲闪增加" + parseInt(lv * 2 + 500) + "点",
 						duration: 10000 + parseInt(lv * 10),
-						prop: { gj: 2000, ds: 2500 },
+						prop: { gj: parseInt(lv * 2), ds: parseInt(lv * 2 + 500) },
 					})},
 				query_desc: function (me, lv) {
-					return "" + (10 + parseInt(lv * 10 / 1000)) + "秒内，提升自身攻击力2000点，躲闪2500点。";
+					return "" + (10 + parseInt(lv * 10 / 1000)) + "秒内，提升自身攻击力" + parseInt(lv * 2) + "点，躲闪" + parseInt(lv * 2 + 500) + "点。";
 				}
 			}
 		};

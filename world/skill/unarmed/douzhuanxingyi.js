@@ -84,7 +84,10 @@ this.pfm = {
 				var sl = lastId.indexOf("/");
 				var srcSkill = sl > 0 ? SKILL.get(lastId.slice(0, sl)) : null;
 				var srcPfm = srcSkill && srcSkill.get_pfm(lastId.slice(sl + 1));
-				if (srcPfm && typeof srcPfm.use === "function" && DZ_BASES.indexOf(srcPfm.enable_skill) >= 0) copied = srcPfm;
+				// grade 6 绝招不能斗转；自创武学里融合来的绝招按来源技能的品级算
+				var gradeSkill = srcPfm && srcPfm.source_skill ? SKILL.get(srcPfm.source_skill) : srcSkill;
+				var srcGrade = gradeSkill ? (parseInt(gradeSkill.grade) || 0) : 0;
+				if (srcPfm && typeof srcPfm.use === "function" && DZ_BASES.indexOf(srcPfm.enable_skill) >= 0 && srcGrade < 6) copied = srcPfm;
 			}
 			if (copied) {
 				me.send_room("<HIB>$N长啸一声，斗转星移之「斗转」全力激发——漫天星光为之黯淡！$N以彼之道还施彼身，使出了" + copied.name + "！</HIB>", target);
@@ -103,7 +106,7 @@ this.pfm = {
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
-			return "使用前一个攻击你的武器或拳脚绝招攻击敌人，效果是你斗转星移等级的100%。以彼之道，还施彼身。";
+			return "使用前一个攻击你的武器或拳脚绝招（六品武学除外）攻击敌人，效果是你斗转星移等级的100%。以彼之道，还施彼身。";
 		}
 	}
 };

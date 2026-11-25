@@ -33,12 +33,12 @@ this.pfm = {
 				me.add_status({
 					id: "shenlong",
 					name: "神龙",
-					desc: "防御增加1000点",
+					desc: "防御增加" + parseInt(lv) + "点",
 					duration: 10000 + parseInt(lv * 10),
-					prop: { fy: 1000 },
+					prop: { fy: parseInt(lv) },
 				})},
 			query_desc: function (me, lv) {
-				return "呼唤洪教主的法力，增加自身防御" + (10 + parseInt(lv * 10 / 1000)) + "秒内，提升自身防御1000点。";
+				return "呼唤洪教主的法力，增加自身防御" + (10 + parseInt(lv * 10 / 1000)) + "秒内，提升自身防御" + parseInt(lv) + "点。";
 			}
 		}
 	};

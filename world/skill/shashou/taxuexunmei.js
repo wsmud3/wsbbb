@@ -40,7 +40,7 @@ this.pfm = {
             no_auto: true,
             use: function (me, target, lv) {
                 var gj = 3000 + lv*5;
-                if (gj > 10000) gj = 10000;
+                if (gj > 8000) gj = 8000;
                 me.send_room("<hiw>$N身体急转，化为一道白光，虚幻不定的出现在$N的周围\n</hiw>", target);
                 me.add_status({
                     id: "dodge",
@@ -52,7 +52,7 @@ this.pfm = {
             },
             query_desc: function (me, lv) {
                 var gj = 3 + parseInt(lv / 200);
-                if (gj > 10) gj = 10;
+                if (gj > 8) gj = 8;
                 return gj+"秒内免疫控制";
             }
     }

@@ -119,13 +119,13 @@ async function main() {
             assert.strictEqual(a.mp, 100000, id + " 不超上限");
         }
     });
-    check("罗汉伏魔：每层 +80%，最多 5 层", () => {
+    check("罗汉伏魔：每层 +(1+lv/150)%（1000 级 7%），最多 5 层", () => {
         const [a, b] = pair({ fumozhang: "staff" }, 1000);
         stubAttack(a, [1]);
         const g0 = a.query_prop("gj_per");
         for (let i = 0; i < 7; i++) SKILL.get("fumozhang").pfm.pfm1.use(a, b, 1000);
         assert.strictEqual(a.query_status("luohan_fumo"), 5);
-        assert.strictEqual(a.query_prop("gj_per") - g0, 400);
+        assert.strictEqual(a.query_prop("gj_per") - g0, 35);
     });
     check("吼仙法：一次性释放，每层 +1000，清空全部层数", () => {
         const [a, b] = pair({ shedaoqigong: "staff" }, 1000);

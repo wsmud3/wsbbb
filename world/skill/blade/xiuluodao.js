@@ -65,6 +65,8 @@ this.on_attack_over = function (me, target, par) {
     }
 };
 
+function lianyu_bonus_percent(lv) { return 1 + parseInt((lv || 0) / 500); }
+
 // 修罗炼狱击杀后清掉自身冷却：玩家手动出招的冷却 temp（pfm/blade/lianyu）与自动出招的 release_time 都要清
 function reset_lianyu_cd(me, pfm) {
     if (!me) return;
@@ -95,9 +97,10 @@ this.pfm = {
             var count = 1 + Math.min(layer, 10);
             var killed = false;
 
+            // 每段附加目标当前气血 (1 + lv/500)%（2300 级 5%），附加部分不超过自身攻击 ×2
+            var bonusPercent = lianyu_bonus_percent(lv);
             for (var i = 0; i < count; i++) {
-                var bonusPercent = 1 + parseInt(lv / 10);
-                var bonus = parseInt(target.hp * bonusPercent / 100);
+                var bonus = Math.min(parseInt(target.hp * bonusPercent / 100), (me.gj || 0) * 2);
                 var dmg = me.do_attack({
                     target: target,
                     gj: me.gj + bonus,
@@ -120,8 +123,9 @@ this.pfm = {
             me.end_attack(target);
         },
         query_desc: function (me, lv) {
-            var bonus = 1 + parseInt(lv / 10);
-            return "根据敌人身上的修罗层数进行多次攻击（1+层数，最多11次），每次附加敌人当前气血" + bonus + "%的伤害。击杀重置冷却。冷却" + (me && this.query_distime ? this.query_distime(me, lv) / 1000 : 20) + "秒，出招" + (me && this.query_releasetime ? this.query_releasetime(me, lv) / 1000 : 4) + "秒。"
+            var bonus = lianyu_bonus_percent(lv);
+            var cap = me && me.gj ? "（最多" + (me.gj * 2) + "点）" : "（最多为自身攻击的2倍）";
+            return "根据敌人身上的修罗层数进行多次攻击（1+层数，最多11次），每次附加敌人当前气血" + bonus + "%的伤害" + cap + "。击杀重置冷却。冷却" + (me && this.query_distime ? this.query_distime(me, lv) / 1000 : 20) + "秒，出招" + (me && this.query_releasetime ? this.query_releasetime(me, lv) / 1000 : 4) + "秒。"
         }
     },
 

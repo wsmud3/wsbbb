@@ -101,14 +101,15 @@ async function main() {
         assert.ok(par.gj > b.gj, "附加伤害生效");
         assert.ok(/年龄：\+9岁/.test(sk.query_enable_prop(1800).force.desc));
     });
-    await check("不老长春功·唯我独尊：迟钝真正延长出招与冷却", () => {
+    await check("不老长春功·唯我独尊：迟钝延长出招与冷却 1000+lv/2 毫秒、攻速 -(5+lv/200)%", () => {
         const a = mkUser(), b = mkUser(); learn(a, {}, 100); learn(b, {}, 100); fight(a, b);
         a.do_attack = () => 0; a.end_attack = () => {};
         const fake = { distime: 30000, release_time: 3000, __proto__: PERFORM.prototype };
         const r0 = fake.query_releasetime(b, 1), d0 = fake.query_distime(b, 1);
         SKILL.get("bulaochangchungong").pfm.wo.use(a, b, 1000);
-        assert.strictEqual(fake.query_releasetime(b, 1) - r0, 3000);
-        assert.strictEqual(fake.query_distime(b, 1) - d0, 3000);
+        assert.strictEqual(fake.query_releasetime(b, 1) - r0, 1500);
+        assert.strictEqual(fake.query_distime(b, 1) - d0, 1500);
+        assert.strictEqual(b.status.find(x => x.id === "bulao_chidun").prop.gjsd_per, -10, "1000 级攻速 -10%");
     });
     await check("枯木神功 / 葵花神功：清负面一次清掉全部层数且不额外跳伤害", () => {
         for (const sk of ["kumushengong", "kuihuashengong"]) {

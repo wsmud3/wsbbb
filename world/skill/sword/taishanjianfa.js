@@ -68,14 +68,14 @@
 								duration: 5000 + parseInt(lv * 5),
 								override: 1,
 								downside: true,
-								prop: { ds_per: -parseInt(lv * 5 / 1000), fy: -5 },
+								prop: { ds_per: -parseInt(lv * 5 / 1000), fy_per: -5 },
 							});
 						}
 					}
 					me.end_attack(target)
 				},
 				query_desc: function (me, lv) {
-					return "瞬间七剑攻击敌方要穴，每剑造成70%伤害，每命中一剑减少敌人" + (parseInt(lv * 5 / 1000)) + "%的躲闪和5点防御。";
+					return "瞬间七剑攻击敌方要穴，每剑造成70%伤害，每命中一剑减少敌人" + (parseInt(lv * 5 / 1000)) + "%的躲闪和5%防御。";
 				}
 			}
 		};
