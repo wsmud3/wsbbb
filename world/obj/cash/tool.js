@@ -22,19 +22,11 @@ function wrap_name(text, grade) {
 this.on_use = function (me, par) {
 
     if (!par) {
-        var str = ["{type:\"cmds\",items:["];
         var list = ["一把" + wrap_name('铁镐', this.grade), "一根"
             + wrap_name('钓鱼竿', this.grade), "一本" + wrap_name('药王神篇', this.grade)];
-        for (var i = 0; i < list.length; i++) {
-            str.push("{cmd:\"use " + this.id + " ");
-            str.push(i + 1);
-            str.push("\",name:\"");
-            str.push(list[i]);
-            str.push("\"},");
-        }
-        str.push("]}");
-        me.notify("选择你想要的工具：");
-        return me.notify_fail(str.join(""));
+        var self = this;
+        me.popup({ text: "选择你想要的工具：", buttons: list.map(function (name, i) { return ["use " + self.id + " " + (i + 1), name]; }) });
+        return false;
     }
     let path = ['sp/tool/chu#', 'sp/tool/diao#', 'sp/tool/yao#'][parseInt(par) - 1];
     if (!path)

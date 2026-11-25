@@ -130,11 +130,11 @@ this.add_action("forge", "锻造神器", function (me, par) {
 
     if (soulCount >= 30 && artCount >= 30) {
         me.notify("\n<hiy>请选择你要锻造的神器：</hiy>");
-        var cmds = [];
+        var buttons = [];
         for (var key in artifacts) {
-            cmds.push({ cmd: "forge " + key, name: artifacts[key] });
+            buttons.push(["forge " + key, artifacts[key]]);
         }
-        me.send('{type:"cmds",items:' + JSON.stringify(cmds) + '}');
+        me.popup({ buttons: buttons });
     } else {
         me.notify("\n<hir>碎片不足，无法锻造任何神器。</hir>");
     }

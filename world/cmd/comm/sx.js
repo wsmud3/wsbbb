@@ -141,23 +141,16 @@ this.manage_battle = function (me, par2) {
         return me.send("你的门派刚结刚束战争，需要休养。");
     }
     if (!par2) {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         for (var key of FAMS) {
             let fam = FAMILIES[key];
             if (fam === me.family || fam.battle_family || fam.query_temp('battle')) continue;
-            if (str.length > 1) str.push(",");
-            str.push("{cmd:\"sx manage battle ");
-            str.push(key);
-            str.push("\",name:\"", "向", fam.name, '宣战');
-            str.push("\"}");
+            buttons.push(["sx manage battle " + key, "向" + fam.name + "宣战"]);
         }
-        if (str.length == 1) {
+        if (!buttons.length) {
             return me.notify("当前没有可宣战的门派。");
         }
-        str.push("]}");
-
-        me.send('选择你要进攻的门派：');
-        return me.send(str.join(""));
+        return me.popup({ text: "选择你要进攻的门派：", buttons: buttons });
     }
     let fam = FAMILIES[par2];
     if (!fam || fam === me.family) return me.send('你要进攻哪个门派？');
@@ -177,23 +170,16 @@ this.manage_battle2 = function (me, par2) {
         return me.send("你的门派正在战斗。");
     }
     if (!par2) {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         for (var key of FAMS) {
             let fam = FAMILIES[key];
             if (fam === me.family || !fam.battle_family) continue;
-            if (str.length > 1) str.push(",");
-            str.push("{cmd:\"sx manage battle ");
-            str.push(key);
-            str.push("\",name:\"", "进攻", fam.name);
-            str.push("\"}");
+            buttons.push(["sx manage battle " + key, "进攻" + fam.name]);
         }
-        if (str.length == 1) {
+        if (!buttons.length) {
             return me.notify("当前没有正在战斗中的门派。");
         }
-        str.push("]}");
-
-        me.send('选择你要趁乱进攻的门派：');
-        return me.send(str.join(""));
+        return me.popup({ text: "选择你要趁乱进攻的门派：", buttons: buttons });
     }
 
     let fam = FAMILIES[par2];

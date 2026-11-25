@@ -36,26 +36,17 @@ this.enter = function (me, oid) {
         }
 
     } else {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         for (var i = 0; i < me.items.length; i++) {
             var item = me.items[i];
             if (!item.level || !item.is_equipment) {
                 continue;
             }
-            if (str.length > 1) str.push(",");
-
-            str.push("{cmd:\"unjinglian ");
-            str.push(item.id);
-            str.push("\",name:\"", UTIL.moneyToStr(MONEYS[item.grade]), "清除精炼");
-            str.push(item.color_name);
-            str.push("\"}");
+            buttons.push(["unjinglian " + item.id, UTIL.moneyToStr(MONEYS[item.grade]) + "清除精炼" + item.color_name]);
         }
-        if (str.length == 1) {
+        if (!buttons.length) {
             return me.notify("铁匠瞄了你一眼说道：你身上没有精炼过的装备。");
         }
-        str.push("]}");
-
-        me.notify("铁匠说道：取消精炼后装备的等级变为初始等级，退回全部玄晶，不论精炼等级统一收费。");
-        me.notify(str.join(""));
+        me.popup({ text: "铁匠说道：取消精炼后装备的等级变为初始等级，退回全部玄晶，不论精炼等级统一收费。", buttons: buttons });
     }
 }

@@ -64,6 +64,16 @@
                 me.send_room("<HIC>$N运起玄铁剑法「海潮汹涌」，剑光如潮水般一波接一波地涌向$n！</HIC>", target);
                 var count = 4 + Math.floor(lv / 250);
                 if (count > 8) count = 8;
+                var HAICHAO_MSGS = [
+                    "<HIC>$N重剑一推，剑势如潮头初起，滚滚压向$n！</HIC>",
+                    "<HIC>前浪未平，后浪又至，$N剑风呼啸，层层叠叠涌向$n！</HIC>",
+                    "<HIC>$N沉肩坠肘，剑劲如暗流回旋，将$n卷在其中！</HIC>",
+                    "<HIC>剑气翻涌如惊涛拍岸，$N一剑横扫，$n只觉四面八方尽是浪涛！</HIC>",
+                    "<HIC>$N剑势愈来愈沉，宛如大潮夜至，无声无息间已漫过$n周身！</HIC>",
+                    "<HIC>$N纵声长啸，重剑劈落，激起千层剑浪向$n倒卷而去！</HIC>",
+                    "<HIC>潮声如雷，$N剑走沉雄，一浪高过一浪，压得$n喘不过气来！</HIC>",
+                    "<HIC>$N力贯剑身，万顷剑潮汇作一线，轰然拍向$n！</HIC>"
+                ];
                 for (var i = 0; i < count; i++) {
                     var cost = Math.floor(me.mp * 0.04);
                     if (cost > 0) {
@@ -72,12 +82,12 @@
                         me.do_attack({
                             target: target,
                             gj: (me.gj + add_damage),
-                            attack_msg: "<HIC>第" + (i + 1) + "波剑浪带着$N的内力向$n涌去！</HIC>"
+                            attack_msg: HAICHAO_MSGS[i % HAICHAO_MSGS.length]
                         });
                     } else {
                         me.do_attack({
                             target: target,
-                            attack_msg: "<HIC>第" + (i + 1) + "波剑浪向$n涌去！</HIC>"
+                            attack_msg: HAICHAO_MSGS[i % HAICHAO_MSGS.length]
                         });
                     }
                 }

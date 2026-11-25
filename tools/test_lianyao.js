@@ -149,14 +149,15 @@ async function main() {
     await check("浮窗：第一级按品级列出，第二级列出该级丹药、所需材料与是否够料", () => {
         const me = mkUser(); me.environment = room(); me.set_skill("lianyao", 500);
         L().learn(me, 2); L().learn(me, 24);
-        const sent = []; me.send_commands = function () { sent.push(Array.prototype.slice.call(arguments)); };
+        const sent = []; me.send = function (t) { if (/^\{type:"cmds"/.test(t)) sent.push(t); };
         WORLD.COMMANDS["lianyao"].enter(me, undefined);
-        const lv1 = sent.pop();
-        assert.deepStrictEqual(lv1.filter(x => typeof x === "string"), ["lianyao g1", "炼制一级丹药", "lianyao g2", "炼制二级丹药"]);
-        assert.ok(/已掌握2个药方/.test(lv1[lv1.length - 1].text));
+        const lv1 = JSON.parse(sent.pop().replace(/^\{type:/, '{"type":').replace(/,items:/, ',"items":').replace(/\{cmd:/g, '{"cmd":').replace(/,name:/g, ',"name":').replace(/\],text:/, '],"text":'));
+        assert.deepStrictEqual(lv1.items.map(i => i.cmd + "/" + i.name), ["lianyao g1/炼制一级丹药", "lianyao g2/炼制二级丹药"]);
+        assert.ok(/已掌握2个药方/.test(lv1.text));
         giveMats(me, L().get(2), 1);
         WORLD.COMMANDS["lianyao"].enter(me, "g1");
-        const html = sent.pop()[0].html;
+        const msg = sent.pop(), hm = msg.match(/,html:("(?:[^"\\]|\\.)*")/);
+        const html = hm ? JSON.parse(hm[1]) : "";
         assert.ok(html.indexOf('cmd="lianyao 2"') >= 0 && html.indexOf("大力丸") >= 0 && html.indexOf("需要材料") >= 0 && html.indexOf("可炼1颗") >= 0);
         assert.ok(html.indexOf("lianyao 24") < 0, "只列本级");
         assert.ok(html.indexOf('cmd="lianyao"') >= 0, "有返回按钮");
@@ -165,11 +166,11 @@ async function main() {
         const owner = mkUser(); owner.environment = room(); owner.set_skill("lianyao", 300); L().learn(owner, 2);
         WORLD.USERS.push(owner);
         try {
-            const sent = []; owner.send_commands = function () { sent.push(Array.prototype.slice.call(arguments)); };
+            const sent = []; owner.send = function (t) { if (/^\{type:"cmds"/.test(t)) sent.push(t); };
             const f = new FOLLOWER(); f.id = "f" + Math.random().toString(36).slice(2, 8); f.name = "程灵素"; f.master = owner.id;
             f.items = []; f.temp = {}; f.status = []; f.skills = {}; f.environment = owner.environment; f.listener = owner;
             WORLD.COMMANDS["lianyao"].enter(f, undefined);
-            assert.ok(sent.pop().indexOf("dc " + f.id + " lianyao g1") >= 0, "按钮带 dc 前缀");
+            assert.ok(sent.pop().indexOf('"dc ' + f.id + ' lianyao g1"') >= 0, "浮窗弹给主人，按钮带 dc 前缀");
             giveMats(f, L().get(2), 1);
             assert.ok(!owner.find_obj_bypath("drug/dan#2"));
             WORLD.COMMANDS["lianyao"].enter(f, "2");

@@ -12,17 +12,8 @@ this.enter = function (me, arg) {
         }
         me.notify(target.query_commands(me));
         if (target.hp) {
-            var str = ["{type:\"cmds\",items:["];
-
             if (target.path && me.query_temp('yb_npc2') == target.path) {
-                str.push("{cmd:\"task yunbiao ");
-                str.push(target.id);
-                str.push(" give\",name:\"交镖银\"}");
-            }
-            str.push("]}");
-            if (str.length > 2) {
-
-                me.send(str.join(''));
+                me.popup({ buttons: [["task yunbiao " + target.id + " give", "交镖银"]] });
             }
 
         }

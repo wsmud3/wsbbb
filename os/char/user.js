@@ -117,6 +117,46 @@ USER.prototype.send_commands = function () {
     str.push("}");
     this.send(str.join(""));
 }
+// 浮窗统一接口（新功能一律用它；说明见 docs/浮窗.md）。opts：
+//   text        说明文字（支持颜色标签）
+//   buttons     底部按钮：[[命令, 名字], ...] 或 [{cmd, name}, ...]
+//   rows        富内容行：每行是字符串（纯说明）或 {text, buttons:[[命令, 名字], ...]}（说明 + 行内按钮）
+//   html        直接给一段 HTML（排在 rows 前面）；行内按钮用 UTIL.popup_btn 生成
+//   back        返回按钮：命令字符串，或 [命令, 名字]（默认名字「返回」），放在最后一行
+//   size        尺寸档位（如 "lg"）；persistent 点按钮后不自动关闭；feedback 窗内提示行
+// 所有文字都做 JSON 转义，命令和名字里有引号也不会出错。
+USER.prototype.popup = function (opts) {
+    opts = opts || {};
+    var items = [];
+    (opts.buttons || []).forEach(function (b) {
+        if (!b) return;
+        var cmd = Array.isArray(b) ? b[0] : b.cmd, name = Array.isArray(b) ? b[1] : b.name;
+        if (cmd) items.push({ cmd: String(cmd), name: String(name == null ? cmd : name) });
+    });
+    var html = opts.html || "";
+    (opts.rows || []).forEach(function (r) {
+        if (r == null) return;
+        if (typeof r === "string") { html += UTIL.popup_row(r); return; }
+        var btns = (r.buttons || []).map(function (b) {
+            return Array.isArray(b) ? UTIL.popup_btn(b[0], b[1]) : UTIL.popup_btn(b.cmd, b.name);
+        });
+        html += UTIL.popup_row(r.text || "", btns);
+    });
+    if (opts.back) {
+        var back = Array.isArray(opts.back) ? opts.back : [opts.back, "返回"];
+        html += UTIL.popup_row("", [UTIL.popup_btn(back[0], back[1] || "返回")]);
+    }
+    var str = ["{type:\"cmds\",items:[", items.map(function (it) {
+        return "{cmd:" + jsonStr(it.cmd) + ",name:" + jsonStr(it.name) + "}";
+    }).join(","), "]"];
+    if (html) str.push(",html:" + jsonStr(html));
+    if (opts.text) str.push(",text:" + jsonStr(opts.text));
+    if (opts.size) str.push(",size:" + JSON.stringify(opts.size));
+    if (opts.feedback) str.push(",feedback:" + jsonStr(opts.feedback));
+    if (opts.persistent) str.push(",persistent:true");
+    str.push("}");
+    this.send(str.join(""));
+}
 USER.prototype.is_connect = function () {
     return this.socket !== null;
 }

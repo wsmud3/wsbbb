@@ -18,6 +18,11 @@ CHARACTER.prototype.notify = function () {
 CHARACTER.prototype.send_commands = function () {
 
 }
+// 浮窗（见 USER.prototype.popup）：非玩家（随从被 dc 代办时）弹给正在指挥它的主人，其余忽略
+CHARACTER.prototype.popup = function (opts) {
+    var viewer = this.listener;
+    if (viewer && viewer !== this && viewer.popup) viewer.popup(opts);
+}
 CHARACTER.prototype.notify_fail = function () {
     return false;
 }

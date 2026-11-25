@@ -71,10 +71,21 @@
                 if (!target) return me.notify("你要对谁使用绝招？");
                 me.send_room("<HIR>$N眼中红芒大盛，$W上血光暴涨——彼岸九式，花开见血！</HIR>", target);
 
+                var BIAN_MSGS = [
+                    "<HIR>「花开彼岸」！$N剑尖轻颤，一点血红自锋端绽开，直刺$n眉心！</HIR>",
+                    "<HIR>「叶落此岸」！$N回剑斜削，剑光如残叶飘零，掠向$n颈侧！</HIR>",
+                    "<HIR>「花叶两不见」！$N身形一错，一剑虚、一剑实，$n竟分不清何处来袭！</HIR>",
+                    "<HIR>「忘川渡」！$N剑势一沉，如引幽冥之水，缓缓漫过$n周身！</HIR>",
+                    "<HIR>「奈何桥」！$N踏步横剑，剑光一线，拦腰斩向$n！</HIR>",
+                    "<HIR>「血曼珠」！$N剑锋连点，血花朵朵绽于$n身前！</HIR>",
+                    "<HIR>「千年一开」！$N一剑递出，仿佛蓄了千年之势，$n只觉寒意彻骨！</HIR>",
+                    "<HIR>「轮回不见」！$N剑影翻飞，前招后招首尾相衔，将$n困于剑网之中！</HIR>",
+                    "<HIR>「彼岸花尽」！$N收剑复出，满天血光凝作一剑，贯向$n心口！</HIR>"
+                ];
                 for (var i = 0; i < 9; i++) {
                     me.do_attack({
                         target: target,
-                        attack_msg: "<HIR>彼岸花开——第" + (i + 1) + "式！</HIR>"
+                        attack_msg: BIAN_MSGS[i]
                     });
                 }
                 start_auto_attack(me);

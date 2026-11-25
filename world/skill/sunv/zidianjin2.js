@@ -35,17 +35,17 @@
 				var cost = Math.floor(me.max_mp * 0.1);
 				if (me.mp < cost) return me.notify("内力不足，无法施展惊雷爆五岳。");
 
-				me.send_room("<HIR>$N暴喝一声，紫电七击——「惊雷爆五岳」！拳出如雷，震撼五岳！</HIR>", target);
+				me.send_room("<HIR>$N暴喝一声，紫电连环——「惊雷爆五岳」！拳出如雷，震撼五岳！</HIR>", target);
 
 				var hits = 0;
 				var totalDmg = 0;
 
 				var thunderMsgs = [
-					"<HIY>$N第一击——「雷震五岳」！拳出如岳，天崩地裂般轰向$n！</HIY>",
-					"<HIY>$N第二击——「电闪九霄」！身化紫电，迅雷不及掩耳之势贯向$n！</HIY>",
-					"<HIY>$N第三击——「雷霆万钧」！紫电拳劲携万钧之力当头砸下！</HIY>",
-					"<HIY>$N第四击——「轰雷掣电」！拳影与电光交织，$n已分不清是拳是雷！</HIY>",
-					"<HIY>$N第五击——「紫电贯日」！紫芒大盛，宛若烈日炸裂，一拳洞穿$n！</HIY>"
+					"<HIY>$N一式「雷震五岳」，拳出如岳，天崩地裂般轰向$n！</HIY>",
+					"<HIY>$N身化紫电，「电闪九霄」！迅雷不及掩耳之势贯向$n！</HIY>",
+					"<HIY>「雷霆万钧」！$N紫电拳劲挟万钧之力，向$n当头砸下！</HIY>",
+					"<HIY>$N拳影与电光交织，「轰雷掣电」！$n已分不清是拳是雷！</HIY>",
+					"<HIY>「紫电贯日」！$N拳上紫芒大盛，宛若烈日炸裂，一拳直捣$n心口！</HIY>"
 				];
 				for (var i = 0; i < 5; i++) {
 					if (target.hp <= 0 || me.hp <= 0) break;
@@ -59,7 +59,7 @@
 					});
 					if (!(hitSh > 0)) break;
 					me.add_mp(cost);
-					me.send_room("<HIG>$N击中$n，内力回流！</HIG>", target);
+					me.send_room("<HIG>$N拳劲击实，紫电真气循臂回流，生生不息！</HIG>", target);
 					totalDmg += hitSh;
 					hits++;
 					if (target.hp <= 0) break;
@@ -70,13 +70,13 @@
 					var atk = me.do_attack({
 						target: target,
 						gj: bonus,
-						attack_msg: "<HIR>五击连中！$N引动九天惊雷，对$n造成" + bonus + "点额外伤害！</HIR>"
+						attack_msg: "<HIR>五雷合一！$N引动九天惊雷，挟五岳之势一拳轰向$n，雷光炸裂，声震四野！</HIR>"
 					});
 					totalDmg += bonus;
 				}
 
 				me.end_attack(target);
-				me.send_room("<HIR>$N的惊雷爆五岳共计" + hits + "连击！</HIR>", target);
+				me.send_room("<HIR>$N收拳而立，周身紫电渐渐隐去。</HIR>", target);
 			},
 			query_desc: function (me, lv) {
 				return "消耗10%最大内力发动连击，每击造成等量伤害，命中则返还消耗内力并继续连击。最多五连击，五击全中则额外造成50%最大内力的伤害。";

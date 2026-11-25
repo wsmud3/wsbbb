@@ -75,28 +75,28 @@ function tick(me, dt) {
     }
 }
 
-// 浮窗发给主人（随从代炼时 me 是随从）
-function viewer_of(me, owner) { return me.is_player ? me : (me.listener || owner); }
+// 浮窗统一走 me.popup（随从代炼时 me 是随从，popup 自动弹给正在指挥它的主人）
 
 // 第一级：选择炼制几级丹药
 function show_grades(me, owner, L, prefix) {
-    var known = L.known_list(owner), viewer = viewer_of(me, owner);
+    var known = L.known_list(owner);
     if (!known.length) return me.notify("你还没有掌握任何丹方。丹方需要研读后才能炼制。");
-    var args = [];
+    var buttons = [];
     for (var g = 1; g <= 6; g++) {
         var has = known.some(function (id) { var r = L.get(id); return r && r.grade === g; });
-        if (has) args.push(prefix + " g" + g, "炼制" + GRADE_CN[g] + "级丹药");
+        if (has) buttons.push([prefix + " g" + g, "炼制" + GRADE_CN[g] + "级丹药"]);
     }
-    args.push({ text: (me === owner ? "你" : me.name + "照你") + "目前已掌握" + known.length + "个药方，要炼制哪个级别的丹药？" });
-    viewer.send_commands.apply(viewer, args);
+    me.popup({
+        text: (me === owner ? "你" : me.name + "照你") + "目前已掌握" + known.length + "个药方，要炼制哪个级别的丹药？",
+        buttons: buttons
+    });
 }
 
 // 第二级：这一级的丹药，每行「丹药按钮 + 需要材料」
 function show_grade(me, owner, L, prefix, grade, free) {
-    var viewer = viewer_of(me, owner);
     var recs = L.known_list(owner).map(L.get).filter(function (r) { return r && r.grade === grade; });
     if (!recs.length) return show_grades(me, owner, L, prefix);
-    var html = '<div class="zc-group">' + (me === owner ? "你" : me.name) + "目前可以炼制以下" + GRADE_CN[grade] + "级丹药：</div>";
+    var rows = [(me === owner ? "你" : me.name) + "目前可以炼制以下" + GRADE_CN[grade] + "级丹药："];
     recs.forEach(function (rec) {
         var dan = OBJ.CREATE("drug/dan#" + rec.id);
         var mats = [];
@@ -106,9 +106,7 @@ function show_grade(me, owner, L, prefix, grade, free) {
         }
         var n = L.craftable(me, rec, free);
         var tail = free ? "（不耗材料）" : n > 0 ? "<hig>可炼" + n + "颗</hig>" : "<hiw>材料不足</hiw>";
-        html += UTIL.popup_row(UTIL.popup_btn(prefix + " " + rec.id, dan ? dan.color_name : rec.name)
-            + "需要材料：" + mats.join("，") + " " + tail);
+        rows.push(UTIL.popup_btn(prefix + " " + rec.id, dan ? dan.color_name : rec.name) + "需要材料：" + mats.join("，") + " " + tail);
     });
-    html += UTIL.popup_row("", [UTIL.popup_btn(prefix, "返回")]);
-    viewer.send_commands({ html: html, size: "lg" });
+    me.popup({ rows: rows, back: prefix, size: "lg" });
 }

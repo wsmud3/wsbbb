@@ -7,26 +7,18 @@ const MONEYS_DESC = [null,
     "1两<hiy>黄金</hiy>", "10两<hiy>黄金</hiy>", "100两<hiy>黄金</hiy>"];
 this.enter = function (player, objid, par) {
     if (!objid) {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         for (var i = 0; i < player.items.length; i++) {
             var item = player.items[i];
             if (!item.st_prop || !item.st_prop.length) {
                 continue;
             }
-            if (str.length > 1) str.push(",");
-
-            str.push("{cmd:\"unxiangqian ");
-            str.push(item.id);
-            str.push("\",name:\"取消镶嵌");
-            str.push(item.color_name);
-            str.push("\"}");
+            buttons.push(["unxiangqian " + item.id, "取消镶嵌" + item.color_name]);
         }
-        if (str.length == 1) {
+        if (!buttons.length) {
             return player.notify("铁匠瞄了你一眼说道：你身上没有镶嵌过宝石的装备。");
         }
-        str.push("]}");
-        player.notify("铁匠说道：你要拆掉哪个装备上的宝石？");
-        return player.notify(str.join(""));
+        return player.popup({ text: "铁匠说道：你要拆掉哪个装备上的宝石？", buttons: buttons });
     }
     var obj = player.find_obj(objid);
     if (!obj) {
@@ -53,25 +45,14 @@ this.enter = function (player, objid, par) {
         return;
     }
     if (!par) {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         var sum = 0;
         for (var i = 0; i < obj.st_prop.length; i++) {
-            str.push("{cmd:\"unxiangqian " + obj.id + " ");
-
-            str.push(obj.st_prop[i].id);
-            str.push("\",name:\"", MONEYS_DESC[obj.st_prop[i].grade], "拆掉");
-            str.push(obj.st_prop[i].name);
+            buttons.push(["unxiangqian " + obj.id + " " + obj.st_prop[i].id, MONEYS_DESC[obj.st_prop[i].grade] + "拆掉" + obj.st_prop[i].name]);
             sum += MONEYS[obj.st_prop[i].grade];
-            str.push("\"},");
         }
-        str.push("{cmd:\"unxiangqian ");
-        str.push(obj.id);
-        str.push(" all\",name:\"", UTIL.moneyToStr(sum), "全部拆掉");
-        str.push("\"}");
-
-        str.push("]}");
-        player.send('铁匠：取消镶嵌后恢复装备的孔洞数量，宝石等级越高需要的手艺更精细。');
-        return player.notify(str.join(""));
+        buttons.push(["unxiangqian " + obj.id + " all", UTIL.moneyToStr(sum) + "全部拆掉"]);
+        return player.popup({ text: "铁匠：取消镶嵌后恢复装备的孔洞数量，宝石等级越高需要的手艺更精细。", buttons: buttons, back: "unxiangqian" });
     } else {
         let st = null, index = 0;
         for (index = 0; index < obj.st_prop.length; index++) {

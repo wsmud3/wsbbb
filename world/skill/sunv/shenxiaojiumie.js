@@ -36,6 +36,13 @@
 			mp: 6,
 			use: function (me, target, lv) {
 				me.send_room("<HIR>$N高举神杖，九天神霄之雷应声而下——「天打五雷轰」！</HIR>");
+				var WULEI_MSGS = [
+					"<HIY>$N神杖高举，杖头雷光一闪，一道霹雳当空劈向$n顶门！</HIY>",
+					"<HIY>雷声未绝，$N杖势回旋，又一道电光自云端斜贯而下，罩住$n周身！</HIY>",
+					"<HIY>$N踏罡步斗，神杖顿地，滚滚雷霆贴地横卷，直扫$n下盘！</HIY>",
+					"<HIY>天际黑云翻涌，$N杖尖遥指，万钧雷霆轰然砸向$n！</HIY>",
+					"<HIY>$N长啸一声，五雷聚于杖端，煌煌天威当头压落，$n避无可避！</HIY>"
+				];
 
 				// 群攻：对所有敌人降下五雷
 				// 群攻：每个敌人五雷，命中才回复等同于造成伤害的内力（add_mp 不会超过上限）
@@ -43,7 +50,7 @@
 					target: target,
 					times: 5,
 					gj: me.gj * 1.5,
-					attack_msg: function (t, n) { return "<HIY>第" + (n + 1) + "雷！</HIY>"; },
+					attack_msg: function (t, n) { return WULEI_MSGS[n]; },
 					on_target: function (t) { me.send_room("<HIY>神雷轰向$n！</HIY>", t); },
 					on_hit: function (t, sh) { me.add_mp(Math.floor(sh)); }
 				});

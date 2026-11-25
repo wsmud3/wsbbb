@@ -16,26 +16,20 @@ this.on_use = function (me, par) {
     var is_max = false;
     if (me.follower && me.follower.length >= max) is_max = true;
     if (!par && is_max) {
-        var str = ["{type:\"cmds\",items:["];
+        var buttons = [];
         for (var i = 0; i < me.follower.length; i++) {
             if (me.follower[i].path == npc.path) {
                 return me.notify_fail("你已经拥有" + npc.name + "了。");
             }
             var follower = FOLLOWER.GET(me, me.follower[i]);
             if (!follower) return me.notify_fail("未能读取到你的追随者，请尝试出去住所重新进入。");
-            if (str.length > 1) str.push(",");
-            str.push("{cmd:\"use ");
-            str.push(this.id);
-            str.push(" ");
-            str.push(follower.id);
-            str.push("\",name:\"继承");
-            str.push(follower.name);
-            str.push("的属性\"}");
+            buttons.push(["use " + this.id + " " + follower.id, "继承" + follower.name + "的属性"]);
         }
-        me.send("你家的位置已经不多了，请选择如何安置" + npc.name
-            + "：\n<hir>会继承你选择的随从的经验，潜能，背包，装备。技能取两者的最高等级，进阶后的技能将保持等级不变</hir>");
-        str.push("]}");
-        me.send(str.join(""));
+        me.popup({
+            text: "你家的位置已经不多了，请选择如何安置" + npc.name
+                + "：<hir>会继承你选择的随从的经验，潜能，背包，装备。技能取两者的最高等级，进阶后的技能将保持等级不变</hir>",
+            buttons: buttons
+        });
         return false;
     } else if (par) {
         for (var i = 0; i < me.follower.length; i++) {

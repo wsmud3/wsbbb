@@ -82,10 +82,17 @@
 				me.send_room("<HIR>$N施展了血刀的「血海魔刀」，刀光化作漫天血影，向$n席卷而去！</HIR>", target);
 				var total_damage = 0;
 				var count = 5;
+				var XUEHAI_MSGS = [
+					"<HIR>$N刀锋一抖，一道血影脱刃而出，直劈$n面门！</HIR>",
+					"<HIR>血影未散，$N反手又是一刀，刀光如血浪翻卷，斜斩$n腰间！</HIR>",
+					"<HIR>$N身形一晃，化作三道血影，刀刀不离$n周身要害！</HIR>",
+					"<HIR>漫天血雾中寒光乍现，$N一刀自下而上撩向$n，腥风扑面！</HIR>",
+					"<HIR>$N长刀高举，血海倒卷，挟着漫天血影当头劈落，$n避无可避！</HIR>"
+				];
 				for (var i = 0; i < count; i++) {
 					var sh = me.do_attack({
 						target: target,
-						attack_msg: "<HIR>第" + (i + 1) + "道血影刀光向$n劈去！</HIR>"
+						attack_msg: XUEHAI_MSGS[i % XUEHAI_MSGS.length]
 					});
 					if (sh > 0) total_damage += sh;
 				}
@@ -94,7 +101,7 @@
 					var heal = Math.floor(total_damage * 0.5);
 					if (heal > 0) {
 						me.do_recover(heal);
-						me.send_room("<HIR>$N吸收了$n的鲜血，恢复了" + heal + "点气血！</HIR>", target);
+						me.send_room("<HIR>$N刀上血气倒流入体，伤势竟渐渐平复！</HIR>", target);
 					}
 				}
 			},

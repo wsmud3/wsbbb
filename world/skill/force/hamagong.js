@@ -80,8 +80,15 @@ this.pfm = {
 					elapsed = Math.floor((Date.now() - start) / 1000);
 					if (elapsed < 0) elapsed = 0;
 				}
-				me.send_room("<hig>$N蓄力" + elapsed + "秒，如炮弹般弹射而出——「蛤蟆冲击」！</hig>", target);
+				me.send_room("<hig>$N蹲身蓄势已久，腹中咕咕作响，猛地弹射而出——「蛤蟆冲击」！</hig>", target);
 				var count = 1 + elapsed;
+				var HAMA_MSGS = [
+					"<hig>$N双掌齐推，一股排山倒海的劲力直撞$n胸口！</hig>",
+					"<hig>$N落地即起，身形如巨蛙扑食，又是一掌推向$n！</hig>",
+					"<hig>$N咕的一声低鸣，劲力连绵不绝，一波强似一波地涌向$n！</hig>",
+					"<hig>$N蹲身再弹，掌风呼啸，激得$n衣袂猎猎作响！</hig>",
+					"<hig>$N周身真气鼓荡，双掌一错，蛤蟆功劲力如怒涛般拍向$n！</hig>"
+				];
 				for (var i = 0; i < count; i++) {
 					var bonus_gj = parseInt(me.gj * (1 + elapsed * 0.15));
 					var bonus_mz = parseInt(me.mz * (1 + elapsed * 0.15));
@@ -89,7 +96,7 @@ this.pfm = {
 						target: target,
 						gj: bonus_gj,
 						mz: bonus_mz,
-						attack_msg: "<hig>第" + (i + 1) + "次蛤蟆冲击带着" + elapsed + "秒蓄力之势撞向$n！</hig>"
+						attack_msg: HAMA_MSGS[i % HAMA_MSGS.length]
 					});
 				}
 				me.end_attack(target);
