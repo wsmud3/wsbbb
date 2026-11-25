@@ -3,6 +3,8 @@
 	this.allow_fight = false;
 	this.allow_state = true;
 	this.allow_busy = true;
+	// 参数只有测试号用：xiulian ren / di / tian 重开一朵已完成的花（不看修为门槛，不再发奖励）
+	this.regex = /^(ren|di|tian)?$/;
 
 	const REN_MAI = ["会阴","曲骨","中极","关元","石门","气海","阴交","神阙","水分","下脘","建里","中脘","上脘","巨阙","鸠尾","中庭","膻中","玉堂","紫宫","华盖","璇玑","天突","廉泉","承浆"];
 	const DU_MAI = ["长强","腰俞","腰阳关","命门","悬枢","脊中","中枢","筋缩","至阳","灵台","神道","身柱","陶道","大椎","哑门","风府","脑户","强间","后顶","百会","前顶","囟会","上星","神庭","素髎","水沟","兑端","龈交"];
@@ -19,7 +21,7 @@
 	    return Math.floor(me.max_mp / 100) + Math.floor(me.con / 10) * conBonus;
 	}
 
-	this.enter = function (me) {
+	this.enter = function (me, replayArg) {
 	    if (me.query_temp("rendu_cultivating")) {
 	        // 防呆：temp还在但state已停止（如断线重连/异常中断），清除残留标记
 	        if (!me.state || me.state.id !== "xiulian") {
@@ -99,20 +101,29 @@
 
 	    // 任督二脉已通，尝试三花聚顶
 	    var value = calcSanhuaValue(me);
-	    var conBonus = me.query_prop("con") || 0;
-	    me.notify("<hiy>三花聚顶修为：内力" + Math.floor(me.max_mp / 100) + " + 先天根骨" + Math.floor(me.con / 10) + " × 后天根骨" + conBonus + " = " + value + "</hiy>");
 
 	    var renDone = me.query_temp("shjd_ren");
 	    var diDone = me.query_temp("shjd_di");
 	    var tianDone = me.query_temp("shjd_tian");
 
-	    if (renDone && diDone && tianDone) {
-	        return me.notify("<hig>你已完成三花聚顶，五气朝元！</hig>");
+	    // 测试号可以反复挑战已完成的花（奖励只在第一次发，见 renhua / dihua / tianhua）
+	    var isTest = me.is_test_char && me.is_test_char();
+	    var replay = isTest && replayArg && me.query_temp("shjd_" + replayArg) ? replayArg : null;
+	    if (renDone && diDone && tianDone && !replay) {
+	        if (isTest) {
+	            return me.popup({
+	                text: "你已完成三花聚顶，精、气、神三花齐聚顶门。测试号可以重新挑战（不再获得奖励）：",
+	                buttons: [["xiulian ren", "重开人花"], ["xiulian di", "重开地花"], ["xiulian tian", "重开天花"]]
+	            });
+	        }
+	        return me.notify("<hig>你已完成三花聚顶，精、气、神三花齐聚顶门。</hig>");
 	    }
 
 	    // 确定当前要开的花
 	    var flowerType = null;
-	    if (!renDone && value >= FLOWER_THRESHOLD.ren) {
+	    if (replay) {
+	        flowerType = replay;
+	    } else if (!renDone && value >= FLOWER_THRESHOLD.ren) {
 	        flowerType = "ren";
 	    } else if (renDone && !diDone && value >= FLOWER_THRESHOLD.di) {
 	        flowerType = "di";
@@ -122,8 +133,7 @@
 
 	    if (!flowerType) {
 	        var nextFlower = !renDone ? "人花" : (!diDone ? "地花" : "天花");
-	        var nextThreshold = !renDone ? FLOWER_THRESHOLD.ren : (!diDone ? FLOWER_THRESHOLD.di : FLOWER_THRESHOLD.tian);
-	        me.notify("<red>你憋了半天，始终无法唤出" + nextFlower + "。当前修为" + value + "，需要达到" + nextThreshold + "。</red>");
+	        me.notify("<red>你憋了半天，始终无法唤出" + nextFlower + "。你的修为尚浅，需将内力与根骨再练得深厚些。</red>");
 	        return;
 	    }
 
@@ -180,8 +190,7 @@
 	                player.notify("<hiy>" + msgs[msgIndex] + "</hiy>");
 	                msgIndex++;
 	            } else {
-	                var remaining = mpNeeded - used - mpPerTick;
-	                player.notify("<hiy>天地之气继续涌入……还需消耗" + Math.max(0, Math.floor(remaining / 10000)) + "万内力。</hiy>");
+	                player.notify("<hiy>天地之气源源不断地涌入体内……</hiy>");
 	            }
 	        },
 	        no_move: "召唤" + FLOWER_NAME[flowerType] + "时要专心，不可移动。",

@@ -40,16 +40,21 @@
 	            var owner = from, dmg = this._total_dmg, hits = this._hit_count;
 	            this.call_out(function () {
 	                this.end_fight();
-	                owner.add_temp("fenpei", 2);
-	                owner.max_mp += 10000;
+	                var first = !owner.query_temp("shjd_ren_rwd");   // 奖励只发一次（测试号可重开）
+	                if (first) {
+	                    owner.add_temp("fenpei", 2);
+	                    owner.max_mp += 10000;
+	                }
 	                owner.set_temp("shjd_cultivating", null);
 	                if (owner.prop) delete owner.prop.no_pfm;
 	                owner.set_temp("shjd_ren", 1);
 	                owner.set_temp("shjd_ren_rwd", 1);
 	                var c = 1 + (owner.query_temp("shjd_di") ? 1 : 0) + (owner.query_temp("shjd_tian") ? 1 : 0);
 	                owner.set_temp("shjd", c);
-	                owner.notify("<hig>人花绽放！" + dmg + "伤害/" + hits + "击，获得2点先天属性+10000内力上限！</hig>");
-	                owner.send_message(owner.name + "成功唤出人花，三花聚顶初成！");
+	                if (first) {
+	                    owner.notify("<hig>人花绽放！你获得了2点可分配先天属性和10000内力上限！</hig>");
+	                    owner.send_message(owner.name + "成功唤出人花，三花聚顶初成！");
+	                } else owner.notify("<hig>人花绽放！（重温试炼，不再获得奖励。）</hig>");
 	                this.destroy();
 	            }, 100);
 	        } else if (this._hit_count >= this._max_hits && !this._done) {
@@ -59,7 +64,7 @@
 	                this.end_fight();
 	                owner.set_temp("shjd_cultivating", null);
 	                if (owner.prop) delete owner.prop.no_pfm;
-	                owner.notify("<red>人花14击未破……开花失败。（累计" + dmg + "伤害，需" + this._required_dmg + "）</red>");
+	                owner.notify("<red>人花在你面前摇曳良久，终究未能绽开……开花失败了。</red>");
 	                this.destroy();
 	            }, 100);
 	        }

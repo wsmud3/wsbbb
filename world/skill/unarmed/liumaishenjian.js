@@ -26,29 +26,29 @@ this.learn_condition = {
 	skill: { unarmed: 1200 }
 };
 
-this.on_attack_over = function (me, target, par, sh) {
-	// Passive splash: only when unarmed (bare hands or fist weapon)
-	if (sh > 0 && me.enemy && me.enemy.length > 0 && me.query_weapon_type() === WEAPON_TYPE.NONE) {
-		var nearby = null;
-		if (me.enemy.length === 1) {
-			nearby = me.enemy[0];
-		} else {
-			var others = [];
-			for (var i = 0; i < me.enemy.length; i++) {
-				if (me.enemy[i] && me.enemy[i] !== target && me.enemy[i].hp > 0 && me.enemy[i].fight_type) {
-					others.push(me.enemy[i]);
-				}
-			}
-			nearby = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : target;
-		}
-		if (nearby && nearby.hp > 0 && nearby.fight_type) {
-			var splash = Math.floor(sh * 0.3);
-			if (splash > 0) {
-				nearby.damage(splash, me);
-				me.send_room("<HIC>六脉剑气溅射，" + nearby.name + "受到了" + splash + "点溅射伤害！</HIC>");
-			}
-		}
+// 溅射（被动）：六脉神剑命中后，剑气余势对附近一名敌人（只有一个敌人时就是它）再出手一次六脉神剑的平 A
+// （no_weapon：按拳脚装的六脉神剑结算）。这一下带 liumai_splash 标记，命中后不再溅射，避免连锁。
+// 六脉神剑自己的绝招也能触发这个被动（拿着兵器放也一样）；融入自创武学后拳脚装的不是六脉神剑，就不触发。
+// 绝招的攻击带 liumai_pfm 标记，由绝招自己按「拳脚装的是不是六脉神剑」决定是否触发，被动见到标记跳过，不重复溅射。
+var SPLASH_MSG = "<HIC>剑气余势未消，自$N指端折转，嗤的一声射向$n！</HIC>";
+// 绝招命中后：拳脚装的是六脉神剑才触发被动溅射
+function pfm_splash(me, target) {
+	if (me.noweapon_skill && me.noweapon_skill.id === "liumaishenjian") splash(me, target);
+}
+function splash(me, target) {
+	var others = [];
+	for (var i = 0; me.enemy && i < me.enemy.length; i++) {
+		var e = me.enemy[i];
+		if (e && e !== target && e.hp > 0 && e.fight_type && e.environment === me.environment) others.push(e);
 	}
+	var nearby = others.length ? others[Math.floor(Math.random() * others.length)] : target;
+	if (!nearby || nearby.hp <= 0 || !nearby.fight_type) return;
+	me.do_attack({ target: nearby, no_weapon: true, liumai_splash: true, attack_msg: SPLASH_MSG });
+	if (nearby !== target) me.end_attack(nearby);
+}
+this.on_attack_over = function (me, target, par, sh) {
+	if (!(sh > 0) || par.liumai_splash || par.liumai_pfm || !me.fight_type || me.hp <= 0) return;
+	splash(me, target);
 };
 
 this.query_enable_prop = function (lv) {
@@ -58,7 +58,7 @@ this.query_enable_prop = function (lv) {
 			mz: parseInt(lv * 2010 / 1000),
 			add_sh_per: parseInt(4 + lv / 300),
 			diff_fy_per: parseInt(4 + lv / 300),
-			desc: "命中敌人后对附近敌人产生溅射伤害",
+			desc: "命中敌人后，剑气余势会对附近一名敌人再出手一次",
 		},
 	};
 };
@@ -72,10 +72,11 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			me.send_room("<HIW>$N指尖轻弹，六脉神剑「无形剑气」——一道无形无相的剑气破空而出！</HIW>", target);
-			me.do_attack({
+			var wxSh = me.do_attack({
 				target: target,
 				gj: me.gj * 2.5,
 				mz: me.mz * 1.5,
+				liumai_pfm: true,
 				attack_msg: "<HIW>一道无形剑气无声无息地射向$n！</HIW>",
 				on_parry: function (target, is_parry) {
 					if (!is_parry) {
@@ -93,6 +94,7 @@ this.pfm = {
 					}
 				}
 			});
+			if (wxSh > 0 && target.hp > 0) pfm_splash(me, target);
 			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
@@ -140,8 +142,10 @@ this.pfm = {
 				var sh = me.do_attack({
 					target: t,
 					gj: me.gj * 1.2,
+					liumai_pfm: true,
 					attack_msg: swordTmpl[si] + t.name + "！</HIC>"
 				});
+				if (sh > 0 && t.hp > 0) pfm_splash(me, t);
 				if (sh > 0) {
 					// 叠加破碎debuff
 					t.add_status({
@@ -155,26 +159,6 @@ this.pfm = {
 						max_count: 10,
 						prop: { fy_per: -defPerStack },
 					}, me);
-					// 溅射：对单体造成额外30%伤害（可实现12次伤害）
-					var splashTarget = null;
-					if (me.enemy && me.enemy.length === 1) {
-						splashTarget = t;
-					} else if (me.enemy && me.enemy.length > 1) {
-						var others = [];
-						for (var j = 0; j < me.enemy.length; j++) {
-							if (me.enemy[j] && me.enemy[j] !== t && me.enemy[j].hp > 0 && me.enemy[j].fight_type) {
-								others.push(me.enemy[j]);
-							}
-						}
-						splashTarget = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : t;
-					}
-					if (splashTarget && splashTarget.hp > 0) {
-						var splashDmg = Math.floor(sh * 0.3);
-						if (splashDmg > 0) {
-							splashTarget.damage(splashDmg, me);
-							me.send_room("<HIC>六脉剑气溅射，" + splashTarget.name + "受到了" + splashDmg + "点溅射伤害！</HIC>");
-						}
-					}
 				}
 			}
 			me.end_attack(target);
@@ -183,7 +167,7 @@ this.pfm = {
 			var defPerStack = 3;
 			if (lv >= 2000) defPerStack = 5;
 			else if (lv >= 1000) defPerStack = 4;
-			return "六脉齐射，随机攻击你的敌人，命中一次叠加一层<hir>破碎</hir>(每层降低" + defPerStack + "%防御，最多10层)，持续" + (Math.min(5000 + parseInt(lv * 5), 10000) / 1000) + "秒。溅射伤害不会触发破碎效果。";
+			return "六脉齐射，随机攻击你的敌人，命中一次叠加一层<hir>破碎</hir>(每层降低" + defPerStack + "%防御，最多10层)，持续" + (Math.min(5000 + parseInt(lv * 5), 10000) / 1000) + "秒。剑气余势的追加攻击不会叠加破碎。";
 		}
 	}
 };

@@ -33,17 +33,20 @@
 	            this._done = true;
 	            this.call_out(function () {
 	                this.end_fight();
+	                var first = !target.query_temp("shjd_tian_rwd");   // 奖励只发一次（测试号可重开）
 	                target.set_temp("shjd_tian", 1);
 	                target.set_temp("shjd_tian_rwd", 1);
 	                target.set_temp("shjd_cultivating", null);
 	                target.remove_temp("no_pfm_key");
 	                target.remove_prop("no_pfm");
-	                target.add_temp("fenpei", 5);
-	                target.max_mp += 30000;
 	                target.set_temp("shjd", 3);
-	                target.notify("<hig>天花绽放！天道之力认可了你，获得了5点可分配先天属性和30000内力上限！</hig>");
-	                target.notify("<hig>三花聚顶，五气朝元！你已臻至全新境界！</hig>");
-	                target.send_message(target.name + "成功唤出天花，完成三花聚顶！");
+	                if (first) {
+	                    target.add_temp("fenpei", 5);
+	                    target.max_mp += 30000;
+	                    target.notify("<hig>天花绽放！天道之力认可了你，获得了5点可分配先天属性和30000内力上限！</hig>");
+	                    target.notify("<hig>三花聚顶，大功告成！精、气、神三花齐聚顶门，你的根基已臻圆满！</hig>");
+	                    target.send_message(target.name + "成功唤出天花，完成三花聚顶！");
+	                } else target.notify("<hig>天花绽放！（重温试炼，不再获得奖励。）</hig>");
 	                this.destroy();
 	            }, 100);
 	        }
