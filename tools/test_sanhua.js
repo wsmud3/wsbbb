@@ -88,6 +88,32 @@ async function main() {
         assert.ok(src.indexOf("五岳") >= 0);
     });
 
+    check("守门人：没有金古易引荐的玩家看不到「提升境界」按钮", () => {
+        const men = WORLD.NPC_STROE.get("pub/wudao_men") || BASE.CREATE(__PATH.NPC, "pub/wudao_men");
+        const p = mkUser(false); p.level = 4;
+        const names = pl => JSON.parse(men.query_commands(pl)).commands.map(c => c.name);
+        assert.ok(names(p).indexOf("提升境界") < 0, "没有引荐看不到");
+        p.set_temp("wd", 1);
+        assert.ok(names(p).indexOf("提升境界") >= 0, "有引荐能看到");
+        assert.ok(names(p).indexOf("武帝之路") < 0, "按钮已改名");
+    });
+    check("金古易引荐：五门基础技能和装备的特殊技能都要 2200 级，内力上限 120 万", () => {
+        const zhu = WORLD.NPC_STROE.get("yz/zhubanxian") || BASE.CREATE(__PATH.NPC, "yz/zhubanxian");
+        const ask = zhu.actions.levelup.action;
+        const build = spLv => {
+            const p = mkUser(false); p.level = 4; p.max_mp = 1300000;
+            p.callme = p.call = () => "阁下";
+            const pairs = [["force", "sp_force"], ["unarmed", "sp_unarmed"], ["sword", "sp_sword"], ["parry", "sp_parry"], ["dodge", "sp_dodge"]];
+            p.skills = {};
+            for (const [b, sp] of pairs) { p.skills[b] = { level: 2200, enable_skill: sp }; p.skills[sp] = { level: spLv }; }
+            return p;
+        };
+        const low = build(2199); ask.call(zhu, low);
+        assert.ok(!low.query_temp("wd"), "特殊技能 2199 级不给引荐");
+        const ok = build(2200); ask.call(zhu, ok);
+        assert.ok(ok.query_temp("wd"), "都到 2200 级才给引荐");
+    });
+
     console.log((failed ? "三花测试失败 " : "三花测试通过 ") + passed + "/" + (passed + failed));
     process.exit(failed ? 1 : 0);
 }

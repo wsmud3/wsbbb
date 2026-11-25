@@ -31,8 +31,8 @@
 
 	});
 
-	// 武帝之路询问
-	this.add_action("ask_wd", "武帝之路", function (me) {
+	// 「提升境界」：武帝之路。按钮只给得到金古易引荐的玩家看（见下方 query_commands）
+	this.add_action("ask_wd", "提升境界", function (me) {
 	    if (me.level < 4) {
 	        return me.notify("守门人瞥了你一眼，淡淡地说道：你的修为还不够，等你到了武圣境界再来找我吧。");
 	    }
@@ -52,7 +52,7 @@
 	        return me.notify("守门人对你说道：五岳之巅，尚有灵气未曾认你为主。再去山中走一遭吧，莫要辜负了金古老先生的引荐。");
 	    }
 
-	    // 首次对话，告知武帝之路（只说在五岳，不点明地点与条件）
+	    // 首次对话，告知如何成就武帝（只说在五岳，不点明地点与条件）
 	    me.set_temp("wd_quest", 1);
 	    me.notify("守门人听完你的来意，眼中精光一闪，缓缓说道：\n"
 	        + "<hiy>金古老先生果然没有看走眼。武圣之上，确有帝君之境！</hiy>\n"
@@ -62,3 +62,12 @@
 	        + "守门人捋了捋胡须，语气转沉：\n"
 	        + "灵气择人而栖。修为不到，莫说纳气，便是那道影子也唤不出来。五气齐聚之日，帝君之境自然水到渠成——去吧。");
 	});
+
+	// 没有金古易引荐（temp.wd）的玩家看不到「提升境界」按钮
+	this.query_commands = function (player) {
+	    var base = NPC.prototype.query_commands.call(this, player);
+	    if (player && player.query_temp && player.query_temp("wd")) return base;
+	    var json = JSON.parse(base);
+	    json.commands = json.commands.filter(function (c) { return String(c.cmd).indexOf("ask_wd ") !== 0; });
+	    return JSON.stringify(json);
+	};

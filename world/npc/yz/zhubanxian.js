@@ -224,10 +224,12 @@
 	        return me.notify("金古易对你说道：武道塔的守门人，连我都看不出他的境界，他肯定知道些什么。");
 	    }
 
+	    // 基础技能 2200 级，且装备在上面的特殊技能也要 2200 级
 	    var check = {};
 	    for (var sk in me.skills) {
 	        var item = me.skills[sk];
-	        if (item.enable_skill && item.level >= 2200) {
+	        var sp = item.enable_skill && me.skills[item.enable_skill];
+	        if (item.enable_skill && item.level >= 2200 && sp && sp.level >= 2200) {
 	            check[sk] = true;
 	        }
 	    }
