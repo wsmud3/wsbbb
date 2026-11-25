@@ -19,6 +19,7 @@ this.on_create = function (path, par) {
     this.grade = parseInt(lv / 3);
     if (this.grade > 6) this.grade = 6;
     if (this.grade === 6) this.desc = "这是一株神奇的药草，可以炼制出传说中的神丹";
-    this.value = [100, 1000, 5000, 10000, 50000, 100000, 680000][this.grade];
+    // 药材 / 鱼按品级定价（白 10 / 绿 20 / 蓝 50 / 黄 100 / 紫 200 / 橙 500 / 红 1000），原价过高会让采药、钓鱼卖钱冲垮黄金产出
+    this.value = [10, 20, 50, 100, 200, 500, 1000][this.grade];
 
 }

@@ -9,6 +9,9 @@
 //                                   · 发放测试专用的无限精力丹、无限扫荡符、无限洗髓丹、无限变性丹（缺哪个补哪个）
 //   sktest unfix [玩家]             取消测试号（解除技能锁定与测试特权，等级/境界/物品保留）
 //   sktest top <境界0~6> [玩家]     设定已领过突破奖励的最高境界（本功能上线前就设过的测试号，原境界没有记录，用它补）
+//   sktest danfang [品级1~5|all] [learn] [玩家]
+//                                   发放丹方：不填品级发全部 5 个品级各一套（115 张）；带 learn 则直接学会、不发物品。
+//                                   测试号炼药不需要也不消耗材料（见 world/lianyao.js 的 free_materials）。
 // [玩家] 填在线玩家的 id 或名字，不填就是自己。
 // 标记都存在 temp 里（skill_fixed / test_char），下线重登仍然有效。技能锁定后学习、练习、读书、
 // 技能书、武道进阶/残页的等级换算、放弃技能都不会改变等级（见 CHARACTER.prototype.skill_fixed）。
@@ -136,6 +139,32 @@ this.enter = function (me, arg) {
         tp.save && tp.save();
         return me.notify((tp === me ? "你" : tp.name) + "已领过突破奖励的最高境界设为" + LEVEL_NAMES[lvTop] + "，此境界及以下再次突破不发奖励。");
     }
+    if (action === "danfang") {
+        var L = WORLD.LIANYAO;
+        if (!L) return me.notify("炼药系统未加载。");
+        var rest2 = parts.slice(1), grades = [1, 2, 3, 4, 5], learnNow = false;
+        if (rest2.length && /^[1-6]$/.test(rest2[0])) grades = [parseInt(rest2.shift())];
+        else if (rest2[0] === "all") rest2.shift();
+        if (rest2[0] === "learn") { learnNow = true; rest2.shift(); }
+        var who = rest2.length ? find_player(rest2[0]) : me;
+        if (!who) return me.notify("找不到在线玩家：" + rest2[0]);
+        var recs = L.LIST.filter(function (r) { return grades.indexOf(r.grade) >= 0; });
+        if (!recs.length) return me.notify("这个品级还没有丹方。");
+        if (learnNow) {
+            var list = L.known_list(who).slice();
+            recs.forEach(function (r) { if (list.indexOf(r.id) < 0) list.push(r.id); });
+            list.sort(function (a, b) { return a - b; });
+            who.set_temp("lianyao_known", list);
+        } else {
+            recs.forEach(function (r) { who.add_obj("book/danfang#" + r.id, 1); });
+        }
+        who.save && who.save();
+        var gtxt = grades.map(function (g) { return L.GRADE_TEXT[g]; }).join("、");
+        var msg = (learnNow ? "直接学会了" : "获得了") + gtxt + "丹方共" + recs.length + "种" + (learnNow ? "" : "（研读需要对应的炼药术等级）") + "。";
+        who.notify("<hiy>你" + msg + (who.is_test_char() ? "测试号炼药不需要材料。" : "") + "</hiy>");
+        if (who !== me) me.notify(who.name + msg);
+        return;
+    }
     if (action === "unfix") {
         var t = parts[1] ? find_player(parts[1]) : me;
         if (!t) return me.notify("找不到在线玩家：" + parts[1]);
@@ -154,6 +183,7 @@ this.help = function () {
         "sktest fix [等级] [玩家]   设为测试号：全部基础 + 公共武学 + 原有技能固定为指定等级（默认 3000）、境界武士（金古易可调）、无限叛师，首次发 1 万武道和 1 万元晶",
         "sktest unfix [玩家]        取消测试号（解除技能锁定与测试特权）",
         "sktest top <境界0~6> [玩家] 设定已领过突破奖励的最高境界（给早先设的测试号补记录）",
+        "sktest danfang [品级1~5|all] [learn] [玩家]  发放丹方（不填品级发全部 115 张）；带 learn 直接学会。测试号炼药不耗材料",
         "[玩家] 为在线玩家的 id 或名字，不填为自己。",
     ].join("\n");
 };

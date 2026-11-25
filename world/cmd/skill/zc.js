@@ -223,45 +223,9 @@ function lvlAskBackCmd(skill_id, book_id, position_key) {
 // 自创武学的菜单必须**一次成型**：持久浮窗每收到一条新报文就会替换窗口，
 // 因此不能"每个词条发一条消息"，否则只剩最后一条（表现为"没有任何选项"）。
 // 这里统一把按钮与说明拼成一段 HTML，随一条 send_commands 发出。
-function zc_btn_html(cmd, label) {
-    // 生成的按钮同时写 cmd 属性与内联 onclick：
-    //   - cmd 属性：浮窗(.float-dialog)用事件委托读取它派发
-    //   - 内联 onclick：通过 innerHTML 渲染的面板（背包「查看」）据此派发
-    // 重要：源码里不得出现反斜杠转义。游戏加载走 BASE.CREATE -> sanitizeScript
-    // -> vm.compileFunction；sanitizeScript 会被字符串内的反斜杠误导，
-    // 使源码损坏、编译失败，整个文件静默加载不出来（按钮随之消失）。
-    // 因此：字符串字面量用单引号，引号/反斜杠字符一律用 fromCharCode 拼。
-    var cmdText = String(cmd);
-    var dq = String.fromCharCode(34);
-    var amp = String.fromCharCode(38);
-    var sq = String.fromCharCode(39);
-    var bs = String.fromCharCode(92);
-    // HTML 实体化：cmd 与 onclick 都要做，否则含尖括号/引号的命令会注入标签或事件
-    var escHtml = function (v) {
-        return String(v).split(amp).join(amp + 'amp;')
-            .split(dq).join(amp + 'quot;')
-            .split(sq).join(amp + '#39;')
-            .split('<').join(amp + 'lt;')
-            .split('>').join(amp + 'gt;');
-    };
-    // JS 字面量转义：onclick 里的命令用单引号括起，需把命令自身的
-    // 单引号与反斜杠写成十六进制转义（bs + x27 / bs + bs），这样命令里的
-    // 引号不会提前结束字符串，也不会把后面的字符当成转义符。
-    var escJs = function (v) {
-        return String(v).split(bs).join(bs + bs)
-            .split(sq).join(bs + 'x27');
-    };
-    var onclick = 'window.SendCommand(' + amp + 'apos;' + escHtml(escJs(cmdText)) + amp + 'apos;)';
-    var style = 'color:gray;border:solid 1px gray;background:black;border-radius:0.25em;'
-        + 'padding:0.25em 1em;margin:0.25em 0.625em 0.25em 0;min-width:2.5em;text-align:center;cursor:pointer;display:inline-block;';
-    return '<span cmd=' + dq + escHtml(cmdText) + dq + ' onclick=' + dq + onclick + dq
-        + ' style=' + dq + style + dq + '>' + label + '</span>';
-}
-function zc_row(text, cmds) {
-    var html = '<div class="zc-row">' + text;
-    if (cmds && cmds.length) html += '<span class="zc-btns">' + cmds.join('') + '</span>';
-    return html + '</div>';
-}
+// 浮窗按钮与行：统一用公共组件 UTIL.popup_btn / UTIL.popup_row（炼药等其他浮窗共用）
+function zc_btn_html(cmd, label) { return UTIL.popup_btn(cmd, label); }
+function zc_row(text, cmds) { return UTIL.popup_row(text, cmds); }
 function zc_send(me, html, feedback) {
     // 只传选项对象：argv 从 0 遍历，单独一个对象即可携带 html/text/feedback，
     // 且不会产生任何按钮（按钮已在 html 里用 cmd 属性写好）。

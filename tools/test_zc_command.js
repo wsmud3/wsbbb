@@ -57,12 +57,12 @@ assert.deepStrictEqual(
     blankEscapes.map(h => `  第 ${h.line} 行: ${h.text}`).join('\n')
 );
 
-// ---- 2. 解析：zc_btn_html 必须产出可用的按钮 HTML ----
-// 直接抽出函数体在沙箱里执行，验证 cmd 属性与 onclick 都能被浏览器正确还原
-const fnMatch = zcSrc.match(/function zc_btn_html\(cmd, label\) \{[\s\S]*?\n\}/);
-assert.ok(fnMatch, '未找到 zc_btn_html 函数');
-// eslint-disable-next-line no-new-func
-const zcBtnHtml = new Function(fnMatch[0] + '; return zc_btn_html;')();
+// ---- 2. 解析：浮窗按钮必须产出可用的按钮 HTML ----
+// zc_btn_html 已统一委托给公共组件 UTIL.popup_btn（os/util/util.js），这里直接验证公共组件，
+// 并确认 zc.js 确实走的是它。
+assert.ok(/function zc_btn_html\(cmd, label\) \{ return UTIL\.popup_btn\(cmd, label\); \}/.test(zcSrc), 'zc_btn_html 应委托给 UTIL.popup_btn');
+require(require('path').join(__dirname, '../os/util/util.js'));
+const zcBtnHtml = UTIL.popup_btn;
 
 const btn = zcBtnHtml('zc deduce iblt1155ab9d', '推演');
 assert.ok(

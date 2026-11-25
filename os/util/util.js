@@ -34,6 +34,25 @@ JSON.toObject = function (str) {
 UTIL = {
     empty: function () {
     },
+    // ===== 浮窗富内容（send_commands 的 html）公共组件：自创武学菜单、炼药等共用 =====
+    // 行内按钮：同时写 cmd 属性（浮窗用事件委托派发）与内联 onclick（innerHTML 渲染的面板据此派发）
+    popup_btn: function (cmd, label) {
+        var escHtml = function (v) {
+            return String(v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+                .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        };
+        var escJs = function (v) { return String(v).replace(/\\/g, "\\\\").replace(/'/g, "\\x27"); };
+        var onclick = "window.SendCommand(&apos;" + escHtml(escJs(cmd)) + "&apos;)";
+        var style = "color:gray;border:solid 1px gray;background:black;border-radius:0.25em;"
+            + "padding:0.25em 1em;margin:0.25em 0.625em 0.25em 0;min-width:2.5em;text-align:center;cursor:pointer;display:inline-block;";
+        return '<span cmd="' + escHtml(cmd) + '" onclick="' + onclick + '" style="' + style + '">' + label + '</span>';
+    },
+    // 一行：说明文字 + 行内按钮（样式见 src/floatdialog.js 的 .zc-row）
+    popup_row: function (text, cmds) {
+        var html = '<div class="zc-row">' + text;
+        if (cmds && cmds.length) html += '<span class="zc-btns">' + cmds.join('') + '</span>';
+        return html + '</div>';
+    },
     require: function (str) {
         return require(str);
     },
