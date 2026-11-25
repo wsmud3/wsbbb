@@ -13,17 +13,13 @@
 		skill: { blade: 500 }
 	};
 
-	this.on_beginfight = function (me, target) {
-		me.set_temp("xuedao_start_hp", me.hp);
-	};
-
-	// 血祭（被动）：以进入战斗时的气血为准，每减少 1% 气血，伤害提高 (1 + 每 1000 级 1)%，只加伤害不加命中。
+	// 血祭（被动）：以进入战斗时的气血为准（引擎记在 me._combat_start_hp，战斗结束清零，所以增益只在本场战斗内有效），每减少 1% 气血，伤害提高 (1 + 每 1000 级 1)%，只加伤害不加命中。
 	// 在技能级 on_attack 里按基础伤害返回附加值，等效乘算（之后再乘部位系数、增伤、暴击）。
 	function xueji_per(lv) { return 1 + Math.floor((lv || 0) / 1000); }
 	this.xueji_per = xueji_per;
 	this.on_attack = function (me, target, par) {
 		if (!par || par.is_throwing) return 0;
-		var start_hp = me.query_temp("xuedao_start_hp");
+		var start_hp = me.fight_type ? me._combat_start_hp : 0;
 		if (!start_hp || start_hp <= me.hp) return 0;
 		var missing = Math.floor((1 - me.hp / start_hp) * 100);
 		if (!(missing > 0)) return 0;

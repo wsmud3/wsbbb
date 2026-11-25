@@ -80,12 +80,7 @@ this.init_trial = function (player, beast_type) {
 
     // 驱散玩家所有增益buff（不可驱散和负面buff保留）
     if (player.status && player.status.length) {
-        for (var i = player.status.length - 1; i >= 0; i--) {
-            var st = player.status[i];
-            if (!st.downside && !st.no_clear) {
-                player.remove_status(st.id, true);
-            }
-        }
+        player.clear_downside(false);   // 驱散全部可驱散的增益
     }
     player.notify("<hib>神兽之力席卷而来，你身上的增益效果尽数消散！</hib>");
 

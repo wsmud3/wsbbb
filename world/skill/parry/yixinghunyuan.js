@@ -73,7 +73,7 @@ this.pfm = {
                 name: "混元之气",
                 desc: "移形混元之混元之气，绝对招架，每次招架成功便连续反击",
                 duration: Math.min(30000, 10000 + lv * 2),
-                only_combat: true,
+                // 不带 only_combat：按持续时间自然结束，脱战不消失
                 // 绝对招架，每次招架成功连续反击：按施展时的等级计算
                 on_parry: function (owner, attacker, par) { par.is_parry = true; },
                 on_parry_success: function (owner, attacker) {

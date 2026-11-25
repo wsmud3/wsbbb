@@ -35,15 +35,7 @@ this.pfm = {
 			use: function (me, target, lv) {
 				me.send_room("<HIM>$N双目闪过一丝妖异红芒，葵花真气轰然运转——「鬼魅」！$N身影陡然变得虚幻难辨，如镜花水月般层层叠叠，所有负面状态一扫而空！</HIM>", me);
 				// 清除自身负面状态
-				var toRemove = [];
-				if (me.status) {
-					for (var j = 0; j < me.status.length; j++) {
-						if (me.status[j].downside && !me.status[j].no_clear) toRemove.push(me.status[j].id);
-					}
-					for (var k = 0; k < toRemove.length; k++) {
-						me.remove_status(toRemove[k], true); // isall：一次清掉全部层数，且不触发 on_interval 的额外一跳
-					}
-				}
+				me.clear_downside(true);   // 清除全部可清除的负面状态
 				me.add_status({
 					id: "guimei",
 					name: "鬼魅",

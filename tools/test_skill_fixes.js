@@ -387,12 +387,13 @@ async function main() {
         assert.strictEqual(a.query_status("tianmoce_quangang"), 2);
         assert.strictEqual(a.query_prop("add_sh_per") - s0, 16);
     });
-    check("化功大法·化毒：被击中后腐蚀攻击者 8000 内力", () => {
+    check("化功大法·化毒：攻防 +等级×4，被击中后腐蚀攻击者 等级×4 内力（1000 级 4000）", () => {
         const a = mkUser(), b = mkUser(); learn(a, { huagongdafa: "force" }, 1000); learn(b, {}, 100); fight(a, b);
         b.max_mp = b.mp = 50000;
         SKILL.get("huagongdafa").pfm.pfm1.use(a, b, 1000);
         b.do_attack({ target: a, gj: 1000, mz: 1e9, no_dodge: true, no_parry: true });
-        assert.strictEqual(b.mp, 42000);
+        assert.strictEqual(b.mp, 46000);
+        const hd = a.status.find(x => x.id === "huadu"); assert.ok(hd.prop.gj === 4000 && hd.prop.fy === 4000);
     });
     check("血海魔功·血祭：期间不会死亡，结束后恢复", () => {
         const a = mkUser(); learn(a, { xuehaimogong: "force" }, 1000); a.fight_type = 2; a.enemy = [];

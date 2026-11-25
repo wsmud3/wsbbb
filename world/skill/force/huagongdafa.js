@@ -29,22 +29,24 @@ this.pfm = {
 			mp: 0,
 			use: function (me, target, lv) {
 				me.send_room("<HIG>$N双眼绿芒一闪，化功大法毒劲催动——「化毒」！碧绿色毒雾如活物般从$N体内汹涌而出，在$N周身翻涌缭绕。</HIG>", me);
+				// 化毒：攻击、防御 +等级×4，被击中时腐蚀对方 等级×4 内力（4 品，按品级：1 品云龙 ×1、2 品踏歌行 ×2）
+				var hd = parseInt(lv * 4);
 				me.add_status({
 					id: "huadu",
 					name: "化毒",
-					desc: "攻击和防御增加1500点，被击中后腐蚀敌方内力",
+					desc: "攻击和防御增加" + hd + "点，被击中后腐蚀敌方内力",
 					duration: parseInt(lv * 10),
-					prop: { gj: 1500, fy: 1500 },
-					// 被敌人击中后毒劲反噬，腐蚀对方 8000 点内力
+					prop: { gj: hd, fy: hd },
+					// 被敌人击中后毒劲反噬，腐蚀对方 hd 点内力
 					on_be_hit: function (owner, attacker) {
 						if (!attacker || attacker === owner || !(attacker.mp > 0)) return;
-						var drain = Math.min(8000, attacker.mp);
+						var drain = Math.min(hd, attacker.mp);
 						attacker.add_mp(-drain);
 						owner.send_combat("<HIG>$N体内的化功毒劲反噬，腐蚀了$n" + drain + "点内力！</HIG>\n", attacker);
 					},
 				})},
 			query_desc: function (me, lv) {
-				return "化毒——在" + (parseInt(lv * 10 / 1000)) + "秒内内力化毒布满自身，增加自身1500攻击和防御，被敌人击中后毒劲反噬，将腐蚀敌方8000点内力。";
+				return "化毒——在" + (parseInt(lv * 10 / 1000)) + "秒内内力化毒布满自身，增加自身" + parseInt(lv * 4) + "攻击和防御，被敌人击中后毒劲反噬，将腐蚀敌方" + parseInt(lv * 4) + "点内力。";
 			}
 		},
 		pfm2: {

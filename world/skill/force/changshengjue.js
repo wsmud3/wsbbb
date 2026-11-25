@@ -44,12 +44,7 @@ this.on_new_enemy = function (me, target) {
 this.on_beginfight = function (me, target) {
 				// 首次进战：驱散对方所有增益buff
 				if (target && target.status && target.status.length) {
-								for (var i = target.status.length - 1; i >= 0; i--) {
-												var st = target.status[i];
-												if (!st.downside && !st.no_clear) {
-																target.remove_status(st.id, true);
-												}
-								}
+								target.clear_downside(false);   // 驱散全部可驱散的增益
 				}
 };
 

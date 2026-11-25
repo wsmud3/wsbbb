@@ -43,35 +43,32 @@ this.pfm = {
             me.send_room("<hib>$N眼中凶光大盛，双掌翻飞如玄冥降世，霎时间冰霜飞舞、寒气四溢，仿佛九幽地狱降临人间！</hib>");
             var room = me.environment;
             if (!room) return;
-            // 群攻：对房间内所有玩家造成伤害
-            for (var i = 0; i < room.items.length; i++) {
-                var p = room.items[i];
-                if (!p.is_player || p.hp <= 0) continue;
-                // 物理伤害（无视招架）
-                var sh = me.do_attack({
-                    target: p,
-                    attack_msg: "",
-                    miss_msg: "",
-                    no_parry: true,
-                    no_dodge: true,
-                });
-                // 内力伤害：扣除目标当前内力30%
-                var mpDrain = Math.floor(p.mp * 0.3);
-                if (mpDrain > 0) p.add_mp(-mpDrain);
-                // 真气伤害
-                var trueDmg = lv * 30 + Math.floor(Math.random() * lv * 15);
-                p.damage(trueDmg, me);
-                // 寒毒debuff
-                p.add_status({
-                    id: "xuanming_cold",
-                    duration: 5000 + parseInt(lv * 5),
-                    downside: true,
-                    name: "寒毒入体",
-                    desc: "玄冥寒毒在体内肆虐，攻击命中和速度大幅降低",
-                    prop: { mz_per: -(20 + parseInt(lv / 100)), gjsd_per: -(20 + parseInt(lv / 100)), gj_per: -(10 + parseInt(lv / 100)) }
-                }, me);
-            }
-            me.end_attack(target);
+            // 群攻：对房间内所有玩家造成伤害（无视闪避与招架），打完后附加内力、真气伤害与寒毒
+            var players = room.items.filter(function (p) { return p.is_player && p.hp > 0; });
+            me.do_attacks({
+                targets: players,
+                attack_msg: "",
+                miss_msg: "",
+                no_parry: true,
+                no_dodge: true,
+                after_target: function (p) {
+                    // 内力伤害：扣除目标当前内力30%
+                    var mpDrain = Math.floor(p.mp * 0.3);
+                    if (mpDrain > 0) p.add_mp(-mpDrain);
+                    // 真气伤害
+                    var trueDmg = lv * 30 + Math.floor(Math.random() * lv * 15);
+                    p.damage(trueDmg, me);
+                    // 寒毒debuff
+                    p.add_status({
+                        id: "xuanming_cold",
+                        duration: 5000 + parseInt(lv * 5),
+                        downside: true,
+                        name: "寒毒入体",
+                        desc: "玄冥寒毒在体内肆虐，攻击命中和速度大幅降低",
+                        prop: { mz_per: -(20 + parseInt(lv / 100)), gjsd_per: -(20 + parseInt(lv / 100)), gj_per: -(10 + parseInt(lv / 100)) }
+                    }, me);
+                }
+            });
         },
         query_desc: function (me, lv) {
             return "群攻，无视招架必中，附带内力扣除+真气伤害+寒毒debuff";

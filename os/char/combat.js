@@ -18,6 +18,8 @@ CHARACTER.prototype.begin_attack = function (target, type) {
     if (this.attack_skill && this.attack_skill.on_new_enemy) {
         this.attack_skill.on_new_enemy(this, target);
     }
+    // 进入战斗时的气血（血刀·血祭等「战斗中气血减少」类被动的基准）；只在内存，战斗结束清除
+    if (!this.fight_type) this._combat_start_hp = this.hp;
     this.fight_type = type; //1fight hp<30% 2 kill 0 提前设置供回调使用
     if (type > (this._prev_fight_type || 0)) {
         this._prev_fight_type = type;
@@ -145,6 +147,8 @@ CHARACTER.prototype.is_fighting = function (p) {
     if (!this.fight_type) return false;
     if (!this.enemy || !this.enemy.length) {
         this.fight_type = 0;
+        this._prev_fight_type = 0;   // 与 end_fight 一致，否则下一场不触发 on_beginfight
+        this._combat_start_hp = 0;
         this.is_busy = 0;
         if (this.attack_handler) clearTimeout(this.attack_handler);
         this.attack_handler = null;
@@ -165,6 +169,7 @@ CHARACTER.prototype.end_fight = function () {
     this.send('{type:"combat",end:1}');
     this.fight_type = 0;
     this._prev_fight_type = 0;
+    this._combat_start_hp = 0;
     this.is_busy = 0;
     this.is_faint = 0;
     this.is_rash = 0;
@@ -265,34 +270,65 @@ CHARACTER.prototype.clear_distime = function (pfmid) {
 
     }
 }
-CHARACTER.prototype.do_attacks = function (par) {
-
-    var targets = par.targets;
-    if (!targets) {
-        targets = new Array(this.enemy.length);
+// 当前可群攻的目标：同房间、还活着的敌人（没有敌人时退回 fallback，一般是绝招的指定目标）
+CHARACTER.prototype.query_attack_targets = function (fallback) {
+    var me = this, list = [];
+    if (this.enemy) {
         for (var i = 0; i < this.enemy.length; i++) {
-            targets[i] = this.enemy[i];
+            var e = this.enemy[i];
+            if (e && e !== me && e.hp > 0 && e.environment === me.environment) list.push(e);
         }
     }
-    if (!targets.length) return;
-    var attack_msg = par.attack_msg;
-    if (attack_msg === undefined) attack_msg = (par.no_weapon ? this.noweapon_skill : this.attack_skill).query_attack_action(this, targets[0]);
-    if (attack_msg !== "") this.send_combat(attack_msg, targets[0]);
-    par.attack_msg = "";
-    for (let i = 0; i < targets.length; i++) {
-        par.target = targets[i];
-        // Reset mutable fields between targets to avoid state leak
-        delete par.iscirt;
-        delete par.power_gj;
-        delete par.bj;
-        delete par.is_dodge;
-        delete par.is_parry;
-        delete par._zy_lingbo_ready;
-        delete par._zy_hit_prepared;
-        if (par._zy_base_mz !== undefined) { par.mz = par._zy_base_mz; delete par._zy_base_mz; }
-        this.do_attack(par);
-        this.end_attack(targets[i]);
+    if (!list.length && fallback && fallback !== me && fallback.hp > 0) list.push(fallback);
+    return list;
+};
+// 群攻：对每个目标各打 times 次（默认 1），共用一套参数。群攻技能统一走这里，不要各自手写循环。
+//   par 里除下面几项外，其余字段原样传给每一次 do_attack（gj、mz、diff_fy、no_parry 等）：
+//   targets        目标列表；不给时取 query_attack_targets(par.target)
+//   times          每个目标攻击次数
+//   until_miss     true 时某个目标一次没打出伤害就停止对它的后续攻击
+//   attack_msg     字符串：每次攻击都用（$n 为当前目标）；函数 (t, n) 返回每次的描述；
+//                  不给时只在第一下发一次本技能的普通招式描述
+//   filter(t)      返回 false 跳过该目标
+//   on_target(t)   对每个目标开打前调用（命中与否都执行的附加效果，如群体减益）
+//   on_hit(t, sh, n)  每次攻击打出伤害后调用
+//   after_target(t, dealt)  对该目标打完后、结算死亡前调用（不论命中都执行的附加效果；dealt 为对它造成的总伤害）
+//   返回本次群攻造成的总伤害。每个目标打完调用 end_attack 结算死亡；自己倒下或战斗结束就停。
+CHARACTER.prototype.do_attacks = function (par) {
+    par = par || {};
+    var targets = (par.targets || this.query_attack_targets(par.target)).slice();
+    if (par.filter) targets = targets.filter(par.filter);
+    if (!targets.length) return 0;
+    var times = par.times > 0 ? par.times : 1;
+    var msg = par.attack_msg;
+    if (msg === undefined) {
+        var sk = par.no_weapon ? this.noweapon_skill : this.attack_skill;
+        var first = sk && sk.query_attack_action ? sk.query_attack_action(this, targets[0]) : "";
+        msg = function (t, n) { var m = first; first = ""; return m; };
     }
+    var SKIP = { targets: 1, times: 1, until_miss: 1, attack_msg: 1, filter: 1, on_target: 1, on_hit: 1, after_target: 1, target: 1 };
+    var total = 0;
+    for (var i = 0; i < targets.length; i++) {
+        var t = targets[i];
+        if (this.hp <= 0 || !this.fight_type) break;
+        if (!t || t.hp <= 0 || t.environment !== this.environment) continue;
+        if (par.on_target) par.on_target(t);
+        var dealt = 0;
+        for (var n = 0; n < times; n++) {
+            if (t.hp <= 0 || this.hp <= 0 || !this.fight_type) break;
+            // 每次攻击用一份新参数，避免暴击、命中修正等状态在目标之间串用
+            var p = { target: t, attack_msg: typeof msg === "function" ? msg(t, n) : msg };
+            for (var k in par) if (!SKIP[k]) p[k] = par[k];
+            var sh = this.do_attack(p);
+            if (sh > 0) {
+                total += sh; dealt += sh;
+                if (par.on_hit) par.on_hit(t, sh, n);
+            } else if (par.until_miss) break;
+        }
+        if (par.after_target && t.hp > 0 && this.hp > 0) par.after_target(t, dealt);
+        this.end_attack(t);
+    }
+    return total;
 }
 var CHARACTER_PARTS = [
     { name: "左脚", hert: 0.8, crit: 0 },

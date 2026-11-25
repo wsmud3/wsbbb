@@ -97,14 +97,8 @@ this.pfm = {
         use: function (me, target, lv) {
             var per = jianlai_per(lv);
             me.send_room("<hiw>$N并指向天，一声清喝：「剑来！」四下剑鸣大作，无数飞剑破空而至！</hiw>", target);
-            var enemies = (me.enemy || []).slice();
-            for (var i = 0; i < enemies.length; i++) {
-                var e = enemies[i];
-                if (!e || e.hp <= 0 || e.environment !== me.environment) continue;
-                me.do_attack({ target: e, gj: me.gj, mz: me.mz, no_append: true,
-                    attack_msg: "<hiw>漫天飞剑如雨落下，罩向$n周身！</hiw>" });
-                me.end_attack(e);
-            }
+            me.do_attacks({ target: target, gj: me.gj, mz: me.mz, no_append: true,
+                attack_msg: "<hiw>漫天飞剑如雨落下，罩向$n周身！</hiw>" });
             me.add_status({
                 id: "dugujianjue_jianlai", name: "剑来", desc: "飞剑环绕，每次攻击附加攻击力" + per + "%的真实伤害",
                 duration: jianlai_time(lv), override: 2,

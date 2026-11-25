@@ -41,13 +41,12 @@ this.enter = function (player, objid, par) {
         if (!(sum > 0) || player.money < sum) return player.send('你身上的钱不够。');
         player.add_money(-sum);
 
-        obj.hole_count += (obj.st_prop.length);
         for (let item of obj.st_prop) {
             let stone = player.add_obj(item.path);
             if (stone)
                 player.send('你从' + obj.color_name + '上拆下来一块' + stone.color_name + "。");
         }
-        obj.st_prop.length = 0;
+        obj.clear_stone();   // 清空宝石并恢复孔位
         // player.send_room("铁匠拿着" + player.name + "的" + obj.color_name + "，三下五除二就把它上面镶嵌的宝石去掉了。");
 
         WORLD.STATS.updateWeapon(player, obj);

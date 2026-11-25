@@ -80,12 +80,7 @@ this.pfm = {
 			me.send_room("<hio>$N" + "催动天魔策——「种魔」！一股魔气直灌$n体内，压制其功力！</hio>", target);
 			// 消除对方的内功buff
 			if (target.status && target.status.length) {
-				for (var i = target.status.length - 1; i >= 0; i--) {
-					var st = target.status[i];
-					if (!st.downside && !st.no_clear) {
-						target.remove_status(st.id, true);
-					}
-				}
+				target.clear_downside(false);   // 驱散全部可驱散的增益
 			}
 			// 压制：降低60%伤害和免伤
 			var dr = 60 + parseInt(lv / 500);
@@ -246,11 +241,6 @@ this.pfm = {
 // 当装备为内功时，首次进战驱散敌方增益
 this.on_beginfight = function (me, target) {
 		if (me.is_enable_skill("force", "tianmoce") && target && target.status && target.status.length) {
-		for (var i = target.status.length - 1; i >= 0; i--) {
-			var st = target.status[i];
-			if (!st.downside && !st.no_clear) {
-				target.remove_status(st.id, true);
-			}
-		}
+		target.clear_downside(false);   // 驱散全部可驱散的增益
 	}
 };

@@ -171,6 +171,54 @@ async function main() {
         assert.ok(!statusOf(c, "force"), "死亡清空状态");
     });
 
+    await check("移形混元·混元之气：战斗结束不消失，按持续时间结束", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { yixinghunyuan: "parry" }, 1000); learn(b, {}, 100); fight(a, b);
+        SKILL.get("yixinghunyuan").pfm.hunyuan.use(a, b, 1000);
+        a.clear_combat_status();
+        const s = statusOf(a, "yixinghunyuan");
+        assert.ok(s && s.duration === 12000, "脱战后混元之气仍在，持续 12 秒");
+    });
+
+    await check("血刀·血祭：以本场进战时气血为基准，战斗结束清零，下一场重新计", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { xuedao: "blade" }, 1000); learn(b, {}, 100);
+        const xd = SKILL.get("xuedao");
+        a.hp = a.max_hp; a.begin_attack(b, 2);
+        assert.strictEqual(a._combat_start_hp, a.max_hp);
+        a.hp = Math.floor(a.max_hp / 2);
+        assert.strictEqual(xd.on_attack(a, b, { gj: 1000 }), 1000 * 50 * 2 / 100, "掉 50% 气血、1000 级每 1% +2%");
+        a.end_fight();
+        assert.strictEqual(a._combat_start_hp, 0, "战斗结束清零");
+        assert.strictEqual(xd.on_attack(a, b, { gj: 1000 }), 0);
+        a.begin_attack(b, 2);   // 半血进入下一场：基准是半血，不继承上一场
+        assert.strictEqual(xd.on_attack(a, b, { gj: 1000 }), 0);
+        a.end_fight();
+        // 敌人离开等原因走 is_fighting 结束战斗：同样清零，并且下一场照常触发 on_beginfight
+        a.begin_attack(b, 2); a.enemy.length = 0; a.is_fighting();
+        assert.ok(!a._combat_start_hp && !a._prev_fight_type);
+    });
+
+    await check("群攻 do_attacks：逐个目标、每人多段、落空即停、回调、每个目标各自结算", () => {
+        const a = mkUser(), b = mkUser(), c = mkUser(), far = mkUser();
+        for (const x of [a, b, c]) { learn(x, {}, 100); }
+        learn(far, {}, 100);
+        const room = { items: [a, b, c] }; a.environment = b.environment = c.environment = room; far.environment = {};
+        a.fight_type = 2; a.enemy = [b, c, far]; b.enemy = [a]; c.enemy = [a]; b.fight_type = c.fight_type = 2;
+        assert.deepStrictEqual(a.query_attack_targets(), [b, c], "只取同房间、活着的敌人");
+        const hits = []; let ended = [];
+        a.do_attack = p => { hits.push([p.target, p.gj, p.attack_msg]); return p.target === c && hits.filter(h => h[0] === c).length >= 2 ? 0 : 100; };
+        a.end_attack = t => { ended.push(t); return true; };
+        const onHit = [], after = [];
+        const total = a.do_attacks({ times: 3, until_miss: true, gj: 777, attack_msg: (t, n) => "第" + (n + 1) + "击",
+            on_hit: (t, sh, n) => onHit.push([t, n]), after_target: (t, d) => after.push([t, d]) });
+        assert.strictEqual(hits.filter(h => h[0] === b).length, 3, "b 打满 3 下");
+        assert.strictEqual(hits.filter(h => h[0] === c).length, 2, "c 第 2 下落空后停止");
+        assert.ok(hits.every(h => h[1] === 777) && hits[1][2] === "第2击", "参数与每段描述传给每一次攻击");
+        assert.strictEqual(total, 400);
+        assert.deepStrictEqual(after.map(x => x[1]), [300, 100], "打完每个目标回调一次，带对它的总伤害");
+        assert.deepStrictEqual(ended, [b, c], "每个目标各自结算");
+        assert.strictEqual(onHit.length, 4);
+    });
+
     console.log((failed ? "P2 杂项测试失败 " : "P2 杂项测试通过 ") + passed + "/" + (passed + failed));
     process.exit(failed ? 1 : 0);
 }

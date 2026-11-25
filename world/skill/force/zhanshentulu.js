@@ -52,12 +52,7 @@ this.on_beginfight = function (me, target) {
             var enemy = room.items[j];
             if (enemy === me || !enemy.status || !enemy.status.length) continue;
             if (enemy.is_player && !me.is_fighting(enemy)) continue;
-            for (var i = enemy.status.length - 1; i >= 0; i--) {
-                var st = enemy.status[i];
-                if (!st.downside && !st.no_clear) {
-                    enemy.remove_status(st.id, true);
-                }
-            }
+            enemy.clear_downside(false);   // 驱散全部可驱散的增益
         }
     }
 };

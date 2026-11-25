@@ -30,15 +30,7 @@ this.pfm = {
 			use: function (me, target, lv) {
 				me.send_room("<HIG>$N双手合十，面如枯木——「枯木逢春」！体内真气在寂静中轰然流转，$N周身枯寂之气一扫而空，如枯木逢春雨、朽木发新芽，生机勃发！</HIG>", me);
 				// 清除自身负面状态
-				var toRemove = [];
-				if (me.status) {
-					for (var j = 0; j < me.status.length; j++) {
-						if (me.status[j].downside && !me.status[j].no_clear) toRemove.push(me.status[j].id);
-					}
-					for (var k = 0; k < toRemove.length; k++) {
-						me.remove_status(toRemove[k], true); // isall：一次清掉全部层数，且不触发 on_interval 的额外一跳
-					}
-				}
+				me.clear_downside(true);   // 清除全部可清除的负面状态
 				me.add_status({
 					id: "kumu",
 					name: "枯木",

@@ -45,12 +45,7 @@ this.pfm = {
 			me.send_room("<hic>$N双手合十，念诵佛号，无念禅功之「净念」涤荡一切！</hic>", target);
 			me.clear_downside(true);
 			if (target && target.status) {
-				for (var i = target.status.length - 1; i >= 0; i--) {
-					var st = target.status[i];
-					if (!st.downside && !st.no_clear) {
-						target.remove_status(st.id, true);
-					}
-				}
+				target.clear_downside(false);   // 驱散全部可驱散的增益
 			}
 			me.notify("<hig>净念发动：你的负面状态已清除，敌人的增益状态已净化！</hig>");
 		},

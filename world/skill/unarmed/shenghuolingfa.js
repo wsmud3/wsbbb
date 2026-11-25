@@ -44,23 +44,7 @@ this.pfm = {
 			mp: 20,
 			use: function (me, target, lv) {
 				me.send_room("<HIR>$N双手结圣火印——「圣火焚烧」！$N周身燃起熊熊圣火，火焰化作无数火球向四周的敌人轰去！</HIR>", me);
-				var env = me.environment;
-				if (env) {
-					var chars = env.query_all_enemy(me);
-					for (var j = 0; j < chars.length; j++) {
-						var c = chars[j];
-						if (c !== me && me.is_fighting(c)) {
-							for (var k = 0; k < 3; k++) {
-								me.do_attack({
-									target: c,
-									gj: me.gj,
-									mz: me.mz,
-								});
-							}
-						}
-					}
-				}
-				me.end_attack(target)
+				me.do_attacks({ target: target, times: 3, gj: me.gj, mz: me.mz });
 			},
 			query_desc: function (me, lv) {
 				return "对附近敌人每人攻击三次";

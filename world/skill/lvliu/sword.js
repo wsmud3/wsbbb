@@ -36,30 +36,24 @@ this.pfm = {
         mp: 0,
         use: function (me, target, lv) {
             me.send_room("<hig>$N剑尖急颤，一招「柳风刺」如疾风骤雨般刺出，万千柳影化作漫天剑雨将四周尽数笼罩！</hig>");
-            var room = me.environment;
-            if (room) {
-                for (var i = 0; i < room.items.length; i++) {
-                    var p = room.items[i];
-                    if (p.is_player && p.hp > 0 && p.is_fighting(me)) {
-                        me.do_attack({
-                            target: p,
-                            attack_msg: "",
-                            miss_msg: "",
-                        });
-                        // 群体忙乱10秒
-                        p.add_status({
-                            id: "lvliu_sword_busy",
-                            duration: 10000,
-                            downside: true,
-                            name: "剑影缭乱",
-                            desc: "被绿柳剑法的剑影所困，手忙脚乱无法行动",
-                            prop: {}
-                        }, me);
-                        p.is_busy = Math.max(p.is_busy || 0, 10000);
-                    }
+            // 群攻：只打正在与自己交战的玩家；打完后不论命中与否都挂忙乱
+            me.do_attacks({
+                target: target,
+                attack_msg: "",
+                miss_msg: "",
+                filter: function (p) { return p.is_player; },
+                after_target: function (p) {
+                    p.add_status({
+                        id: "lvliu_sword_busy",
+                        duration: 10000,
+                        downside: true,
+                        name: "剑影缭乱",
+                        desc: "被绿柳剑法的剑影所困，手忙脚乱无法行动",
+                        prop: {}
+                    }, me);
+                    p.is_busy = Math.max(p.is_busy || 0, 10000);
                 }
-            }
-            me.end_attack(target);
+            });
         },
         query_desc: function () { return "群体攻击，使所有敌人忙乱10秒"; }
     }

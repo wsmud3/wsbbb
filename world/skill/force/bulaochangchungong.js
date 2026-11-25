@@ -72,28 +72,11 @@ this.pfm = {
         mp: 35,
         use: function (me, target, lv) {
             me.send_room("<HIG>$N运转不老长春功，真气澎湃而出——「不老长春」！</HIG>", target);
-            var total_damage = 0;
-            if (me.enemy) {
-                for (var i = 0; i < me.enemy.length; i++) {
-                    var t = me.enemy[i];
-                    if (t && t.hp > 0) {
-                        var sh = me.do_attack({
-                            target: t,
-                            gj: me.gj * 2,
-                            attack_msg: "<HIG>$N的长春真气如潮水般涌向" + t.name + "！</HIG>"
-                        });
-                        if (sh > 0) total_damage += sh;
-                    }
-                }
-            } else if (target) {
-                var sh = me.do_attack({
-                    target: target,
-                    gj: me.gj * 2,
-                    attack_msg: "<HIG>$N的长春真气涌向$n！</HIG>"
-                });
-                if (sh > 0) total_damage += sh;
-            }
-            if (target) me.end_attack(target);
+            var total_damage = me.do_attacks({
+                target: target,
+                gj: me.gj * 2,
+                attack_msg: "<HIG>$N的长春真气如潮水般涌向$n！</HIG>"
+            });
             if (total_damage > 0) {
                 me.do_recover(Math.floor(total_damage));
                 me.send_room("<HIG>$N吸收了" + Math.floor(total_damage) + "点气血！</HIG>");

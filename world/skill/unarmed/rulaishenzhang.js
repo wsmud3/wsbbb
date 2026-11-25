@@ -43,26 +43,15 @@ this.pfm = {
 		mp: 30,
 		use: function (me, target, lv) {
 			me.send_room("<hio>$N双掌推出，万道佛光自掌心迸发，虚空之中隐隐浮现诸佛法相，梵音齐鸣，正是如来神掌之「万佛朝宗」！天地为之震动。</hio>", target);
-			// AoE: hit all enemies in the room
-			var enemies = me.enemy ? me.enemy.filter(function(e) { return e && e.hp > 0; }) : [];
-			if (enemies.length === 0 && target && target.hp > 0) enemies = [target];
-			var totalDmg = 0;
-			for (var i = 0; i < enemies.length; i++) {
-				var e = enemies[i];
-				if (!e || e.hp <= 0) continue;
-				// Force-based damage: 20% of attacker's max_mp as bonus damage
-				var bonusDmg = Math.floor(me.max_mp * 0.2);
-				// 按本次实际造成的伤害累计（原先读的是攻击者的 record_damage / 目标的历史总伤害，几乎从不成立）
-				var dealt = me.do_attack({target: e, damage_msg: "<hio>$N的万佛朝宗佛光普照，金光如潮水般涌过$n全身，造成内劲伤害！</hio>", gj: me.gj + bonusDmg});
-				if (dealt > 0) totalDmg += dealt;
-			}
+			// 附加内力上限 20% 的攻击；按本次实际造成的总伤害回血
+			var totalDmg = me.do_attacks({ target: target, gj: me.gj + Math.floor(me.max_mp * 0.2),
+				damage_msg: "<hio>$N的万佛朝宗佛光普照，金光如潮水般涌过$n全身，造成内劲伤害！</hio>" });
 			// Heal based on damage dealt
 			if (totalDmg > 0) {
 				var heal = Math.floor(totalDmg * 0.3);
 				me.do_recover(heal);
 				me.notify("<hig>万佛朝宗，来袭的劲力尽数化为你的气血！</hig>");
 			}
-			me.end_attack(target);
 		},
 		query_desc: function (me, lv) {
 			return "对附近敌人造成内力伤害（附加内力上限20%），将造成伤害的30%转化为气血。万佛朝宗，普度众生。";

@@ -38,24 +38,16 @@
 				me.send_room("<HIR>$N高举神杖，九天神霄之雷应声而下——「天打五雷轰」！</HIR>");
 
 				// 群攻：对所有敌人降下五雷
-				var enemies = me.enemy || (target ? [target] : []);
-				for (var e = 0; e < enemies.length; e++) {
-					var t = enemies[e];
-					if (!t || t.hp <= 0 || me.hp <= 0) continue;
-					me.send_room("<HIY>神雷轰向" + t.name + "！</HIY>");
-					for (var i = 0; i < 5; i++) {
-						if (t.hp <= 0 || me.hp <= 0) break;
-						var leiSh = me.do_attack({
-							target: t,
-							gj: me.gj * 1.5,
-							attack_msg: "<HIY>第" + (i + 1) + "雷！</HIY>"
-						});
-						// 按说明：命中才回复等同于造成伤害的内力（add_mp 不会超过上限；原为不判命中直接 mp += 攻击力×1.5）
-						if (leiSh > 0) me.add_mp(Math.floor(leiSh));
-					}
-				}
+				// 群攻：每个敌人五雷，命中才回复等同于造成伤害的内力（add_mp 不会超过上限）
+				me.do_attacks({
+					target: target,
+					times: 5,
+					gj: me.gj * 1.5,
+					attack_msg: function (t, n) { return "<HIY>第" + (n + 1) + "雷！</HIY>"; },
+					on_target: function (t) { me.send_room("<HIY>神雷轰向$n！</HIY>", t); },
+					on_hit: function (t, sh) { me.add_mp(Math.floor(sh)); }
+				});
 				me.send_room("<HIR>$N的天打五雷轰——五雷轰顶，群敌辟易！</HIR>");
-				me.end_attack(target);
 			},
 			query_desc: function (me, lv) {
 				return "群攻技能，对每个敌人连续出杖五次，每击造成150%攻击力的伤害，每次命中回复等同于造成伤害的内力。";
