@@ -41,7 +41,7 @@ xi:
             on_interval: function (me) {
                 if (me.hp > 0) {
                     var hp = me.do_recover(me.max_hp * gj / 100);
-                    if (hp > 0) me.notify("<hig>你恢复了" + hp + "点气血。</hig>");
+                    if (hp > 0) me.notify("<hig>鹤翔真气流转周身，你的伤势又好了几分。</hig>");
                 }
 
             },
@@ -71,7 +71,7 @@ xi:
             if (x.hp > 0 && me.is_here(x)) {
                 var healed = x.do_recover(gj); // 每人按同一回复量结算（原先把 gj 改写成上一个人的实际回复量，后面的人越回越少）
                 if (healed > 0)
-                x.notify("<hig>你恢复了" + healed + "点气血。</hig>");
+                x.notify("<hig>游龙真气入体，你的伤势大为好转。</hig>");
                 if (x.is_busy) {
                     x.remove_status("busy");
                     // me.reauto_attack();

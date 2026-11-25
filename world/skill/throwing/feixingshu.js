@@ -48,7 +48,7 @@
 					var ds_diff = Math.max(0, me.ds - target.ds);
 					var extra = Math.min(Math.floor(ds_diff / 3000), 4);
 					var hits = 1 + extra;
-					me.send_room("<HIW>$N十指连弹——「星雨」！" + hits + "道寒星如流星雨般射向$n！</HIW>", target);
+					me.send_room("<HIW>$N十指连弹——「星雨」！" + (hits > 1 ? "漫天寒星如流星雨般射向$n！" : "一点寒星破空射向$n！") + "</HIW>", target);
 					for (var i = 0; i < hits; i++) {
 						me.do_attack({target: target});
 					}

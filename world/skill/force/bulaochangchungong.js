@@ -79,7 +79,7 @@ this.pfm = {
             });
             if (total_damage > 0) {
                 me.do_recover(Math.floor(total_damage));
-                me.send_room("<HIG>$N吸收了" + Math.floor(total_damage) + "点气血！</HIG>");
+                me.send_room("<HIG>$N长春真气回转，将来袭劲力化作生机，气色红润了许多！</HIG>");
             }
         },
         query_desc: function (me, lv) {

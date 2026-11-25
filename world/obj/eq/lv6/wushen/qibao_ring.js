@@ -35,7 +35,7 @@ this.on_eq = function (me) {
 								var recover = Math.floor(me.max_mp * 5 / 100);
 								if (recover > 0 && me.mp < me.max_mp) {
 												me.add_mp(recover);
-												me.notify("<HIC>七宝指环灵光流转，恢复内力" + recover + "点。</HIC>");
+												me.notify("<HIC>七宝指环灵光流转，一股清气注入丹田。</HIC>");
 								}
 				}, 5000);
 				// 定时器句柄是 Node Timeout 对象，绝不能进 temp（temp 会被序列化存档）

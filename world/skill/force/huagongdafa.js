@@ -42,7 +42,7 @@ this.pfm = {
 						if (!attacker || attacker === owner || !(attacker.mp > 0)) return;
 						var drain = Math.min(hd, attacker.mp);
 						attacker.add_mp(-drain);
-						owner.send_combat("<HIG>$N体内的化功毒劲反噬，腐蚀了$n" + drain + "点内力！</HIG>\n", attacker);
+						owner.send_combat("<HIG>$N体内的化功毒劲反噬，$n只觉丹田一空，内力竟被腐蚀了不少！</HIG>\n", attacker);
 					},
 				})},
 			query_desc: function (me, lv) {

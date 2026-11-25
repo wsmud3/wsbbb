@@ -153,7 +153,7 @@ this.pfm = {
             var dmg = target.damage(raw, me, 0);
             if (dmg > 0) {
                 var healed = me.add_hp(dmg);
-                me.send_combat("<HIG>$N汲取风云之势，恢复了" + healed + "点气血！</HIG>", target);
+                me.send_combat("<HIG>$N借风云之势回转周身，气血随之充盈！</HIG>", target);
             }
             me.end_attack(target);
         },

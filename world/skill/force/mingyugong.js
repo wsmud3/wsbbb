@@ -67,7 +67,7 @@ this.pfm = {
 						duration_count: 20,
 						downside: true,
 						data: { dps: 1033 },
-						start_msg: "<HIW>$n被太上忘情的光华笼罩，每2秒受到切割伤害！</HIW>",
+						start_msg: "<HIW>$n被太上忘情的光华笼罩，周身似有无形利刃不住切割！</HIW>",
 						finish_msg: "$n身上的太上忘情之力消散。",
 						on_interval: function(target, count) {
 							target.from_attack(1033 * count, 999999, null, "<HIW>$N太上忘情之力切割$n！</HIW>");

@@ -101,7 +101,7 @@ this.pfm = {
 																				desc: "你被太极剑法缠绕，无法脱身",
 																				duration: time,
 																				is_busy: true, // 原先写在 prop 里，引擎只认状态上的 is_busy 标志
-																				start_msg: "<cyn>$n被太极剑的连绵剑气缠绕，忙乱" + (time / 1000) + "秒！</cyn>",
+																				start_msg: "<cyn>$n被太极剑的连绵剑气缠绕，一时手忙脚乱，脱身不得！</cyn>",
 																				finish_msg: "<cyn>$N终于挣脱了太极剑的缠绕。</cyn>",
 																}, me);
 																me.end_attack(target);
