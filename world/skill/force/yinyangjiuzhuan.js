@@ -73,8 +73,7 @@ this.pfm = {
                     duration: 86400000,
                     downside: false,
                     override: 2,
-                    no_clear: true,
-                    only_combat: true,
+                    no_clear: true,   // 不带 only_combat：战斗结束不消失，只有死亡（clear_status）、切换阴阳或换掉内功（enable 移除 force 状态）才结束
                     prop: { gj_per: jy_gj, diff_fy_per: jy_fy, gjsd_per: jy_spd },
                     start_msg: "<hio>$N周身幽光流转，进入九幽状态——攻伐如幽冥无际！</hio>",
                     finish_msg: "$N的九幽状态消散了。",
@@ -91,8 +90,7 @@ this.pfm = {
                     duration: 86400000,
                     downside: false,
                     override: 2,
-                    no_clear: true,
-                    only_combat: true,
+                    no_clear: true,   // 不带 only_combat：战斗结束不消失，只有死亡（clear_status）、切换阴阳或换掉内功（enable 移除 force 状态）才结束
                     prop: { hp_per: jz_hp, diff_sh_per2: jz_dr },
                     start_msg: "<hio>$N周身烛光笼罩，进入九烛状态——气血如烛火不灭！</hio>",
                     // 被命中反震：写在状态上（原在阴阳九转的受伤钩子里），按施展时的等级计算，融入自创武学后照常生效

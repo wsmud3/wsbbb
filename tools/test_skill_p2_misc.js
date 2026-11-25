@@ -152,6 +152,24 @@ async function main() {
         assert.ok(/^逆转经脉，20秒内/.test(d("busiyinfa", "nisheng", 2000)));
         assert.ok(/持续10秒/.test(d("liumaishenjian", Object.keys(SKILL.get("liumaishenjian").pfm)[1], 2000)));
     });
+    await check("阴阳九转：九烛 / 九幽战斗结束不消失，切换阴阳替换，换内功或死亡清除", () => {
+        const a = mkUser(), b = mkUser(); learn(a, { yinyangjiuzhuan: "force" }, 1000); learn(b, {}, 100); fight(a, b);
+        const zy = SKILL.get("yinyangjiuzhuan").pfm.zhuanyinyang;
+        zy.use(a, b, 1000);
+        assert.strictEqual(statusOf(a, "force").name, "九烛");
+        a.clear_combat_status();
+        assert.ok(statusOf(a, "force") && statusOf(a, "force").name === "九烛", "战斗结束九烛仍在");
+        zy.use(a, b, 1000);
+        assert.strictEqual(statusOf(a, "force").name, "九幽", "切换为九幽");
+        a.clear_combat_status();
+        assert.ok(statusOf(a, "force") && statusOf(a, "force").name === "九幽", "战斗结束九幽仍在");
+        a.fight_type = 0; a.enemy = [];
+        WORLD.COMMANDS["enable"].enter(a, "force", "none");
+        assert.ok(!statusOf(a, "force"), "取消内功后九幽清除");
+        const c = mkUser(); learn(c, { yinyangjiuzhuan: "force" }, 1000); zy.use(c, null, 1000);
+        c.clear_status();
+        assert.ok(!statusOf(c, "force"), "死亡清空状态");
+    });
 
     console.log((failed ? "P2 杂项测试失败 " : "P2 杂项测试通过 ") + passed + "/" + (passed + failed));
     process.exit(failed ? 1 : 0);
